@@ -1,0 +1,5 @@
+{
+  "name": "MHRS Hekim Çalışma Planı Analizörü",
+  "description": "Kamu hastaneleri için MHRS cetvel kapasite analizi, doluluk tahmini ve yapay zeka destekli çalışma planı optimizasyon uygulaması.",
+  "requestFramePermissions": []
+}
