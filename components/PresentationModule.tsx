@@ -17,10 +17,162 @@ import PhysicianData from './PhysicianData';
 import AnalysisModule from './AnalysisModule';
 import { normalizeDoctorName, getPeriodKey } from '../utils/formatters';
 
+// Doctor Detail Modal Component (imported from EfficiencyAnalysis pattern)
+interface DoctorDetailModalProps {
+  doctor: any;
+  onClose: () => void;
+  versions: Record<string, Record<string, ScheduleVersion>>;
+  detailedScheduleData: DetailedScheduleData[];
+  periodMonth: string;
+  periodYear: number;
+  muayeneByPeriod: Record<string, Record<string, MuayeneMetrics>>;
+  ameliyatByPeriod: Record<string, Record<string, number>>;
+}
+
+const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
+  doctor,
+  onClose,
+  versions,
+  detailedScheduleData,
+  periodMonth,
+  periodYear,
+  muayeneByPeriod,
+  ameliyatByPeriod
+}) => {
+  const normName = normalizeDoctorName(doctor.doctorName);
+  const periodKey = getPeriodKey(periodYear, periodMonth);
+
+  const docSchedules = useMemo(() => {
+    return detailedScheduleData.filter(d =>
+      normalizeDoctorName(d.doctorName) === normName &&
+      d.month === periodMonth &&
+      d.year === periodYear
+    ).sort((a, b) => {
+      const parseDate = (s: string) => {
+        const [d, m, y] = s.split('.');
+        return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).getTime();
+      };
+      return parseDate(a.startDate) - parseDate(b.startDate);
+    });
+  }, [detailedScheduleData, normName, periodMonth, periodYear]);
+
+  const muayeneMetrics = muayeneByPeriod[periodKey]?.[normName] || { mhrs: 0, ayaktan: 0, toplam: 0 };
+  const plannedCapacity = docSchedules.reduce((acc, curr) => acc + (curr.capacity || 0), 0);
+  const usageRate = plannedCapacity > 0 ? (muayeneMetrics.toplam / plannedCapacity) * 100 : null;
+  const diff = plannedCapacity > 0 ? (muayeneMetrics.toplam - plannedCapacity) : null;
+
+  const activitySummary = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const dailyMap: Record<string, { AM?: string; PM?: string }> = {};
+    const getTimeMins = (t: string) => {
+      const p = t.split(':');
+      return parseInt(p[0]) * 60 + parseInt(p[1]);
+    };
+
+    docSchedules.forEach(s => {
+      const start = getTimeMins(s.startTime);
+      const end = start + (s.duration || 0);
+      const act = s.action.trim().toLocaleUpperCase('tr-TR');
+      if (!dailyMap[s.startDate]) dailyMap[s.startDate] = {};
+      const overlap = (s1: number, e1: number, s2: number, e2: number) =>
+        Math.max(0, Math.min(e1, e2) - Math.max(s1, s2));
+      if (overlap(start, end, 8 * 60, 12 * 60) >= 30) dailyMap[s.startDate].AM = act;
+      if (overlap(start, end, 13 * 60, 17 * 60) >= 30) dailyMap[s.startDate].PM = act;
+    });
+
+    Object.values(dailyMap).forEach(day => {
+      if (day.AM) counts[day.AM] = (counts[day.AM] || 0) + 0.5;
+      if (day.PM) counts[day.PM] = (counts[day.PM] || 0) + 0.5;
+    });
+    return counts;
+  }, [docSchedules]);
+
+  return (
+    <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 lg:p-8">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative w-full max-w-[1200px] max-h-[90vh] bg-white rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="p-10 border-b border-slate-50 flex justify-between items-start bg-slate-50/30">
+          <div>
+            <h3 className="text-3xl font-black uppercase text-slate-900 tracking-tight">{doctor.doctorName}</h3>
+            <div className="flex items-center gap-3 mt-1">
+              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{doctor.branchName}</p>
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+              <p className="text-sm font-black text-indigo-600 uppercase tracking-widest">{periodMonth} {periodYear}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-4 bg-white border border-slate-200 rounded-full hover:bg-slate-100 transition-all shadow-sm group">
+            <svg className="w-6 h-6 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
+          <div className="space-y-6">
+            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+              <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+              Kapasite Kullanım Özeti
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-indigo-50 border border-indigo-100 rounded-[32px] p-8">
+                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">RANDEVU KAPASİTESİ</p>
+                <h5 className="text-4xl font-black text-indigo-600">{plannedCapacity.toLocaleString('tr-TR')}</h5>
+                <p className="text-[11px] font-bold text-indigo-400 mt-2">DÖNEMLİK TOPLAM SLOT</p>
+              </div>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-[32px] p-8">
+                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">GERÇEKLEŞEN MUAYENE</p>
+                <h5 className="text-4xl font-black text-emerald-600">{muayeneMetrics.toplam.toLocaleString('tr-TR')}</h5>
+                <p className="text-[11px] font-bold text-emerald-400 mt-2">
+                  MHRS: {muayeneMetrics.mhrs} • AYAKTAN: {muayeneMetrics.ayaktan}
+                </p>
+              </div>
+              <div className={`rounded-[32px] p-8 border ${usageRate !== null && usageRate < 100 ? 'bg-rose-50 border-rose-100' : 'bg-blue-50 border-blue-100'}`}>
+                <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${usageRate !== null && usageRate < 100 ? 'text-rose-400' : 'text-blue-400'}`}>KAPASİTE VERİMLİLİĞİ</p>
+                <h5 className={`text-4xl font-black ${usageRate !== null && usageRate < 100 ? 'text-rose-600' : 'text-blue-600'}`}>
+                  {usageRate !== null ? `%${usageRate.toFixed(1).replace('.', ',')}` : '—'}
+                </h5>
+                <p className={`text-[11px] font-bold mt-2 ${usageRate !== null && usageRate < 100 ? 'text-rose-400' : 'text-blue-400'}`}>
+                  FARK: {diff !== null ? (diff >= 0 ? `+${diff}` : diff) : '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+              Aylık Faaliyet Analiz Raporu
+            </h4>
+            <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 divide-x divide-y divide-slate-50">
+                {Object.entries(activitySummary).length > 0 ? (
+                  Object.entries(activitySummary).map(([act, days]) => (
+                    <div key={act} className="p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors">
+                      <p className="text-[9px] font-black text-slate-400 uppercase mb-2 line-clamp-1 h-3">{act}</p>
+                      <p className="text-2xl font-black text-slate-800">{days.toString().replace('.', ',')}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">GÜN</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full p-12 text-center text-slate-300 font-black uppercase italic tracking-widest">
+                    Cetvel kaydı bulunamadı
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Capacity Chart Widget Component
 interface CapacityChartWidgetProps {
   detailedScheduleData: DetailedScheduleData[];
   muayeneByPeriod: Record<string, Record<string, MuayeneMetrics>>;
+  ameliyatByPeriod: Record<string, Record<string, number>>;
+  versions: Record<string, Record<string, ScheduleVersion>>;
   month: string;
   year: number;
   branch: string;
@@ -30,6 +182,8 @@ interface CapacityChartWidgetProps {
 const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
   detailedScheduleData,
   muayeneByPeriod,
+  ameliyatByPeriod,
+  versions,
   month,
   year,
   branch: initialBranch,
@@ -38,6 +192,8 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
   const [branchFilter, setBranchFilter] = useState<string>(initialBranch);
   const [viewLimit, setViewLimit] = useState<number | 'ALL'>(isPresentation ? 50 : 12);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDoctorForDetail, setSelectedDoctorForDetail] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const availableBranches = useMemo(() => {
     const branches = new Set<string>();
@@ -148,12 +304,26 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
           data={paginatedChartData}
           onClick={(data: any) => {
             if (data && data.doctorName) {
-              // Open detail in new window or show modal
-              alert(`Hekim: ${data.doctorName}\nBranş: ${data.branchName}\nKapasite: ${data.capacity}\nGerçekleşen: ${data.totalExam}`);
+              const enrichedDoctor = fullChartData.find(d => normalizeDoctorName(d.doctorName) === normalizeDoctorName(data.doctorName));
+              setSelectedDoctorForDetail(enrichedDoctor || data);
+              setIsDetailModalOpen(true);
             }
           }}
         />
       </div>
+
+      {isDetailModalOpen && selectedDoctorForDetail && (
+        <DoctorDetailModal
+          doctor={selectedDoctorForDetail}
+          onClose={() => setIsDetailModalOpen(false)}
+          versions={versions}
+          detailedScheduleData={detailedScheduleData}
+          periodMonth={month}
+          periodYear={year}
+          muayeneByPeriod={muayeneByPeriod}
+          ameliyatByPeriod={ameliyatByPeriod}
+        />
+      )}
 
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-4">
@@ -322,6 +492,8 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           return <CapacityChartWidget
             detailedScheduleData={detailedScheduleData}
             muayeneByPeriod={muayeneByPeriod}
+            ameliyatByPeriod={ameliyatByPeriod}
+            versions={versions}
             month={state.month!}
             year={state.year!}
             branch={state.branch!}
