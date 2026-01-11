@@ -123,15 +123,39 @@ const App: React.FC = () => {
   const [departments, setDepartments] = useState<string[]>(HOSPITAL_DEPARTMENTS[selectedHospital] || DEPARTMENTS);
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>(MOCK_DATA.filter(d => d.hospital === selectedHospital));
   const [hbysData, setHbysData] = useState<HBYSData[]>([]);
-  const [detailedScheduleData, setDetailedScheduleData] = useState<DetailedScheduleData[]>([]);
-  const [sutServiceData, setSutServiceData] = useState<SUTServiceData[]>([]);
+  // Load data from localStorage on mount
+  const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  };
 
-  const [muayeneByPeriod, setMuayeneByPeriod] = useState<Record<string, Record<string, MuayeneMetrics>>>({});
-  const [ameliyatByPeriod, setAmeliyatByPeriod] = useState<Record<string, Record<string, number>>>({});
-  const [muayeneMetaByPeriod, setMuayeneMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>({});
-  const [ameliyatMetaByPeriod, setAmeliyatMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>({});
-  
-  const [scheduleVersions, setScheduleVersions] = useState<Record<string, Record<string, ScheduleVersion>>>({});
+  const [detailedScheduleData, setDetailedScheduleData] = useState<DetailedScheduleData[]>(() =>
+    loadFromLocalStorage('detailedScheduleData', [])
+  );
+  const [sutServiceData, setSutServiceData] = useState<SUTServiceData[]>(() =>
+    loadFromLocalStorage('sutServiceData', [])
+  );
+
+  const [muayeneByPeriod, setMuayeneByPeriod] = useState<Record<string, Record<string, MuayeneMetrics>>>(() =>
+    loadFromLocalStorage('muayeneByPeriod', {})
+  );
+  const [ameliyatByPeriod, setAmeliyatByPeriod] = useState<Record<string, Record<string, number>>>(() =>
+    loadFromLocalStorage('ameliyatByPeriod', {})
+  );
+  const [muayeneMetaByPeriod, setMuayeneMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>(() =>
+    loadFromLocalStorage('muayeneMetaByPeriod', {})
+  );
+  const [ameliyatMetaByPeriod, setAmeliyatMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>(() =>
+    loadFromLocalStorage('ameliyatMetaByPeriod', {})
+  );
+
+  const [scheduleVersions, setScheduleVersions] = useState<Record<string, Record<string, ScheduleVersion>>>(() =>
+    loadFromLocalStorage('scheduleVersions', {})
+  );
   
   const [planningProposals, setPlanningProposals] = useState<ScheduleProposal[]>([]);
   const [planningSourceMonth, setPlanningSourceMonth] = useState<string>('Kasım');
@@ -153,7 +177,42 @@ const App: React.FC = () => {
   const [isDevExpanded, setIsDevExpanded] = useState(true);
 
   // Sync for presentation "Add current screen"
-  const [slides, setSlides] = useState<PresentationSlide[]>([]);
+  const [slides, setSlides] = useState<PresentationSlide[]>(() =>
+    loadFromLocalStorage('presentationSlides', [])
+  );
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('detailedScheduleData', JSON.stringify(detailedScheduleData));
+  }, [detailedScheduleData]);
+
+  useEffect(() => {
+    localStorage.setItem('muayeneByPeriod', JSON.stringify(muayeneByPeriod));
+  }, [muayeneByPeriod]);
+
+  useEffect(() => {
+    localStorage.setItem('ameliyatByPeriod', JSON.stringify(ameliyatByPeriod));
+  }, [ameliyatByPeriod]);
+
+  useEffect(() => {
+    localStorage.setItem('muayeneMetaByPeriod', JSON.stringify(muayeneMetaByPeriod));
+  }, [muayeneMetaByPeriod]);
+
+  useEffect(() => {
+    localStorage.setItem('ameliyatMetaByPeriod', JSON.stringify(ameliyatMetaByPeriod));
+  }, [ameliyatMetaByPeriod]);
+
+  useEffect(() => {
+    localStorage.setItem('scheduleVersions', JSON.stringify(scheduleVersions));
+  }, [scheduleVersions]);
+
+  useEffect(() => {
+    localStorage.setItem('sutServiceData', JSON.stringify(sutServiceData));
+  }, [sutServiceData]);
+
+  useEffect(() => {
+    localStorage.setItem('presentationSlides', JSON.stringify(slides));
+  }, [slides]);
 
   useEffect(() => {
     setLoadingText('Hastane Değiştiriliyor...');
@@ -177,14 +236,15 @@ const App: React.FC = () => {
     setDepartments(newDeptList);
     setAppointmentData(MOCK_DATA.filter(d => d.hospital === selectedHospital));
     setHbysData([]);
-    setDetailedScheduleData([]);
-    setMuayeneByPeriod({});
-    setAmeliyatByPeriod({});
-    setMuayeneMetaByPeriod({});
-    setAmeliyatMetaByPeriod({});
-    setScheduleVersions({});
+    // Don't clear localStorage data on hospital change - keep data persistent
+    // setDetailedScheduleData([]);
+    // setMuayeneByPeriod({});
+    // setAmeliyatByPeriod({});
+    // setMuayeneMetaByPeriod({});
+    // setAmeliyatMetaByPeriod({});
+    // setScheduleVersions({});
     setPlanningProposals([]);
-    setSutServiceData([]);
+    // setSutServiceData([]);
     setSutRiskAnalysis(null);
     const timer = setTimeout(() => {
       setIsLoading(false);
