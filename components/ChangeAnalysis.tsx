@@ -13,6 +13,10 @@ interface ChangeAnalysisProps {
   versions: Record<string, Record<string, ScheduleVersion>>;
   setVersions: React.Dispatch<React.SetStateAction<Record<string, Record<string, ScheduleVersion>>>>;
   selectedBranch: string | null;
+  // Hospital filters
+  selectedHospital: string;
+  allowedHospitals: string[];
+  onHospitalChange: (hospital: string) => void;
   // Global month/year filters
   selectedMonth: string;
   setSelectedMonth: (month: string) => void;
@@ -23,11 +27,50 @@ interface ChangeAnalysisProps {
   setBaselineLabel: (label: string) => void;
   updatedLabel: string;
   setUpdatedLabel: (label: string) => void;
+  // Admin check
+  isAdmin: boolean;
 }
 
-const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({ versions, setVersions, selectedBranch, selectedMonth, setSelectedMonth, selectedYear, setSelectedYear, baselineLabel, setBaselineLabel, updatedLabel, setUpdatedLabel }) => {
+const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
+  versions,
+  setVersions,
+  selectedBranch,
+  selectedHospital,
+  allowedHospitals,
+  onHospitalChange,
+  selectedMonth,
+  setSelectedMonth,
+  selectedYear,
+  setSelectedYear,
+  baselineLabel,
+  setBaselineLabel,
+  updatedLabel,
+  setUpdatedLabel,
+  isAdmin
+}) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+
+  // Cetvel silme fonksiyonu
+  const handleDeleteVersion = (versionLabel: string) => {
+    if (!isAdmin) return;
+
+    const confirmDelete = window.confirm(`"${versionLabel}" sürümünü silmek istediğinizden emin misiniz?`);
+    if (!confirmDelete) return;
+
+    setVersions(prev => {
+      const updated = { ...prev };
+      if (updated[monthKey]) {
+        const { [versionLabel]: removed, ...rest } = updated[monthKey];
+        updated[monthKey] = rest;
+      }
+      return updated;
+    });
+
+    // Silinen sürüm seçiliyse, seçimi temizle
+    if (baselineLabel === versionLabel) setBaselineLabel('');
+    if (updatedLabel === versionLabel) setUpdatedLabel('');
+  };
 
   const monthKey = `${selectedYear}-${selectedMonth}`;
   
@@ -259,41 +302,85 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({ versions, setVersions, 
         <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-8 items-center">
           <div className="xl:col-span-4 space-y-6">
             <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-tight italic">CETVEL KIYASLAMA MERKEZİ</h2>
-            <div className="flex gap-2">
-              <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase transition-colors hover:border-indigo-200">
-                {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-              </select>
-              <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="w-28 bg-slate-900 text-white rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase">
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
+            <div className="space-y-3">
+              {/* Hastane Filtresi */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
+                <select
+                  value={selectedHospital}
+                  onChange={(e) => onHospitalChange(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase transition-colors hover:border-indigo-200"
+                >
+                  {allowedHospitals.map(h => (
+                    <option key={h} value={h}>{h}</option>
+                  ))}
+                </select>
+              </div>
+              {/* Ay ve Yıl Filtreleri */}
+              <div className="flex gap-2">
+                <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase transition-colors hover:border-indigo-200">
+                  {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                </select>
+                <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="w-28 bg-slate-900 text-white rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase">
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
             </div>
           </div>
           <div className="xl:col-span-5 grid grid-cols-1 md:grid-cols-11 gap-4 items-center">
              <div className="md:col-span-5 flex flex-col gap-1">
                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">İLK CETVEL (BAŞLANGIÇ)</label>
-               <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 text-xs font-black shadow-sm outline-none focus:border-indigo-500 transition-all uppercase">
-                 <option value="">Sürüm Seçiniz...</option>
-                 {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
-               </select>
+               <div className="flex gap-2">
+                 <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="flex-1 bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 text-xs font-black shadow-sm outline-none focus:border-indigo-500 transition-all uppercase">
+                   <option value="">Sürüm Seçiniz...</option>
+                   {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
+                 </select>
+                 {isAdmin && baselineLabel && (
+                   <button
+                     onClick={() => handleDeleteVersion(baselineLabel)}
+                     className="p-3.5 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all border border-rose-200"
+                     title="Sürümü Sil"
+                   >
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                     </svg>
+                   </button>
+                 )}
+               </div>
              </div>
              <div className="hidden md:flex md:col-span-1 justify-center items-center pt-4 text-slate-300">
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
              </div>
              <div className="md:col-span-5 flex flex-col gap-1">
                <label className="text-[9px] font-black text-rose-400 uppercase tracking-widest ml-1">GÜNCEL CETVEL (KIYAS)</label>
-               <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-xs font-black text-rose-600 shadow-sm outline-none focus:border-rose-500 transition-all uppercase">
-                 <option value="">Sürüm Seçiniz...</option>
-                 {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
-               </select>
+               <div className="flex gap-2">
+                 <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="flex-1 bg-white border-2 border-rose-100 rounded-2xl px-4 py-3.5 text-xs font-black text-rose-600 shadow-sm outline-none focus:border-rose-500 transition-all uppercase">
+                   <option value="">Sürüm Seçiniz...</option>
+                   {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
+                 </select>
+                 {isAdmin && updatedLabel && (
+                   <button
+                     onClick={() => handleDeleteVersion(updatedLabel)}
+                     className="p-3.5 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all border border-rose-200"
+                     title="Sürümü Sil"
+                   >
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                     </svg>
+                   </button>
+                 )}
+               </div>
              </div>
           </div>
-          <div className="xl:col-span-3 flex flex-col items-end gap-2">
-             <label htmlFor="versionUpload" className="w-full bg-indigo-600 text-white px-8 py-6 rounded-3xl font-black text-xs shadow-2xl cursor-pointer hover:bg-indigo-700 active:scale-95 flex items-center justify-center gap-3 uppercase transition-all">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
-                <span>YENİ SÜRÜM YÜKLE</span>
-             </label>
-             <input id="versionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
-          </div>
+          {isAdmin && (
+            <div className="xl:col-span-3 flex flex-col items-end gap-2">
+               <label htmlFor="versionUpload" className="w-full bg-indigo-600 text-white px-8 py-6 rounded-3xl font-black text-xs shadow-2xl cursor-pointer hover:bg-indigo-700 active:scale-95 flex items-center justify-center gap-3 uppercase transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
+                  <span>YENİ SÜRÜM YÜKLE</span>
+               </label>
+               <input id="versionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
+            </div>
+          )}
         </div>
       </div>
 

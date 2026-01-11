@@ -536,25 +536,23 @@ const App: React.FC = () => {
 
             case 'change-analysis':
               return (
-                <>
-                  <FilterPanel
-                    selectedHospital={selectedHospital}
-                    onHospitalChange={setSelectedHospital}
-                    allowedHospitals={allowedHospitals}
-                    selectedBranch={selectedBranch}
-                    onBranchChange={(branch) => setBranchFilters(prev => ({ ...prev, [view]: branch }))}
-                    branchOptions={currentBranchOptions}
-                    selectedMonth={selectedMonth}
-                    onMonthChange={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))}
-                    selectedYear={selectedYear}
-                    onYearChange={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))}
-                    showHospitalFilter={true}
-                    showBranchFilter={true}
-                    showMonthFilter={true}
-                    showYearFilter={true}
-                  />
-                  <ChangeAnalysis versions={scheduleVersions} setVersions={setScheduleVersions} selectedBranch={selectedBranch} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} baselineLabel={selectedBaselineLabel} setBaselineLabel={(label) => setBaselineLabels(prev => ({ ...prev, [view]: label }))} updatedLabel={selectedUpdatedLabel} setUpdatedLabel={(label) => setUpdatedLabels(prev => ({ ...prev, [view]: label }))} />
-                </>
+                <ChangeAnalysis
+                  versions={scheduleVersions}
+                  setVersions={setScheduleVersions}
+                  selectedBranch={selectedBranch}
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                  selectedMonth={selectedMonth}
+                  setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))}
+                  selectedYear={selectedYear}
+                  setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))}
+                  baselineLabel={selectedBaselineLabel}
+                  setBaselineLabel={(label) => setBaselineLabels(prev => ({ ...prev, [view]: label }))}
+                  updatedLabel={selectedUpdatedLabel}
+                  setUpdatedLabel={(label) => setUpdatedLabels(prev => ({ ...prev, [view]: label }))}
+                  isAdmin={isAdmin}
+                />
               );
 
             /* Correcting property names to match state setters in PlanningModule */
