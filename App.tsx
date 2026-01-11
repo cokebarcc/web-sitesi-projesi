@@ -30,6 +30,7 @@ import AnalysisModule from './components/AnalysisModule';
 import PhysicianData from './components/PhysicianData';
 import EfficiencyAnalysis from './components/EfficiencyAnalysis';
 import PresentationModule from './components/PresentationModule';
+import Dashboard from './components/Dashboard';
 
 const App: React.FC = () => {
   // Firebase Authentication State
@@ -127,10 +128,14 @@ const App: React.FC = () => {
   const selectedBaselineLabel = baselineLabels[view];
   const selectedUpdatedLabel = updatedLabels[view];
 
-  
+
   const [departments, setDepartments] = useState<string[]>(HOSPITAL_DEPARTMENTS[selectedHospital] || DEPARTMENTS);
-  const [appointmentData, setAppointmentData] = useState<AppointmentData[]>(MOCK_DATA.filter(d => d.hospital === selectedHospital));
-  const [hbysData, setHbysData] = useState<HBYSData[]>([]);
+  const [appointmentData, setAppointmentData] = useState<AppointmentData[]>(() =>
+    loadFromLocalStorage('appointmentData', MOCK_DATA.filter(d => d.hospital === selectedHospital))
+  );
+  const [hbysData, setHbysData] = useState<HBYSData[]>(() =>
+    loadFromLocalStorage('hbysData', [])
+  );
   // Load data from localStorage on mount
   const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     try {
@@ -216,6 +221,8 @@ const App: React.FC = () => {
         if (data.scheduleVersions) setScheduleVersions(data.scheduleVersions);
         if (data.sutServiceData) setSutServiceData(data.sutServiceData);
         if (data.presentationSlides) setSlides(data.presentationSlides);
+        if (data.appointmentData) setAppointmentData(data.appointmentData);
+        if (data.hbysData) setHbysData(data.hbysData);
       }
     });
 
@@ -238,6 +245,8 @@ const App: React.FC = () => {
           scheduleVersions,
           sutServiceData,
           presentationSlides: slides,
+          appointmentData,
+          hbysData,
           lastUpdated: new Date().toISOString()
         }, { merge: true });
       } catch (error) {
@@ -246,7 +255,7 @@ const App: React.FC = () => {
     }, 1000); // 1 second debounce
 
     return () => clearTimeout(timer);
-  }, [user, detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides]);
+  }, [user, detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides, appointmentData, hbysData]);
 
   // Save data to localStorage whenever it changes (backup)
   useEffect(() => {
@@ -280,6 +289,14 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('presentationSlides', JSON.stringify(slides));
   }, [slides]);
+
+  useEffect(() => {
+    localStorage.setItem('appointmentData', JSON.stringify(appointmentData));
+  }, [appointmentData]);
+
+  useEffect(() => {
+    localStorage.setItem('hbysData', JSON.stringify(hbysData));
+  }, [hbysData]);
 
   useEffect(() => {
     setLoadingText('Hastane Değiştiriliyor...');
@@ -384,6 +401,7 @@ const App: React.FC = () => {
       <div key={selectedHospital} className="w-full">
         {(() => {
           switch (view) {
+            case 'schedule': return <Dashboard selectedBranch={selectedBranch} appointmentData={appointmentData} hbysData={hbysData} />;
             case 'physician-data': return <PhysicianData data={detailedScheduleData} onNavigateToDetailed={() => setView('detailed-schedule')} muayeneByPeriod={muayeneByPeriod} setMuayeneByPeriod={setMuayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} setAmeliyatByPeriod={setAmeliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} setMuayeneMetaByPeriod={setMuayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} setAmeliyatMetaByPeriod={setAmeliyatMetaByPeriod} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />;
             case 'efficiency-analysis': return <EfficiencyAnalysis detailedScheduleData={detailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} versions={scheduleVersions} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />;
             case 'detailed-schedule': return <DetailedSchedule data={detailedScheduleData} selectedBranch={selectedBranch} onImportExcel={handleImportDetailedExcel} onDelete={(id) => setDetailedScheduleData(prev => prev.filter(d => d.id !== id))} onClearAll={() => setDetailedScheduleData([])} onRemoveMonth={(m, y) => setDetailedScheduleData(prev => prev.filter(d => !(d.month === m && d.year === y)))} />;
@@ -439,7 +457,7 @@ const App: React.FC = () => {
     showToast("Görünüm sunuma eklendi. 'Sunum' sekmesinden düzenleyebilirsiniz.");
   };
 
-  const isMhrsActive = ['detailed-schedule', 'physician-data', 'efficiency-analysis', 'change-analysis'].includes(view);
+  const isMhrsActive = ['schedule', 'detailed-schedule', 'physician-data', 'efficiency-analysis', 'change-analysis'].includes(view);
   const isFinancialExpandedActive = ['service-analysis'].includes(view);
   const isDevActive = ['analysis-module', 'performance-planning', 'presentation'].includes(view);
 
@@ -514,6 +532,7 @@ const App: React.FC = () => {
                 <svg className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isMhrsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isMhrsExpanded ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1">
+                  <SubNavItem label="Dashboard" active={view === 'schedule'} onClick={() => setView('schedule')} color="blue" />
                   <SubNavItem label="Detaylı Cetveller" active={view === 'detailed-schedule'} onClick={() => setView('detailed-schedule')} color="emerald" />
                   <SubNavItem label="Hekim Verileri" active={view === 'physician-data'} onClick={() => setView('physician-data')} color="blue" />
                   <SubNavItem label="Değişim Analizleri" active={view === 'change-analysis'} onClick={() => setView('change-analysis')} color="blue" />
@@ -576,7 +595,7 @@ const App: React.FC = () => {
           <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 no-print">
             <div>
               <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">
-                {view === 'physician-data' ? 'Hekim Verileri' : view === 'efficiency-analysis' ? 'Verimlilik Analizleri' : view === 'detailed-schedule' ? 'Detaylı Takip' : view === 'change-analysis' ? 'Değişim Analizleri' : view === 'analysis-module' ? 'Analiz Modülü' : view === 'performance-planning' ? 'AI Planlama' : view === 'presentation' ? 'Sunum' : 'Modül Analiz'}
+                {view === 'schedule' ? 'Dashboard' : view === 'physician-data' ? 'Hekim Verileri' : view === 'efficiency-analysis' ? 'Verimlilik Analizleri' : view === 'detailed-schedule' ? 'Detaylı Takip' : view === 'change-analysis' ? 'Değişim Analizleri' : view === 'analysis-module' ? 'Analiz Modülü' : view === 'performance-planning' ? 'AI Planlama' : view === 'presentation' ? 'Sunum' : 'Modül Analiz'}
               </h1>
               <p className="text-slate-500 font-bold mt-1 uppercase text-xs tracking-widest">{selectedHospital} • {selectedBranch || 'TÜM BRANŞLAR'}</p>
             </div>
