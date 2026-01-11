@@ -297,9 +297,10 @@ const App: React.FC = () => {
   }, [slides]);
 
   useEffect(() => {
-    setLoadingText('Hastane Değiştiriliyor...');
-    setIsLoading(true);
-    // Hastane değiştiğinde tüm filtreleri sıfırla
+    // Hastane değiştiğinde tüm filtreleri varsayılana döndür
+    const defaultMonth = MONTHS[new Date().getMonth()];
+    const defaultYear = new Date().getFullYear();
+
     setBranchFilters({
       'detailed-schedule': null,
       'physician-data': null,
@@ -315,25 +316,46 @@ const App: React.FC = () => {
       'admin': null,
       'schedule': null
     });
+
+    // Ay ve yıl filtrelerini de sıfırla
+    setMonthFilters({
+      'detailed-schedule': defaultMonth,
+      'physician-data': defaultMonth,
+      'efficiency-analysis': defaultMonth,
+      'change-analysis': defaultMonth,
+      'performance-planning': defaultMonth,
+      'data-entry': defaultMonth,
+      'ai-chatbot': defaultMonth,
+      'service-analysis': defaultMonth,
+      'goren': defaultMonth,
+      'analysis-module': defaultMonth,
+      'presentation': defaultMonth,
+      'schedule': defaultMonth,
+      'admin': defaultMonth
+    });
+
+    setYearFilters({
+      'detailed-schedule': defaultYear,
+      'physician-data': defaultYear,
+      'efficiency-analysis': defaultYear,
+      'change-analysis': defaultYear,
+      'performance-planning': defaultYear,
+      'data-entry': defaultYear,
+      'ai-chatbot': defaultYear,
+      'service-analysis': defaultYear,
+      'goren': defaultYear,
+      'analysis-module': defaultYear,
+      'presentation': defaultYear,
+      'schedule': defaultYear,
+      'admin': defaultYear
+    });
+
     const newDeptList = HOSPITAL_DEPARTMENTS[selectedHospital] || DEPARTMENTS;
     setDepartments(newDeptList);
     setAppointmentData(MOCK_DATA.filter(d => d.hospital === selectedHospital));
     setHbysData([]);
-    // Don't clear localStorage data on hospital change - keep data persistent
-    // setDetailedScheduleData([]);
-    // setMuayeneByPeriod({});
-    // setAmeliyatByPeriod({});
-    // setMuayeneMetaByPeriod({});
-    // setAmeliyatMetaByPeriod({});
-    // setScheduleVersions({});
     setPlanningProposals([]);
-    // setSutServiceData([]);
     setSutRiskAnalysis(null);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setLoadingText('Veriler Güncelleniyor...');
-    }, 600);
-    return () => clearTimeout(timer);
   }, [selectedHospital]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -389,10 +411,15 @@ const App: React.FC = () => {
   };
 
   const currentBranchOptions = useMemo(() => {
-    const branches = new Set(detailedScheduleData.map(d => d.specialty));
+    const branches = new Set<string>();
+    // Seçili hastaneye ait detaylı cetvel verilerinden branşları al
+    detailedScheduleData
+      .filter(d => d.hospital === selectedHospital)
+      .forEach(d => branches.add(d.specialty));
+    // Seçili hastaneye ait randevu verilerinden branşları al
     appointmentData.forEach(a => branches.add(a.specialty));
     return Array.from(branches).filter(b => b && b !== 'Bilinmiyor').sort();
-  }, [detailedScheduleData, appointmentData]);
+  }, [detailedScheduleData, appointmentData, selectedHospital]);
 
   // Kullanıcı yetkilerine göre hastane listesi
   const allowedHospitals = useMemo(() => {
@@ -401,6 +428,11 @@ const App: React.FC = () => {
     if (userPermissions.permissions.allowedHospitals.length === 0) return HOSPITALS; // Boş array = tüm hastaneler
     return userPermissions.permissions.allowedHospitals;
   }, [userPermissions, isAdmin]);
+
+  // Seçili hastaneye göre filtrelenmiş veriler
+  const filteredDetailedScheduleData = useMemo(() => {
+    return detailedScheduleData.filter(d => d.hospital === selectedHospital);
+  }, [detailedScheduleData, selectedHospital]);
 
   // Unified rendering bridge for Normal View vs Presentation View
   const renderView = () => {
@@ -460,7 +492,7 @@ const App: React.FC = () => {
                     showMonthFilter={true}
                     showYearFilter={true}
                   />
-                  <PhysicianData data={detailedScheduleData} onNavigateToDetailed={() => setView('detailed-schedule')} muayeneByPeriod={muayeneByPeriod} setMuayeneByPeriod={setMuayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} setAmeliyatByPeriod={setAmeliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} setMuayeneMetaByPeriod={setMuayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} setAmeliyatMetaByPeriod={setAmeliyatMetaByPeriod} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />
+                  <PhysicianData data={filteredDetailedScheduleData} onNavigateToDetailed={() => setView('detailed-schedule')} muayeneByPeriod={muayeneByPeriod} setMuayeneByPeriod={setMuayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} setAmeliyatByPeriod={setAmeliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} setMuayeneMetaByPeriod={setMuayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} setAmeliyatMetaByPeriod={setAmeliyatMetaByPeriod} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />
                 </>
               );
             case 'efficiency-analysis':
@@ -482,7 +514,7 @@ const App: React.FC = () => {
                     showMonthFilter={true}
                     showYearFilter={true}
                   />
-                  <EfficiencyAnalysis detailedScheduleData={detailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} versions={scheduleVersions} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />
+                  <EfficiencyAnalysis detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} versions={scheduleVersions} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />
                 </>
               );
             case 'detailed-schedule':
@@ -498,7 +530,7 @@ const App: React.FC = () => {
                     showHospitalFilter={true}
                     showBranchFilter={true}
                   />
-                  <DetailedSchedule data={detailedScheduleData} selectedBranch={selectedBranch} onImportExcel={handleImportDetailedExcel} onDelete={(id) => setDetailedScheduleData(prev => prev.filter(d => d.id !== id))} onClearAll={() => setDetailedScheduleData([])} onRemoveMonth={(m, y) => setDetailedScheduleData(prev => prev.filter(d => !(d.month === m && d.year === y)))} />
+                  <DetailedSchedule data={filteredDetailedScheduleData} selectedBranch={selectedBranch} onImportExcel={handleImportDetailedExcel} onDelete={(id) => setDetailedScheduleData(prev => prev.filter(d => d.id !== id))} onClearAll={() => setDetailedScheduleData(prev => prev.filter(d => d.hospital !== selectedHospital))} onRemoveMonth={(m, y) => setDetailedScheduleData(prev => prev.filter(d => !(d.hospital === selectedHospital && d.month === m && d.year === y)))} />
                 </>
               );
 
@@ -539,7 +571,7 @@ const App: React.FC = () => {
                     showHospitalFilter={true}
                     showBranchFilter={true}
                   />
-                  <PlanningModule selectedBranch={selectedBranch} appointmentData={appointmentData} hbysData={hbysData} detailedScheduleData={detailedScheduleData} proposals={planningProposals} setProposals={setPlanningProposals} sourceMonth={planningSourceMonth} setSourceMonth={setPlanningSourceMonth} sourceYear={planningSourceYear} setSourceYear={setPlanningSourceYear} targetMonth={planningTargetMonth} setTargetMonth={setPlanningTargetMonth} targetYear={planningTargetYear} setTargetYear={setPlanningTargetYear} targetWorkDays={planningTargetWorkDays} setTargetWorkDays={setPlanningTargetWorkDays} />
+                  <PlanningModule selectedBranch={selectedBranch} appointmentData={appointmentData} hbysData={hbysData} detailedScheduleData={filteredDetailedScheduleData} proposals={planningProposals} setProposals={setPlanningProposals} sourceMonth={planningSourceMonth} setSourceMonth={setPlanningSourceMonth} sourceYear={planningSourceYear} setSourceYear={setPlanningSourceYear} targetMonth={planningTargetMonth} setTargetMonth={setPlanningTargetMonth} targetYear={planningTargetYear} setTargetYear={setPlanningTargetYear} targetWorkDays={planningTargetWorkDays} setTargetWorkDays={setPlanningTargetWorkDays} />
                 </>
               );
 
@@ -594,7 +626,7 @@ const App: React.FC = () => {
                   <AnalysisModule appointmentData={appointmentData} hbysData={hbysData} planningProposals={planningProposals} pastChangesInitialData={null} pastChangesFinalData={null} onClearPastChanges={() => {}} selectedHospital={selectedHospital} />
                 </>
               );
-            case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={detailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
+            case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
             case 'admin': return <AdminPanel currentUserEmail={user?.email || ''} />;
             default: return null;
           }
