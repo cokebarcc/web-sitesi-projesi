@@ -159,7 +159,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
       {!overrideMonth && (
         <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 flex flex-wrap gap-6 items-end">
           <div className="flex flex-col gap-2">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HASTANE SEÇİMİ</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HASTANE</p>
             <select
               value={selectedHospital}
               onChange={(e) => onHospitalChange(e.target.value)}
@@ -168,9 +168,9 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
               {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
             </select>
           </div>
-          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY SEÇİMİ</p><select value={selectedMonth} onChange={handleMonthChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[180px]">{MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}</select></div>
-          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">YIL SEÇİMİ</p><select value={selectedYear} onChange={handleYearChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[140px]">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select></div>
-          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">GENEL BRANŞ FİLTRESİ</p><select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} disabled={!isPeriodConfirmed} className="border rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[240px]"><option value="ALL">Tüm Hastane</option>{availableBranches.map(br => <option key={br} value={br}>{br}</option>)}</select></div>
+          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">YIL</p><select value={selectedYear} onChange={handleYearChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[140px]">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select></div>
+          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY</p><select value={selectedMonth} onChange={handleMonthChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[180px]">{MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}</select></div>
+          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">BRANŞ</p><select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} disabled={!isPeriodConfirmed} className="border rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[240px]"><option value="ALL">Tüm Branşlar</option>{availableBranches.map(br => <option key={br} value={br}>{br}</option>)}</select></div>
           <button onClick={confirmPeriod} disabled={!selectedMonth || !selectedYear || isPeriodConfirmed} className={`px-10 py-4 rounded-2xl font-black text-xs uppercase shadow-lg h-[54px] ${!selectedMonth || !selectedYear || isPeriodConfirmed ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>Veriyi Getir</button>
         </div>
       )}

@@ -22,6 +22,10 @@ interface PhysicianDataProps {
   setSelectedMonth: (month: string) => void;
   selectedYear: number;
   setSelectedYear: (year: number) => void;
+  // Hospital filter
+  selectedHospital: string;
+  allowedHospitals: string[];
+  onHospitalChange: (hospital: string) => void;
 }
 
 interface MergedPhysician {
@@ -47,7 +51,10 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   selectedMonth,
   setSelectedMonth,
   selectedYear,
-  setSelectedYear
+  setSelectedYear,
+  selectedHospital,
+  allowedHospitals,
+  onHospitalChange
 }) => {
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -233,29 +240,39 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
         <div className="flex flex-col xl:flex-row justify-between items-end gap-6">
           <div className="flex flex-wrap items-end gap-4 w-full xl:w-auto">
             <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY SEÇİMİ</p>
-              <select 
-                value={selectedMonth} 
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer"
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HASTANE</p>
+              <select
+                value={selectedHospital}
+                onChange={(e) => onHospitalChange(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer min-w-[240px]"
               >
-                {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">YIL SEÇİMİ</p>
-              <select 
-                value={selectedYear} 
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">YIL</p>
+              <select
+                value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
                 className="bg-slate-900 text-white rounded-2xl px-6 py-4 text-sm font-black outline-none transition-all cursor-pointer"
               >
                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY</p>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer"
+              >
+                {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+              </select>
+            </div>
             <div className="flex flex-col gap-2 flex-1 md:min-w-[300px]">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HEKİM / BRANŞ ARA</p>
               <div className="relative">
-                <input 
+                <input
                   type="text" placeholder="Hekim veya Branş adı..."
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-12 py-4 text-sm font-bold outline-none focus:ring-4 ring-indigo-50 transition-all"
                   value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}

@@ -10,6 +10,10 @@ interface DetailedScheduleProps {
   onDelete: (id: string) => void;
   onClearAll: () => void;
   onRemoveMonth: (month: string, year: number) => void; // New Granular removal
+  // Hospital filter
+  selectedHospital: string;
+  allowedHospitals: string[];
+  onHospitalChange: (hospital: string) => void;
 }
 
 interface DoctorSummary {
@@ -21,7 +25,7 @@ const AM_WINDOW = { start: 8 * 60, end: 12 * 60 };
 const PM_WINDOW = { start: 13 * 60, end: 17 * 60 };
 const MIN_SESSION_THRESHOLD = 30;
 
-const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth }) => {
+const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth, selectedHospital, allowedHospitals, onHospitalChange }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('Aralık');
   const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,15 +190,25 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
 
       <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">FİLTRE: AY</label>
-          <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
-            {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
+          <select
+            value={selectedHospital}
+            onChange={(e) => onHospitalChange(e.target.value)}
+            className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer min-w-[240px]"
+          >
+            {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">FİLTRE: YIL</label>
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
           <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
             {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
+          <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
+            {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
         <div className="flex-1 min-w-[200px] flex flex-col gap-1">

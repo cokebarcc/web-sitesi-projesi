@@ -475,25 +475,25 @@ const App: React.FC = () => {
 
             case 'physician-data':
               return (
-                <>
-                  <FilterPanel
-                    selectedHospital={selectedHospital}
-                    onHospitalChange={setSelectedHospital}
-                    allowedHospitals={allowedHospitals}
-                    selectedBranch={selectedBranch}
-                    onBranchChange={(branch) => setBranchFilters(prev => ({ ...prev, [view]: branch }))}
-                    branchOptions={currentBranchOptions}
-                    selectedMonth={selectedMonth}
-                    onMonthChange={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))}
-                    selectedYear={selectedYear}
-                    onYearChange={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))}
-                    showHospitalFilter={true}
-                    showBranchFilter={true}
-                    showMonthFilter={true}
-                    showYearFilter={true}
-                  />
-                  <PhysicianData data={filteredDetailedScheduleData} onNavigateToDetailed={() => setView('detailed-schedule')} muayeneByPeriod={muayeneByPeriod} setMuayeneByPeriod={setMuayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} setAmeliyatByPeriod={setAmeliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} setMuayeneMetaByPeriod={setMuayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} setAmeliyatMetaByPeriod={setAmeliyatMetaByPeriod} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />
-                </>
+                <PhysicianData
+                  data={filteredDetailedScheduleData}
+                  onNavigateToDetailed={() => setView('detailed-schedule')}
+                  muayeneByPeriod={muayeneByPeriod}
+                  setMuayeneByPeriod={setMuayeneByPeriod}
+                  ameliyatByPeriod={ameliyatByPeriod}
+                  setAmeliyatByPeriod={setAmeliyatByPeriod}
+                  muayeneMetaByPeriod={muayeneMetaByPeriod}
+                  setMuayeneMetaByPeriod={setMuayeneMetaByPeriod}
+                  ameliyatMetaByPeriod={ameliyatMetaByPeriod}
+                  setAmeliyatMetaByPeriod={setAmeliyatMetaByPeriod}
+                  selectedMonth={selectedMonth}
+                  setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))}
+                  selectedYear={selectedYear}
+                  setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))}
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                />
               );
             case 'efficiency-analysis':
               return (
@@ -515,19 +515,17 @@ const App: React.FC = () => {
               );
             case 'detailed-schedule':
               return (
-                <>
-                  <FilterPanel
-                    selectedHospital={selectedHospital}
-                    onHospitalChange={setSelectedHospital}
-                    allowedHospitals={allowedHospitals}
-                    selectedBranch={selectedBranch}
-                    onBranchChange={(branch) => setBranchFilters(prev => ({ ...prev, [view]: branch }))}
-                    branchOptions={currentBranchOptions}
-                    showHospitalFilter={true}
-                    showBranchFilter={true}
-                  />
-                  <DetailedSchedule data={filteredDetailedScheduleData} selectedBranch={selectedBranch} onImportExcel={handleImportDetailedExcel} onDelete={(id) => setDetailedScheduleData(prev => prev.filter(d => d.id !== id))} onClearAll={() => setDetailedScheduleData(prev => prev.filter(d => d.hospital !== selectedHospital))} onRemoveMonth={(m, y) => setDetailedScheduleData(prev => prev.filter(d => !(d.hospital === selectedHospital && d.month === m && d.year === y)))} />
-                </>
+                <DetailedSchedule
+                  data={filteredDetailedScheduleData}
+                  selectedBranch={selectedBranch}
+                  onImportExcel={handleImportDetailedExcel}
+                  onDelete={(id) => setDetailedScheduleData(prev => prev.filter(d => d.id !== id))}
+                  onClearAll={() => setDetailedScheduleData(prev => prev.filter(d => d.hospital !== selectedHospital))}
+                  onRemoveMonth={(m, y) => setDetailedScheduleData(prev => prev.filter(d => !(d.hospital === selectedHospital && d.month === m && d.year === y)))}
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                />
               );
 
             case 'change-analysis':
