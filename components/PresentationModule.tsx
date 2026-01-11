@@ -328,20 +328,37 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           );
 
         case 'KPI_SUMMARY':
+          const kpiData = calculateKPIs(detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, state.month!, state.year!, state.branch!);
+          const appointmentRateVal = kpiData.totalExamsCount > 0 ? (kpiData.totalMhrsExamsCount / kpiData.totalExamsCount) * 100 : 0;
+          const avgHoursPerSurgery = kpiData.totalAbcSurgeriesCount > 0 ? kpiData.totalScheduledSurgeryHours / kpiData.totalAbcSurgeriesCount : 0;
+
           return (
-            <div className="h-full w-full bg-white flex items-center justify-center p-16">
-              <div className="grid grid-cols-3 gap-8 w-full max-w-[90%]">
-                <div className="bg-slate-900 text-white p-12 rounded-[56px] text-center shadow-2xl flex flex-col justify-center">
-                  <p className="text-slate-400 text-sm font-black uppercase mb-4">Örnek KPI 1</p>
-                  <h4 className="text-7xl font-black">1,234</h4>
+            <div className="h-full w-full bg-white flex items-center justify-center p-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
+                <div className="bg-slate-900 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                  <p className="text-slate-400 text-xs font-black uppercase mb-2">Toplam Kapasite Sayısı</p>
+                  <h4 className="text-5xl font-black">{kpiData.totalCapacityCount.toLocaleString('tr-TR')}</h4>
                 </div>
-                <div className="bg-indigo-600 text-white p-12 rounded-[56px] text-center shadow-2xl flex flex-col justify-center">
-                  <p className="text-indigo-200 text-sm font-black uppercase mb-4">Örnek KPI 2</p>
-                  <h4 className="text-7xl font-black">5,678</h4>
+                <div className="bg-indigo-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                  <p className="text-indigo-200 text-xs font-black uppercase mb-2">Toplam Muayene Sayısı</p>
+                  <h4 className="text-5xl font-black">{kpiData.totalExamsCount.toLocaleString('tr-TR')}</h4>
                 </div>
-                <div className="bg-emerald-600 text-white p-12 rounded-[56px] text-center shadow-2xl flex flex-col justify-center">
-                  <p className="text-emerald-200 text-sm font-black uppercase mb-4">Örnek KPI 3</p>
-                  <h4 className="text-7xl font-black">90%</h4>
+                <div className="bg-emerald-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                  <p className="text-emerald-200 text-xs font-black uppercase mb-2">Randevulu Muayene Oranı</p>
+                  <h4 className="text-5xl font-black">{appointmentRateVal.toFixed(1).replace('.', ',')}%</h4>
+                </div>
+                <div className="bg-purple-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                  <p className="text-purple-200 text-xs font-black uppercase mb-2">Planlanan Ameliyat Gün</p>
+                  <h4 className="text-5xl font-black">{kpiData.totalSurgeryDays.toLocaleString('tr-TR')}</h4>
+                </div>
+                <div className="bg-rose-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                  <p className="text-rose-200 text-xs font-black uppercase mb-2">Toplam A+B+C Ameliyat</p>
+                  <h4 className="text-5xl font-black">{kpiData.totalAbcSurgeriesCount.toLocaleString('tr-TR')}</h4>
+                </div>
+                <div className="bg-amber-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                  <p className="text-amber-200 text-xs font-black uppercase mb-2">Ameliyat Cetvel Verimi</p>
+                  <h4 className="text-4xl font-black">{avgHoursPerSurgery.toFixed(2).replace('.', ',')}</h4>
+                  <p className="text-amber-200 text-[10px] font-black uppercase mt-1">SAAT / AMELİYAT</p>
                 </div>
               </div>
             </div>
@@ -609,11 +626,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
             controlsTimerRef.current=window.setTimeout(()=>setShowControls(false),3000);
           }}
         >
-          <div className={`flex-1 relative bg-white ${
-            slides[currentSlideIndex].widgets.length === 1
-              ? 'grid grid-cols-1'
-              : 'grid grid-cols-2'
-          } gap-4 p-4`}>
+          <div className="flex-1 relative bg-white flex flex-col gap-4 p-4 overflow-y-auto">
             {slides[currentSlideIndex].widgets.map(w => <WidgetMirror key={w.id} widget={w} isPresentation />)}
             <div className={`absolute top-10 right-10 flex gap-4 transition-opacity duration-500 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
               <button onClick={exitPresentation} className="bg-rose-600 text-white p-5 rounded-2xl shadow-2xl hover:scale-110 transition-all" title="Tam Ekrandan Çık">
@@ -641,6 +654,71 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
       )}
     </div>
   );
+};
+
+// Helper to calculate KPIs for a specific period
+const calculateKPIs = (
+  detailedScheduleData: DetailedScheduleData[],
+  muayeneByPeriod: Record<string, Record<string, MuayeneMetrics>>,
+  ameliyatByPeriod: Record<string, Record<string, number>>,
+  month: string,
+  year: number,
+  branch: string
+) => {
+  const surgeryActions = ['AMELİYAT', 'AMELİYATTA', 'SURGERY', 'AMELİYATHANE', 'CERRAHİ', 'OPERASYON'];
+  const kpiSchedules = detailedScheduleData.filter(d => d.month === month && d.year === year);
+  const periodKey = getPeriodKey(year, month);
+  const rawMuayeneData = muayeneByPeriod[periodKey] || {};
+  const rawAmeliyatData = ameliyatByPeriod[periodKey] || {};
+
+  const physicianMap = new Map<string, { name: string, branch: string }>();
+  kpiSchedules.forEach(s => {
+    const norm = normalizeDoctorName(s.doctorName);
+    if (!physicianMap.has(norm)) {
+      physicianMap.set(norm, { name: s.doctorName, branch: s.specialty });
+    }
+  });
+
+  const totalCapacityCount = kpiSchedules.reduce((acc, curr) => acc + (curr.capacity || 0), 0);
+
+  const distinctSurgeryDays = new Set<string>();
+  let totalScheduledSurgeryHours = 0;
+  kpiSchedules.forEach(item => {
+    const actionNorm = item.action.toLocaleUpperCase('tr-TR');
+    if (surgeryActions.some(sa => actionNorm.includes(sa))) {
+      distinctSurgeryDays.add(`${item.doctorName}|${item.startDate}`);
+      totalScheduledSurgeryHours += (item.duration || 0) / 60;
+    }
+  });
+  const totalSurgeryDays = distinctSurgeryDays.size;
+
+  let totalExamsCount = 0;
+  let totalMhrsExamsCount = 0;
+  let totalAbcSurgeriesCount = 0;
+
+  (Object.entries(rawMuayeneData) as [string, MuayeneMetrics][]).forEach(([docName, metrics]) => {
+    const docBase = physicianMap.get(docName);
+    if (docBase && (branch === 'ALL' || docBase.branch === branch)) {
+      totalExamsCount += (metrics.toplam || 0);
+      totalMhrsExamsCount += (metrics.mhrs || 0);
+    }
+  });
+
+  (Object.entries(rawAmeliyatData) as [string, number][]).forEach(([docName, count]) => {
+    const docBase = physicianMap.get(docName);
+    if (docBase && (branch === 'ALL' || docBase.branch === branch)) {
+      totalAbcSurgeriesCount += (count || 0);
+    }
+  });
+
+  return {
+    totalCapacityCount,
+    totalExamsCount,
+    totalMhrsExamsCount,
+    totalSurgeryDays,
+    totalAbcSurgeriesCount,
+    totalScheduledSurgeryHours
+  };
 };
 
 export default PresentationModule;
