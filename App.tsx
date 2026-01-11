@@ -497,25 +497,21 @@ const App: React.FC = () => {
               );
             case 'efficiency-analysis':
               return (
-                <>
-                  <FilterPanel
-                    selectedHospital={selectedHospital}
-                    onHospitalChange={setSelectedHospital}
-                    allowedHospitals={allowedHospitals}
-                    selectedBranch={selectedBranch}
-                    onBranchChange={(branch) => setBranchFilters(prev => ({ ...prev, [view]: branch }))}
-                    branchOptions={currentBranchOptions}
-                    selectedMonth={selectedMonth}
-                    onMonthChange={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))}
-                    selectedYear={selectedYear}
-                    onYearChange={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))}
-                    showHospitalFilter={true}
-                    showBranchFilter={true}
-                    showMonthFilter={true}
-                    showYearFilter={true}
-                  />
-                  <EfficiencyAnalysis detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} versions={scheduleVersions} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />
-                </>
+                <EfficiencyAnalysis
+                  detailedScheduleData={filteredDetailedScheduleData}
+                  muayeneByPeriod={muayeneByPeriod}
+                  ameliyatByPeriod={ameliyatByPeriod}
+                  muayeneMetaByPeriod={muayeneMetaByPeriod}
+                  ameliyatMetaByPeriod={ameliyatMetaByPeriod}
+                  versions={scheduleVersions}
+                  selectedMonth={selectedMonth}
+                  setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))}
+                  selectedYear={selectedYear}
+                  setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))}
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                />
               );
             case 'detailed-schedule':
               return (
