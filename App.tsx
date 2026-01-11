@@ -416,14 +416,20 @@ const App: React.FC = () => {
             case 'dashboard-support':
               const category = dashboardCategory || 'mhrs';
               return (
-                <DashboardCategory
-                  category={category}
-                  onBack={() => {
-                    setView('dashboard');
-                    setDashboardCategory(null);
-                  }}
-                  hasModuleAccess={hasModuleAccess}
-                />
+                <div>
+                  <DashboardCategory
+                    category={category}
+                    onBack={() => {
+                      setView('dashboard');
+                      setDashboardCategory(null);
+                    }}
+                    hasModuleAccess={hasModuleAccess}
+                    onModuleSelect={(moduleId) => {
+                      // Modül ID'sine göre view'i değiştir
+                      setView(moduleId as ViewType);
+                    }}
+                  />
+                </div>
               );
 
             case 'physician-data': return <PhysicianData data={detailedScheduleData} onNavigateToDetailed={() => setView('detailed-schedule')} muayeneByPeriod={muayeneByPeriod} setMuayeneByPeriod={setMuayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} setAmeliyatByPeriod={setAmeliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} setMuayeneMetaByPeriod={setMuayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} setAmeliyatMetaByPeriod={setAmeliyatMetaByPeriod} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />;

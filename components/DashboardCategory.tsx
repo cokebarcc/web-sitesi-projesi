@@ -5,6 +5,7 @@ interface DashboardCategoryProps {
   category: 'mhrs' | 'financial' | 'preparation' | 'support';
   onBack: () => void;
   hasModuleAccess: (module: string) => boolean;
+  onModuleSelect: (moduleId: string) => void;
 }
 
 interface ModuleDefinition {
@@ -123,7 +124,8 @@ const CATEGORY_TITLES: Record<string, string> = {
 const DashboardCategory: React.FC<DashboardCategoryProps> = ({
   category,
   onBack,
-  hasModuleAccess
+  hasModuleAccess,
+  onModuleSelect
 }) => {
   // Erişilebilir tab'ları filtrele
   const availableTabs = useMemo(() => {
@@ -136,12 +138,9 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
     });
   }, [category, hasModuleAccess]);
 
-  // İlk erişilebilir modülü default tab yap
-  const [activeTab, setActiveTab] = useState(availableTabs[0]?.id || '');
-
-  // Tab değiştiğinde state'i güncelle
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
+  // Tab'a tıklandığında doğrudan modülü aç
+  const handleTabClick = (tabId: string) => {
+    onModuleSelect(tabId);
   };
 
   if (availableTabs.length === 0) {
@@ -191,34 +190,37 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
 
       {/* Tab Navigation & Content */}
       <div className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm">
-        {/* Tab Header */}
-        <div className="border-b border-slate-100 bg-slate-50 px-6 py-4 flex gap-2 overflow-x-auto">
+        {/* Module Cards */}
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availableTabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase transition-all whitespace-nowrap
-                ${activeTab === tab.id
-                  ? 'bg-slate-900 text-white shadow-lg'
-                  : 'bg-white text-slate-400 hover:bg-slate-100 border border-slate-200'}`}
+              onClick={() => handleTabClick(tab.id)}
+              className="group bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-500 rounded-2xl p-6 text-left transition-all hover:shadow-lg"
             >
-              {tab.icon}
-              {tab.label}
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-blue-50 group-hover:bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 transition-all shrink-0">
+                  {tab.icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-black text-sm uppercase text-slate-900 mb-2">
+                    {tab.label}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Modülü görüntülemek için tıklayın
+                  </p>
+                </div>
+                <svg
+                  className="w-5 h-5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </button>
           ))}
-        </div>
-
-        {/* Tab Content */}
-        <div className="p-8">
-          {/* Placeholder - Gerçek modüller App.tsx'den prop olarak gelecek */}
-          <div className="bg-slate-50 rounded-2xl p-12 text-center border-2 border-dashed border-slate-200">
-            <p className="text-lg font-black text-slate-400 uppercase">
-              {availableTabs.find(t => t.id === activeTab)?.label}
-            </p>
-            <p className="text-sm text-slate-500 mt-2">
-              Modül içeriği App.tsx entegrasyonu sonrası buraya gelecek
-            </p>
-          </div>
         </div>
       </div>
     </div>
