@@ -1,11 +1,14 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { 
-  ViewType, 
-  AppointmentData, 
-  HBYSData, 
-  DetailedScheduleData, 
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from './firebase';
+import {
+  ViewType,
+  AppointmentData,
+  HBYSData,
+  DetailedScheduleData,
   SUTServiceData,
   ScheduleProposal,
   ScheduleVersion,
@@ -15,6 +18,7 @@ import {
   PresentationWidgetState
 } from './types';
 import { MOCK_DATA, DEPARTMENTS, HOSPITALS, YEARS, HOSPITAL_DEPARTMENTS, MONTHS } from './constants';
+import LoginPage from './components/LoginPage';
 
 import PlanningModule from './components/PlanningModule';
 import ChatBot from './components/ChatBot';
@@ -28,6 +32,10 @@ import EfficiencyAnalysis from './components/EfficiencyAnalysis';
 import PresentationModule from './components/PresentationModule';
 
 const App: React.FC = () => {
+  // Firebase Authentication State
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [view, setView] = useState<ViewType>('detailed-schedule');
   const [selectedHospital, setSelectedHospital] = useState<string>(HOSPITALS[0]);
 
@@ -181,7 +189,66 @@ const App: React.FC = () => {
     loadFromLocalStorage('presentationSlides', [])
   );
 
-  // Save data to localStorage whenever it changes
+  // Firebase Authentication Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Firebase Data Sync - Load data from Firestore when user logs in
+  useEffect(() => {
+    if (!user) return;
+
+    const dataRef = doc(db, 'appData', 'mainData');
+
+    const unsubscribe = onSnapshot(dataRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data.detailedScheduleData) setDetailedScheduleData(data.detailedScheduleData);
+        if (data.muayeneByPeriod) setMuayeneByPeriod(data.muayeneByPeriod);
+        if (data.ameliyatByPeriod) setAmeliyatByPeriod(data.ameliyatByPeriod);
+        if (data.muayeneMetaByPeriod) setMuayeneMetaByPeriod(data.muayeneMetaByPeriod);
+        if (data.ameliyatMetaByPeriod) setAmeliyatMetaByPeriod(data.ameliyatMetaByPeriod);
+        if (data.scheduleVersions) setScheduleVersions(data.scheduleVersions);
+        if (data.sutServiceData) setSutServiceData(data.sutServiceData);
+        if (data.presentationSlides) setSlides(data.presentationSlides);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  // Save data to Firestore whenever it changes (debounced)
+  useEffect(() => {
+    if (!user) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const dataRef = doc(db, 'appData', 'mainData');
+        await setDoc(dataRef, {
+          detailedScheduleData,
+          muayeneByPeriod,
+          ameliyatByPeriod,
+          muayeneMetaByPeriod,
+          ameliyatMetaByPeriod,
+          scheduleVersions,
+          sutServiceData,
+          presentationSlides: slides,
+          lastUpdated: new Date().toISOString()
+        }, { merge: true });
+      } catch (error) {
+        console.error('Error saving to Firestore:', error);
+      }
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timer);
+  }, [user, detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides]);
+
+  // Save data to localStorage whenever it changes (backup)
   useEffect(() => {
     localStorage.setItem('detailedScheduleData', JSON.stringify(detailedScheduleData));
   }, [detailedScheduleData]);
@@ -376,6 +443,32 @@ const App: React.FC = () => {
   const isFinancialExpandedActive = ['service-analysis'].includes(view);
   const isDevActive = ['analysis-module', 'performance-planning', 'presentation'].includes(view);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return (
+      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-white font-black text-lg">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!user) {
+    return <LoginPage onLoginSuccess={() => setAuthLoading(false)} />;
+  }
+
   return (
     <div className="flex min-h-screen text-slate-900 bg-[#F8FAFC] relative font-['Inter']">
       {toast && (
@@ -451,7 +544,30 @@ const App: React.FC = () => {
               <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} label="GÖREN Başarı" active={view === 'goren'} onClick={() => setView('goren')} color="amber" />
             </div>
           </nav>
-          <div className="mt-auto pt-6 border-t border-white/5"><div className="bg-white/5 rounded-2xl p-4"><span className="text-[10px] font-black text-slate-500 uppercase block mb-2">Aktif Hastane</span><select className="w-full bg-transparent text-xs font-black text-white outline-none cursor-pointer" value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)}>{HOSPITALS.map(h => <option key={h} value={h} className="text-slate-900">{h}</option>)}</select></div></div>
+          <div className="mt-auto pt-6 space-y-4">
+            <div className="bg-white/5 rounded-2xl p-4 border-t border-white/5">
+              <span className="text-[10px] font-black text-slate-500 uppercase block mb-2">Aktif Kullanıcı</span>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-black text-sm">{user?.email?.charAt(0).toUpperCase()}</span>
+                </div>
+                <span className="text-[10px] font-bold text-white truncate flex-1">{user?.email}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Çıkış Yap
+              </button>
+            </div>
+            <div className="bg-white/5 rounded-2xl p-4">
+              <span className="text-[10px] font-black text-slate-500 uppercase block mb-2">Aktif Hastane</span>
+              <select className="w-full bg-transparent text-xs font-black text-white outline-none cursor-pointer" value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)}>{HOSPITALS.map(h => <option key={h} value={h} className="text-slate-900">{h}</option>)}</select>
+            </div>
+          </div>
         </div>
       </aside>
 
