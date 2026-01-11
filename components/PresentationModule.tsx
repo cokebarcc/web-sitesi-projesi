@@ -144,7 +144,15 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
       </div>
 
       <div className="flex-1 min-h-0">
-        <CapacityUsageChart data={paginatedChartData} />
+        <CapacityUsageChart
+          data={paginatedChartData}
+          onClick={(data: any) => {
+            if (data && data.doctorName) {
+              // Open detail in new window or show modal
+              alert(`Hekim: ${data.doctorName}\nBranş: ${data.branchName}\nKapasite: ${data.capacity}\nGerçekleşen: ${data.totalExam}`);
+            }
+          }}
+        />
       </div>
 
       {totalPages > 1 && (
