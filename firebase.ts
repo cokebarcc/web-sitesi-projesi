@@ -3,15 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration
-// IMPORTANT: Replace these values with your own Firebase project credentials
-// Get these from: Firebase Console > Project Settings > General > Your apps > Web app
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBnP_A2Ubvmi8y6vkcrUpdn5oDSOEwWqWY",
+  authDomain: "mhrs-analiz.firebaseapp.com",
+  projectId: "mhrs-analiz",
+  storageBucket: "mhrs-analiz.firebasestorage.app",
+  messagingSenderId: "719575328088",
+  appId: "1:719575328088:web:bff7a5a795dbeb0c7bb12d"
 };
 
 // Initialize Firebase

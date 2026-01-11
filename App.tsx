@@ -19,6 +19,7 @@ import {
 } from './types';
 import { MOCK_DATA, DEPARTMENTS, HOSPITALS, YEARS, HOSPITAL_DEPARTMENTS, MONTHS } from './constants';
 import LoginPage from './components/LoginPage';
+import AdminPanel from './src/components/AdminPanel';
 
 import PlanningModule from './components/PlanningModule';
 import ChatBot from './components/ChatBot';
@@ -30,13 +31,21 @@ import AnalysisModule from './components/AnalysisModule';
 import PhysicianData from './components/PhysicianData';
 import EfficiencyAnalysis from './components/EfficiencyAnalysis';
 import PresentationModule from './components/PresentationModule';
+import DashboardHome from './components/DashboardHome';
+import DashboardCategory from './components/DashboardCategory';
+import { useUserPermissions } from './src/hooks/useUserPermissions';
+import { ADMIN_EMAIL } from './src/types/user';
 
 const App: React.FC = () => {
   // Firebase Authentication State
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const [view, setView] = useState<ViewType>('detailed-schedule');
+  // User Permissions
+  const { userPermissions, loading: permissionsLoading, hasModuleAccess, isAdmin } = useUserPermissions(user?.email || null);
+
+  const [view, setView] = useState<ViewType>('dashboard');
+  const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<string>(HOSPITALS[0]);
 
   // Her modül için ayrı filtreleme state'i
@@ -52,7 +61,8 @@ const App: React.FC = () => {
     'goren': null,
     'analysis-module': null,
     'presentation': null,
-    'schedule': null
+    'schedule': null,
+    'admin': null
   });
 
   // Her modül için ayrı ay/yıl seçimleri
@@ -71,7 +81,8 @@ const App: React.FC = () => {
     'goren': currentMonth,
     'analysis-module': currentMonth,
     'presentation': currentMonth,
-    'schedule': currentMonth
+    'schedule': currentMonth,
+    'admin': currentMonth
   });
 
   const [yearFilters, setYearFilters] = useState<Record<ViewType, number>>({
@@ -86,7 +97,8 @@ const App: React.FC = () => {
     'goren': currentYear,
     'analysis-module': currentYear,
     'presentation': currentYear,
-    'schedule': currentYear
+    'schedule': currentYear,
+    'admin': currentYear
   });
 
   // Her modül için cetvel seçimleri (ChangeAnalysis için)
@@ -102,7 +114,8 @@ const App: React.FC = () => {
     'goren': '',
     'analysis-module': '',
     'presentation': '',
-    'schedule': ''
+    'schedule': '',
+    'admin': ''
   });
 
   const [updatedLabels, setUpdatedLabels] = useState<Record<ViewType, string>>({
@@ -117,7 +130,8 @@ const App: React.FC = () => {
     'goren': '',
     'analysis-module': '',
     'presentation': '',
-    'schedule': ''
+    'schedule': '',
+    'admin': ''
   });
 
   // Mevcut modül için aktif filtreyi al
@@ -297,6 +311,7 @@ const App: React.FC = () => {
       'goren': null,
       'analysis-module': null,
       'presentation': null,
+      'admin': null,
       'schedule': null
     });
     const newDeptList = HOSPITAL_DEPARTMENTS[selectedHospital] || DEPARTMENTS;
@@ -384,6 +399,33 @@ const App: React.FC = () => {
       <div key={selectedHospital} className="w-full">
         {(() => {
           switch (view) {
+            case 'dashboard':
+              return (
+                <DashboardHome
+                  onNavigateToCategory={(cat) => {
+                    setDashboardCategory(cat);
+                    setView(`dashboard-${cat}` as ViewType);
+                  }}
+                  userPermissions={userPermissions}
+                />
+              );
+
+            case 'dashboard-mhrs':
+            case 'dashboard-financial':
+            case 'dashboard-preparation':
+            case 'dashboard-support':
+              const category = dashboardCategory || 'mhrs';
+              return (
+                <DashboardCategory
+                  category={category}
+                  onBack={() => {
+                    setView('dashboard');
+                    setDashboardCategory(null);
+                  }}
+                  hasModuleAccess={hasModuleAccess}
+                />
+              );
+
             case 'physician-data': return <PhysicianData data={detailedScheduleData} onNavigateToDetailed={() => setView('detailed-schedule')} muayeneByPeriod={muayeneByPeriod} setMuayeneByPeriod={setMuayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} setAmeliyatByPeriod={setAmeliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} setMuayeneMetaByPeriod={setMuayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} setAmeliyatMetaByPeriod={setAmeliyatMetaByPeriod} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />;
             case 'efficiency-analysis': return <EfficiencyAnalysis detailedScheduleData={detailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} muayeneMetaByPeriod={muayeneMetaByPeriod} ameliyatMetaByPeriod={ameliyatMetaByPeriod} versions={scheduleVersions} selectedMonth={selectedMonth} setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))} selectedYear={selectedYear} setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))} />;
             case 'detailed-schedule': return <DetailedSchedule data={detailedScheduleData} selectedBranch={selectedBranch} onImportExcel={handleImportDetailedExcel} onDelete={(id) => setDetailedScheduleData(prev => prev.filter(d => d.id !== id))} onClearAll={() => setDetailedScheduleData([])} onRemoveMonth={(m, y) => setDetailedScheduleData(prev => prev.filter(d => !(d.month === m && d.year === y)))} />;
@@ -395,6 +437,7 @@ const App: React.FC = () => {
             case 'goren': return <GorenBashekimlik />;
             case 'analysis-module': return <AnalysisModule appointmentData={appointmentData} hbysData={hbysData} planningProposals={planningProposals} pastChangesInitialData={null} pastChangesFinalData={null} onClearPastChanges={() => {}} selectedHospital={selectedHospital} />;
             case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={detailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
+            case 'admin': return <AdminPanel currentUserEmail={user?.email || ''} />;
             default: return null;
           }
         })()}
@@ -514,10 +557,10 @@ const App: React.FC = () => {
                 <svg className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isMhrsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isMhrsExpanded ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1">
-                  <SubNavItem label="Detaylı Cetveller" active={view === 'detailed-schedule'} onClick={() => setView('detailed-schedule')} color="emerald" />
-                  <SubNavItem label="Hekim Verileri" active={view === 'physician-data'} onClick={() => setView('physician-data')} color="blue" />
-                  <SubNavItem label="Değişim Analizleri" active={view === 'change-analysis'} onClick={() => setView('change-analysis')} color="blue" />
-                  <SubNavItem label="Verimlilik Analizleri" active={view === 'efficiency-analysis'} onClick={() => setView('efficiency-analysis')} color="indigo" />
+                  {hasModuleAccess('detailedSchedule') && <SubNavItem label="Detaylı Cetveller" active={view === 'detailed-schedule'} onClick={() => setView('detailed-schedule')} color="emerald" />}
+                  {hasModuleAccess('physicianData') && <SubNavItem label="Hekim Verileri" active={view === 'physician-data'} onClick={() => setView('physician-data')} color="blue" />}
+                  {hasModuleAccess('changeAnalysis') && <SubNavItem label="Değişim Analizleri" active={view === 'change-analysis'} onClick={() => setView('change-analysis')} color="blue" />}
+                  {hasModuleAccess('efficiencyAnalysis') && <SubNavItem label="Verimlilik Analizleri" active={view === 'efficiency-analysis'} onClick={() => setView('efficiency-analysis')} color="indigo" />}
               </div></div>
             </div>
             <div className="space-y-1">
@@ -525,7 +568,7 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-3"><div className={`w-12 h-12 rounded-lg flex items-center justify-center font-black shrink-0 ${isFinancialExpandedActive ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20' : 'bg-white/5 text-slate-500'}`}><span className="text-xl font-bold">₺</span></div><span className="text-sm font-black tracking-tight uppercase">FİNANSAL ANALİZ</span></div>
                 <svg className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isFinancialExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isFinancialExpanded ? 'max-h-[200px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1"><SubNavItem label="Hizmet Girişim" active={view === 'service-analysis'} onClick={() => setView('service-analysis')} color="rose" /></div></div>
+              <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isFinancialExpanded ? 'max-h-[200px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1">{hasModuleAccess('serviceAnalysis') && <SubNavItem label="Hizmet Girişim" active={view === 'service-analysis'} onClick={() => setView('service-analysis')} color="rose" />}</div></div>
             </div>
             <div className="space-y-1 pt-2">
               <button onClick={() => setIsDevExpanded(!isDevExpanded)} className="w-full flex items-center justify-between px-3 py-3 rounded-xl transition-colors hover:bg-white/5">
@@ -533,15 +576,18 @@ const App: React.FC = () => {
                 <svg className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isDevExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isDevExpanded ? 'max-h-[450px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1">
-                  <SubNavItem label="Analiz Modülü" active={view === 'analysis-module'} onClick={() => setView('analysis-module')} color="indigo" />
-                  <SubNavItem label="AI Planlama" active={view === 'performance-planning'} onClick={() => setView('performance-planning')} color="blue" />
-                  <SubNavItem label="SUNUM" active={view === 'presentation'} onClick={() => setView('presentation')} color="slate" />
+                  {hasModuleAccess('analysisModule') && <SubNavItem label="Analiz Modülü" active={view === 'analysis-module'} onClick={() => setView('analysis-module')} color="indigo" />}
+                  {hasModuleAccess('performancePlanning') && <SubNavItem label="AI Planlama" active={view === 'performance-planning'} onClick={() => setView('performance-planning')} color="blue" />}
+                  {hasModuleAccess('presentation') && <SubNavItem label="SUNUM" active={view === 'presentation'} onClick={() => setView('presentation')} color="slate" />}
               </div></div>
             </div>
             <div className="pt-4 space-y-1">
               <div className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">DESTEK SİSTEMLERİ</div>
-              <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>} label="AI Sohbet" active={view === 'ai-chatbot'} onClick={() => setView('ai-chatbot')} color="indigo" />
-              <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} label="GÖREN Başarı" active={view === 'goren'} onClick={() => setView('goren')} color="amber" />
+              {hasModuleAccess('aiChatbot') && <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>} label="AI Sohbet" active={view === 'ai-chatbot'} onClick={() => setView('ai-chatbot')} color="indigo" />}
+              {hasModuleAccess('gorenBashekimlik') && <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} label="GÖREN Başarı" active={view === 'goren'} onClick={() => setView('goren')} color="amber" />}
+              {isAdmin && (
+                <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>} label="Kullanıcı Yönetimi" active={view === 'admin'} onClick={() => setView('admin')} color="rose" />
+              )}
             </div>
           </nav>
           <div className="mt-auto pt-6 space-y-4">
@@ -576,11 +622,11 @@ const App: React.FC = () => {
           <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 no-print">
             <div>
               <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">
-                {view === 'physician-data' ? 'Hekim Verileri' : view === 'efficiency-analysis' ? 'Verimlilik Analizleri' : view === 'detailed-schedule' ? 'Detaylı Takip' : view === 'change-analysis' ? 'Değişim Analizleri' : view === 'analysis-module' ? 'Analiz Modülü' : view === 'performance-planning' ? 'AI Planlama' : view === 'presentation' ? 'Sunum' : 'Modül Analiz'}
+                {view === 'physician-data' ? 'Hekim Verileri' : view === 'efficiency-analysis' ? 'Verimlilik Analizleri' : view === 'detailed-schedule' ? 'Detaylı Takip' : view === 'change-analysis' ? 'Değişim Analizleri' : view === 'analysis-module' ? 'Analiz Modülü' : view === 'performance-planning' ? 'AI Planlama' : view === 'presentation' ? 'Sunum' : view === 'admin' ? 'Kullanıcı Yönetimi' : 'Modül Analiz'}
               </h1>
               <p className="text-slate-500 font-bold mt-1 uppercase text-xs tracking-widest">{selectedHospital} • {selectedBranch || 'TÜM BRANŞLAR'}</p>
             </div>
-            {view !== 'efficiency-analysis' && view !== 'presentation' && (
+            {view !== 'efficiency-analysis' && view !== 'presentation' && view !== 'admin' && (
               <div className="flex gap-3 w-full md:w-auto">
                 <div className="flex-1 md:min-w-[280px] flex items-center gap-2">
                   <select
@@ -597,7 +643,7 @@ const App: React.FC = () => {
                 <button onClick={() => setIsBranchModalOpen(true)} className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-xl hover:bg-blue-700 active:scale-95 transition-all whitespace-nowrap">BRANŞ EKLE</button>
               </div>
             )}
-            {view !== 'presentation' && (
+            {view !== 'presentation' && view !== 'admin' && (
               <button 
                 onClick={addCurrentToPresentation}
                 className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-2"

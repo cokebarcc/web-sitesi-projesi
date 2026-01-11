@@ -161,6 +161,7 @@ export interface PresentationWidgetState {
   month?: string;
   year?: number;
   branch?: string;
+  hospital?: string;  // YENİ - Snapshot hospital bilgisi
   viewLimit?: number | 'ALL';
 }
 
@@ -179,4 +180,22 @@ export interface PresentationSlide {
   widgets: PresentationWidget[];
 }
 
-export type ViewType = 'schedule' | 'performance-planning' | 'data-entry' | 'physician-data' | 'ai-chatbot' | 'service-analysis' | 'detailed-schedule' | 'change-analysis' | 'goren' | 'analysis-module' | 'efficiency-analysis' | 'presentation';
+export type ViewType =
+  | 'dashboard'              // YENİ - Ana dashboard
+  | 'dashboard-mhrs'         // YENİ - MHRS kategori dashboard'u
+  | 'dashboard-financial'    // YENİ - Finansal kategori dashboard'u
+  | 'dashboard-preparation'  // YENİ - Hazırlama kategori dashboard'u
+  | 'dashboard-support'      // YENİ - Destek modülleri dashboard'u
+  | 'schedule'
+  | 'performance-planning'
+  | 'data-entry'
+  | 'physician-data'
+  | 'ai-chatbot'
+  | 'service-analysis'
+  | 'detailed-schedule'
+  | 'change-analysis'
+  | 'goren'
+  | 'analysis-module'
+  | 'efficiency-analysis'
+  | 'presentation'
+  | 'admin';
