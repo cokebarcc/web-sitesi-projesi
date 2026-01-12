@@ -216,11 +216,17 @@ const App: React.FC = () => {
       // İlk açılışta veya modüle geçişte filtreleri sıfırla
       console.log('🔄 Physician-data modülü açıldı, filtreler sıfırlanıyor...');
       console.log('📊 Mevcut selectedHospital:', selectedHospital);
-      setSelectedHospital('');
-      setMonthFilters(prev => ({ ...prev, 'physician-data': '' }));
-      setYearFilters(prev => ({ ...prev, 'physician-data': 0 }));
+      console.log('🏥 allowedHospitals:', allowedHospitals);
+
+      // setTimeout ile tüm re-render'lar bittikten sonra sıfırla
+      setTimeout(() => {
+        setSelectedHospital('');
+        setMonthFilters(prev => ({ ...prev, 'physician-data': '' }));
+        setYearFilters(prev => ({ ...prev, 'physician-data': 0 }));
+        console.log('✅ Filtreler sıfırlandı');
+      }, 0);
     }
-  }, [view, permissionsLoading]);
+  }, [view, permissionsLoading, allowedHospitals]);
 
   // Firebase Authentication Listener
   useEffect(() => {
