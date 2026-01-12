@@ -212,14 +212,15 @@ const App: React.FC = () => {
 
   // Physician-data modülüne her geçişte filtreleri sıfırla
   useEffect(() => {
-    if (view === 'physician-data') {
+    if (view === 'physician-data' && !permissionsLoading) {
       // İlk açılışta veya modüle geçişte filtreleri sıfırla
       console.log('🔄 Physician-data modülü açıldı, filtreler sıfırlanıyor...');
+      console.log('📊 Mevcut selectedHospital:', selectedHospital);
       setSelectedHospital('');
       setMonthFilters(prev => ({ ...prev, 'physician-data': '' }));
       setYearFilters(prev => ({ ...prev, 'physician-data': 0 }));
     }
-  }, [view]);
+  }, [view, permissionsLoading]);
 
   // Firebase Authentication Listener
   useEffect(() => {
