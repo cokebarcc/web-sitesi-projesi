@@ -68,7 +68,9 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
-  const periodKey = selectedYear > 0 && selectedMonth ? getPeriodKey(selectedYear, selectedMonth) : '';
+  const periodKey = selectedYear > 0 && selectedMonth && selectedHospital
+    ? `${selectedHospital}-${getPeriodKey(selectedYear, selectedMonth)}`
+    : '';
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ message, type });

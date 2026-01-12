@@ -283,7 +283,7 @@ export async function loadAllMuayeneData(hospital?: string, month?: string, year
     console.log(`📦 [MUAYENE] ${files.length} dosya yüklenecek...`);
 
     for (const file of files) {
-      const periodKey = `${file.year}-${file.month}`;
+      const periodKey = `${file.hospital}-${file.year}-${file.month}`;
       const data = await loadMuayeneDataFromUrl(file.fileUrl);
       allData[periodKey] = data;
       console.log(`✅ [MUAYENE] ${periodKey}: ${Object.keys(data).length} hekim`);
@@ -307,7 +307,7 @@ export async function loadAllAmeliyatData(hospital?: string, month?: string, yea
     console.log(`📦 [AMELIYAT] ${files.length} dosya yüklenecek...`);
 
     for (const file of files) {
-      const periodKey = `${file.year}-${file.month}`;
+      const periodKey = `${file.hospital}-${file.year}-${file.month}`;
       const data = await loadAmeliyatDataFromUrl(file.fileUrl);
       allData[periodKey] = data;
       console.log(`✅ [AMELIYAT] ${periodKey}: ${Object.keys(data).length} hekim`);

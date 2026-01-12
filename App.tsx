@@ -293,8 +293,6 @@ const App: React.FC = () => {
       // Load muayene and ameliyat data from Storage
       const { loadAllMuayeneData, loadAllAmeliyatData } = await import('./src/services/physicianDataStorage');
 
-      const periodKey = `${year}-${month}`;
-
       // Load muayene data for this period
       const muayeneFiles = await import('./src/services/physicianDataStorage').then(m =>
         m.getPhysicianDataFiles(hospital, month, year, 'muayene')

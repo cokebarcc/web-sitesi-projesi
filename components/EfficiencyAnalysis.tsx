@@ -101,7 +101,9 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
     }
   }, [selectedMonth, selectedYear, selectedBranch]);
 
-  const periodKey = selectedMonth && selectedYear ? getPeriodKey(Number(selectedYear), selectedMonth) : '';
+  const periodKey = selectedMonth && selectedYear && selectedHospital
+    ? `${selectedHospital}-${getPeriodKey(Number(selectedYear), selectedMonth)}`
+    : '';
 
   const availableBranches = useMemo(() => {
     if (!selectedMonth || !selectedYear) return [];
@@ -215,13 +217,14 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
       </div>
 
       {isDetailModalOpen && (
-        <DoctorDetailModal 
-          doctor={selectedDoctorForDetail} 
-          onClose={() => setIsDetailModalOpen(false)} 
-          versions={versions} 
-          detailedScheduleData={detailedScheduleData} 
-          periodMonth={selectedMonth} 
+        <DoctorDetailModal
+          doctor={selectedDoctorForDetail}
+          onClose={() => setIsDetailModalOpen(false)}
+          versions={versions}
+          detailedScheduleData={detailedScheduleData}
+          periodMonth={selectedMonth}
           periodYear={Number(selectedYear)}
+          periodHospital={selectedHospital}
           muayeneByPeriod={muayeneByPeriod}
           ameliyatByPeriod={ameliyatByPeriod}
         />
@@ -325,12 +328,13 @@ const EmptyState = () => <div className="bg-slate-50 border-2 border-dashed bord
 const NoResults = ({text}:any) => <div className="bg-amber-50 border-2 border-dashed border-amber-200 p-24 rounded-[40px] text-center"><p className="text-amber-800 font-black uppercase tracking-tight">KAYIT BULUNAMADI</p><p className="text-amber-600 font-bold mt-2 italic">{text || 'Filtrelere uygun hekim bulunamadı.'}</p></div>;
 
 const DoctorDetailModal = ({ 
-  doctor, 
-  onClose, 
-  versions, 
-  detailedScheduleData, 
-  periodMonth, 
+  doctor,
+  onClose,
+  versions,
+  detailedScheduleData,
+  periodMonth,
   periodYear,
+  periodHospital,
   muayeneByPeriod,
   ameliyatByPeriod
 }: {
@@ -340,11 +344,12 @@ const DoctorDetailModal = ({
   detailedScheduleData: DetailedScheduleData[];
   periodMonth: string;
   periodYear: number;
+  periodHospital: string;
   muayeneByPeriod: Record<string, Record<string, MuayeneMetrics>>;
   ameliyatByPeriod: Record<string, Record<string, number>>;
 }) => {
   const normName = normalizeDoctorName(doctor.doctorName);
-  const periodKey = getPeriodKey(periodYear, periodMonth);
+  const periodKey = periodHospital ? `${periodHospital}-${getPeriodKey(periodYear, periodMonth)}` : getPeriodKey(periodYear, periodMonth);
   
   const docSchedules = useMemo(() => {
     return detailedScheduleData.filter(d => 
