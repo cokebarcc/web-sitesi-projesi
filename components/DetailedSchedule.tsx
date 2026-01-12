@@ -241,10 +241,10 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
           }} />
         </label>
         <button onClick={async () => {
-          const { db } = await import('../src/db');
-          const records = await db.detailedSchedule.toArray();
-          const lsData = localStorage.getItem('detailedScheduleData');
-          alert(`Veri Durumu:\n\nIndexedDB:\n- Kayıt sayısı: ${records.length}\n- Örnek ID: ${records[0]?.id || 'yok'}\n\nLocalStorage:\n- Boyut: ${lsData?.length || 0} karakter\n- İlk 100: ${lsData?.substring(0, 100) || 'boş'}\n\nMemory:\n- State kayıt: ${data.length}`);
+          const { getDetailedScheduleFiles } = await import('../src/services/detailedScheduleStorage');
+          const files = await getDetailedScheduleFiles();
+          const fileList = files.map(f => `${f.hospital} - ${f.month} ${f.year} (${f.recordCount} kayıt)`).join('\n');
+          alert(`Veri Durumu:\n\nFirebase Storage:\n- Yüklü dosya sayısı: ${files.length}\n\nDosyalar:\n${fileList || 'Yok'}\n\nMemory:\n- State kayıt: ${data.length}`);
         }} className="px-6 py-3 text-xs font-black text-purple-600 hover:bg-purple-50 rounded-2xl transition-all uppercase border border-purple-100">Debug</button>
         {data.length > 0 && (
           <button onClick={() => { if(window.confirm("Tüm aylar hafızadan silinecek! Emin misiniz?")) onClearAll(); }} className="px-6 py-3 text-xs font-black text-rose-600 hover:bg-rose-50 rounded-2xl transition-all uppercase border border-rose-100">Belleği Boşalt</button>

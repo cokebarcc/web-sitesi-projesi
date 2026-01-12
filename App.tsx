@@ -3,8 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from './firebase';
-import { db as indexedDB } from './src/db';
+import { auth, db, storage } from './firebase';
 import {
   ViewType,
   AppointmentData,
@@ -158,7 +157,7 @@ const App: React.FC = () => {
   };
 
   const [detailedScheduleData, setDetailedScheduleData] = useState<DetailedScheduleData[]>([]);
-  const [isDataLoaded, setIsDataLoaded] = useState(false); // Track if IndexedDB data is loaded
+  const [isDataLoaded, setIsDataLoaded] = useState(false); // Track if Firebase data is loaded
   const [sutServiceData, setSutServiceData] = useState<SUTServiceData[]>(() =>
     loadFromLocalStorage('sutServiceData', [])
   );
@@ -204,21 +203,19 @@ const App: React.FC = () => {
     loadFromLocalStorage('presentationSlides', [])
   );
 
-  // Load detailedScheduleData from IndexedDB on mount
+  // Load detailedScheduleData from Firebase Storage on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log('📂 IndexedDB\'den veri yükleniyor...');
-        const records = await indexedDB.detailedSchedule.toArray();
-        console.log(`✅ ${records.length} kayıt IndexedDB\'den yüklendi`);
-        if (records.length > 0) {
-          console.log('📊 İlk 3 kayıt:', records.slice(0, 3).map(r => ({ id: r.id, hospital: r.hospital, month: r.month, year: r.year })));
-        }
-        setDetailedScheduleData(records as DetailedScheduleData[]);
-        setIsDataLoaded(true); // Mark data as loaded
+        console.log('📂 Firebase Storage\'dan veri yükleniyor...');
+        const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
+        const records = await loadAllDetailedScheduleData();
+        console.log(`✅ ${records.length} kayıt yüklendi`);
+        setDetailedScheduleData(records);
+        setIsDataLoaded(true);
       } catch (error) {
-        console.error('❌ IndexedDB yükleme hatası:', error);
-        setIsDataLoaded(true); // Mark as loaded even on error to prevent hanging
+        console.error('❌ Veri yükleme hatası:', error);
+        setIsDataLoaded(true);
       }
     };
     loadData();
@@ -235,7 +232,7 @@ const App: React.FC = () => {
   }, []);
 
   // Firebase Data Sync - Load data from Firestore when user logs in
-  // Note: detailedScheduleData is loaded from IndexedDB, not Firestore
+  // detailedScheduleData is loaded from Storage (see useEffect above)
   useEffect(() => {
     if (!user) return;
 
@@ -244,7 +241,7 @@ const App: React.FC = () => {
     const unsubscribe = onSnapshot(dataRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        // detailedScheduleData excluded - loaded from IndexedDB instead
+        // detailedScheduleData excluded - loaded from Storage
         if (data.muayeneByPeriod) setMuayeneByPeriod(data.muayeneByPeriod);
         if (data.ameliyatByPeriod) setAmeliyatByPeriod(data.ameliyatByPeriod);
         if (data.muayeneMetaByPeriod) setMuayeneMetaByPeriod(data.muayeneMetaByPeriod);
@@ -259,14 +256,14 @@ const App: React.FC = () => {
   }, [user]);
 
   // Save data to Firestore whenever it changes (debounced)
-  // Note: detailedScheduleData is stored in IndexedDB, not Firestore, due to size limits
+  // detailedScheduleData excluded - stored in Firebase Storage
   useEffect(() => {
     if (!user) return;
 
     const timer = setTimeout(async () => {
       try {
         const dataToSave = {
-          // detailedScheduleData excluded - stored in IndexedDB instead
+          // detailedScheduleData excluded - stored in Storage
           muayeneByPeriod,
           ameliyatByPeriod,
           muayeneMetaByPeriod,
@@ -288,7 +285,7 @@ const App: React.FC = () => {
 
         const dataRef = doc(db, 'appData', 'mainData');
         await setDoc(dataRef, dataToSave, { merge: true });
-        console.log('✅ Veriler Firestore\'a kaydedildi (detailedScheduleData hariç - IndexedDB\'de)');
+        console.log('✅ Veriler Firestore\'a kaydedildi');
       } catch (error) {
         console.error('Error saving to Firestore:', error);
       }
@@ -297,51 +294,7 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [user, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides]);
 
-  // Save data to IndexedDB whenever it changes (but only after initial load)
-  useEffect(() => {
-    // Don't save until initial data is loaded from IndexedDB
-    if (!isDataLoaded) {
-      console.log('⏳ İlk yükleme tamamlanmadı, kaydetme atlanıyor');
-      return;
-    }
-
-    const saveData = async () => {
-      try {
-        const dataSize = new Blob([JSON.stringify(detailedScheduleData)]).size;
-        console.log(`💾 IndexedDB'ye kaydediliyor: ${detailedScheduleData.length} kayıt, ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
-
-        // Clear existing data and add new data
-        // Use bulkPut instead of bulkAdd to overwrite existing records
-        await indexedDB.detailedSchedule.clear();
-        if (detailedScheduleData.length > 0) {
-          await indexedDB.detailedSchedule.bulkPut(detailedScheduleData);
-        }
-
-        // Verify save
-        const count = await indexedDB.detailedSchedule.count();
-        console.log(`✅ IndexedDB kaydı başarılı - Toplam kayıt: ${count}`);
-
-        if (count !== detailedScheduleData.length) {
-          console.error(`⚠️ Kayıt uyumsuzluğu! Beklenen: ${detailedScheduleData.length}, Kaydedilen: ${count}`);
-        }
-      } catch (error) {
-        console.error('❌ IndexedDB kaydı başarısız:', error);
-        // Eğer şema uyumsuzluğu varsa, veritabanını sil ve yeniden oluştur
-        if (error instanceof Error && error.message.includes('schema')) {
-          console.log('🔄 Şema uyumsuzluğu tespit edildi, veritabanı yeniden oluşturuluyor...');
-          await indexedDB.delete();
-          window.location.reload();
-        }
-      }
-    };
-
-    // Debounce to avoid saving on every keystroke
-    const timer = setTimeout(() => {
-      saveData();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [detailedScheduleData, isDataLoaded]);
+  // IndexedDB removed - data now stored in Firestore for all users
 
   useEffect(() => {
     localStorage.setItem('muayeneByPeriod', JSON.stringify(muayeneByPeriod));
@@ -439,84 +392,45 @@ const App: React.FC = () => {
   };
 
   const handleImportDetailedExcel = async (files: FileList | null, targetHospital?: string, targetMonth?: string, targetYear?: number) => {
-    if (!files?.length) return;
-    console.log('📁 Dosya yükleme başladı:', { targetHospital, targetMonth, targetYear });
+    if (!files?.length || !targetHospital || !targetMonth || !targetYear) {
+      showToast("Lütfen hastane, ay ve yıl seçin.", "error");
+      return;
+    }
+
+    if (!user?.email) {
+      showToast("Dosya yüklemek için giriş yapmalısınız.", "error");
+      return;
+    }
+
     setIsLoading(true);
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: true });
-        const allNewDetailedData: DetailedScheduleData[] = [];
+    setLoadingText('Dosya Firebase Storage\'a yükleniyor...');
 
-        // Modal'dan gelen değerleri kullan, yoksa global state'i kullan
-        const hospitalToUse = targetHospital || selectedHospital;
-        const monthToUse = targetMonth;
-        const yearToUse = targetYear;
-        console.log('🏥 Yükleme parametreleri:', { hospitalToUse, monthToUse, yearToUse });
-        
-        workbook.SheetNames.forEach(sn => {
-           const sheet = workbook.Sheets[sn];
-           const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: true }) as any[]; 
-           jsonData.forEach((row, idx) => {
-             const cleanForMatch = (str: any) => String(str || "").toLocaleLowerCase('tr-TR').trim().replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/\s+/g, '');
-             const findKey = (patterns: string[]) => Object.keys(row).find(k => patterns.some(p => cleanForMatch(k) === cleanForMatch(p)));
-             const rawDateVal = row[findKey(['Aksiyon Tarihi', 'Tarih', 'Günü']) || ''];
-             const doctorNameRaw = row[findKey(['Hekim Ad Soyad', 'Hekim', 'Ad Soyad']) || ''];
-             const specialtyRaw = row[findKey(['Klinik Adı', 'Klinik', 'Branş', 'Bölüm']) || ''];
-             const actionRaw = row[findKey(['Aksiyon', 'İşlem']) || ''];
-             const capacityRaw = row[findKey(['Randevu Kapasitesi', 'Kapasite', 'Slot Sayısı']) || ''];
-             const startTimeRaw = row[findKey(['Aksiyon Başlangıç Saati', 'Başlangıç Saati', 'Saat']) || ''];
-             const endTimeRaw = row[findKey(['Aksiyon Bitiş Saati', 'Bitiş Saati']) || ''];
+    try {
+      const file = files[0];
+      console.log('📁 Dosya yükleme başladı:', { targetHospital, targetMonth, targetYear, fileName: file.name });
 
-             if (!doctorNameRaw || String(doctorNameRaw).trim() === "") return;
-             let m = "Bilinmiyor", y = 2025, dateStr = "Bilinmiyor";
-             if (rawDateVal) {
-                let dateObj: Date | null = null;
-                if (rawDateVal instanceof Date) { dateObj = new Date(rawDateVal.getTime()); if (dateObj.getHours() >= 21) dateObj.setHours(dateObj.getHours() + 4); dateObj.setHours(12, 0, 0, 0); }
-                else if (typeof rawDateVal === 'string') { const s = rawDateVal.trim(); const parts = s.split(/[./-]/); if (parts.length === 3) { const d = parseInt(parts[0]); const mon = parseInt(parts[1]); let year = parseInt(parts[2]); if (year < 100) year += 2000; if (!isNaN(mon) && mon >= 1 && mon <= 12) dateObj = new Date(year, mon - 1, d); } }
-                else if (typeof rawDateVal === 'number') { dateObj = new Date(Math.round((rawDateVal - 25569) * 864e5)); dateObj.setHours(12, 0, 0, 0); }
-                if (dateObj && !isNaN(dateObj.getTime())) { m = MONTHS[dateObj.getMonth()]; y = dateObj.getFullYear(); const dd = String(dateObj.getDate()).padStart(2, '0'); const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); dateStr = `${dd}.${mm}.${y}`; }
-             }
+      // Upload file to Firebase Storage
+      const { uploadDetailedScheduleFile, loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
+      const result = await uploadDetailedScheduleFile(file, targetHospital, targetMonth, targetYear, user.email);
 
-             // Modal'dan ay/yıl seçilmişse, Excel'den gelen değerleri ezme
-             if (monthToUse) m = monthToUse;
-             if (yearToUse) y = yearToUse;
+      if (result.success) {
+        showToast(`✅ Dosya yüklendi: ${result.recordCount} kayıt`, 'success');
 
-             const parseTimeToMinutes = (val: any) => { if (!val) return 0; if (val instanceof Date) return val.getHours() * 60 + val.getMinutes(); if (typeof val === 'number') return Math.round(val * 1440); const p = String(val).trim().split(':'); return p.length >= 2 ? parseInt(p[0])*60 + parseInt(p[1]) : 0; };
-             const startMins = parseTimeToMinutes(startTimeRaw); const endMins = parseTimeToMinutes(endTimeRaw); let duration = endMins - startMins; if (duration < 0) duration += 1440;
-             const formatTime = (mins: number) => `${String(Math.floor(mins/60)).padStart(2, '0')}:${String(mins%60).padStart(2, '0')}`;
-
-             const newItem = { id: `ds-${Date.now()}-${sn}-${idx}-${Math.random()}`, specialty: String(specialtyRaw || sn || 'Bilinmiyor').toUpperCase().trim(), doctorName: String(doctorNameRaw).trim().toUpperCase(), hospital: hospitalToUse, startDate: dateStr, startTime: startTimeRaw ? (typeof startTimeRaw === 'string' ? startTimeRaw : formatTime(startMins)) : '', endDate: '', endTime: endTimeRaw ? (typeof endTimeRaw === 'string' ? endTimeRaw : formatTime(endMins)) : '', action: String(actionRaw || 'Belirsiz').trim(), slotCount: 0, duration: duration, capacity: parseFloat(String(capacityRaw).replace(/\./g, '').replace(',', '.')) || 0, month: m, year: y };
-
-             // İlk 3 kayıt için debug
-             if (allNewDetailedData.length < 3) {
-               console.log(`🔍 Örnek kayıt ${allNewDetailedData.length + 1}:`, {
-                 month: newItem.month,
-                 year: newItem.year,
-                 hospital: newItem.hospital,
-                 doctorName: newItem.doctorName
-               });
-             }
-
-             allNewDetailedData.push(newItem);
-           });
-        });
-        console.log('📊 İşlenen veri sayısı:', allNewDetailedData.length);
-        if (allNewDetailedData.length > 0) {
-          console.log('✅ Veri state\'e ekleniyor:', allNewDetailedData.slice(0, 3));
-          setDetailedScheduleData(prev => {
-            const newData = [...prev, ...allNewDetailedData];
-            console.log('💾 Yeni toplam veri sayısı:', newData.length);
-            return newData;
-          });
-          showToast(`${allNewDetailedData.length} yeni kayıt mevcut listeye eklendi.`);
-        }
-        else { showToast("Excel dosyasında geçerli bir veri bulunamadı.", "error"); }
-      } catch (err) { console.error('❌ Hata:', err); showToast("Dosya okuma hatası.", "error"); } finally { setIsLoading(false); }
-    };
-    reader.readAsArrayBuffer(file);
+        // Reload all data from Storage
+        console.log('🔄 Veriler yeniden yükleniyor...');
+        const allData = await loadAllDetailedScheduleData();
+        setDetailedScheduleData(allData);
+        console.log(`✅ Toplam ${allData.length} kayıt yüklendi`);
+      } else {
+        showToast(`❌ Yükleme hatası: ${result.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('❌ Dosya yükleme hatası:', error);
+      showToast("Dosya yükleme hatası.", "error");
+    } finally {
+      setIsLoading(false);
+      setLoadingText('Veriler Güncelleniyor...');
+    }
   };
 
   const currentBranchOptions = useMemo(() => {
