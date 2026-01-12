@@ -243,8 +243,7 @@ const App: React.FC = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const dataRef = doc(db, 'appData', 'mainData');
-        await setDoc(dataRef, {
+        const dataToSave = {
           detailedScheduleData,
           muayeneByPeriod,
           ameliyatByPeriod,
@@ -254,7 +253,20 @@ const App: React.FC = () => {
           sutServiceData,
           presentationSlides: slides,
           lastUpdated: new Date().toISOString()
-        }, { merge: true });
+        };
+
+        // Check data size (Firestore limit is 1MB)
+        const dataSize = new Blob([JSON.stringify(dataToSave)]).size;
+        const maxSize = 1048576; // 1MB in bytes
+
+        if (dataSize > maxSize) {
+          console.warn(`⚠️ Veri boyutu çok büyük (${(dataSize / 1024 / 1024).toFixed(2)} MB), Firestore'a kaydedilemiyor. LocalStorage kullanılıyor.`);
+          return;
+        }
+
+        const dataRef = doc(db, 'appData', 'mainData');
+        await setDoc(dataRef, dataToSave, { merge: true });
+        console.log('✅ Veriler Firestore\'a kaydedildi');
       } catch (error) {
         console.error('Error saving to Firestore:', error);
       }
