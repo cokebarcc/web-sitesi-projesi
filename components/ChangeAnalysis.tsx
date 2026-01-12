@@ -78,7 +78,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
     try {
       const loadedVersions = await loadAllChangeAnalysisVersions(selectedHospital, selectedMonth, selectedYear);
-      const monthKey = `${selectedYear}-${selectedMonth}`;
+      const monthKey = `${selectedHospital}-${selectedYear}-${selectedMonth}`;
 
       if (loadedVersions[monthKey] && Object.keys(loadedVersions[monthKey]).length > 0) {
         setVersions(prev => ({
