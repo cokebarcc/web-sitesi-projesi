@@ -216,7 +216,6 @@ const App: React.FC = () => {
       // İlk açılışta veya modüle geçişte filtreleri sıfırla
       console.log('🔄 Physician-data modülü açıldı, filtreler sıfırlanıyor...');
       console.log('📊 Mevcut selectedHospital:', selectedHospital);
-      console.log('🏥 allowedHospitals:', allowedHospitals);
 
       // setTimeout ile tüm re-render'lar bittikten sonra sıfırla
       setTimeout(() => {
@@ -226,7 +225,7 @@ const App: React.FC = () => {
         console.log('✅ Filtreler sıfırlandı');
       }, 0);
     }
-  }, [view, permissionsLoading, allowedHospitals]);
+  }, [view, permissionsLoading]);
 
   // Firebase Authentication Listener
   useEffect(() => {
