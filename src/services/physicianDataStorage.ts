@@ -247,11 +247,12 @@ export async function getPhysicianDataFiles(
     if (year) constraints.push(where('year', '==', year));
     if (type) constraints.push(where('type', '==', type));
 
-    const q = query(
-      collection(db, 'physicianDataFiles'),
-      ...constraints,
-      orderBy('uploadedAt', 'desc')
-    );
+    let q;
+    if (constraints.length > 0) {
+      q = query(collection(db, 'physicianDataFiles'), ...constraints);
+    } else {
+      q = query(collection(db, 'physicianDataFiles'));
+    }
 
     const querySnapshot = await getDocs(q);
     const files: PhysicianDataFile[] = [];
@@ -263,7 +264,8 @@ export async function getPhysicianDataFiles(
       } as PhysicianDataFile);
     });
 
-    return files;
+    // Sort by uploadedAt in memory instead of using orderBy
+    return files.sort((a, b) => b.uploadedAt - a.uploadedAt);
   } catch (error) {
     console.error('❌ Dosya listesi yükleme hatası:', error);
     return [];
