@@ -19,22 +19,12 @@ export class AppDatabase extends Dexie {
   muayene!: Table<MuayeneRecord>;
 
   constructor() {
-    super('HealthDataDB');
+    super('HealthDataDB_v2'); // Changed database name to avoid migration issues
 
-    // Version 1: Initial schema with auto-increment
+    // Version 1: Use string ID from Excel data as primary key
     this.version(1).stores({
-      detailedSchedule: '++id, hospital, month, year',
-      muayene: '++id, period'
-    });
-
-    // Version 2: Use string ID from Excel data instead of auto-increment
-    this.version(2).stores({
       detailedSchedule: 'id, hospital, month, year',
       muayene: '++id, period'
-    }).upgrade(async tx => {
-      // Clear old data with auto-increment IDs when upgrading
-      await tx.table('detailedSchedule').clear();
-      console.log('🔄 IndexedDB schema upgraded to v2, old data cleared');
     });
   }
 }
