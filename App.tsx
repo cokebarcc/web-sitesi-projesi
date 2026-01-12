@@ -158,6 +158,7 @@ const App: React.FC = () => {
   };
 
   const [detailedScheduleData, setDetailedScheduleData] = useState<DetailedScheduleData[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false); // Track if IndexedDB data is loaded
   const [sutServiceData, setSutServiceData] = useState<SUTServiceData[]>(() =>
     loadFromLocalStorage('sutServiceData', [])
   );
@@ -210,9 +211,14 @@ const App: React.FC = () => {
         console.log('📂 IndexedDB\'den veri yükleniyor...');
         const records = await indexedDB.detailedSchedule.toArray();
         console.log(`✅ ${records.length} kayıt IndexedDB\'den yüklendi`);
+        if (records.length > 0) {
+          console.log('📊 İlk 3 kayıt:', records.slice(0, 3).map(r => ({ id: r.id, hospital: r.hospital, month: r.month, year: r.year })));
+        }
         setDetailedScheduleData(records as DetailedScheduleData[]);
+        setIsDataLoaded(true); // Mark data as loaded
       } catch (error) {
         console.error('❌ IndexedDB yükleme hatası:', error);
+        setIsDataLoaded(true); // Mark as loaded even on error to prevent hanging
       }
     };
     loadData();
@@ -291,8 +297,14 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [user, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides]);
 
-  // Save data to IndexedDB whenever it changes
+  // Save data to IndexedDB whenever it changes (but only after initial load)
   useEffect(() => {
+    // Don't save until initial data is loaded from IndexedDB
+    if (!isDataLoaded) {
+      console.log('⏳ İlk yükleme tamamlanmadı, kaydetme atlanıyor');
+      return;
+    }
+
     const saveData = async () => {
       try {
         const dataSize = new Blob([JSON.stringify(detailedScheduleData)]).size;
@@ -304,7 +316,14 @@ const App: React.FC = () => {
         if (detailedScheduleData.length > 0) {
           await indexedDB.detailedSchedule.bulkPut(detailedScheduleData);
         }
-        console.log('✅ IndexedDB kaydı başarılı');
+
+        // Verify save
+        const count = await indexedDB.detailedSchedule.count();
+        console.log(`✅ IndexedDB kaydı başarılı - Toplam kayıt: ${count}`);
+
+        if (count !== detailedScheduleData.length) {
+          console.error(`⚠️ Kayıt uyumsuzluğu! Beklenen: ${detailedScheduleData.length}, Kaydedilen: ${count}`);
+        }
       } catch (error) {
         console.error('❌ IndexedDB kaydı başarısız:', error);
         // Eğer şema uyumsuzluğu varsa, veritabanını sil ve yeniden oluştur
@@ -322,7 +341,7 @@ const App: React.FC = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [detailedScheduleData]);
+  }, [detailedScheduleData, isDataLoaded]);
 
   useEffect(() => {
     localStorage.setItem('muayeneByPeriod', JSON.stringify(muayeneByPeriod));
