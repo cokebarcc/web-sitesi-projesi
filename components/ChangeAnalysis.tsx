@@ -387,16 +387,16 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-tight italic mb-6">CETVEL KIYASLAMA MERKEZİ</h2>
 
-            {/* Filtreler: Hastane → Yıl → Ay → Uygula */}
-            <div className="flex flex-wrap gap-3 items-end">
+            {/* Filtreler: Hastane → Yıl → Ay → Eski Sürüm → Yeni Sürüm → Uygula */}
+            <div className="flex flex-wrap gap-2 items-end">
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
                 <select
                   value={selectedHospital}
                   onChange={(e) => onHospitalChange(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 font-bold text-xs outline-none uppercase transition-colors hover:border-indigo-200"
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-[11px] outline-none uppercase transition-colors hover:border-indigo-200 min-w-[140px]"
                 >
-                  <option value="">Hastane Seçiniz</option>
+                  <option value="">Hastane</option>
                   {allowedHospitals.map(h => (
                     <option key={h} value={h}>{h}</option>
                   ))}
@@ -405,24 +405,66 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
-                <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-900 text-white rounded-xl px-4 py-2 font-bold text-xs outline-none uppercase">
-                  <option value={0}>Yıl Seçiniz</option>
+                <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-900 text-white rounded-xl px-3 py-2 font-bold text-[11px] outline-none uppercase min-w-[90px]">
+                  <option value={0}>Yıl</option>
                   {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
 
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
-                <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 font-bold text-xs outline-none uppercase transition-colors hover:border-indigo-200">
-                  <option value="">Ay Seçiniz</option>
+                <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-[11px] outline-none uppercase transition-colors hover:border-indigo-200 min-w-[100px]">
+                  <option value="">Ay</option>
                   {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">ESKİ SÜRÜM</label>
+                <div className="flex gap-1">
+                  <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold shadow-sm outline-none focus:border-indigo-500 transition-all min-w-[180px]">
+                    <option value="">Eski Sürüm Seçiniz</option>
+                    {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                  {isAdmin && baselineLabel && (
+                    <button
+                      onClick={() => handleDeleteVersion(baselineLabel)}
+                      className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
+                      title="Sürümü Sil"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1">YENİ SÜRÜM</label>
+                <div className="flex gap-1">
+                  <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="bg-white border border-rose-200 rounded-xl px-3 py-2 text-[11px] font-bold text-rose-600 shadow-sm outline-none focus:border-rose-500 transition-all min-w-[180px]">
+                    <option value="">Yeni Sürüm Seçiniz</option>
+                    {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                  {isAdmin && updatedLabel && (
+                    <button
+                      onClick={() => handleDeleteVersion(updatedLabel)}
+                      className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
+                      title="Sürümü Sil"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <button
                 onClick={handleLoadPeriodData}
                 disabled={!selectedHospital || selectedYear === 0 || !selectedMonth || isProcessing}
-                className={`px-6 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 ${
+                className={`px-5 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 ${
                   selectedHospital && selectedYear > 0 && selectedMonth && !isProcessing
                     ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-xl hover:scale-105 cursor-pointer'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
@@ -433,53 +475,6 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                 </svg>
                 {isProcessing ? 'YÜKLENİYOR...' : 'UYGULA'}
               </button>
-            </div>
-          </div>
-
-          {/* Cetvel Seçimleri */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* İlk Cetvel (Başlangıç) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">ESKİ SÜRÜM (BAŞLANGIÇ)</label>
-              <div className="flex gap-2">
-                <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold shadow-sm outline-none focus:border-indigo-500 transition-all">
-                  <option value="">Sürüm Seçiniz...</option>
-                  {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-                {isAdmin && baselineLabel && (
-                  <button
-                    onClick={() => handleDeleteVersion(baselineLabel)}
-                    className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
-                    title="Sürümü Sil"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Güncel Cetvel (Kıyas) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1">YENİ SÜRÜM (KIYAS)</label>
-              <div className="flex gap-2">
-                <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="flex-1 bg-white border border-rose-200 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 shadow-sm outline-none focus:border-rose-500 transition-all">
-                  <option value="">Sürüm Seçiniz...</option>
-                  {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
-                </select>
-                {isAdmin && updatedLabel && (
-                  <button
-                    onClick={() => handleDeleteVersion(updatedLabel)}
-                    className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
-                    title="Sürümü Sil"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-              </div>
             </div>
           </div>
 
