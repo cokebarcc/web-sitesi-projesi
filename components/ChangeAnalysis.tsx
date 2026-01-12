@@ -60,6 +60,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Clear version selections when hospital changes
+  useEffect(() => {
+    setBaselineLabel('');
+    setUpdatedLabel('');
+  }, [selectedHospital]);
+
   // Load data for selected period
   const handleLoadPeriodData = async () => {
     if (!selectedHospital || !selectedMonth || selectedYear === 0) {
@@ -112,9 +118,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     if (updatedLabel === versionLabel) setUpdatedLabel('');
   };
 
-  const monthKey = `${selectedYear}-${selectedMonth}`;
-  
+  const monthKey = selectedHospital && selectedYear && selectedMonth
+    ? `${selectedHospital}-${selectedYear}-${selectedMonth}`
+    : '';
+
   const availableVersions = useMemo(() => {
+    if (!monthKey) return [];
     const periodVersions = versions[monthKey] || {};
     return Object.keys(periodVersions).sort((a, b) => periodVersions[b].timestamp - periodVersions[a].timestamp);
   }, [versions, monthKey]);
