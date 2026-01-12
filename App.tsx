@@ -301,9 +301,9 @@ const App: React.FC = () => {
       );
 
       if (muayeneFiles.length > 0) {
-        const muayeneDataForPeriod = await loadAllMuayeneData();
+        const muayeneDataForPeriod = await loadAllMuayeneData(hospital, month, year);
         setMuayeneByPeriod(prev => ({ ...prev, ...muayeneDataForPeriod }));
-        console.log(`✅ Muayene verisi yüklendi`);
+        console.log(`✅ ${hospital} - Muayene verisi yüklendi`);
       }
 
       // Load ameliyat data for this period
@@ -312,9 +312,9 @@ const App: React.FC = () => {
       );
 
       if (ameliyatFiles.length > 0) {
-        const ameliyatDataForPeriod = await loadAllAmeliyatData();
+        const ameliyatDataForPeriod = await loadAllAmeliyatData(hospital, month, year);
         setAmeliyatByPeriod(prev => ({ ...prev, ...ameliyatDataForPeriod }));
-        console.log(`✅ Ameliyat verisi yüklendi`);
+        console.log(`✅ ${hospital} - Ameliyat verisi yüklendi`);
       }
 
       // Mark as loaded

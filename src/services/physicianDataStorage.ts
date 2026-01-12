@@ -275,9 +275,9 @@ export async function getPhysicianDataFiles(
 /**
  * Load all muayene data from Storage
  */
-export async function loadAllMuayeneData(): Promise<Record<string, Record<string, MuayeneMetrics>>> {
+export async function loadAllMuayeneData(hospital?: string, month?: string, year?: number): Promise<Record<string, Record<string, MuayeneMetrics>>> {
   try {
-    const files = await getPhysicianDataFiles(undefined, undefined, undefined, 'muayene');
+    const files = await getPhysicianDataFiles(hospital, month, year, 'muayene');
     const allData: Record<string, Record<string, MuayeneMetrics>> = {};
 
     console.log(`📦 [MUAYENE] ${files.length} dosya yüklenecek...`);
@@ -299,9 +299,9 @@ export async function loadAllMuayeneData(): Promise<Record<string, Record<string
 /**
  * Load all ameliyat data from Storage
  */
-export async function loadAllAmeliyatData(): Promise<Record<string, Record<string, number>>> {
+export async function loadAllAmeliyatData(hospital?: string, month?: string, year?: number): Promise<Record<string, Record<string, number>>> {
   try {
-    const files = await getPhysicianDataFiles(undefined, undefined, undefined, 'ameliyat');
+    const files = await getPhysicianDataFiles(hospital, month, year, 'ameliyat');
     const allData: Record<string, Record<string, number>> = {};
 
     console.log(`📦 [AMELIYAT] ${files.length} dosya yüklenecek...`);
