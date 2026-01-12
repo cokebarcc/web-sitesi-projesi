@@ -194,18 +194,21 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
             onChange={(e) => onHospitalChange(e.target.value)}
             className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer min-w-[240px]"
           >
+            <option value="">Hastane Seçiniz</option>
             {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
           <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
+            <option value={0}>Yıl Seçiniz</option>
             {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
           <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
+            <option value="">Ay Seçiniz</option>
             {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
