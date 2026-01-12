@@ -63,11 +63,10 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   // Use override if provided (for presentation), otherwise use global filter
   const selectedMonth = overrideMonth || propMonth.toString();
   const selectedYear = overrideYear ? overrideYear.toString() : propYear.toString();
-  const setSelectedMonth = (val: string) => { if (!overrideMonth) { propSetMonth(val); setIsPeriodConfirmed(false); } };
-  const setSelectedYear = (val: string) => { if (!overrideYear) { propSetYear(parseInt(val)); setIsPeriodConfirmed(false); } };
+  const setSelectedMonth = (val: string) => { if (!overrideMonth) { propSetMonth(val); } };
+  const setSelectedYear = (val: string) => { if (!overrideYear) { propSetYear(parseInt(val)); } };
 
   const [selectedBranch, setSelectedBranch] = useState<string>(overrideBranch || 'ALL');
-  const [isPeriodConfirmed, setIsPeriodConfirmed] = useState<boolean>(!!selectedMonth && !!selectedYear);
   
   const [chartBranchFilter, setChartBranchFilter] = useState<string>(overrideBranch || 'ALL');
   const [viewLimit, setViewLimit] = useState<number | 'ALL'>(12);
@@ -89,24 +88,32 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedMonth(e.target.value); };
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedYear(e.target.value); };
 
-  const confirmPeriod = () => {
+  // Auto-load data when month, year, or branch changes
+  useEffect(() => {
     if (selectedMonth && selectedYear) {
-      setIsPeriodConfirmed(true); setCurrentPage(1); setSurgCurrentPage(1); setHoursCurrentPage(1);
-      setChartBranchFilter(selectedBranch); setSurgBranchFilter(selectedBranch); setDistBranchFilter(selectedBranch); setHoursBranchFilter(selectedBranch);
+      setCurrentPage(1);
+      setSurgCurrentPage(1);
+      setHoursCurrentPage(1);
+      setChartBranchFilter(selectedBranch);
+      setSurgBranchFilter(selectedBranch);
+      setDistBranchFilter(selectedBranch);
+      setHoursBranchFilter(selectedBranch);
     }
-  };
+  }, [selectedMonth, selectedYear, selectedBranch]);
 
-  const periodKey = isPeriodConfirmed ? getPeriodKey(Number(selectedYear), selectedMonth) : '';
+  const periodKey = selectedMonth && selectedYear ? getPeriodKey(Number(selectedYear), selectedMonth) : '';
 
   const availableBranches = useMemo(() => {
-    if (!isPeriodConfirmed) return [];
+    if (!selectedMonth || !selectedYear) return [];
     const branches = new Set<string>();
     detailedScheduleData.filter(d => d.month === selectedMonth && d.year === Number(selectedYear)).forEach(d => { if (d.specialty && d.specialty !== 'Bilinmiyor') branches.add(d.specialty); });
     return Array.from(branches).sort((a, b) => a.localeCompare(b, 'tr-TR'));
-  }, [detailedScheduleData, selectedMonth, selectedYear, isPeriodConfirmed]);
+  }, [detailedScheduleData, selectedMonth, selectedYear]);
+
+  const isPeriodSelected = !!(selectedMonth && selectedYear);
 
   const { stats, fullChartData, fullSurgeryChartData, fullSurgHoursChartData, eligibleSurgicalBranches, distributionChartData } = useMemo(() => {
-    if (!isPeriodConfirmed) return { stats: { totalCapacityCount: 0, totalExamsCount: 0, totalMhrsExamsCount: 0, totalSurgeryDays: 0, totalAbcSurgeriesCount: 0, totalScheduledSurgeryHours: 0, hasSchedule: false, hasMuayene: false, hasAmeliyat: false, rowCount: 0 }, fullChartData: [], fullSurgeryChartData: [], fullSurgHoursChartData: [], eligibleSurgicalBranches: [], distributionChartData: [] };
+    if (!isPeriodSelected) return { stats: { totalCapacityCount: 0, totalExamsCount: 0, totalMhrsExamsCount: 0, totalSurgeryDays: 0, totalAbcSurgeriesCount: 0, totalScheduledSurgeryHours: 0, hasSchedule: false, hasMuayene: false, hasAmeliyat: false, rowCount: 0 }, fullChartData: [], fullSurgeryChartData: [], fullSurgHoursChartData: [], eligibleSurgicalBranches: [], distributionChartData: [] };
     const periodSchedules = detailedScheduleData.filter(d => d.month === selectedMonth && d.year === Number(selectedYear));
     const rawMuayeneData = muayeneByPeriod[periodKey] || {};
     const rawAmeliyatData = ameliyatByPeriod[periodKey] || {};
@@ -133,7 +140,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
     const surgicalBranchesSet = new Set<string>(); surgeryList.forEach(item => { if (item.plannedDays > 0 || item.performedABC > 0) surgicalBranchesSet.add(item.branchName); });
     const eligibleSurgicalBranches = Array.from(surgicalBranchesSet).sort((a, b) => a.localeCompare(b, 'tr-TR'));
     return { stats: { totalCapacityCount, totalExamsCount, totalMhrsExamsCount, totalSurgeryDays, totalAbcSurgeriesCount, totalScheduledSurgeryHours, hasSchedule: periodSchedules.length > 0, hasMuayene: !!muayeneMetaByPeriod[periodKey], hasAmeliyat: !!ameliyatMetaByPeriod[periodKey], rowCount: kpiSchedules.length }, fullChartData: [...underGroup, ...noCapGroup, ...overGroup], fullSurgeryChartData: surgeryList.filter(item => surgBranchFilter === 'ALL' || item.branchName === surgBranchFilter).sort((a, b) => b.efficiencyVal - a.efficiencyVal), fullSurgHoursChartData: surgHoursList.filter(item => hoursBranchFilter === 'ALL' || item.branchName === hoursBranchFilter).sort((a, b) => b.avgHoursPerCase - a.avgHoursPerCase), eligibleSurgicalBranches, distributionChartData };
-  }, [detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, selectedMonth, selectedYear, periodKey, isPeriodConfirmed, selectedBranch, chartBranchFilter, surgBranchFilter, hoursBranchFilter, distBranchFilter]);
+  }, [detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, selectedMonth, selectedYear, periodKey, isPeriodSelected, selectedBranch, chartBranchFilter, surgBranchFilter, hoursBranchFilter, distBranchFilter]);
 
   const paginatedChartData = useMemo(() => { if (viewLimit === 'ALL') return fullChartData; const startIndex = (currentPage - 1) * viewLimit; return fullChartData.slice(startIndex, startIndex + (viewLimit as number)); }, [fullChartData, viewLimit, currentPage]);
   const paginatedSurgData = useMemo(() => { if (surgViewLimit === 'ALL') return fullSurgeryChartData; const startIndex = (surgCurrentPage - 1) * surgViewLimit; return fullSurgeryChartData.slice(startIndex, startIndex + (surgViewLimit as number)); }, [fullSurgeryChartData, surgViewLimit, surgCurrentPage]);
@@ -143,8 +150,8 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   const totalSurgPages = surgViewLimit === 'ALL' ? 1 : Math.ceil(fullSurgeryChartData.length / (Number(surgViewLimit) || 1));
   const totalHoursPages = hoursViewLimit === 'ALL' ? 1 : Math.ceil(fullSurgHoursChartData.length / (Number(hoursViewLimit) || 1));
 
-  const appointmentRate = useMemo(() => (isPeriodConfirmed && stats.totalExamsCount > 0) ? (stats.totalMhrsExamsCount / stats.totalExamsCount) * 100 : null, [isPeriodConfirmed, stats]);
-  const avgHoursPerSurgery = useMemo(() => (isPeriodConfirmed && stats.totalAbcSurgeriesCount > 0) ? stats.totalScheduledSurgeryHours / stats.totalAbcSurgeriesCount : 0, [isPeriodConfirmed, stats]);
+  const appointmentRate = useMemo(() => (isPeriodSelected && stats.totalExamsCount > 0) ? (stats.totalMhrsExamsCount / stats.totalExamsCount) * 100 : null, [isPeriodSelected, stats]);
+  const avgHoursPerSurgery = useMemo(() => (isPeriodSelected && stats.totalAbcSurgeriesCount > 0) ? stats.totalScheduledSurgeryHours / stats.totalAbcSurgeriesCount : 0, [isPeriodSelected, stats]);
 
   const handleBarClick = (data: any) => { 
     if (data && data.doctorName) { 
@@ -170,42 +177,41 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
           </div>
           <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">YIL</p><select value={selectedYear} onChange={handleYearChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[140px]">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select></div>
           <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY</p><select value={selectedMonth} onChange={handleMonthChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[180px]">{MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}</select></div>
-          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">BRANŞ</p><select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} disabled={!isPeriodConfirmed} className="border rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[240px]"><option value="ALL">Tüm Branşlar</option>{availableBranches.map(br => <option key={br} value={br}>{br}</option>)}</select></div>
-          <button onClick={confirmPeriod} disabled={!selectedMonth || !selectedYear || isPeriodConfirmed} className={`px-10 py-4 rounded-2xl font-black text-xs uppercase shadow-lg h-[54px] ${!selectedMonth || !selectedYear || isPeriodConfirmed ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>Veriyi Getir</button>
+          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">BRANŞ</p><select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[240px]"><option value="ALL">Tüm Branşlar</option>{availableBranches.map(br => <option key={br} value={br}>{br}</option>)}</select></div>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        <KpiCard title="Toplam Kapasite Sayısı" value={isPeriodConfirmed ? stats.totalCapacityCount : null} source="Detaylı Cetveller" accent="capacity" isEmpty={!isPeriodConfirmed} />
-        <KpiCard title="Toplam Muayene Sayısı" value={isPeriodConfirmed ? stats.totalExamsCount : null} source="Hekim Verileri" accent="visits" isEmpty={!isPeriodConfirmed} isWarning={isPeriodConfirmed && !stats.hasMuayene} warningText="Eksik Veri" />
-        <KpiCard title="Randevulu Muayene Oranı" value={appointmentRate !== null ? `${appointmentRate.toFixed(1).replace('.', ',')}%` : null} source="Hekim Verileri" accent="ratio" subtitle="(MHRS / TOPLAM)" isEmpty={!isPeriodConfirmed || stats.totalExamsCount === 0} />
-        <KpiCard title="Planlanan Ameliyat Gün" value={isPeriodConfirmed ? stats.totalSurgeryDays : null} source="Detaylı Cetveller" accent="surgery" isEmpty={!isPeriodConfirmed} />
-        <KpiCard title="Toplam A+B+C Ameliyat" value={isPeriodConfirmed ? stats.totalAbcSurgeriesCount : null} source="Hekim Verileri" accent="surgery" isEmpty={!isPeriodConfirmed} isWarning={isPeriodConfirmed && !stats.hasAmeliyat} warningText="Eksik Veri" />
-        <KpiCard title="Ameliyat Cetvel Verimi" value={isPeriodConfirmed ? avgHoursPerSurgery.toFixed(2).replace('.', ',') : null} source="Cetvel + Hekim Verileri" accent="surgery" subtitle="SAAT / AMELİYAT" isEmpty={!isPeriodConfirmed || stats.totalAbcSurgeriesCount === 0} />
+        <KpiCard title="Toplam Kapasite Sayısı" value={isPeriodSelected ? stats.totalCapacityCount : null} source="Detaylı Cetveller" accent="capacity" isEmpty={!isPeriodSelected} />
+        <KpiCard title="Toplam Muayene Sayısı" value={isPeriodSelected ? stats.totalExamsCount : null} source="Hekim Verileri" accent="visits" isEmpty={!isPeriodSelected} isWarning={isPeriodSelected && !stats.hasMuayene} warningText="Eksik Veri" />
+        <KpiCard title="Randevulu Muayene Oranı" value={appointmentRate !== null ? `${appointmentRate.toFixed(1).replace('.', ',')}%` : null} source="Hekim Verileri" accent="ratio" subtitle="(MHRS / TOPLAM)" isEmpty={!isPeriodSelected || stats.totalExamsCount === 0} />
+        <KpiCard title="Planlanan Ameliyat Gün" value={isPeriodSelected ? stats.totalSurgeryDays : null} source="Detaylı Cetveller" accent="surgery" isEmpty={!isPeriodSelected} />
+        <KpiCard title="Toplam A+B+C Ameliyat" value={isPeriodSelected ? stats.totalAbcSurgeriesCount : null} source="Hekim Verileri" accent="surgery" isEmpty={!isPeriodSelected} isWarning={isPeriodSelected && !stats.hasAmeliyat} warningText="Eksik Veri" />
+        <KpiCard title="Ameliyat Cetvel Verimi" value={isPeriodSelected ? avgHoursPerSurgery.toFixed(2).replace('.', ',') : null} source="Cetvel + Hekim Verileri" accent="surgery" subtitle="SAAT / AMELİYAT" isEmpty={!isPeriodSelected || stats.totalAbcSurgeriesCount === 0} />
       </div>
 
       <div className="bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
           <div><h3 className="text-xl font-black text-slate-900 uppercase">KAPASİTE KULLANIM GRAFİĞİ</h3><p className="text-[10px] font-bold text-slate-400 uppercase">Hekim bazında kapasite ve muayene karşılaştırması</p></div>
-          {isPeriodConfirmed && <LocalFilters value={chartBranchFilter} onChange={setChartBranchFilter} limit={viewLimit} onLimitChange={setViewLimit} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} branches={availableBranches} />}
+          {isPeriodSelected && <LocalFilters value={chartBranchFilter} onChange={setChartBranchFilter} limit={viewLimit} onLimitChange={setViewLimit} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} branches={availableBranches} />}
         </div>
-        {!isPeriodConfirmed ? <EmptyState /> : <CapacityUsageChart data={paginatedChartData} onClick={handleBarClick} />}
+        {!isPeriodSelected ? <EmptyState /> : <CapacityUsageChart data={paginatedChartData} onClick={handleBarClick} />}
       </div>
 
       <div className="bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
           <div><h3 className="text-xl font-black text-slate-900 uppercase">CERRAHİ VERİMLİLİK GRAFİĞİ</h3><p className="text-[10px] font-bold text-slate-400 uppercase">Planlanan ameliyat günleri ve gerçekleşen vaka sayısı</p></div>
-          {isPeriodConfirmed && <LocalFilters value={surgBranchFilter} onChange={setSurgBranchFilter} limit={surgViewLimit} onLimitChange={setSurgViewLimit} currentPage={surgCurrentPage} totalPages={totalSurgPages} onPageChange={setSurgCurrentPage} branches={eligibleSurgicalBranches} />}
+          {isPeriodSelected && <LocalFilters value={surgBranchFilter} onChange={setSurgBranchFilter} limit={surgViewLimit} onLimitChange={setSurgViewLimit} currentPage={surgCurrentPage} totalPages={totalSurgPages} onPageChange={setSurgCurrentPage} branches={eligibleSurgicalBranches} />}
         </div>
-        {!isPeriodConfirmed ? <EmptyState /> : <SurgicalEfficiencyChart data={paginatedSurgData} />}
+        {!isPeriodSelected ? <EmptyState /> : <SurgicalEfficiencyChart data={paginatedSurgData} />}
       </div>
 
       <div className="bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
           <div><h3 className="text-xl font-black text-slate-900 uppercase">AMELİYAT BAŞINA DÜŞEN CETVEL SÜRESİ</h3><p className="text-[10px] font-bold text-slate-400 uppercase">Vaka başına düşen ortalama cetvel saati</p></div>
-          {isPeriodConfirmed && <LocalFilters value={hoursBranchFilter} onChange={setHoursBranchFilter} limit={hoursViewLimit} onLimitChange={setHoursViewLimit} currentPage={hoursCurrentPage} totalPages={totalHoursPages} onPageChange={setHoursCurrentPage} branches={availableBranches} />}
+          {isPeriodSelected && <LocalFilters value={hoursBranchFilter} onChange={setHoursBranchFilter} limit={hoursViewLimit} onLimitChange={setHoursViewLimit} currentPage={hoursCurrentPage} totalPages={totalHoursPages} onPageChange={setHoursCurrentPage} branches={availableBranches} />}
         </div>
-        {!isPeriodConfirmed ? <EmptyState /> : <SurgHoursChart data={paginatedHoursData} />}
+        {!isPeriodSelected ? <EmptyState /> : <SurgHoursChart data={paginatedHoursData} />}
       </div>
 
       {isDetailModalOpen && (
