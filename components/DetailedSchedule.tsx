@@ -6,7 +6,7 @@ import { MONTHS, YEARS } from '../constants';
 interface DetailedScheduleProps {
   data: DetailedScheduleData[];
   selectedBranch: string | null;
-  onImportExcel: (files: FileList | null) => void;
+  onImportExcel: (files: FileList | null, hospital?: string, month?: string, year?: number) => void;
   onDelete: (id: string) => void;
   onClearAll: () => void;
   onRemoveMonth: (month: string, year: number) => void; // New Granular removal
@@ -30,6 +30,12 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
   const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'summary'>('summary');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [pendingFile, setPendingFile] = useState<FileList | null>(null);
+  const [uploadHospital, setUploadHospital] = useState(selectedHospital);
+  const [uploadMonth, setUploadMonth] = useState(selectedMonth);
+  const [uploadYear, setUploadYear] = useState(selectedYear);
+  const [lastUploadTarget, setLastUploadTarget] = useState<{hospital: string, month: string, year: number} | null>(null);
 
   // Derive loaded months from memory
   const loadedPeriods = useMemo(() => {
@@ -52,6 +58,21 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
       }
     }
   }, [data, loadedPeriods]);
+
+  // Yükleme sonrası hedef döneme otomatik geçiş
+  useEffect(() => {
+    if (lastUploadTarget && data.length > 0) {
+      const { hospital, month, year } = lastUploadTarget;
+      // Eğer yükleme yapılan hastane şu anki seçili hastane değilse, hastaneyi değiştir
+      if (hospital !== selectedHospital) {
+        onHospitalChange(hospital);
+      }
+      // Ay ve yılı güncelle
+      setSelectedMonth(month);
+      setSelectedYear(year);
+      setLastUploadTarget(null);
+    }
+  }, [data, lastUploadTarget, selectedHospital, onHospitalChange]);
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
@@ -153,7 +174,16 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
           <label className="inline-flex items-center gap-3 bg-blue-600 text-white px-10 py-5 rounded-3xl font-black shadow-xl hover:bg-blue-700 cursor-pointer transition-all active:scale-95">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
             İLK DOSYAYI YÜKLE
-            <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => { onImportExcel(e.target.files); e.target.value = ''; }} />
+            <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => {
+              if (e.target.files?.length) {
+                setPendingFile(e.target.files);
+                setUploadHospital(selectedHospital);
+                setUploadMonth(selectedMonth);
+                setUploadYear(selectedYear);
+                setShowUploadModal(true);
+                e.target.value = '';
+              }
+            }} />
           </label>
         </div>
       </div>
@@ -182,7 +212,16 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
              <label className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-2.5 rounded-2xl text-[10px] font-black cursor-pointer hover:bg-emerald-700 transition-all uppercase tracking-widest shadow-lg shadow-emerald-900/40 active:scale-95">
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
                EK AY/DOSYA YÜKLE
-               <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => { onImportExcel(e.target.files); e.target.value = ''; }} />
+               <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => {
+                 if (e.target.files?.length) {
+                   setPendingFile(e.target.files);
+                   setUploadHospital(selectedHospital);
+                   setUploadMonth(selectedMonth);
+                   setUploadYear(selectedYear);
+                   setShowUploadModal(true);
+                   e.target.value = '';
+                 }
+               }} />
              </label>
            </div>
         </div>
@@ -310,6 +349,92 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Confirmation Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 max-w-2xl w-full mx-4 animate-in zoom-in duration-200">
+            <div className="p-10 space-y-8">
+              <div className="flex items-start gap-6">
+                <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Excel Yükleme Onayı</h3>
+                  <p className="text-slate-500 text-sm font-bold leading-relaxed">
+                    Yüklemek üzere olduğunuz Excel dosyasının hangi hastane, yıl ve aya ait olduğunu doğrulayın.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
+                  <select
+                    value={uploadHospital}
+                    onChange={(e) => setUploadHospital(e.target.value)}
+                    className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-black text-slate-900 outline-none focus:ring-2 ring-blue-500 transition-all"
+                  >
+                    {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
+                    <select
+                      value={uploadYear}
+                      onChange={(e) => setUploadYear(Number(e.target.value))}
+                      className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-black text-slate-900 outline-none focus:ring-2 ring-blue-500 transition-all"
+                    >
+                      {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
+                    <select
+                      value={uploadMonth}
+                      onChange={(e) => setUploadMonth(e.target.value)}
+                      className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-black text-slate-900 outline-none focus:ring-2 ring-blue-500 transition-all"
+                    >
+                      {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 justify-end">
+                <button
+                  onClick={() => {
+                    setPendingFile(null);
+                    setShowUploadModal(false);
+                  }}
+                  className="px-8 py-4 bg-slate-100 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={() => {
+                    if (pendingFile) {
+                      // Yükleme hedefini kaydet
+                      setLastUploadTarget({ hospital: uploadHospital, month: uploadMonth, year: uploadYear });
+                      onImportExcel(pendingFile, uploadHospital, uploadMonth, uploadYear);
+                      setPendingFile(null);
+                      setShowUploadModal(false);
+                    }
+                  }}
+                  className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                >
+                  Yükle
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
