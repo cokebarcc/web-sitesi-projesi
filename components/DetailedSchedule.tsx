@@ -14,6 +14,8 @@ interface DetailedScheduleProps {
   selectedHospital: string;
   allowedHospitals: string[];
   onHospitalChange: (hospital: string) => void;
+  // Load data function
+  onLoadData: (hospital: string, month: string, year: number) => Promise<void>;
 }
 
 interface DoctorSummary {
@@ -25,7 +27,7 @@ const AM_WINDOW = { start: 8 * 60, end: 12 * 60 };
 const PM_WINDOW = { start: 13 * 60, end: 17 * 60 };
 const MIN_SESSION_THRESHOLD = 30;
 
-const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth, selectedHospital, allowedHospitals, onHospitalChange }) => {
+const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth, selectedHospital, allowedHospitals, onHospitalChange, onLoadData }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>(''); // Boş başlangıç
   const [selectedYear, setSelectedYear] = useState<number>(0); // Boş başlangıç
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +36,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
   const [uploadMonth, setUploadMonth] = useState('');
   const [uploadYear, setUploadYear] = useState(0);
   const [lastUploadTarget, setLastUploadTarget] = useState<{hospital: string, month: string, year: number} | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Derive loaded months from memory
   const loadedPeriods = useMemo(() => {
@@ -224,6 +227,25 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
           <button onClick={() => setViewMode('summary')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'summary' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Aylık Özet</button>
           <button onClick={() => setViewMode('list')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Detaylı Satırlar</button>
         </div>
+        <button
+          onClick={async () => {
+            if (!selectedHospital || !selectedMonth || !selectedYear) {
+              alert('Lütfen hastane, ay ve yıl seçiniz!');
+              return;
+            }
+            setIsLoading(true);
+            try {
+              await onLoadData(selectedHospital, selectedMonth, selectedYear);
+            } finally {
+              setIsLoading(false);
+            }
+          }}
+          disabled={isLoading || !selectedHospital || !selectedMonth || !selectedYear}
+          className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-green-700 transition-all uppercase tracking-widest shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+          {isLoading ? 'YÜKLENIYOR...' : 'UYGULA'}
+        </button>
         <label className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl text-xs font-black cursor-pointer hover:bg-blue-700 transition-all uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           DOSYA YÜKLE

@@ -97,17 +97,22 @@ export async function uploadDetailedScheduleFile(
 /**
  * Get all detailed schedule files metadata from Firestore
  * @param hospital Optional hospital filter
+ * @param month Optional month filter
+ * @param year Optional year filter
  */
-export async function getDetailedScheduleFiles(hospital?: string): Promise<DetailedScheduleFile[]> {
+export async function getDetailedScheduleFiles(hospital?: string, month?: string, year?: number): Promise<DetailedScheduleFile[]> {
   try {
     let querySnapshot;
+    const constraints = [];
 
-    if (hospital) {
-      // Sadece belirli hastaneye ait dosyaları getir
-      const q = query(collection(db, 'detailedScheduleFiles'), where('hospital', '==', hospital));
+    if (hospital) constraints.push(where('hospital', '==', hospital));
+    if (month) constraints.push(where('month', '==', month));
+    if (year) constraints.push(where('year', '==', year));
+
+    if (constraints.length > 0) {
+      const q = query(collection(db, 'detailedScheduleFiles'), ...constraints);
       querySnapshot = await getDocs(q);
     } else {
-      // Tüm dosyaları getir
       querySnapshot = await getDocs(collection(db, 'detailedScheduleFiles'));
     }
 
@@ -272,14 +277,22 @@ export async function deleteDetailedScheduleFile(fileId: string): Promise<boolea
 
 /**
  * Load all detailed schedule data from all files
- * @param hospital Optional hospital filter - only load files from specific hospital
+ * @param hospital Optional hospital filter
+ * @param month Optional month filter
+ * @param year Optional year filter
  */
-export async function loadAllDetailedScheduleData(hospital?: string): Promise<DetailedScheduleData[]> {
+export async function loadAllDetailedScheduleData(hospital?: string, month?: string, year?: number): Promise<DetailedScheduleData[]> {
   try {
-    const files = await getDetailedScheduleFiles(hospital);
+    const files = await getDetailedScheduleFiles(hospital, month, year);
     const allData: DetailedScheduleData[] = [];
 
-    console.log(`📦 ${files.length} dosya yüklenecek...` + (hospital ? ` (Hastane: ${hospital})` : ''));
+    const filterDesc = [
+      hospital && `Hastane: ${hospital}`,
+      month && `Ay: ${month}`,
+      year && `Yıl: ${year}`
+    ].filter(Boolean).join(', ') || 'Tümü';
+
+    console.log(`📦 ${files.length} dosya yüklenecek... (${filterDesc})`);
 
     for (const file of files) {
       const data = await loadDetailedScheduleData(file.fileUrl, file.hospital, file.month, file.year);

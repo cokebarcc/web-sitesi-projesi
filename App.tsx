@@ -203,30 +203,7 @@ const App: React.FC = () => {
     loadFromLocalStorage('presentationSlides', [])
   );
 
-  // Load detailedScheduleData from Firebase Storage when hospital is selected
-  useEffect(() => {
-    // Sadece giriş yapılmış ve hastane seçiliyse veri yükle
-    if (!user || !selectedHospital) {
-      setDetailedScheduleData([]);
-      setIsDataLoaded(true);
-      return;
-    }
-
-    const loadData = async () => {
-      try {
-        console.log(`📂 Firebase Storage'dan veri yükleniyor... (Hastane: ${selectedHospital})`);
-        const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
-        const records = await loadAllDetailedScheduleData(selectedHospital);
-        console.log(`✅ ${records.length} kayıt yüklendi`);
-        setDetailedScheduleData(records);
-        setIsDataLoaded(true);
-      } catch (error) {
-        console.error('❌ Veri yükleme hatası:', error);
-        setIsDataLoaded(true);
-      }
-    };
-    loadData();
-  }, [user, selectedHospital]);
+  // Otomatik veri yükleme kaldırıldı - kullanıcı "Uygula" butonuna tıklayacak
 
   // Firebase Authentication Listener
   useEffect(() => {
@@ -423,9 +400,9 @@ const App: React.FC = () => {
       if (result.success) {
         showToast(`✅ Dosya yüklendi: ${result.recordCount} kayıt`, 'success');
 
-        // Reload data for selected hospital
+        // Reload data with same filters (hospital, month, year)
         console.log('🔄 Veriler yeniden yükleniyor...');
-        const allData = await loadAllDetailedScheduleData(selectedHospital);
+        const allData = await loadAllDetailedScheduleData(targetHospital, targetMonth, targetYear);
         setDetailedScheduleData(allData);
         console.log(`✅ Toplam ${allData.length} kayıt yüklendi`);
       } else {
@@ -434,6 +411,26 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('❌ Dosya yükleme hatası:', error);
       showToast("Dosya yükleme hatası.", "error");
+    } finally {
+      setIsLoading(false);
+      setLoadingText('Veriler Güncelleniyor...');
+    }
+  };
+
+  const handleLoadDetailedScheduleData = async (hospital: string, month: string, year: number) => {
+    setIsLoading(true);
+    setLoadingText(`${hospital} - ${month} ${year} verileri yükleniyor...`);
+
+    try {
+      console.log(`📂 Veri yükleniyor: ${hospital} ${month} ${year}`);
+      const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
+      const records = await loadAllDetailedScheduleData(hospital, month, year);
+      setDetailedScheduleData(records);
+      console.log(`✅ ${records.length} kayıt yüklendi`);
+      showToast(`✅ ${records.length} kayıt yüklendi`, 'success');
+    } catch (error) {
+      console.error('❌ Veri yükleme hatası:', error);
+      showToast("Veri yükleme hatası.", "error");
     } finally {
       setIsLoading(false);
       setLoadingText('Veriler Güncelleniyor...');
@@ -562,6 +559,7 @@ const App: React.FC = () => {
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
+                  onLoadData={handleLoadDetailedScheduleData}
                 />
               );
 
