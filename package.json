@@ -11,6 +11,7 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "dexie": "^4.2.1",
     "firebase": "^12.7.0",
     "html2canvas": "1.4.1",
     "jspdf": "2.5.1",

@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { db as indexedDB } from './src/db';
 import {
   ViewType,
   AppointmentData,
@@ -146,7 +147,7 @@ const App: React.FC = () => {
   const [departments, setDepartments] = useState<string[]>(HOSPITAL_DEPARTMENTS[selectedHospital] || DEPARTMENTS);
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>(MOCK_DATA.filter(d => d.hospital === selectedHospital));
   const [hbysData, setHbysData] = useState<HBYSData[]>([]);
-  // Load data from localStorage on mount
+  // Load data from localStorage on mount (for non-detailedSchedule data)
   const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     try {
       const stored = localStorage.getItem(key);
@@ -156,9 +157,7 @@ const App: React.FC = () => {
     }
   };
 
-  const [detailedScheduleData, setDetailedScheduleData] = useState<DetailedScheduleData[]>(() =>
-    loadFromLocalStorage('detailedScheduleData', [])
-  );
+  const [detailedScheduleData, setDetailedScheduleData] = useState<DetailedScheduleData[]>([]);
   const [sutServiceData, setSutServiceData] = useState<SUTServiceData[]>(() =>
     loadFromLocalStorage('sutServiceData', [])
   );
@@ -204,6 +203,21 @@ const App: React.FC = () => {
     loadFromLocalStorage('presentationSlides', [])
   );
 
+  // Load detailedScheduleData from IndexedDB on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        console.log('📂 IndexedDB\'den veri yükleniyor...');
+        const records = await indexedDB.detailedSchedule.toArray();
+        console.log(`✅ ${records.length} kayıt IndexedDB\'den yüklendi`);
+        setDetailedScheduleData(records as DetailedScheduleData[]);
+      } catch (error) {
+        console.error('❌ IndexedDB yükleme hatası:', error);
+      }
+    };
+    loadData();
+  }, []);
+
   // Firebase Authentication Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -215,6 +229,7 @@ const App: React.FC = () => {
   }, []);
 
   // Firebase Data Sync - Load data from Firestore when user logs in
+  // Note: detailedScheduleData is loaded from IndexedDB, not Firestore
   useEffect(() => {
     if (!user) return;
 
@@ -223,7 +238,7 @@ const App: React.FC = () => {
     const unsubscribe = onSnapshot(dataRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        if (data.detailedScheduleData) setDetailedScheduleData(data.detailedScheduleData);
+        // detailedScheduleData excluded - loaded from IndexedDB instead
         if (data.muayeneByPeriod) setMuayeneByPeriod(data.muayeneByPeriod);
         if (data.ameliyatByPeriod) setAmeliyatByPeriod(data.ameliyatByPeriod);
         if (data.muayeneMetaByPeriod) setMuayeneMetaByPeriod(data.muayeneMetaByPeriod);
@@ -238,13 +253,14 @@ const App: React.FC = () => {
   }, [user]);
 
   // Save data to Firestore whenever it changes (debounced)
+  // Note: detailedScheduleData is stored in IndexedDB, not Firestore, due to size limits
   useEffect(() => {
     if (!user) return;
 
     const timer = setTimeout(async () => {
       try {
         const dataToSave = {
-          detailedScheduleData,
+          // detailedScheduleData excluded - stored in IndexedDB instead
           muayeneByPeriod,
           ameliyatByPeriod,
           muayeneMetaByPeriod,
@@ -260,44 +276,45 @@ const App: React.FC = () => {
         const maxSize = 1048576; // 1MB in bytes
 
         if (dataSize > maxSize) {
-          console.warn(`⚠️ Veri boyutu çok büyük (${(dataSize / 1024 / 1024).toFixed(2)} MB), Firestore'a kaydedilemiyor. LocalStorage kullanılıyor.`);
+          console.warn(`⚠️ Veri boyutu çok büyük (${(dataSize / 1024 / 1024).toFixed(2)} MB), Firestore'a kaydedilemiyor.`);
           return;
         }
 
         const dataRef = doc(db, 'appData', 'mainData');
         await setDoc(dataRef, dataToSave, { merge: true });
-        console.log('✅ Veriler Firestore\'a kaydedildi');
+        console.log('✅ Veriler Firestore\'a kaydedildi (detailedScheduleData hariç - IndexedDB\'de)');
       } catch (error) {
         console.error('Error saving to Firestore:', error);
       }
     }, 1000); // 1 second debounce
 
     return () => clearTimeout(timer);
-  }, [user, detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides]);
+  }, [user, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides]);
 
-  // Save data to localStorage whenever it changes (backup)
+  // Save data to IndexedDB whenever it changes
   useEffect(() => {
-    try {
-      const dataStr = JSON.stringify(detailedScheduleData);
-      const dataSize = new Blob([dataStr]).size;
-      console.log(`💾 LocalStorage'a kaydediliyor: ${detailedScheduleData.length} kayıt, ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
+    const saveData = async () => {
+      try {
+        const dataSize = new Blob([JSON.stringify(detailedScheduleData)]).size;
+        console.log(`💾 IndexedDB'ye kaydediliyor: ${detailedScheduleData.length} kayıt, ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
 
-      localStorage.setItem('detailedScheduleData', dataStr);
-      console.log('✅ LocalStorage kaydı başarılı');
-    } catch (error) {
-      console.error('❌ LocalStorage kaydı başarısız:', error);
-      // LocalStorage dolu olabilir, eski verileri temizle
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        console.warn('⚠️ LocalStorage dolu! Eski veriler temizleniyor...');
-        localStorage.clear();
-        try {
-          localStorage.setItem('detailedScheduleData', JSON.stringify(detailedScheduleData));
-          console.log('✅ Temizlik sonrası kayıt başarılı');
-        } catch (e) {
-          console.error('❌ Temizlik sonrası da başarısız, veri çok büyük olabilir');
+        // Clear existing data and add new data
+        await indexedDB.detailedSchedule.clear();
+        if (detailedScheduleData.length > 0) {
+          await indexedDB.detailedSchedule.bulkAdd(detailedScheduleData);
         }
+        console.log('✅ IndexedDB kaydı başarılı');
+      } catch (error) {
+        console.error('❌ IndexedDB kaydı başarısız:', error);
       }
-    }
+    };
+
+    // Debounce to avoid saving on every keystroke
+    const timer = setTimeout(() => {
+      saveData();
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [detailedScheduleData]);
 
   useEffect(() => {
