@@ -47,7 +47,7 @@ const App: React.FC = () => {
 
   const [view, setView] = useState<ViewType>('dashboard');
   const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | null>(null);
-  const [selectedHospital, setSelectedHospital] = useState<string>(HOSPITALS[0]);
+  const [selectedHospital, setSelectedHospital] = useState<string>(''); // Boş başlangıç - kullanıcı seçecek
 
   // Her modül için ayrı filtreleme state'i
   const [branchFilters, setBranchFilters] = useState<Record<ViewType, string | null>>({
@@ -203,8 +203,15 @@ const App: React.FC = () => {
     loadFromLocalStorage('presentationSlides', [])
   );
 
-  // Load detailedScheduleData from Firebase Storage on mount and when hospital changes
+  // Load detailedScheduleData from Firebase Storage when hospital is selected
   useEffect(() => {
+    // Sadece hastane seçiliyse veri yükle
+    if (!selectedHospital) {
+      setDetailedScheduleData([]);
+      setIsDataLoaded(true);
+      return;
+    }
+
     const loadData = async () => {
       try {
         console.log(`📂 Firebase Storage'dan veri yükleniyor... (Hastane: ${selectedHospital})`);

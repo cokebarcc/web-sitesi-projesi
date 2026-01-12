@@ -26,13 +26,13 @@ const PM_WINDOW = { start: 13 * 60, end: 17 * 60 };
 const MIN_SESSION_THRESHOLD = 30;
 
 const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth, selectedHospital, allowedHospitals, onHospitalChange }) => {
-  const [selectedMonth, setSelectedMonth] = useState<string>('Aralık');
-  const [selectedYear, setSelectedYear] = useState<number>(2025);
+  const [selectedMonth, setSelectedMonth] = useState<string>(''); // Boş başlangıç
+  const [selectedYear, setSelectedYear] = useState<number>(0); // Boş başlangıç
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'summary'>('summary');
   const [uploadHospital, setUploadHospital] = useState(selectedHospital);
-  const [uploadMonth, setUploadMonth] = useState(selectedMonth);
-  const [uploadYear, setUploadYear] = useState(selectedYear);
+  const [uploadMonth, setUploadMonth] = useState('Aralık'); // Upload için default
+  const [uploadYear, setUploadYear] = useState(2025); // Upload için default
   const [lastUploadTarget, setLastUploadTarget] = useState<{hospital: string, month: string, year: number} | null>(null);
 
   // Derive loaded months from memory
@@ -47,15 +47,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
     }).sort((a, b) => b.year - a.year || MONTHS.indexOf(b.month) - MONTHS.indexOf(a.month));
   }, [data]);
 
-  useEffect(() => {
-    if (data.length > 0 && !loadedPeriods.some(p => p.month === selectedMonth && p.year === selectedYear)) {
-      const latest = loadedPeriods[0];
-      if (latest) {
-        setSelectedMonth(latest.month);
-        setSelectedYear(latest.year);
-      }
-    }
-  }, [data, loadedPeriods]);
+  // Otomatik dönem seçimi kaldırıldı - kullanıcı manuel seçecek
 
   // Yükleme sonrası hedef döneme otomatik geçiş
   useEffect(() => {
@@ -75,16 +67,16 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
   const filteredData = useMemo(() => {
     const filtered = data.filter(item => {
       const branchMatch = !selectedBranch || item.specialty === selectedBranch;
-      const monthMatch = item.month === selectedMonth;
-      const yearMatch = item.year === selectedYear;
+      const monthMatch = !selectedMonth || item.month === selectedMonth; // Boşsa filtreleme yapma
+      const yearMatch = !selectedYear || item.year === selectedYear; // Boşsa filtreleme yapma
       const searchMatch = !searchTerm || item.doctorName.toLocaleLowerCase('tr-TR').includes(searchTerm.toLocaleLowerCase('tr-TR'));
       return branchMatch && monthMatch && yearMatch && searchMatch;
     });
 
     console.log('📋 DetailedSchedule filtreleme:', {
       totalData: data.length,
-      selectedMonth,
-      selectedYear,
+      selectedMonth: selectedMonth || 'Boş',
+      selectedYear: selectedYear || 'Boş',
       filteredCount: filtered.length,
       sampleMonths: [...new Set(data.slice(0, 10).map(d => d.month))],
       sampleYears: [...new Set(data.slice(0, 10).map(d => d.year))]
