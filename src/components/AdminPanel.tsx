@@ -142,6 +142,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
     }
   };
 
+  const handleClearPhysicianData = async () => {
+    if (!window.confirm('⚠️ UYARI: Tüm hekim muayene ve ameliyat verileri silinecek! Bu işlem geri alınamaz. Devam etmek istiyor musunuz?')) return;
+
+    if (!window.confirm('Son kez soruyorum: Firestore\'daki TÜM hekim verilerini silmek istediğinize emin misiniz?')) return;
+
+    try {
+      setError('');
+      setSuccess('Hekim verileri temizleniyor...');
+
+      const dataRef = doc(db, 'appData', 'mainData');
+
+      // Clear physician data fields
+      await setDoc(dataRef, {
+        muayeneByPeriod: {},
+        ameliyatByPeriod: {},
+        muayeneMetaByPeriod: {},
+        ameliyatMetaByPeriod: {},
+        lastUpdated: new Date().toISOString()
+      }, { merge: true });
+
+      setSuccess('✅ Tüm hekim verileri başarıyla temizlendi! Sayfayı yenileyin.');
+      console.log('✅ Hekim verileri Firestore\'dan temizlendi');
+    } catch (err: any) {
+      setError('❌ Temizleme hatası: ' + (err.message || 'Bilinmeyen hata'));
+      console.error('❌ Temizleme hatası:', err);
+    }
+  };
+
   const startEdit = (user: AppUser) => {
     setEditingUser(user);
     setEmail(user.email);
@@ -186,9 +214,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
     <div className="admin-panel">
       <div className="admin-header">
         <h1>Kullanıcı Yönetimi</h1>
-        <button className="btn-add-user" onClick={() => setShowAddModal(true)}>
-          + Yeni Kullanıcı Ekle
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-add-user" onClick={() => setShowAddModal(true)}>
+            + Yeni Kullanıcı Ekle
+          </button>
+          <button
+            className="btn-delete"
+            onClick={handleClearPhysicianData}
+            style={{ backgroundColor: '#dc2626', color: 'white' }}
+          >
+            🗑️ Hekim Verilerini Temizle
+          </button>
+        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
