@@ -203,13 +203,13 @@ const App: React.FC = () => {
     loadFromLocalStorage('presentationSlides', [])
   );
 
-  // Load detailedScheduleData from Firebase Storage on mount
+  // Load detailedScheduleData from Firebase Storage on mount and when hospital changes
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log('📂 Firebase Storage\'dan veri yükleniyor...');
+        console.log(`📂 Firebase Storage'dan veri yükleniyor... (Hastane: ${selectedHospital})`);
         const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
-        const records = await loadAllDetailedScheduleData();
+        const records = await loadAllDetailedScheduleData(selectedHospital);
         console.log(`✅ ${records.length} kayıt yüklendi`);
         setDetailedScheduleData(records);
         setIsDataLoaded(true);
@@ -219,7 +219,7 @@ const App: React.FC = () => {
       }
     };
     loadData();
-  }, []);
+  }, [selectedHospital]);
 
   // Firebase Authentication Listener
   useEffect(() => {
@@ -416,9 +416,9 @@ const App: React.FC = () => {
       if (result.success) {
         showToast(`✅ Dosya yüklendi: ${result.recordCount} kayıt`, 'success');
 
-        // Reload all data from Storage
+        // Reload data for selected hospital
         console.log('🔄 Veriler yeniden yükleniyor...');
-        const allData = await loadAllDetailedScheduleData();
+        const allData = await loadAllDetailedScheduleData(selectedHospital);
         setDetailedScheduleData(allData);
         console.log(`✅ Toplam ${allData.length} kayıt yüklendi`);
       } else {

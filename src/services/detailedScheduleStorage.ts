@@ -96,10 +96,21 @@ export async function uploadDetailedScheduleFile(
 
 /**
  * Get all detailed schedule files metadata from Firestore
+ * @param hospital Optional hospital filter
  */
-export async function getDetailedScheduleFiles(): Promise<DetailedScheduleFile[]> {
+export async function getDetailedScheduleFiles(hospital?: string): Promise<DetailedScheduleFile[]> {
   try {
-    const querySnapshot = await getDocs(collection(db, 'detailedScheduleFiles'));
+    let querySnapshot;
+
+    if (hospital) {
+      // Sadece belirli hastaneye ait dosyaları getir
+      const q = query(collection(db, 'detailedScheduleFiles'), where('hospital', '==', hospital));
+      querySnapshot = await getDocs(q);
+    } else {
+      // Tüm dosyaları getir
+      querySnapshot = await getDocs(collection(db, 'detailedScheduleFiles'));
+    }
+
     const files: DetailedScheduleFile[] = [];
 
     querySnapshot.forEach((doc) => {
@@ -261,13 +272,14 @@ export async function deleteDetailedScheduleFile(fileId: string): Promise<boolea
 
 /**
  * Load all detailed schedule data from all files
+ * @param hospital Optional hospital filter - only load files from specific hospital
  */
-export async function loadAllDetailedScheduleData(): Promise<DetailedScheduleData[]> {
+export async function loadAllDetailedScheduleData(hospital?: string): Promise<DetailedScheduleData[]> {
   try {
-    const files = await getDetailedScheduleFiles();
+    const files = await getDetailedScheduleFiles(hospital);
     const allData: DetailedScheduleData[] = [];
 
-    console.log(`📦 ${files.length} dosya yüklenecek...`);
+    console.log(`📦 ${files.length} dosya yüklenecek...` + (hospital ? ` (Hastane: ${hospital})` : ''));
 
     for (const file of files) {
       const data = await loadDetailedScheduleData(file.fileUrl, file.hospital, file.month, file.year);
