@@ -28,8 +28,8 @@ interface PhysicianDataProps {
   selectedHospital: string;
   allowedHospitals: string[];
   onHospitalChange: (hospital: string) => void;
-  // DetailedSchedule senkronizasyonu için
-  onApplyFilters?: (hospital: string, year: number, month: string) => void;
+  // Load period data function
+  onLoadPeriodData: (hospital: string, year: number, month: string) => Promise<void>;
 }
 
 interface MergedPhysician {
@@ -59,7 +59,7 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   selectedHospital,
   allowedHospitals,
   onHospitalChange,
-  onApplyFilters
+  onLoadPeriodData
 }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -251,21 +251,23 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
                 </select>
               </div>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (selectedHospital && selectedYear > 0 && selectedMonth) {
-                    onApplyFilters?.(selectedHospital, selectedYear, selectedMonth);
-                    showToast(`${selectedHospital} - ${selectedMonth} ${selectedYear} filtreleri uygulandı`, 'success');
+                    await onLoadPeriodData(selectedHospital, selectedYear, selectedMonth);
                   } else {
                     showToast('Lütfen hastane, yıl ve ay seçin', 'warning');
                   }
                 }}
                 disabled={!selectedHospital || selectedYear === 0 || !selectedMonth}
-                className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
+                className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 ${
                   selectedHospital && selectedYear > 0 && selectedMonth
-                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 cursor-pointer'
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-xl hover:scale-105 cursor-pointer'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                </svg>
                 UYGULA
               </button>
             </div>

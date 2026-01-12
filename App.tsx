@@ -261,40 +261,75 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
-  // Auto-load all detailedScheduleData in background when user logs in
-  useEffect(() => {
-    if (!user || isDataLoaded) return;
+  // Cache for loaded data - only load once per hospital/year/month
+  const [loadedDataCache, setLoadedDataCache] = useState<Set<string>>(new Set());
 
-    console.log('🔄 Kullanıcı giriş yaptı, tüm veriler arkaplanda yükleniyor...');
+  // Function to load data for specific hospital/year/month
+  const handleLoadPeriodData = async (hospital: string, year: number, month: string) => {
+    const cacheKey = `${hospital}-${year}-${month}`;
 
-    const loadAllData = async () => {
-      try {
-        // Load detailedScheduleData
-        const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
-        const allData = await loadAllDetailedScheduleData();
-        setDetailedScheduleData(allData);
-        console.log(`✅ ${allData.length} detaylı cetvel kaydı yüklendi`);
+    // Check if already loaded
+    if (loadedDataCache.has(cacheKey)) {
+      console.log(`✅ Veriler zaten yüklü: ${cacheKey}`);
+      return;
+    }
 
-        // Load muayene and ameliyat data from Storage
-        const { loadAllMuayeneData, loadAllAmeliyatData } = await import('./src/services/physicianDataStorage');
+    setIsLoading(true);
+    setLoadingText(`${hospital} - ${month} ${year} verileri yükleniyor...`);
 
-        const muayeneData = await loadAllMuayeneData();
-        setMuayeneByPeriod(muayeneData);
-        console.log(`✅ ${Object.keys(muayeneData).length} dönem muayene verisi yüklendi`);
+    try {
+      console.log(`🔄 Veriler yükleniyor: ${hospital} - ${month} ${year}`);
 
-        const ameliyatData = await loadAllAmeliyatData();
-        setAmeliyatByPeriod(ameliyatData);
-        console.log(`✅ ${Object.keys(ameliyatData).length} dönem ameliyat verisi yüklendi`);
+      // Load detailed schedule data
+      const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
+      const scheduleData = await loadAllDetailedScheduleData(hospital, month, year);
+      setDetailedScheduleData(prev => {
+        // Remove old data for this period and add new
+        const filtered = prev.filter(d => !(d.hospital === hospital && d.month === month && d.year === year));
+        return [...filtered, ...scheduleData];
+      });
+      console.log(`✅ ${scheduleData.length} detaylı cetvel kaydı yüklendi`);
 
-        setIsDataLoaded(true);
-        console.log('✅ Tüm veriler başarıyla yüklendi');
-      } catch (error) {
-        console.error('❌ Arkaplanda veri yükleme hatası:', error);
+      // Load muayene and ameliyat data from Storage
+      const { loadAllMuayeneData, loadAllAmeliyatData } = await import('./src/services/physicianDataStorage');
+
+      const periodKey = `${year}-${month}`;
+
+      // Load muayene data for this period
+      const muayeneFiles = await import('./src/services/physicianDataStorage').then(m =>
+        m.getPhysicianDataFiles(hospital, month, year, 'muayene')
+      );
+
+      if (muayeneFiles.length > 0) {
+        const muayeneDataForPeriod = await loadAllMuayeneData();
+        setMuayeneByPeriod(prev => ({ ...prev, ...muayeneDataForPeriod }));
+        console.log(`✅ Muayene verisi yüklendi`);
       }
-    };
 
-    loadAllData();
-  }, [user, isDataLoaded]);
+      // Load ameliyat data for this period
+      const ameliyatFiles = await import('./src/services/physicianDataStorage').then(m =>
+        m.getPhysicianDataFiles(hospital, month, year, 'ameliyat')
+      );
+
+      if (ameliyatFiles.length > 0) {
+        const ameliyatDataForPeriod = await loadAllAmeliyatData();
+        setAmeliyatByPeriod(prev => ({ ...prev, ...ameliyatDataForPeriod }));
+        console.log(`✅ Ameliyat verisi yüklendi`);
+      }
+
+      // Mark as loaded
+      setLoadedDataCache(prev => new Set([...prev, cacheKey]));
+      console.log(`✅ Tüm veriler başarıyla yüklendi: ${cacheKey}`);
+
+      showToast(`${hospital} - ${month} ${year} verileri yüklendi`, 'success');
+    } catch (error) {
+      console.error('❌ Veri yükleme hatası:', error);
+      showToast('Veri yükleme hatası', 'error');
+    } finally {
+      setIsLoading(false);
+      setLoadingText('Veriler Güncelleniyor...');
+    }
+  };
 
   // Save data to Firestore whenever it changes (debounced)
   // detailedScheduleData excluded - stored in Firebase Storage
@@ -584,14 +619,7 @@ const App: React.FC = () => {
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
-                  onApplyFilters={async (hospital, year, month) => {
-                    // Önce Detaylı Cetveller modülü için veri yükle
-                    await handleLoadDetailedScheduleData(hospital, month, year);
-                    // Veri yüklendikten sonra filtreleri senkronize et
-                    setSelectedHospital(hospital);
-                    setMonthFilters(prev => ({ ...prev, 'detailed-schedule': month }));
-                    setYearFilters(prev => ({ ...prev, 'detailed-schedule': year }));
-                  }}
+                  onLoadPeriodData={handleLoadPeriodData}
                 />
               );
             case 'efficiency-analysis':

@@ -18,6 +18,10 @@ interface FilterPanelProps {
   selectedYear?: number;
   onYearChange?: (year: number) => void;
 
+  // Apply button callback
+  onApply?: () => void;
+  showApplyButton?: boolean;
+
   // Custom content slot
   customFilters?: React.ReactNode;
 
@@ -39,6 +43,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onMonthChange,
   selectedYear,
   onYearChange,
+  onApply,
+  showApplyButton = false,
   customFilters,
   showHospitalFilter = true,
   showBranchFilter = false,
@@ -139,6 +145,20 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           <div className="flex-1 min-w-full md:min-w-0">
             {customFilters}
           </div>
+        )}
+
+        {/* Apply Button */}
+        {showApplyButton && onApply && (
+          <button
+            onClick={onApply}
+            disabled={!selectedHospital || (!selectedYear && showYearFilter) || (!selectedMonth && showMonthFilter)}
+            className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all flex items-center gap-2 uppercase"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>UYGULA</span>
+          </button>
         )}
       </div>
     </div>
