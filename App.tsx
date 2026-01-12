@@ -299,13 +299,20 @@ const App: React.FC = () => {
         console.log(`💾 IndexedDB'ye kaydediliyor: ${detailedScheduleData.length} kayıt, ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
 
         // Clear existing data and add new data
+        // Use bulkPut instead of bulkAdd to overwrite existing records
         await indexedDB.detailedSchedule.clear();
         if (detailedScheduleData.length > 0) {
-          await indexedDB.detailedSchedule.bulkAdd(detailedScheduleData);
+          await indexedDB.detailedSchedule.bulkPut(detailedScheduleData);
         }
         console.log('✅ IndexedDB kaydı başarılı');
       } catch (error) {
         console.error('❌ IndexedDB kaydı başarısız:', error);
+        // Eğer şema uyumsuzluğu varsa, veritabanını sil ve yeniden oluştur
+        if (error instanceof Error && error.message.includes('schema')) {
+          console.log('🔄 Şema uyumsuzluğu tespit edildi, veritabanı yeniden oluşturuluyor...');
+          await indexedDB.delete();
+          window.location.reload();
+        }
       }
     };
 

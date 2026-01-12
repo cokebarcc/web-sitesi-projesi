@@ -1,7 +1,7 @@
 import Dexie, { Table } from 'dexie';
 
 export interface DetailedScheduleRecord {
-  id?: number;
+  id: string;
   hospital: string;
   month: string;
   year: number;
@@ -20,9 +20,21 @@ export class AppDatabase extends Dexie {
 
   constructor() {
     super('HealthDataDB');
+
+    // Version 1: Initial schema with auto-increment
     this.version(1).stores({
       detailedSchedule: '++id, hospital, month, year',
       muayene: '++id, period'
+    });
+
+    // Version 2: Use string ID from Excel data instead of auto-increment
+    this.version(2).stores({
+      detailedSchedule: 'id, hospital, month, year',
+      muayene: '++id, period'
+    }).upgrade(async tx => {
+      // Clear old data with auto-increment IDs when upgrading
+      await tx.table('detailedSchedule').clear();
+      console.log('🔄 IndexedDB schema upgraded to v2, old data cleared');
     });
   }
 }
