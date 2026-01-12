@@ -248,11 +248,11 @@ const App: React.FC = () => {
       if (snapshot.exists()) {
         const data = snapshot.data();
         // detailedScheduleData excluded - loaded from Storage
+        // scheduleVersions excluded - loaded from Storage (change-analysis)
         if (data.muayeneByPeriod) setMuayeneByPeriod(data.muayeneByPeriod);
         if (data.ameliyatByPeriod) setAmeliyatByPeriod(data.ameliyatByPeriod);
         if (data.muayeneMetaByPeriod) setMuayeneMetaByPeriod(data.muayeneMetaByPeriod);
         if (data.ameliyatMetaByPeriod) setAmeliyatMetaByPeriod(data.ameliyatMetaByPeriod);
-        if (data.scheduleVersions) setScheduleVersions(data.scheduleVersions);
         if (data.sutServiceData) setSutServiceData(data.sutServiceData);
         if (data.presentationSlides) setSlides(data.presentationSlides);
       }
@@ -338,11 +338,11 @@ const App: React.FC = () => {
       try {
         const dataToSave = {
           // detailedScheduleData excluded - stored in Storage
+          // scheduleVersions excluded - stored in Storage (change-analysis)
           muayeneByPeriod,
           ameliyatByPeriod,
           muayeneMetaByPeriod,
           ameliyatMetaByPeriod,
-          scheduleVersions,
           sutServiceData,
           presentationSlides: slides,
           lastUpdated: new Date().toISOString()
@@ -366,7 +366,7 @@ const App: React.FC = () => {
     }, 1000); // 1 second debounce
 
     return () => clearTimeout(timer);
-  }, [user, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, scheduleVersions, sutServiceData, slides]);
+  }, [user, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, sutServiceData, slides]);
 
   // IndexedDB removed - data now stored in Firestore for all users
 
