@@ -261,6 +261,28 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, [user]);
 
+  // Auto-load all detailedScheduleData in background when user logs in
+  useEffect(() => {
+    if (!user || isDataLoaded) return;
+
+    console.log('🔄 Kullanıcı giriş yaptı, tüm detaylı cetvel verileri arkaplanda yükleniyor...');
+
+    const loadAllData = async () => {
+      try {
+        const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
+        // Tüm verileri filtre olmadan yükle
+        const allData = await loadAllDetailedScheduleData();
+        setDetailedScheduleData(allData);
+        setIsDataLoaded(true);
+        console.log(`✅ Arkaplanda ${allData.length} detaylı cetvel kaydı yüklendi`);
+      } catch (error) {
+        console.error('❌ Arkaplanda veri yükleme hatası:', error);
+      }
+    };
+
+    loadAllData();
+  }, [user, isDataLoaded]);
+
   // Save data to Firestore whenever it changes (debounced)
   // detailedScheduleData excluded - stored in Firebase Storage
   useEffect(() => {
