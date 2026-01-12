@@ -158,104 +158,30 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
     return Array.from(actions).sort();
   }, [summaryData]);
 
-  if (data.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-8 animate-in fade-in duration-700">
-        <div className="bg-white p-12 rounded-[48px] border-2 border-dashed border-slate-200 text-center max-w-3xl shadow-sm w-full mx-4">
-          <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-            <svg className="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h3 className="text-3xl font-black text-slate-900 tracking-tight mb-4 uppercase">Detaylı Veri Yükleyin</h3>
-          <p className="text-slate-500 font-bold leading-relaxed mb-10 px-10">Birden fazla ayı hafızaya ekleyebilirsiniz. Her yeni yükleme mevcut verilerin üzerine eklenir.</p>
-
-          <div className="space-y-6 bg-slate-50 p-8 rounded-3xl border border-slate-200 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-left">HASTANE</label>
-                <select
-                  value={uploadHospital}
-                  onChange={(e) => setUploadHospital(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-black text-slate-900 outline-none focus:ring-2 ring-blue-500 transition-all"
-                >
-                  {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-left">YIL</label>
-                <select
-                  value={uploadYear}
-                  onChange={(e) => setUploadYear(Number(e.target.value))}
-                  className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-black text-slate-900 outline-none focus:ring-2 ring-blue-500 transition-all"
-                >
-                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 text-left">AY</label>
-                <select
-                  value={uploadMonth}
-                  onChange={(e) => setUploadMonth(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-black text-slate-900 outline-none focus:ring-2 ring-blue-500 transition-all"
-                >
-                  {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <label className="inline-flex items-center gap-3 bg-blue-600 text-white px-10 py-5 rounded-3xl font-black shadow-xl hover:bg-blue-700 cursor-pointer transition-all active:scale-95">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            DOSYA YÜKLE
-            <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => {
-              if (e.target.files?.length) {
-                setLastUploadTarget({ hospital: uploadHospital, month: uploadMonth, year: uploadYear });
-                onImportExcel(e.target.files, uploadHospital, uploadMonth, uploadYear);
-                e.target.value = '';
-              }
-            }} />
-          </label>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 pb-20">
       {/* Hafızadaki Dönemler Yönetim Alanı */}
-      <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -mr-32 -mt-32 blur-3xl opacity-50"></div>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
-           <div>
-             <h4 className="text-lg font-black uppercase tracking-tight">Hafızadaki Dönem Kayıtları</h4>
-             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Birden fazla ay hafızada biriktirilmiştir.</p>
-           </div>
-           <div className="flex flex-wrap gap-3">
-             {loadedPeriods.map(p => (
-               <div key={`${p.month}-${p.year}`} className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl border transition-all ${selectedMonth === p.month && selectedYear === p.year ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                  <button onClick={() => { setSelectedMonth(p.month); setSelectedYear(p.year); }} className="text-xs font-black uppercase tracking-widest">{p.month} {p.year}</button>
-                  <button onClick={() => { if(window.confirm(`${p.month} ${p.year} verisini sileyim mi?`)) onRemoveMonth(p.month, p.year); }} className="text-white/30 hover:text-rose-400 transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
-               </div>
-             ))}
-             <label className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-2.5 rounded-2xl text-[10px] font-black cursor-pointer hover:bg-emerald-700 transition-all uppercase tracking-widest shadow-lg shadow-emerald-900/40 active:scale-95">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-               EK AY/DOSYA YÜKLE
-               <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => {
-                 if (e.target.files?.length) {
-                   setLastUploadTarget({ hospital: selectedHospital, month: selectedMonth, year: selectedYear });
-                   onImportExcel(e.target.files, selectedHospital, selectedMonth, selectedYear);
-                   e.target.value = '';
-                 }
-               }} />
-             </label>
-           </div>
+      {data.length > 0 && (
+        <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -mr-32 -mt-32 blur-3xl opacity-50"></div>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
+             <div>
+               <h4 className="text-lg font-black uppercase tracking-tight">Hafızadaki Dönem Kayıtları</h4>
+               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Birden fazla ay hafızada biriktirilmiştir.</p>
+             </div>
+             <div className="flex flex-wrap gap-3">
+               {loadedPeriods.map(p => (
+                 <div key={`${p.month}-${p.year}`} className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl border transition-all ${selectedMonth === p.month && selectedYear === p.year ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/20' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                    <button onClick={() => { setSelectedMonth(p.month); setSelectedYear(p.year); }} className="text-xs font-black uppercase tracking-widest">{p.month} {p.year}</button>
+                    <button onClick={() => { if(window.confirm(`${p.month} ${p.year} verisini sileyim mi?`)) onRemoveMonth(p.month, p.year); }} className="text-white/30 hover:text-rose-400 transition-colors">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                 </div>
+               ))}
+             </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-1">
@@ -292,7 +218,20 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
           <button onClick={() => setViewMode('summary')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'summary' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Aylık Özet</button>
           <button onClick={() => setViewMode('list')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Detaylı Satırlar</button>
         </div>
-        <button onClick={() => { if(window.confirm("Tüm aylar hafızadan silinecek! Emin misiniz?")) onClearAll(); }} className="px-6 py-3 text-xs font-black text-rose-600 hover:bg-rose-50 rounded-2xl transition-all uppercase border border-rose-100">Belleği Boşalt</button>
+        <label className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl text-xs font-black cursor-pointer hover:bg-blue-700 transition-all uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          DOSYA YÜKLE
+          <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => {
+            if (e.target.files?.length) {
+              setLastUploadTarget({ hospital: selectedHospital, month: selectedMonth, year: selectedYear });
+              onImportExcel(e.target.files, selectedHospital, selectedMonth, selectedYear);
+              e.target.value = '';
+            }
+          }} />
+        </label>
+        {data.length > 0 && (
+          <button onClick={() => { if(window.confirm("Tüm aylar hafızadan silinecek! Emin misiniz?")) onClearAll(); }} className="px-6 py-3 text-xs font-black text-rose-600 hover:bg-rose-50 rounded-2xl transition-all uppercase border border-rose-100">Belleği Boşalt</button>
+        )}
       </div>
 
       {viewMode === 'summary' ? (
@@ -358,7 +297,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredData.slice(0, 1000).map((item) => (
+                {filteredData.length > 0 ? filteredData.slice(0, 1000).map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-8 py-4 font-bold text-slate-600 text-xs">{item.startDate}</td>
                     <td className="px-8 py-4 font-black text-slate-900 uppercase text-xs">{item.doctorName}</td>
@@ -366,7 +305,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                       <span className="text-[10px] font-black uppercase text-slate-500 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">{item.action}</span>
                     </td>
                     <td className="px-8 py-4 text-center text-xs font-bold text-slate-400">
-                      {item.startTime} - {item.endTime} 
+                      {item.startTime} - {item.endTime}
                       <span className="ml-2 text-indigo-500 font-black">({item.duration} dk)</span>
                     </td>
                     <td className="px-8 py-4 text-center"><span className="font-black text-slate-700 text-sm">{item.capacity || '-'}</span></td>
@@ -376,7 +315,11 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                       </button>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="px-10 py-32 text-center text-slate-300 uppercase font-black tracking-widest opacity-40">Seçili dönem için veri bulunamadı</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
