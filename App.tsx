@@ -277,7 +277,27 @@ const App: React.FC = () => {
 
   // Save data to localStorage whenever it changes (backup)
   useEffect(() => {
-    localStorage.setItem('detailedScheduleData', JSON.stringify(detailedScheduleData));
+    try {
+      const dataStr = JSON.stringify(detailedScheduleData);
+      const dataSize = new Blob([dataStr]).size;
+      console.log(`💾 LocalStorage'a kaydediliyor: ${detailedScheduleData.length} kayıt, ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
+
+      localStorage.setItem('detailedScheduleData', dataStr);
+      console.log('✅ LocalStorage kaydı başarılı');
+    } catch (error) {
+      console.error('❌ LocalStorage kaydı başarısız:', error);
+      // LocalStorage dolu olabilir, eski verileri temizle
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.warn('⚠️ LocalStorage dolu! Eski veriler temizleniyor...');
+        localStorage.clear();
+        try {
+          localStorage.setItem('detailedScheduleData', JSON.stringify(detailedScheduleData));
+          console.log('✅ Temizlik sonrası kayıt başarılı');
+        } catch (e) {
+          console.error('❌ Temizlik sonrası da başarısız, veri çok büyük olabilir');
+        }
+      }
+    }
   }, [detailedScheduleData]);
 
   useEffect(() => {
