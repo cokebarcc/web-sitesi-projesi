@@ -229,7 +229,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
             }
           }}
           disabled={isLoading || !selectedHospital || !selectedMonth || !selectedYear}
-          className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-green-700 transition-all uppercase tracking-widest shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed self-end"
+          className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-green-700 transition-all uppercase tracking-widest shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
           {isLoading ? 'YÜKLENIYOR...' : 'UYGULA'}
