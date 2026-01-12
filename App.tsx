@@ -79,7 +79,7 @@ const App: React.FC = () => {
     'detailed-schedule': currentMonth,
     'physician-data': '', // Boş başlangıç - kullanıcı seçecek
     'efficiency-analysis': currentMonth,
-    'change-analysis': currentMonth,
+    'change-analysis': '', // Boş başlangıç - kullanıcı seçecek
     'performance-planning': currentMonth,
     'data-entry': currentMonth,
     'ai-chatbot': currentMonth,
@@ -95,7 +95,7 @@ const App: React.FC = () => {
     'detailed-schedule': currentYear,
     'physician-data': 0, // Boş başlangıç - kullanıcı seçecek
     'efficiency-analysis': currentYear,
-    'change-analysis': currentYear,
+    'change-analysis': 0, // Boş başlangıç - kullanıcı seçecek
     'performance-planning': currentYear,
     'data-entry': currentYear,
     'ai-chatbot': currentYear,

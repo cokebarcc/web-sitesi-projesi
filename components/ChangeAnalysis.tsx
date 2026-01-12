@@ -300,8 +300,8 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       <div className="bg-white p-8 lg:p-12 rounded-[48px] shadow-xl border border-slate-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50 rounded-full -mr-40 -mt-40 blur-3xl opacity-60"></div>
         <div className="relative z-10 space-y-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-tight italic">CETVEL KIYASLAMA MERKEZİ</h2>
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-tight italic mb-6">CETVEL KIYASLAMA MERKEZİ</h2>
 
             {/* Filtreler: Hastane → Yıl → Ay */}
             <div className="flex flex-wrap gap-3 items-end">
@@ -310,8 +310,9 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                 <select
                   value={selectedHospital}
                   onChange={(e) => onHospitalChange(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase transition-colors hover:border-indigo-200 min-w-[240px]"
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 font-bold text-xs outline-none uppercase transition-colors hover:border-indigo-200"
                 >
+                  <option value="">Hastane Seçiniz</option>
                   {allowedHospitals.map(h => (
                     <option key={h} value={h}>{h}</option>
                   ))}
@@ -320,34 +321,36 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
-                <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-900 text-white rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase min-w-[100px]">
+                <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-900 text-white rounded-xl px-4 py-2 font-bold text-xs outline-none uppercase">
+                  <option value={0}>Yıl Seçiniz</option>
                   {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
 
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
-                <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 font-black text-xs outline-none uppercase transition-colors hover:border-indigo-200 min-w-[140px]">
+                <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 font-bold text-xs outline-none uppercase transition-colors hover:border-indigo-200">
+                  <option value="">Ay Seçiniz</option>
                   {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                 </select>
               </div>
             </div>
           </div>
 
-          {/* Cetvel Seçimleri Aşağıda */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Cetvel Seçimleri */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* İlk Cetvel (Başlangıç) */}
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">İLK CETVEL (BAŞLANGIÇ)</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">ESKİ SÜRÜM (BAŞLANGIÇ)</label>
               <div className="flex gap-2">
-                <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="flex-1 bg-white border-2 border-slate-200 rounded-2xl px-4 py-4 text-sm font-black shadow-sm outline-none focus:border-indigo-500 transition-all">
+                <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold shadow-sm outline-none focus:border-indigo-500 transition-all">
                   <option value="">Sürüm Seçiniz...</option>
                   {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
                 {isAdmin && baselineLabel && (
                   <button
                     onClick={() => handleDeleteVersion(baselineLabel)}
-                    className="p-4 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all border border-rose-200"
+                    className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
                     title="Sürümü Sil"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,16 +363,16 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
             {/* Güncel Cetvel (Kıyas) */}
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1">GÜNCEL CETVEL (KIYAS)</label>
+              <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1">YENİ SÜRÜM (KIYAS)</label>
               <div className="flex gap-2">
-                <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="flex-1 bg-white border-2 border-rose-100 rounded-2xl px-4 py-4 text-sm font-black text-rose-600 shadow-sm outline-none focus:border-rose-500 transition-all">
+                <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="flex-1 bg-white border border-rose-200 rounded-xl px-3 py-2 text-xs font-bold text-rose-600 shadow-sm outline-none focus:border-rose-500 transition-all">
                   <option value="">Sürüm Seçiniz...</option>
                   {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
                 {isAdmin && updatedLabel && (
                   <button
                     onClick={() => handleDeleteVersion(updatedLabel)}
-                    className="p-4 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all border border-rose-200"
+                    className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
                     title="Sürümü Sil"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,14 +384,20 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             </div>
           </div>
 
-          {/* Yeni Sürüm Yükle Butonu */}
+          {/* Sürüm Yükleme Butonları */}
           {isAdmin && (
-            <div className="flex justify-end">
-              <label htmlFor="versionUpload" className="bg-indigo-600 text-white px-8 py-4 rounded-3xl font-black text-xs shadow-2xl cursor-pointer hover:bg-indigo-700 active:scale-95 flex items-center gap-3 uppercase transition-all">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
+            <div className="flex flex-wrap gap-3 justify-end">
+              <label htmlFor="oldVersionUpload" className="bg-slate-700 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg cursor-pointer hover:bg-slate-800 active:scale-95 flex items-center gap-2 uppercase transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <span>ESKİ SÜRÜM YÜKLE</span>
+              </label>
+              <input id="oldVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
+
+              <label htmlFor="newVersionUpload" className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg cursor-pointer hover:bg-indigo-700 active:scale-95 flex items-center gap-2 uppercase transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                 <span>YENİ SÜRÜM YÜKLE</span>
               </label>
-              <input id="versionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
+              <input id="newVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
             </div>
           )}
         </div>
