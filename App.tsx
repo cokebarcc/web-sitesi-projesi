@@ -205,8 +205,8 @@ const App: React.FC = () => {
 
   // Load detailedScheduleData from Firebase Storage when hospital is selected
   useEffect(() => {
-    // Sadece hastane seçiliyse veri yükle
-    if (!selectedHospital) {
+    // Sadece giriş yapılmış ve hastane seçiliyse veri yükle
+    if (!user || !selectedHospital) {
       setDetailedScheduleData([]);
       setIsDataLoaded(true);
       return;
@@ -226,7 +226,7 @@ const App: React.FC = () => {
       }
     };
     loadData();
-  }, [selectedHospital]);
+  }, [user, selectedHospital]);
 
   // Firebase Authentication Listener
   useEffect(() => {

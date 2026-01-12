@@ -30,9 +30,9 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
   const [selectedYear, setSelectedYear] = useState<number>(0); // Boş başlangıç
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'summary'>('summary');
-  const [uploadHospital, setUploadHospital] = useState(selectedHospital);
-  const [uploadMonth, setUploadMonth] = useState('Aralık'); // Upload için default
-  const [uploadYear, setUploadYear] = useState(2025); // Upload için default
+  const [uploadHospital, setUploadHospital] = useState('');
+  const [uploadMonth, setUploadMonth] = useState('');
+  const [uploadYear, setUploadYear] = useState(0);
   const [lastUploadTarget, setLastUploadTarget] = useState<{hospital: string, month: string, year: number} | null>(null);
 
   // Derive loaded months from memory
