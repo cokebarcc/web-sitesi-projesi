@@ -186,8 +186,9 @@ export async function saveVersionAsJson(
     console.log('🚀 [CHANGE-ANALYSIS] JSON versiyon kaydediliyor...');
 
     const timestamp = Date.now();
-    const monthKey = `${year}-${month}`;
-    const storagePath = `change-analysis/${hospital}/${year}/${month}/${timestamp}_${versionData.label}.json`;
+    const monthKey = `${hospital}-${year}-${month}`;
+    const sanitizedFileName = versionData.label.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const storagePath = `change-analysis/${hospital}/${year}/${month}/${timestamp}_${sanitizedFileName}.json`;
 
     console.log('📁 [CHANGE-ANALYSIS] Yol:', storagePath);
 
