@@ -26,6 +26,8 @@ interface PhysicianDataProps {
   selectedHospital: string;
   allowedHospitals: string[];
   onHospitalChange: (hospital: string) => void;
+  // DetailedSchedule senkronizasyonu için
+  onApplyFilters?: (hospital: string, year: number, month: string) => void;
 }
 
 interface MergedPhysician {
@@ -54,16 +56,17 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   setSelectedYear,
   selectedHospital,
   allowedHospitals,
-  onHospitalChange
+  onHospitalChange,
+  onApplyFilters
 }) => {
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<keyof MergedPhysician>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
-  const periodKey = getPeriodKey(selectedYear, selectedMonth);
+  const periodKey = selectedYear > 0 && selectedMonth ? getPeriodKey(selectedYear, selectedMonth) : '';
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ message, type });
@@ -172,6 +175,9 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   };
 
   const rosterForPeriod = useMemo(() => {
+    // Filtreler boşsa boş array döndür
+    if (!selectedMonth || selectedYear === 0) return [];
+
     const physMap = new Map<string, { name: string; branch: string }>();
     data.filter(d => d.month === selectedMonth && d.year === selectedYear).forEach(item => {
       const name = item.doctorName.trim();
@@ -185,6 +191,8 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   }, [data, selectedMonth, selectedYear]);
 
   const mergedPhysicians = useMemo(() => {
+    if (!periodKey) return [];
+
     const muayeneData = muayeneByPeriod[periodKey] || {};
     const ameliyatData = ameliyatByPeriod[periodKey] || {};
 
@@ -256,18 +264,40 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
                 className="bg-slate-900 text-white rounded-2xl px-6 py-4 text-sm font-black outline-none transition-all cursor-pointer"
               >
+                <option value={0}>Yıl Seçin</option>
                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY</p>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer"
+            <div className="flex items-end gap-3">
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY</p>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer"
+                >
+                  <option value="">Ay Seçin</option>
+                  {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
+                </select>
+              </div>
+              <button
+                onClick={() => {
+                  if (selectedHospital && selectedYear > 0 && selectedMonth) {
+                    onApplyFilters?.(selectedHospital, selectedYear, selectedMonth);
+                    showToast(`${selectedHospital} - ${selectedMonth} ${selectedYear} filtreleri uygulandı`, 'success');
+                  } else {
+                    showToast('Lütfen hastane, yıl ve ay seçin', 'warning');
+                  }
+                }}
+                disabled={!selectedHospital || selectedYear === 0 || !selectedMonth}
+                className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
+                  selectedHospital && selectedYear > 0 && selectedMonth
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 cursor-pointer'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
               >
-                {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-              </select>
+                UYGULA
+              </button>
             </div>
             <div className="flex flex-col gap-2 flex-1 md:min-w-[300px]">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HEKİM / BRANŞ ARA</p>

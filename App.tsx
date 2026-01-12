@@ -72,7 +72,7 @@ const App: React.FC = () => {
 
   const [monthFilters, setMonthFilters] = useState<Record<ViewType, string>>({
     'detailed-schedule': currentMonth,
-    'physician-data': currentMonth,
+    'physician-data': '', // Boş başlangıç - kullanıcı seçecek
     'efficiency-analysis': currentMonth,
     'change-analysis': currentMonth,
     'performance-planning': currentMonth,
@@ -88,7 +88,7 @@ const App: React.FC = () => {
 
   const [yearFilters, setYearFilters] = useState<Record<ViewType, number>>({
     'detailed-schedule': currentYear,
-    'physician-data': currentYear,
+    'physician-data': 0, // Boş başlangıç - kullanıcı seçecek
     'efficiency-analysis': currentYear,
     'change-analysis': currentYear,
     'performance-planning': currentYear,
@@ -527,6 +527,12 @@ const App: React.FC = () => {
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
+                  onApplyFilters={(hospital, year, month) => {
+                    // Detaylı Cetveller modülü için filtreleri senkronize et
+                    setSelectedHospital(hospital);
+                    setMonthFilters(prev => ({ ...prev, 'detailed-schedule': month }));
+                    setYearFilters(prev => ({ ...prev, 'detailed-schedule': year }));
+                  }}
                 />
               );
             case 'efficiency-analysis':
