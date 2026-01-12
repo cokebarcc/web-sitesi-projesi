@@ -205,6 +205,15 @@ const App: React.FC = () => {
 
   // Otomatik veri yükleme kaldırıldı - kullanıcı "Uygula" butonuna tıklayacak
 
+  // Physician-data modülüne her geçişte filtreleri sıfırla
+  useEffect(() => {
+    if (view === 'physician-data') {
+      // İlk açılışta veya modüle geçişte filtreleri sıfırla
+      setMonthFilters(prev => ({ ...prev, 'physician-data': '' }));
+      setYearFilters(prev => ({ ...prev, 'physician-data': 0 }));
+    }
+  }, [view]);
+
   // Firebase Authentication Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -527,11 +536,13 @@ const App: React.FC = () => {
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
-                  onApplyFilters={(hospital, year, month) => {
+                  onApplyFilters={async (hospital, year, month) => {
                     // Detaylı Cetveller modülü için filtreleri senkronize et
                     setSelectedHospital(hospital);
                     setMonthFilters(prev => ({ ...prev, 'detailed-schedule': month }));
                     setYearFilters(prev => ({ ...prev, 'detailed-schedule': year }));
+                    // Detaylı Cetveller modülü için veri yükle
+                    await handleLoadDetailedScheduleData(hospital, month, year);
                   }}
                 />
               );
