@@ -215,18 +215,6 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
             {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
-        <div className="flex-1 min-w-[200px] flex flex-col gap-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HEKİM ARA</label>
-          <input 
-            type="text" placeholder="Hekim adı soyadı..." 
-            className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none focus:ring-2 ring-blue-500/20"
-            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-          <button onClick={() => setViewMode('summary')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'summary' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Aylık Özet</button>
-          <button onClick={() => setViewMode('list')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Detaylı Satırlar</button>
-        </div>
         <button
           onClick={async () => {
             if (!selectedHospital || !selectedMonth || !selectedYear) {
@@ -241,11 +229,23 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
             }
           }}
           disabled={isLoading || !selectedHospital || !selectedMonth || !selectedYear}
-          className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-green-700 transition-all uppercase tracking-widest shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-green-700 transition-all uppercase tracking-widest shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed self-end"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
           {isLoading ? 'YÜKLENIYOR...' : 'UYGULA'}
         </button>
+        <div className="flex-1 min-w-[200px] flex flex-col gap-1">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HEKİM ARA</label>
+          <input
+            type="text" placeholder="Hekim adı soyadı..."
+            className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-bold outline-none focus:ring-2 ring-blue-500/20"
+            value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+          <button onClick={() => setViewMode('summary')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'summary' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Aylık Özet</button>
+          <button onClick={() => setViewMode('list')} className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>Detaylı Satırlar</button>
+        </div>
         <label className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-2xl text-xs font-black cursor-pointer hover:bg-blue-700 transition-all uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           DOSYA YÜKLE
