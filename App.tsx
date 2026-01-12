@@ -389,9 +389,9 @@ const App: React.FC = () => {
     // Ay ve yıl filtrelerini de sıfırla
     setMonthFilters({
       'detailed-schedule': defaultMonth,
-      'physician-data': defaultMonth,
+      'physician-data': '', // Boş başlangıç
       'efficiency-analysis': defaultMonth,
-      'change-analysis': defaultMonth,
+      'change-analysis': '', // Boş başlangıç
       'performance-planning': defaultMonth,
       'data-entry': defaultMonth,
       'ai-chatbot': defaultMonth,
@@ -405,9 +405,9 @@ const App: React.FC = () => {
 
     setYearFilters({
       'detailed-schedule': defaultYear,
-      'physician-data': defaultYear,
+      'physician-data': 0, // Boş başlangıç
       'efficiency-analysis': defaultYear,
-      'change-analysis': defaultYear,
+      'change-analysis': 0, // Boş başlangıç
       'performance-planning': defaultYear,
       'data-entry': defaultYear,
       'ai-chatbot': defaultYear,
