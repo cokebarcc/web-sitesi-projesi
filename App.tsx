@@ -325,7 +325,7 @@ const App: React.FC = () => {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleImportDetailedExcel = async (files: FileList | null) => {
+  const handleImportDetailedExcel = async (files: FileList | null, targetHospital?: string, targetMonth?: string, targetYear?: number) => {
     if (!files?.length) return;
     setIsLoading(true);
     const file = files[0];
@@ -335,6 +335,11 @@ const App: React.FC = () => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellNF: true });
         const allNewDetailedData: DetailedScheduleData[] = [];
+
+        // Modal'dan gelen değerleri kullan, yoksa global state'i kullan
+        const hospitalToUse = targetHospital || selectedHospital;
+        const monthToUse = targetMonth;
+        const yearToUse = targetYear;
         
         workbook.SheetNames.forEach(sn => {
            const sheet = workbook.Sheets[sn];
@@ -359,10 +364,15 @@ const App: React.FC = () => {
                 else if (typeof rawDateVal === 'number') { dateObj = new Date(Math.round((rawDateVal - 25569) * 864e5)); dateObj.setHours(12, 0, 0, 0); }
                 if (dateObj && !isNaN(dateObj.getTime())) { m = MONTHS[dateObj.getMonth()]; y = dateObj.getFullYear(); const dd = String(dateObj.getDate()).padStart(2, '0'); const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); dateStr = `${dd}.${mm}.${y}`; }
              }
+
+             // Modal'dan ay/yıl seçilmişse, Excel'den gelen değerleri ezme
+             if (monthToUse) m = monthToUse;
+             if (yearToUse) y = yearToUse;
+
              const parseTimeToMinutes = (val: any) => { if (!val) return 0; if (val instanceof Date) return val.getHours() * 60 + val.getMinutes(); if (typeof val === 'number') return Math.round(val * 1440); const p = String(val).trim().split(':'); return p.length >= 2 ? parseInt(p[0])*60 + parseInt(p[1]) : 0; };
              const startMins = parseTimeToMinutes(startTimeRaw); const endMins = parseTimeToMinutes(endTimeRaw); let duration = endMins - startMins; if (duration < 0) duration += 1440;
              const formatTime = (mins: number) => `${String(Math.floor(mins/60)).padStart(2, '0')}:${String(mins%60).padStart(2, '0')}`;
-             allNewDetailedData.push({ id: `ds-${Date.now()}-${sn}-${idx}-${Math.random()}`, specialty: String(specialtyRaw || sn || 'Bilinmiyor').toUpperCase().trim(), doctorName: String(doctorNameRaw).trim().toUpperCase(), hospital: selectedHospital, startDate: dateStr, startTime: startTimeRaw ? (typeof startTimeRaw === 'string' ? startTimeRaw : formatTime(startMins)) : '', endDate: '', endTime: endTimeRaw ? (typeof endTimeRaw === 'string' ? endTimeRaw : formatTime(endMins)) : '', action: String(actionRaw || 'Belirsiz').trim(), slotCount: 0, duration: duration, capacity: parseFloat(String(capacityRaw).replace(/\./g, '').replace(',', '.')) || 0, month: m, year: y });
+             allNewDetailedData.push({ id: `ds-${Date.now()}-${sn}-${idx}-${Math.random()}`, specialty: String(specialtyRaw || sn || 'Bilinmiyor').toUpperCase().trim(), doctorName: String(doctorNameRaw).trim().toUpperCase(), hospital: hospitalToUse, startDate: dateStr, startTime: startTimeRaw ? (typeof startTimeRaw === 'string' ? startTimeRaw : formatTime(startMins)) : '', endDate: '', endTime: endTimeRaw ? (typeof endTimeRaw === 'string' ? endTimeRaw : formatTime(endMins)) : '', action: String(actionRaw || 'Belirsiz').trim(), slotCount: 0, duration: duration, capacity: parseFloat(String(capacityRaw).replace(/\./g, '').replace(',', '.')) || 0, month: m, year: y });
            });
         });
         if (allNewDetailedData.length > 0) { setDetailedScheduleData(prev => [...prev, ...allNewDetailedData]); showToast(`${allNewDetailedData.length} yeni kayıt mevcut listeye eklendi.`); }

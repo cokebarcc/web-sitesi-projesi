@@ -17,7 +17,8 @@
       "Bash(rm:*)",
       "Bash(gh workflow run:*)",
       "Bash(mkdir:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(ls:*)"
     ]
   }
 }
