@@ -12,7 +12,12 @@
       "Bash(npm install:*)",
       "Bash(gh repo view:*)",
       "Bash(git checkout:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run build:*)",
+      "Bash(rm:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(mkdir:*)",
+      "Bash(git reset:*)"
     ]
   }
 }
