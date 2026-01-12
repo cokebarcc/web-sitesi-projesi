@@ -424,7 +424,20 @@ const App: React.FC = () => {
              const parseTimeToMinutes = (val: any) => { if (!val) return 0; if (val instanceof Date) return val.getHours() * 60 + val.getMinutes(); if (typeof val === 'number') return Math.round(val * 1440); const p = String(val).trim().split(':'); return p.length >= 2 ? parseInt(p[0])*60 + parseInt(p[1]) : 0; };
              const startMins = parseTimeToMinutes(startTimeRaw); const endMins = parseTimeToMinutes(endTimeRaw); let duration = endMins - startMins; if (duration < 0) duration += 1440;
              const formatTime = (mins: number) => `${String(Math.floor(mins/60)).padStart(2, '0')}:${String(mins%60).padStart(2, '0')}`;
-             allNewDetailedData.push({ id: `ds-${Date.now()}-${sn}-${idx}-${Math.random()}`, specialty: String(specialtyRaw || sn || 'Bilinmiyor').toUpperCase().trim(), doctorName: String(doctorNameRaw).trim().toUpperCase(), hospital: hospitalToUse, startDate: dateStr, startTime: startTimeRaw ? (typeof startTimeRaw === 'string' ? startTimeRaw : formatTime(startMins)) : '', endDate: '', endTime: endTimeRaw ? (typeof endTimeRaw === 'string' ? endTimeRaw : formatTime(endMins)) : '', action: String(actionRaw || 'Belirsiz').trim(), slotCount: 0, duration: duration, capacity: parseFloat(String(capacityRaw).replace(/\./g, '').replace(',', '.')) || 0, month: m, year: y });
+
+             const newItem = { id: `ds-${Date.now()}-${sn}-${idx}-${Math.random()}`, specialty: String(specialtyRaw || sn || 'Bilinmiyor').toUpperCase().trim(), doctorName: String(doctorNameRaw).trim().toUpperCase(), hospital: hospitalToUse, startDate: dateStr, startTime: startTimeRaw ? (typeof startTimeRaw === 'string' ? startTimeRaw : formatTime(startMins)) : '', endDate: '', endTime: endTimeRaw ? (typeof endTimeRaw === 'string' ? endTimeRaw : formatTime(endMins)) : '', action: String(actionRaw || 'Belirsiz').trim(), slotCount: 0, duration: duration, capacity: parseFloat(String(capacityRaw).replace(/\./g, '').replace(',', '.')) || 0, month: m, year: y };
+
+             // İlk 3 kayıt için debug
+             if (allNewDetailedData.length < 3) {
+               console.log(`🔍 Örnek kayıt ${allNewDetailedData.length + 1}:`, {
+                 month: newItem.month,
+                 year: newItem.year,
+                 hospital: newItem.hospital,
+                 doctorName: newItem.doctorName
+               });
+             }
+
+             allNewDetailedData.push(newItem);
            });
         });
         console.log('📊 İşlenen veri sayısı:', allNewDetailedData.length);
