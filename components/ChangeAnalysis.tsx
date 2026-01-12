@@ -251,7 +251,8 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
         });
       });
 
-      const label = `Sürüm ${availableVersions.length + 1} (${new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })})`;
+      // Use file name as label
+      const label = file.name;
       const newVersion: ScheduleVersion = {
         id: `v-${Date.now()}`, label, timestamp: Date.now(), fileName: file.name, monthKey, physicians: physMap,
         diagnostics: { rawRowsCount: json.length, validRowsCount: allParsedRows.length, invalidRowsCount: 0, mapping: {}, qualityIssues: { unparseableDate: 0, unparseableTime: 0, zeroDuration: 0 } }
