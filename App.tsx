@@ -49,6 +49,11 @@ const App: React.FC = () => {
   const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<string>(''); // Boş başlangıç - kullanıcı seçecek
 
+  // Debug: selectedHospital değişimini logla
+  useEffect(() => {
+    console.log('🏥 selectedHospital değişti:', selectedHospital);
+  }, [selectedHospital]);
+
   // Her modül için ayrı filtreleme state'i
   const [branchFilters, setBranchFilters] = useState<Record<ViewType, string | null>>({
     'detailed-schedule': null,
@@ -209,6 +214,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (view === 'physician-data') {
       // İlk açılışta veya modüle geçişte filtreleri sıfırla
+      console.log('🔄 Physician-data modülü açıldı, filtreler sıfırlanıyor...');
       setSelectedHospital('');
       setMonthFilters(prev => ({ ...prev, 'physician-data': '' }));
       setYearFilters(prev => ({ ...prev, 'physician-data': 0 }));
