@@ -452,7 +452,14 @@ const App: React.FC = () => {
 
   // Seçili hastaneye göre filtrelenmiş veriler
   const filteredDetailedScheduleData = useMemo(() => {
-    return detailedScheduleData.filter(d => d.hospital === selectedHospital);
+    const filtered = detailedScheduleData.filter(d => d.hospital === selectedHospital);
+    console.log('🔍 Filtreleme:', {
+      totalData: detailedScheduleData.length,
+      selectedHospital,
+      filteredCount: filtered.length,
+      allHospitals: [...new Set(detailedScheduleData.map(d => d.hospital))]
+    });
+    return filtered;
   }, [detailedScheduleData, selectedHospital]);
 
   // Unified rendering bridge for Normal View vs Presentation View
