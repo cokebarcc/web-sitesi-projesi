@@ -832,12 +832,78 @@ const App: React.FC = () => {
       
       {isLoading && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[250] flex items-center justify-center">
-          <div className="bg-white p-10 rounded-[32px] shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95">
-             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-             <p className="font-black">{loadingText}</p>
+          <div className="bg-white p-10 rounded-[32px] shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in-95 min-w-[400px]">
+             {/* ECG Kalp Ritmi Animasyonu */}
+             <div className="relative w-full h-24 flex items-center justify-center overflow-hidden">
+               <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                 <defs>
+                   <linearGradient id="ecgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                     <stop offset="0%" style={{stopColor: '#3b82f6', stopOpacity: 0.8}} />
+                     <stop offset="100%" style={{stopColor: '#60a5fa', stopOpacity: 0.4}} />
+                   </linearGradient>
+                 </defs>
+                 {/* ECG Çizgisi */}
+                 <path
+                   d="M0,30 L40,30 L43,10 L46,50 L49,30 L60,30 L63,25 L66,35 L69,30 L200,30"
+                   fill="none"
+                   stroke="url(#ecgGradient)"
+                   strokeWidth="2.5"
+                   strokeLinecap="round"
+                   strokeLinejoin="round"
+                   className="animate-ecg"
+                 />
+               </svg>
+               {/* Kalp İkonu */}
+               <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2">
+                 <svg className="w-8 h-8 text-rose-500 animate-heartbeat" fill="currentColor" viewBox="0 0 20 20">
+                   <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                 </svg>
+               </div>
+             </div>
+             <p className="font-black text-slate-700 text-center">{loadingText}</p>
           </div>
         </div>
       )}
+
+      {/* ECG ve Kalp Animasyonları için CSS */}
+      <style>{`
+        @keyframes ecg {
+          0% {
+            stroke-dasharray: 0 1000;
+            stroke-dashoffset: 0;
+          }
+          100% {
+            stroke-dasharray: 1000 1000;
+            stroke-dashoffset: -1000;
+          }
+        }
+
+        @keyframes heartbeat {
+          0%, 100% {
+            transform: scale(1);
+          }
+          10% {
+            transform: scale(1.2);
+          }
+          20% {
+            transform: scale(1);
+          }
+          30% {
+            transform: scale(1.15);
+          }
+          40% {
+            transform: scale(1);
+          }
+        }
+
+        .animate-ecg {
+          animation: ecg 2s linear infinite;
+        }
+
+        .animate-heartbeat {
+          animation: heartbeat 1.5s ease-in-out infinite;
+        }
+      `}</style>
 
       {isBranchModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
