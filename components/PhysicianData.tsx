@@ -4,6 +4,8 @@ import * as XLSX from 'xlsx';
 import { DetailedScheduleData, MuayeneMetrics } from '../types';
 import { MONTHS, YEARS } from '../constants';
 import { normalizeDoctorName, getPeriodKey } from '../utils/formatters';
+import { uploadMuayeneFile, uploadAmeliyatFile } from '../src/services/physicianDataStorage';
+import { auth } from '../firebase';
 
 interface PhysicianDataProps {
   data: DetailedScheduleData[];
@@ -86,80 +88,47 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
     return isNaN(num) ? 0 : num;
   };
 
-  const handleFileUpload = (files: FileList | null, type: 'muayene' | 'ameliyat') => {
+  const handleFileUpload = async (files: FileList | null, type: 'muayene' | 'ameliyat') => {
     if (!files || files.length === 0) return;
+    if (!selectedHospital || !selectedMonth || selectedYear === 0) {
+      showToast("Lütfen önce hastane, ay ve yıl seçin.", "error");
+      return;
+    }
+    if (!auth.currentUser?.email) {
+      showToast("Dosya yüklemek için giriş yapmalısınız.", "error");
+      return;
+    }
+
     const file = files[0];
-    const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const bdata = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(bdata, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
+    try {
+      if (type === 'muayene') {
+        showToast("Muayene dosyası yükleniyor...", "success");
+        const result = await uploadMuayeneFile(file, selectedHospital, selectedMonth, selectedYear, auth.currentUser.email);
 
-        if (jsonData.length === 0) {
-            showToast("Dosya boş görünüyor.", "warning");
-            return;
-        }
-
-        const findColumn = (obj: any, patterns: string[]) => {
-          return Object.keys(obj).find(k => {
-              const kn = normalizeDoctorName(k);
-              return patterns.some(p => kn.includes(normalizeDoctorName(p)));
-          });
-        };
-
-        if (type === 'muayene') {
-          const colName = findColumn(jsonData[0], ['Hekim Ad Soyad', 'Hekim']);
-          const colMhrs = findColumn(jsonData[0], ['MHRS Muayene Sayısı', 'MHRS Muayene']);
-          const colAyaktan = findColumn(jsonData[0], ['Ayaktan Muayene Sayısı', 'Ayaktan Muayene']);
-          const colToplam = findColumn(jsonData[0], ['Toplam Muayene Sayısı', 'Toplam Muayene']);
-
-          if (!colName || (!colMhrs && !colAyaktan && !colToplam)) {
-            showToast("Muayene dosyasında gerekli sütunlar bulunamadı.", 'error');
-            return;
-          }
-
-          const agg: Record<string, MuayeneMetrics> = {};
-          jsonData.forEach(row => {
-            const docName = normalizeDoctorName(row[colName]);
-            if (!docName) return;
-            if (!agg[docName]) agg[docName] = { mhrs: 0, ayaktan: 0, toplam: 0 };
-            agg[docName].mhrs += parseNum(row[colMhrs]);
-            agg[docName].ayaktan += parseNum(row[colAyaktan]);
-            agg[docName].toplam += parseNum(row[colToplam]);
-          });
-
-          setMuayeneByPeriod(prev => ({ ...prev, [periodKey]: agg }));
+        if (result.success && result.data) {
+          setMuayeneByPeriod(prev => ({ ...prev, [periodKey]: result.data! }));
           setMuayeneMetaByPeriod(prev => ({ ...prev, [periodKey]: { fileName: file.name, uploadedAt: Date.now() } }));
-          showToast(`${selectedMonth} ${selectedYear} için muayene verisi yüklendi.`, 'success');
-
-        } else if (type === 'ameliyat') {
-          const colName = findColumn(jsonData[0], ['Hekim Ad Soyad', 'Hekim']);
-          const colSurg = findColumn(jsonData[0], ['A+B+C Grubu Ameliyat', 'Ameliyat Sayısı', 'ABC Ameliyat']);
-
-          if (!colName || !colSurg) {
-            showToast("Ameliyat dosyasında gerekli sütunlar bulunamadı.", 'error');
-            return;
-          }
-
-          const agg: Record<string, number> = {};
-          jsonData.forEach(row => {
-            const docName = normalizeDoctorName(row[colName]);
-            if (!docName) return;
-            agg[docName] = (agg[docName] || 0) + parseNum(row[colSurg]);
-          });
-
-          setAmeliyatByPeriod(prev => ({ ...prev, [periodKey]: agg }));
-          setAmeliyatMetaByPeriod(prev => ({ ...prev, [periodKey]: { fileName: file.name, uploadedAt: Date.now() } }));
-          showToast(`${selectedMonth} ${selectedYear} için ameliyat verisi yüklendi.`, 'success');
+          showToast(`✅ ${result.recordCount} hekim muayene verisi yüklendi ve Storage'a kaydedildi.`, 'success');
+        } else {
+          showToast(`❌ ${result.error}`, 'error');
         }
-      } catch (err) {
-        showToast("Dosya okuma hatası.", "error");
+      } else if (type === 'ameliyat') {
+        showToast("Ameliyat dosyası yükleniyor...", "success");
+        const result = await uploadAmeliyatFile(file, selectedHospital, selectedMonth, selectedYear, auth.currentUser.email);
+
+        if (result.success && result.data) {
+          setAmeliyatByPeriod(prev => ({ ...prev, [periodKey]: result.data! }));
+          setAmeliyatMetaByPeriod(prev => ({ ...prev, [periodKey]: { fileName: file.name, uploadedAt: Date.now() } }));
+          showToast(`✅ ${result.recordCount} hekim ameliyat verisi yüklendi ve Storage'a kaydedildi.`, 'success');
+        } else {
+          showToast(`❌ ${result.error}`, 'error');
+        }
       }
-    };
-    reader.readAsArrayBuffer(file);
+    } catch (err) {
+      console.error('❌ Dosya yükleme hatası:', err);
+      showToast("Dosya yükleme hatası.", "error");
+    }
   };
 
   const clearPeriodData = (type: 'muayene' | 'ameliyat') => {

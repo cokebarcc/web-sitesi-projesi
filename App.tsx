@@ -265,16 +265,29 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!user || isDataLoaded) return;
 
-    console.log('🔄 Kullanıcı giriş yaptı, tüm detaylı cetvel verileri arkaplanda yükleniyor...');
+    console.log('🔄 Kullanıcı giriş yaptı, tüm veriler arkaplanda yükleniyor...');
 
     const loadAllData = async () => {
       try {
+        // Load detailedScheduleData
         const { loadAllDetailedScheduleData } = await import('./src/services/detailedScheduleStorage');
-        // Tüm verileri filtre olmadan yükle
         const allData = await loadAllDetailedScheduleData();
         setDetailedScheduleData(allData);
+        console.log(`✅ ${allData.length} detaylı cetvel kaydı yüklendi`);
+
+        // Load muayene and ameliyat data from Storage
+        const { loadAllMuayeneData, loadAllAmeliyatData } = await import('./src/services/physicianDataStorage');
+
+        const muayeneData = await loadAllMuayeneData();
+        setMuayeneByPeriod(muayeneData);
+        console.log(`✅ ${Object.keys(muayeneData).length} dönem muayene verisi yüklendi`);
+
+        const ameliyatData = await loadAllAmeliyatData();
+        setAmeliyatByPeriod(ameliyatData);
+        console.log(`✅ ${Object.keys(ameliyatData).length} dönem ameliyat verisi yüklendi`);
+
         setIsDataLoaded(true);
-        console.log(`✅ Arkaplanda ${allData.length} detaylı cetvel kaydı yüklendi`);
+        console.log('✅ Tüm veriler başarıyla yüklendi');
       } catch (error) {
         console.error('❌ Arkaplanda veri yükleme hatası:', error);
       }
