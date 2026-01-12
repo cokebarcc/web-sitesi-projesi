@@ -73,13 +73,24 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
   }, [data, lastUploadTarget, selectedHospital, onHospitalChange]);
 
   const filteredData = useMemo(() => {
-    return data.filter(item => {
+    const filtered = data.filter(item => {
       const branchMatch = !selectedBranch || item.specialty === selectedBranch;
       const monthMatch = item.month === selectedMonth;
       const yearMatch = item.year === selectedYear;
       const searchMatch = !searchTerm || item.doctorName.toLocaleLowerCase('tr-TR').includes(searchTerm.toLocaleLowerCase('tr-TR'));
       return branchMatch && monthMatch && yearMatch && searchMatch;
     });
+
+    console.log('📋 DetailedSchedule filtreleme:', {
+      totalData: data.length,
+      selectedMonth,
+      selectedYear,
+      filteredCount: filtered.length,
+      sampleMonths: [...new Set(data.slice(0, 10).map(d => d.month))],
+      sampleYears: [...new Set(data.slice(0, 10).map(d => d.year))]
+    });
+
+    return filtered;
   }, [data, selectedMonth, selectedYear, searchTerm, selectedBranch]);
 
   const getTimeInMinutes = (timeStr: string): number => {
