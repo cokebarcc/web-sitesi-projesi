@@ -209,6 +209,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (view === 'physician-data') {
       // İlk açılışta veya modüle geçişte filtreleri sıfırla
+      setSelectedHospital('');
       setMonthFilters(prev => ({ ...prev, 'physician-data': '' }));
       setYearFilters(prev => ({ ...prev, 'physician-data': 0 }));
     }
@@ -537,12 +538,12 @@ const App: React.FC = () => {
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
                   onApplyFilters={async (hospital, year, month) => {
-                    // Detaylı Cetveller modülü için filtreleri senkronize et
+                    // Önce Detaylı Cetveller modülü için veri yükle
+                    await handleLoadDetailedScheduleData(hospital, month, year);
+                    // Veri yüklendikten sonra filtreleri senkronize et
                     setSelectedHospital(hospital);
                     setMonthFilters(prev => ({ ...prev, 'detailed-schedule': month }));
                     setYearFilters(prev => ({ ...prev, 'detailed-schedule': year }));
-                    // Detaylı Cetveller modülü için veri yükle
-                    await handleLoadDetailedScheduleData(hospital, month, year);
                   }}
                 />
               );

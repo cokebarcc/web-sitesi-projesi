@@ -254,6 +254,7 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
                 onChange={(e) => onHospitalChange(e.target.value)}
                 className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer min-w-[240px]"
               >
+                <option value="">Hastane Seçin</option>
                 {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
               </select>
             </div>
