@@ -190,50 +190,52 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
       )}
 
       <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 flex flex-wrap items-end gap-6">
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
-          <select
-            value={selectedHospital}
-            onChange={(e) => onHospitalChange(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer min-w-[240px]"
+        <div className="flex items-end gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
+            <select
+              value={selectedHospital}
+              onChange={(e) => onHospitalChange(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer min-w-[240px]"
+            >
+              <option value="">Hastane Seçiniz</option>
+              {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
+            <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
+              <option value={0}>Yıl Seçiniz</option>
+              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
+            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
+              <option value="">Ay Seçiniz</option>
+              {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+          <button
+            onClick={async () => {
+              if (!selectedHospital || !selectedMonth || !selectedYear) {
+                alert('Lütfen hastane, ay ve yıl seçiniz!');
+                return;
+              }
+              setIsLoading(true);
+              try {
+                await onLoadData(selectedHospital, selectedMonth, selectedYear);
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+            disabled={isLoading || !selectedHospital || !selectedMonth || !selectedYear}
+            className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-green-700 transition-all uppercase tracking-widest shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <option value="">Hastane Seçiniz</option>
-            {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
-          </select>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+            {isLoading ? 'YÜKLENIYOR...' : 'UYGULA'}
+          </button>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
-          <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
-            <option value={0}>Yıl Seçiniz</option>
-            {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
-          <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3 text-sm font-black text-slate-900 outline-none cursor-pointer">
-            <option value="">Ay Seçiniz</option>
-            {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
-        <button
-          onClick={async () => {
-            if (!selectedHospital || !selectedMonth || !selectedYear) {
-              alert('Lütfen hastane, ay ve yıl seçiniz!');
-              return;
-            }
-            setIsLoading(true);
-            try {
-              await onLoadData(selectedHospital, selectedMonth, selectedYear);
-            } finally {
-              setIsLoading(false);
-            }
-          }}
-          disabled={isLoading || !selectedHospital || !selectedMonth || !selectedYear}
-          className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 rounded-2xl text-xs font-black hover:bg-green-700 transition-all uppercase tracking-widest shadow-lg shadow-green-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
-          {isLoading ? 'YÜKLENIYOR...' : 'UYGULA'}
-        </button>
         <div className="flex-1 min-w-[200px] flex flex-col gap-1">
           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">HEKİM ARA</label>
           <input
