@@ -1,13 +1,15 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { 
-  DetailedScheduleData, 
-  ScheduleVersion, 
+import {
+  DetailedScheduleData,
+  ScheduleVersion,
   ProcessedPhysicianSummary,
   SessionActionStats
 } from '../types';
 import { MONTHS, YEARS } from '../constants';
+import { saveVersionAsJson, loadAllChangeAnalysisVersions } from '../src/services/changeAnalysisStorage';
+import { auth } from '../firebase';
 
 interface ChangeAnalysisProps {
   versions: Record<string, Record<string, ScheduleVersion>>;
@@ -50,6 +52,44 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // Load data for selected period
+  const handleLoadPeriodData = async () => {
+    if (!selectedHospital || !selectedMonth || selectedYear === 0) {
+      showToast('Lütfen hastane, yıl ve ay seçin', 'warning');
+      return;
+    }
+
+    setIsProcessing(true);
+    showToast('Veriler yükleniyor...', 'success');
+
+    try {
+      const loadedVersions = await loadAllChangeAnalysisVersions(selectedHospital, selectedMonth, selectedYear);
+      const monthKey = `${selectedYear}-${selectedMonth}`;
+
+      if (loadedVersions[monthKey] && Object.keys(loadedVersions[monthKey]).length > 0) {
+        setVersions(prev => ({
+          ...prev,
+          [monthKey]: loadedVersions[monthKey]
+        }));
+        showToast(`${Object.keys(loadedVersions[monthKey]).length} versiyon yüklendi`, 'success');
+      } else {
+        showToast('Bu dönem için kayıtlı versiyon bulunamadı', 'warning');
+      }
+    } catch (error) {
+      console.error('Veri yükleme hatası:', error);
+      showToast('Veri yükleme hatası', 'error');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Cetvel silme fonksiyonu
   const handleDeleteVersion = (versionLabel: string) => {
@@ -107,7 +147,21 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!selectedHospital || !selectedMonth || selectedYear === 0) {
+      showToast('Lütfen önce hastane, ay ve yıl seçin', 'warning');
+      e.target.value = '';
+      return;
+    }
+
+    if (!auth.currentUser?.email) {
+      showToast('Dosya yüklemek için giriş yapmalısınız', 'error');
+      e.target.value = '';
+      return;
+    }
+
     setIsProcessing(true);
+    showToast('Dosya işleniyor...', 'success');
 
     try {
       const data = await file.arrayBuffer();
@@ -198,17 +252,37 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       });
 
       const label = `Sürüm ${availableVersions.length + 1} (${new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })})`;
-      const newVersion: ScheduleVersion = { 
+      const newVersion: ScheduleVersion = {
         id: `v-${Date.now()}`, label, timestamp: Date.now(), fileName: file.name, monthKey, physicians: physMap,
         diagnostics: { rawRowsCount: json.length, validRowsCount: allParsedRows.length, invalidRowsCount: 0, mapping: {}, qualityIssues: { unparseableDate: 0, unparseableTime: 0, zeroDuration: 0 } }
       };
 
-      setVersions(prev => ({ ...prev, [monthKey]: { ...(prev[monthKey] || {}), [newVersion.label]: newVersion } }));
-      if (!baselineLabel) setBaselineLabel(newVersion.label);
-      else setUpdatedLabel(newVersion.label);
+      // Save to Storage
+      showToast('Versiyon Storage\'a kaydediliyor...', 'success');
+      const saveResult = await saveVersionAsJson(
+        newVersion,
+        selectedHospital,
+        selectedMonth,
+        selectedYear,
+        auth.currentUser!.email
+      );
 
-    } catch (err) { console.error(err); alert("Hata oluştu."); }
-    finally { setIsProcessing(false); e.target.value = ""; }
+      if (saveResult.success) {
+        setVersions(prev => ({ ...prev, [monthKey]: { ...(prev[monthKey] || {}), [newVersion.label]: newVersion } }));
+        if (!baselineLabel) setBaselineLabel(newVersion.label);
+        else setUpdatedLabel(newVersion.label);
+        showToast(`✅ Versiyon "${label}" başarıyla kaydedildi`, 'success');
+      } else {
+        showToast(`❌ Storage kayıt hatası: ${saveResult.error}`, 'error');
+      }
+
+    } catch (err) {
+      console.error(err);
+      showToast('Dosya işleme hatası', 'error');
+    } finally {
+      setIsProcessing(false);
+      e.target.value = "";
+    }
   };
 
   const comparison = useMemo(() => {
@@ -297,13 +371,22 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
   return (
     <div className="space-y-10 pb-20 animate-in fade-in duration-700">
+      {toast && (
+        <div className={`fixed top-10 right-10 z-[100] px-6 py-4 rounded-2xl shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-right-10 ${
+          toast.type === 'success' ? 'bg-emerald-600 text-white' :
+          toast.type === 'error' ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white'
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
       <div className="bg-white p-8 lg:p-12 rounded-[48px] shadow-xl border border-slate-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50 rounded-full -mr-40 -mt-40 blur-3xl opacity-60"></div>
         <div className="relative z-10 space-y-8">
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-tight italic mb-6">CETVEL KIYASLAMA MERKEZİ</h2>
 
-            {/* Filtreler: Hastane → Yıl → Ay */}
+            {/* Filtreler: Hastane → Yıl → Ay → Uygula */}
             <div className="flex flex-wrap gap-3 items-end">
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
@@ -334,6 +417,21 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                   {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                 </select>
               </div>
+
+              <button
+                onClick={handleLoadPeriodData}
+                disabled={!selectedHospital || selectedYear === 0 || !selectedMonth || isProcessing}
+                className={`px-6 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 ${
+                  selectedHospital && selectedYear > 0 && selectedMonth && !isProcessing
+                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-xl hover:scale-105 cursor-pointer'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                {isProcessing ? 'YÜKLENİYOR...' : 'UYGULA'}
+              </button>
             </div>
           </div>
 
