@@ -1,4 +1,4 @@
-import { ref, uploadBytes, getDownloadURL, listAll, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, listAll, deleteObject, getBlob } from 'firebase/storage';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { storage, db } from '../../firebase';
 import * as XLSX from 'xlsx';
@@ -128,8 +128,15 @@ export async function loadDetailedScheduleData(
   try {
     console.log(`📂 Dosya indiriliyor: ${hospital} ${month} ${year}`);
 
-    const response = await fetch(fileUrl);
-    const arrayBuffer = await response.arrayBuffer();
+    // Extract storage path from URL and use getBlob to avoid CORS issues
+    const urlObj = new URL(fileUrl);
+    const pathMatch = urlObj.pathname.match(/\/o\/(.+)\?/);
+    if (!pathMatch) throw new Error('Invalid file URL');
+
+    const storagePath = decodeURIComponent(pathMatch[1]);
+    const storageRef = ref(storage, storagePath);
+    const blob = await getBlob(storageRef);
+    const arrayBuffer = await blob.arrayBuffer();
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), {
       type: 'array',
       cellDates: true,
