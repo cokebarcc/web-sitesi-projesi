@@ -130,8 +130,11 @@ export async function loadDetailedScheduleData(
 
     // Extract storage path from URL and use getBlob to avoid CORS issues
     const urlObj = new URL(fileUrl);
-    const pathMatch = urlObj.pathname.match(/\/o\/(.+)\?/);
-    if (!pathMatch) throw new Error('Invalid file URL');
+    const pathMatch = urlObj.pathname.match(/\/o\/(.+)/);
+    if (!pathMatch) {
+      console.error('❌ URL parse hatası:', fileUrl);
+      throw new Error(`Invalid file URL: ${fileUrl}`);
+    }
 
     const storagePath = decodeURIComponent(pathMatch[1]);
     const storageRef = ref(storage, storagePath);
