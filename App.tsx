@@ -365,6 +365,7 @@ const App: React.FC = () => {
 
   const handleImportDetailedExcel = async (files: FileList | null, targetHospital?: string, targetMonth?: string, targetYear?: number) => {
     if (!files?.length) return;
+    console.log('📁 Dosya yükleme başladı:', { targetHospital, targetMonth, targetYear });
     setIsLoading(true);
     const file = files[0];
     const reader = new FileReader();
@@ -378,6 +379,7 @@ const App: React.FC = () => {
         const hospitalToUse = targetHospital || selectedHospital;
         const monthToUse = targetMonth;
         const yearToUse = targetYear;
+        console.log('🏥 Yükleme parametreleri:', { hospitalToUse, monthToUse, yearToUse });
         
         workbook.SheetNames.forEach(sn => {
            const sheet = workbook.Sheets[sn];
@@ -413,9 +415,18 @@ const App: React.FC = () => {
              allNewDetailedData.push({ id: `ds-${Date.now()}-${sn}-${idx}-${Math.random()}`, specialty: String(specialtyRaw || sn || 'Bilinmiyor').toUpperCase().trim(), doctorName: String(doctorNameRaw).trim().toUpperCase(), hospital: hospitalToUse, startDate: dateStr, startTime: startTimeRaw ? (typeof startTimeRaw === 'string' ? startTimeRaw : formatTime(startMins)) : '', endDate: '', endTime: endTimeRaw ? (typeof endTimeRaw === 'string' ? endTimeRaw : formatTime(endMins)) : '', action: String(actionRaw || 'Belirsiz').trim(), slotCount: 0, duration: duration, capacity: parseFloat(String(capacityRaw).replace(/\./g, '').replace(',', '.')) || 0, month: m, year: y });
            });
         });
-        if (allNewDetailedData.length > 0) { setDetailedScheduleData(prev => [...prev, ...allNewDetailedData]); showToast(`${allNewDetailedData.length} yeni kayıt mevcut listeye eklendi.`); }
+        console.log('📊 İşlenen veri sayısı:', allNewDetailedData.length);
+        if (allNewDetailedData.length > 0) {
+          console.log('✅ Veri state\'e ekleniyor:', allNewDetailedData.slice(0, 3));
+          setDetailedScheduleData(prev => {
+            const newData = [...prev, ...allNewDetailedData];
+            console.log('💾 Yeni toplam veri sayısı:', newData.length);
+            return newData;
+          });
+          showToast(`${allNewDetailedData.length} yeni kayıt mevcut listeye eklendi.`);
+        }
         else { showToast("Excel dosyasında geçerli bir veri bulunamadı.", "error"); }
-      } catch (err) { console.error(err); showToast("Dosya okuma hatası.", "error"); } finally { setIsLoading(false); }
+      } catch (err) { console.error('❌ Hata:', err); showToast("Dosya okuma hatası.", "error"); } finally { setIsLoading(false); }
     };
     reader.readAsArrayBuffer(file);
   };
