@@ -205,13 +205,21 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     }
 
     setIsProcessing(true);
-    showToast('Dosya yükleniyor...', 'success');
+    showToast('Excel dosyası işleniyor...', 'success');
 
     try {
-      // Save raw Excel file directly to Storage (no parsing to prevent memory overflow)
-      const label = file.name;
-      const saveResult = await saveExcelFileToStorage(
-        file,
+      // Parse Excel file to JSON
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+      // Import and use parser
+      const { parseExcelToScheduleVersion } = await import('../src/services/excelParser');
+      const versionData = parseExcelToScheduleVersion(workbook, file.name);
+
+      // Save as JSON to Storage
+      showToast('JSON verisi kaydediliyor...', 'success');
+      const saveResult = await saveVersionAsJson(
+        versionData,
         selectedHospital,
         selectedMonth,
         selectedYear,
@@ -227,18 +235,18 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
       // Store only metadata in state - no parsing, no large objects
       const metadata: ScheduleVersion = {
-        label,
+        label: versionData.label,
         timestamp: Date.now(),
-        physicianSummaries: [], // Empty - will be parsed on demand when comparing
-        rawScheduleData: [], // Empty - will be parsed on demand when comparing
+        physicianSummaries: [], // Empty - will be loaded on demand when comparing
+        rawScheduleData: [], // Empty - will be loaded on demand when comparing
         fileUrl: saveResult.fileUrl // Store URL for lazy loading
       } as any;
 
-      setVersions(prev => ({ ...prev, [monthKey]: { ...(prev[monthKey] || {}), [label]: metadata } }));
-      if (!baselineLabel) setBaselineLabel(label);
-      else setUpdatedLabel(label);
+      setVersions(prev => ({ ...prev, [monthKey]: { ...(prev[monthKey] || {}), [versionData.label]: metadata } }));
+      if (!baselineLabel) setBaselineLabel(versionData.label);
+      else setUpdatedLabel(versionData.label);
 
-      showToast(`✅ "${label}" başarıyla kaydedildi`, 'success');
+      showToast(`✅ "${versionData.label}" başarıyla kaydedildi`, 'success');
 
     } catch (err) {
       console.error(err);

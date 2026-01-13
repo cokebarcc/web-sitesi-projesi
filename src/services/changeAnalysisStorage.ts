@@ -164,10 +164,23 @@ export async function loadSingleVersionData(fileUrl: string): Promise<ScheduleVe
     const storageRef = ref(storage, storagePath);
     const blob = await getBlob(storageRef);
 
-    const text = await blob.text();
-    const versionData = JSON.parse(text) as ScheduleVersion;
+    // Check if it's an Excel file or JSON
+    if (fileUrl.includes('.xlsx') || fileUrl.includes('.xls')) {
+      // Parse Excel file
+      const arrayBuffer = await blob.arrayBuffer();
+      const workbook = await import('xlsx').then(XLSX => XLSX.read(arrayBuffer, { type: 'array' }));
 
-    return versionData;
+      // Import the parsing function
+      const { parseExcelToScheduleVersion } = await import('./excelParser');
+      const versionData = parseExcelToScheduleVersion(workbook, fileUrl);
+
+      return versionData;
+    } else {
+      // Parse JSON
+      const text = await blob.text();
+      const versionData = JSON.parse(text) as ScheduleVersion;
+      return versionData;
+    }
   } catch (error) {
     console.error('❌ Versiyon verisi yükleme hatası:', error);
     return null;
@@ -251,7 +264,7 @@ export async function saveExcelFileToStorage(
 }
 
 /**
- * Save version data as JSON to storage (DEPRECATED - causes memory overflow with large files)
+ * Save version data as JSON to storage
  */
 export async function saveVersionAsJson(
   versionData: ScheduleVersion,
@@ -259,7 +272,7 @@ export async function saveVersionAsJson(
   month: string,
   year: number,
   uploadedBy: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; fileUrl?: string }> {
   try {
     console.log('🚀 [CHANGE-ANALYSIS] JSON versiyon kaydediliyor...');
 
@@ -298,7 +311,7 @@ export async function saveVersionAsJson(
     await addDoc(collection(db, 'changeAnalysisFiles'), metadata);
     console.log('✅ [CHANGE-ANALYSIS] Metadata Firestore\'a kaydedildi');
 
-    return { success: true };
+    return { success: true, fileUrl };
 
   } catch (error: any) {
     console.error('❌ [CHANGE-ANALYSIS] HATA:', error);
