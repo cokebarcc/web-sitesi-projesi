@@ -61,6 +61,11 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   // Cached full version data (loaded on demand for comparison)
   const [loadedFullVersions, setLoadedFullVersions] = useState<Record<string, ScheduleVersion>>({});
 
+  // Calculate monthKey before any useEffect that needs it
+  const monthKey = selectedHospital && selectedYear && selectedMonth
+    ? `${selectedHospital}-${selectedYear}-${selectedMonth}`
+    : '';
+
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
@@ -151,10 +156,6 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     if (baselineLabel === versionLabel) setBaselineLabel('');
     if (updatedLabel === versionLabel) setUpdatedLabel('');
   };
-
-  const monthKey = selectedHospital && selectedYear && selectedMonth
-    ? `${selectedHospital}-${selectedYear}-${selectedMonth}`
-    : '';
 
   const availableVersions = useMemo(() => {
     if (!monthKey) return [];
