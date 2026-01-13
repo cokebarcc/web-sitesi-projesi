@@ -268,18 +268,18 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     const processedDocs = allDocKeys.map(key => {
       const bPhys = base.physicians[key];
       const uPhys = upd.physicians[key];
-      
-      const name = uPhys?.name || bPhys?.name || "Bilinmiyor";
+
+      const name = uPhys?.physicianName || bPhys?.physicianName || "Bilinmiyor";
       const branch = uPhys?.branch || bPhys?.branch || "Bilinmiyor";
-      
+
       const baseline_capacity: number = bPhys?.totalCapacity || 0;
       const updated_capacity: number = uPhys?.totalCapacity || 0;
       const capacity_delta: number = updated_capacity - baseline_capacity;
-      
-      const baseline_action_days = bPhys?.actionDays || {};
-      const updated_action_days = uPhys?.actionDays || {};
+
+      const baseline_action_days = bPhys?.sessionsByAction || {};
+      const updated_action_days = uPhys?.sessionsByAction || {};
       const all_actions = Array.from(new Set([...Object.keys(baseline_action_days), ...Object.keys(updated_action_days)]));
-      
+
       const action_deltas: Record<string, number> = {};
       let has_action_change = false;
       all_actions.forEach(act => {

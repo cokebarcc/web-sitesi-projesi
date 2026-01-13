@@ -85,11 +85,7 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
   }
 
   const rawScheduleData: DetailedScheduleData[] = [];
-  const physicianMap: Record<string, {
-    name: string;
-    branch: string;
-    totalCapacity: number;
-    actionDays: Record<string, number>;
+  const physicianMap: Record<string, ProcessedPhysicianSummary & {
     rawRows: any[];
   }> = {};
 
@@ -107,16 +103,19 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
 
     if (!physicianMap[normalizedKey]) {
       physicianMap[normalizedKey] = {
-        name: physicianName,
+        physicianName,
         branch,
         totalCapacity: 0,
-        actionDays: {},
+        totalSessions: 0,
+        sessionsByAction: {},
+        sessionsByDay: {},
         rawRows: []
       };
     }
 
     physicianMap[normalizedKey].totalCapacity += capacity;
-    physicianMap[normalizedKey].actionDays[action] = (physicianMap[normalizedKey].actionDays[action] || 0) + 1;
+    physicianMap[normalizedKey].totalSessions += 1;
+    physicianMap[normalizedKey].sessionsByAction[action] = (physicianMap[normalizedKey].sessionsByAction[action] || 0) + 1;
     physicianMap[normalizedKey].rawRows.push({
       startDate: row[headers.findIndex((h: any) => String(h || "").toLocaleLowerCase('tr-TR').includes("tarih"))] || '',
       action,
@@ -134,13 +133,13 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
     });
   }
 
-  const physicianSummaries: ProcessedPhysicianSummary[] = Object.entries(physicianMap).map(([key, data]) => ({
-    physicianName: data.name,
+  const physicianSummaries: ProcessedPhysicianSummary[] = Object.values(physicianMap).map(data => ({
+    physicianName: data.physicianName,
     branch: data.branch,
     totalCapacity: data.totalCapacity,
-    totalSessions: data.rawRows.length,
-    sessionsByAction: data.actionDays,
-    sessionsByDay: {}
+    totalSessions: data.totalSessions,
+    sessionsByAction: data.sessionsByAction,
+    sessionsByDay: data.sessionsByDay
   }));
 
   return {
@@ -148,6 +147,6 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
     timestamp: Date.now(),
     physicianSummaries,
     rawScheduleData,
-    physicians: physicianMap
+    physicians: physicianMap as any
   };
 }
