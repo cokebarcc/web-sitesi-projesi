@@ -91,8 +91,8 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
           <div className="lg:col-span-8 bg-slate-50/50 p-8 rounded-[32px] border border-slate-100">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-4">Yönetici Özeti ve Kritik Tespitler</h3>
             <div className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:font-medium prose-p:leading-relaxed">
-              {report ? report.split('\n').map((line, i) => (
-                <div key={i} className={`flex gap-3 mb-4 last:mb-0 ${line.includes('!') || line.toLowerCase().includes('kritik') ? 'bg-rose-50/50 p-3 rounded-xl border border-rose-100' : ''}`}>
+              {report ? report.split('\n').map((line, lineIdx) => (
+                <div key={lineIdx} className={`flex gap-3 mb-4 last:mb-0 ${line.includes('!') || line.toLowerCase().includes('kritik') ? 'bg-rose-50/50 p-3 rounded-xl border border-rose-100' : ''}`}>
                   {line && line.trim() && <span className="text-emerald-500 mt-1 shrink-0">●</span>}
                   <p className="text-sm md:text-base">{line.replace(/^\*+/, '').trim()}</p>
                 </div>

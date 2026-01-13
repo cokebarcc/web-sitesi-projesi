@@ -1031,8 +1031,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                         </div>
                       </div>
                       <div className="prose prose-indigo max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-li:font-bold prose-headings:font-black">
-                        {aiReport.split('\n').map((line, i) => (
-                           <p key={i} className="mb-4 text-lg font-medium text-slate-700 leading-normal">
+                        {aiReport.split('\n').map((line, lineIdx) => (
+                           <p key={lineIdx} className="mb-4 text-lg font-medium text-slate-700 leading-normal">
                              {line.startsWith('-') || line.startsWith('*') ? (
                                <span className="flex gap-4">
                                  <span className="text-indigo-500 mt-1.5 shrink-0">●</span>

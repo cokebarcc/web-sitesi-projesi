@@ -250,7 +250,7 @@ export const CapacityUsageChart = ({ data, onClick }: any) => (
         }} />
         <Bar name="Randevu Kapasitesi" dataKey="capacity" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={25} onClick={(d) => onClick?.(d)} className="cursor-pointer" />
         <Bar name="Toplam Muayene" dataKey="totalExam" radius={[4, 4, 0, 0]} barSize={25} onClick={(d) => onClick?.(d)} className="cursor-pointer">
-          {data.map((e: any, i: number) => <Cell key={`cell-${i}`} fill={e.status==='UNDER'?'#ef4444':e.status==='NO_CAP'?'#94a3b8':'#10b981'} />)}
+          {data.map((e: any, cellIdx: number) => <Cell key={`cell-${cellIdx}`} fill={e.status==='UNDER'?'#ef4444':e.status==='NO_CAP'?'#94a3b8':'#10b981'} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>

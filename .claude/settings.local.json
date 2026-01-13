@@ -20,7 +20,8 @@
       "Bash(gh-pages:*)",
       "Bash(npx gh-pages-clean)",
       "Bash(gh api:*)",
-      "Bash(ipconfig /flushdns)"
+      "Bash(ipconfig /flushdns)",
+      "Bash(grep:*)"
     ]
   }
 }

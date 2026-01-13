@@ -250,11 +250,11 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
              <h3 className="text-2xl font-black tracking-tight">Hizmet Girişim Stratejik Risk Raporu</h3>
           </div>
           <div className="prose prose-invert max-w-none relative z-10">
-            {aiAnalysis.split('\n').map((line, i) => {
+            {aiAnalysis.split('\n').map((line, lineIdx) => {
               const currentLine = line || '';
               const isDanger = currentLine.toLowerCase().includes('dikkat') || currentLine.toLowerCase().includes('kritik') || currentLine.toLowerCase().includes('risk');
               return (
-                <div key={i} className={`mb-4 flex gap-4 ${isDanger ? 'bg-rose-500/10 p-5 rounded-2xl border border-rose-500/20' : ''}`}>
+                <div key={lineIdx} className={`mb-4 flex gap-4 ${isDanger ? 'bg-rose-500/10 p-5 rounded-2xl border border-rose-500/20' : ''}`}>
                    {currentLine.trim() && <span className={isDanger ? "text-rose-400 mt-1" : "text-indigo-400 mt-1"}>●</span>}
                    <p className={`text-base leading-relaxed font-medium ${isDanger ? 'text-rose-50' : 'text-slate-300'}`}>{currentLine.replace(/^\*+/, '').trim()}</p>
                 </div>
