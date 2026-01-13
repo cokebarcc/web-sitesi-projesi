@@ -15,7 +15,11 @@
       "Bash(git merge:*)",
       "Bash(git worktree:*)",
       "Bash(rm:*)",
-      "Bash(firebase deploy:*)"
+      "Bash(firebase deploy:*)",
+      "Bash(if exist \"node_modules\\\\.cache\\\\gh-pages\" rmdir /s /q \"node_modules\\\\.cache\\\\gh-pages\")",
+      "Bash(gh-pages:*)",
+      "Bash(npx gh-pages-clean)",
+      "Bash(gh api:*)"
     ]
   }
 }

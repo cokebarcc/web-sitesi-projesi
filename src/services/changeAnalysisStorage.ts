@@ -113,7 +113,8 @@ export async function getChangeAnalysisFiles(
 }
 
 /**
- * Load all change analysis versions from Storage for specific period
+ * Load only metadata (labels/timestamps) for versions - NOT full data
+ * Use loadChangeAnalysisVersionFromUrl() to load full data when needed
  */
 export async function loadAllChangeAnalysisVersions(
   hospital?: string,
@@ -124,23 +125,52 @@ export async function loadAllChangeAnalysisVersions(
     const files = await getChangeAnalysisFiles(hospital, month, year);
     const allVersions: Record<string, Record<string, ScheduleVersion>> = {};
 
-    console.log(`📦 [CHANGE-ANALYSIS] ${files.length} dosya yüklenecek...`);
+    console.log(`📦 [CHANGE-ANALYSIS] ${files.length} dosya metadata yükleniyor...`);
 
     for (const file of files) {
-      const versionData = await loadChangeAnalysisVersionFromUrl(file.fileUrl, file.versionLabel, file.monthKey);
-      if (versionData) {
-        if (!allVersions[file.monthKey]) {
-          allVersions[file.monthKey] = {};
-        }
-        allVersions[file.monthKey][file.versionLabel] = versionData;
-        console.log(`✅ [CHANGE-ANALYSIS] ${file.monthKey} / ${file.versionLabel} yüklendi`);
+      // Store only metadata - prevent memory overflow
+      const metadata: ScheduleVersion = {
+        label: file.versionLabel,
+        timestamp: file.timestamp,
+        physicianSummaries: [], // Empty - loaded on demand
+        rawScheduleData: [], // Empty - loaded on demand
+        fileUrl: file.fileUrl // Store URL for lazy loading
+      } as any;
+
+      if (!allVersions[file.monthKey]) {
+        allVersions[file.monthKey] = {};
       }
+      allVersions[file.monthKey][file.versionLabel] = metadata;
+      console.log(`✅ [CHANGE-ANALYSIS] ${file.monthKey} / ${file.versionLabel} metadata yüklendi`);
     }
 
     return allVersions;
   } catch (error) {
-    console.error('❌ Tüm versiyon dosyalarını yükleme hatası:', error);
+    console.error('❌ Metadata yükleme hatası:', error);
     return {};
+  }
+}
+
+/**
+ * Load single version's full data on demand
+ */
+export async function loadSingleVersionData(fileUrl: string): Promise<ScheduleVersion | null> {
+  try {
+    const urlObj = new URL(fileUrl);
+    const pathMatch = urlObj.pathname.match(/\/o\/(.+)/);
+    if (!pathMatch) throw new Error(`Invalid file URL: ${fileUrl}`);
+
+    const storagePath = decodeURIComponent(pathMatch[1]);
+    const storageRef = ref(storage, storagePath);
+    const blob = await getBlob(storageRef);
+
+    const text = await blob.text();
+    const versionData = JSON.parse(text) as ScheduleVersion;
+
+    return versionData;
+  } catch (error) {
+    console.error('❌ Versiyon verisi yükleme hatası:', error);
+    return null;
   }
 }
 
@@ -173,7 +203,55 @@ async function loadChangeAnalysisVersionFromUrl(
 }
 
 /**
- * Save version data as JSON to storage
+ * Save raw Excel file directly to storage (no JSON conversion to prevent memory overflow)
+ */
+export async function saveExcelFileToStorage(
+  file: File,
+  hospital: string,
+  month: string,
+  year: number,
+  uploadedBy: string
+): Promise<{ success: boolean; error?: string; fileUrl?: string }> {
+  try {
+    console.log('🚀 [CHANGE-ANALYSIS] Excel dosyası kaydediliyor...');
+
+    const timestamp = Date.now();
+    const monthKey = `${hospital}-${year}-${month}`;
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const storagePath = `change-analysis/${hospital}/${year}/${month}/${timestamp}_${sanitizedFileName}.xlsx`;
+
+    console.log('📁 [CHANGE-ANALYSIS] Yol:', storagePath);
+
+    // Upload raw Excel file directly - no parsing/stringifying
+    const storageRef = ref(storage, storagePath);
+    await uploadBytes(storageRef, file);
+    const fileUrl = await getDownloadURL(storageRef);
+
+    console.log('✅ [CHANGE-ANALYSIS] Excel Storage\'a yüklendi');
+
+    // Save metadata to Firestore
+    await addDoc(collection(db, 'changeAnalysisFiles'), {
+      hospital,
+      month,
+      year,
+      versionLabel: file.name,
+      fileName: file.name,
+      fileUrl,
+      timestamp,
+      uploadedBy,
+      monthKey
+    });
+
+    console.log('✅ [CHANGE-ANALYSIS] Metadata Firestore\'a kaydedildi');
+    return { success: true, fileUrl };
+  } catch (error: any) {
+    console.error('❌ [CHANGE-ANALYSIS] HATA:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}
+
+/**
+ * Save version data as JSON to storage (DEPRECATED - causes memory overflow with large files)
  */
 export async function saveVersionAsJson(
   versionData: ScheduleVersion,

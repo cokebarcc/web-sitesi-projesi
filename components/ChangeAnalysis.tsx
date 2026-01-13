@@ -8,7 +8,7 @@ import {
   SessionActionStats
 } from '../types';
 import { MONTHS, YEARS } from '../constants';
-import { saveVersionAsJson, loadAllChangeAnalysisVersions } from '../src/services/changeAnalysisStorage';
+import { saveVersionAsJson, loadAllChangeAnalysisVersions, loadSingleVersionData, saveExcelFileToStorage } from '../src/services/changeAnalysisStorage';
 import { auth } from '../firebase';
 
 interface ChangeAnalysisProps {
@@ -34,8 +34,8 @@ interface ChangeAnalysisProps {
 }
 
 const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
-  versions,
-  setVersions,
+  versions: _unused_versions,
+  setVersions: _unused_setVersions,
   selectedBranch,
   selectedHospital,
   allowedHospitals,
@@ -50,10 +50,16 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   setUpdatedLabel,
   isAdmin
 }) => {
+  // Local state for versions - NOT shared with App.tsx to prevent Firestore issues
+  const [versions, setVersions] = useState<Record<string, Record<string, ScheduleVersion>>>({});
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Cached full version data (loaded on demand for comparison)
+  const [loadedFullVersions, setLoadedFullVersions] = useState<Record<string, ScheduleVersion>>({});
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ message, type });
@@ -65,6 +71,34 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     setBaselineLabel('');
     setUpdatedLabel('');
   }, [selectedHospital]);
+
+  // Load full version data when baseline or updated labels change
+  useEffect(() => {
+    const loadFullData = async () => {
+      if (!monthKey) return;
+
+      const toLoad: string[] = [];
+      if (baselineLabel && !loadedFullVersions[baselineLabel]) toLoad.push(baselineLabel);
+      if (updatedLabel && !loadedFullVersions[updatedLabel]) toLoad.push(updatedLabel);
+
+      if (toLoad.length === 0) return;
+
+      setIsProcessing(true);
+      for (const label of toLoad) {
+        const metadata = versions[monthKey]?.[label];
+        if (metadata && (metadata as any).fileUrl) {
+          const fullData = await loadSingleVersionData((metadata as any).fileUrl);
+          if (fullData) {
+            setLoadedFullVersions(prev => ({ ...prev, [label]: fullData }));
+            console.log(`✅ ${label} tam verisi yüklendi`);
+          }
+        }
+      }
+      setIsProcessing(false);
+    };
+
+    loadFullData();
+  }, [baselineLabel, updatedLabel, monthKey, versions]);
 
   // Load data for selected period
   const handleLoadPeriodData = async () => {
@@ -170,121 +204,40 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     }
 
     setIsProcessing(true);
-    showToast('Dosya işleniyor...', 'success');
+    showToast('Dosya yükleniyor...', 'success');
 
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data, { cellDates: true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(sheet) as any[];
-
-      const allParsedRows: DetailedScheduleData[] = [];
-      json.forEach((row, idx) => {
-        const docName = String(row["Hekim Ad Soyad"] || "").trim().toLocaleUpperCase('tr-TR');
-        if (!docName || docName.includes("TOPLAM")) return;
-
-        const startMins = toMins(row["Aksiyon Başlangıç Saati"]);
-        const endMins = toMins(row["Aksiyon Bitiş Saati"]);
-        let dur = (startMins !== -1 && endMins !== -1) ? (endMins - startMins) : 480;
-        if (dur < 0) dur += 1440;
-
-        let dateStr = "01.01.2025";
-        const rDate = row["Aksiyon Tarihi"];
-        if (rDate instanceof Date) {
-          dateStr = `${String(rDate.getDate()).padStart(2, '0')}.${String(rDate.getMonth() + 1).padStart(2, '0')}.${rDate.getFullYear()}`;
-        } else if (rDate) {
-          dateStr = String(rDate);
-        }
-
-        allParsedRows.push({
-          id: `row-${Date.now()}-${idx}`,
-          doctorName: docName,
-          specialty: String(row["Klinik Adı"] || "BİLİNMİYOR").trim().toLocaleUpperCase('tr-TR'),
-          hospital: "HOSPITAL",
-          startDate: dateStr,
-          startTime: String(row["Aksiyon Başlangıç Saati"] || "08:00"),
-          endDate: dateStr,
-          endTime: String(row["Aksiyon Bitiş Saati"] || "17:00"),
-          action: String(row["Aksiyon"] || "BELİRSİZ").trim().toLocaleUpperCase('tr-TR'),
-          slotCount: 0,
-          duration: dur,
-          capacity: Number(row["Randevu Kapasitesi"] || 0),
-          month: selectedMonth,
-          year: selectedYear
-        });
-      });
-
-      const physMap: Record<string, ProcessedPhysicianSummary> = {};
-      const dailyMinutes: Record<string, Record<string, Record<string, number>>> = {};
-
-      allParsedRows.forEach(row => {
-        const key = `${row.doctorName}||${row.specialty}`;
-        const date = row.startDate;
-        const action = row.action;
-
-        if (!physMap[key]) physMap[key] = { name: row.doctorName, branch: row.specialty, totalCapacity: 0, totalWorkDays: 0, actionDays: {}, rawRows: [] };
-        physMap[key].totalCapacity += row.capacity;
-        physMap[key].rawRows.push(row);
-
-        if (!dailyMinutes[key]) dailyMinutes[key] = {};
-        if (!dailyMinutes[key][date]) dailyMinutes[key][date] = {};
-        dailyMinutes[key][date][action] = (dailyMinutes[key][date][action] || 0) + row.duration;
-      });
-
-      // Günlük Aksiyon Belirleme (0.5 kuralı)
-      Object.keys(dailyMinutes).forEach(key => {
-        Object.keys(dailyMinutes[key]).forEach(date => {
-          const actions = dailyMinutes[key][date];
-          const sortedActions = Object.entries(actions).sort((a, b) => b[1] - a[1]);
-          const totalMins = Object.values(actions).reduce((a, b) => a + b, 0);
-
-          if (sortedActions.length === 0) return;
-
-          const topAction = sortedActions[0];
-          const secondAction = sortedActions[1];
-
-          // İki aksiyon da anlamlı paya sahip mi? (%25+ veya 180dk+)
-          const isSplit = secondAction && (
-            (secondAction[1] / totalMins >= 0.25) || 
-            (secondAction[1] >= 180)
-          );
-
-          if (isSplit) {
-            physMap[key].actionDays[topAction[0]] = (physMap[key].actionDays[topAction[0]] || 0) + 0.5;
-            physMap[key].actionDays[secondAction[0]] = (physMap[key].actionDays[secondAction[0]] || 0) + 0.5;
-            physMap[key].totalWorkDays += 1;
-          } else {
-            physMap[key].actionDays[topAction[0]] = (physMap[key].actionDays[topAction[0]] || 0) + 1;
-            physMap[key].totalWorkDays += 1;
-          }
-        });
-      });
-
-      // Use file name as label
+      // Save raw Excel file directly to Storage (no parsing to prevent memory overflow)
       const label = file.name;
-      const newVersion: ScheduleVersion = {
-        id: `v-${Date.now()}`, label, timestamp: Date.now(), fileName: file.name, monthKey, physicians: physMap,
-        diagnostics: { rawRowsCount: json.length, validRowsCount: allParsedRows.length, invalidRowsCount: 0, mapping: {}, qualityIssues: { unparseableDate: 0, unparseableTime: 0, zeroDuration: 0 } }
-      };
-
-      // Save to Storage
-      showToast('Versiyon Storage\'a kaydediliyor...', 'success');
-      const saveResult = await saveVersionAsJson(
-        newVersion,
+      const saveResult = await saveExcelFileToStorage(
+        file,
         selectedHospital,
         selectedMonth,
         selectedYear,
         auth.currentUser!.email
       );
 
-      if (saveResult.success) {
-        setVersions(prev => ({ ...prev, [monthKey]: { ...(prev[monthKey] || {}), [newVersion.label]: newVersion } }));
-        if (!baselineLabel) setBaselineLabel(newVersion.label);
-        else setUpdatedLabel(newVersion.label);
-        showToast(`✅ Versiyon "${label}" başarıyla kaydedildi`, 'success');
-      } else {
-        showToast(`❌ Storage kayıt hatası: ${saveResult.error}`, 'error');
+      if (!saveResult.success) {
+        showToast(`❌ Yükleme hatası: ${saveResult.error}`, 'error');
+        setIsProcessing(false);
+        e.target.value = "";
+        return;
       }
+
+      // Store only metadata in state - no parsing, no large objects
+      const metadata: ScheduleVersion = {
+        label,
+        timestamp: Date.now(),
+        physicianSummaries: [], // Empty - will be parsed on demand when comparing
+        rawScheduleData: [], // Empty - will be parsed on demand when comparing
+        fileUrl: saveResult.fileUrl // Store URL for lazy loading
+      } as any;
+
+      setVersions(prev => ({ ...prev, [monthKey]: { ...(prev[monthKey] || {}), [label]: metadata } }));
+      if (!baselineLabel) setBaselineLabel(label);
+      else setUpdatedLabel(label);
+
+      showToast(`✅ "${label}" başarıyla kaydedildi`, 'success');
 
     } catch (err) {
       console.error(err);
@@ -296,8 +249,9 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   };
 
   const comparison = useMemo(() => {
-    const base = versions[monthKey]?.[baselineLabel];
-    const upd = versions[monthKey]?.[updatedLabel];
+    // Use loaded full versions instead of metadata
+    const base = loadedFullVersions[baselineLabel];
+    const upd = loadedFullVersions[updatedLabel];
     if (!base || !upd) return null;
 
     const allDocKeys = Array.from(new Set([...Object.keys(base.physicians), ...Object.keys(upd.physicians)]));
@@ -363,7 +317,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       totalBaseCap: filteredDocs.reduce((s: number, p) => s + p.baseline_capacity, 0),
       totalUpdCap: filteredDocs.reduce((s: number, p) => s + p.updated_capacity, 0),
     } as any;
-  }, [versions, monthKey, baselineLabel, updatedLabel, selectedBranch]);
+  }, [loadedFullVersions, baselineLabel, updatedLabel, selectedBranch]);
 
   // Fix: Added explicit casting and Number() conversion for arithmetic reliability.
   const maxAbsBranchDelta = useMemo(() => {

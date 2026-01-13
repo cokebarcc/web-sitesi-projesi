@@ -38,6 +38,40 @@ import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
 const App: React.FC = () => {
+  // Clean up localStorage on app start - remove large data
+  useEffect(() => {
+    try {
+      // Remove scheduleVersions (now stored in Storage only)
+      localStorage.removeItem('scheduleVersions');
+
+      // Check total localStorage usage
+      let totalSize = 0;
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          totalSize += localStorage[key].length + key.length;
+        }
+      }
+
+      // If localStorage is too full (>4MB), clear old large items
+      if (totalSize > 4 * 1024 * 1024) {
+        console.warn('⚠️ LocalStorage çok büyük, temizleniyor...');
+        const keysToRemove = ['muayeneByPeriod', 'ameliyatByPeriod', 'muayeneMetaByPeriod', 'ameliyatMetaByPeriod'];
+        keysToRemove.forEach(key => {
+          try {
+            localStorage.removeItem(key);
+            console.log(`✅ ${key} temizlendi`);
+          } catch (e) {
+            console.error(`❌ ${key} temizlenemedi:`, e);
+          }
+        });
+      }
+
+      console.log('✅ LocalStorage temizliği tamamlandı');
+    } catch (error) {
+      console.error('LocalStorage temizleme hatası:', error);
+    }
+  }, []);
+
   // Firebase Authentication State
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -152,38 +186,20 @@ const App: React.FC = () => {
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>(MOCK_DATA.filter(d => d.hospital === selectedHospital));
   const [hbysData, setHbysData] = useState<HBYSData[]>([]);
   // Load data from localStorage on mount (for non-detailedSchedule data)
-  const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
-    try {
-      const stored = localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : defaultValue;
-    } catch {
-      return defaultValue;
-    }
-  };
+  // LocalStorage removed - all data loaded from Firestore
 
   const [detailedScheduleData, setDetailedScheduleData] = useState<DetailedScheduleData[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false); // Track if Firebase data is loaded
-  const [sutServiceData, setSutServiceData] = useState<SUTServiceData[]>(() =>
-    loadFromLocalStorage('sutServiceData', [])
-  );
+  const [sutServiceData, setSutServiceData] = useState<SUTServiceData[]>([]);
 
-  const [muayeneByPeriod, setMuayeneByPeriod] = useState<Record<string, Record<string, MuayeneMetrics>>>(() =>
-    loadFromLocalStorage('muayeneByPeriod', {})
-  );
-  const [ameliyatByPeriod, setAmeliyatByPeriod] = useState<Record<string, Record<string, number>>>(() =>
-    loadFromLocalStorage('ameliyatByPeriod', {})
-  );
-  const [muayeneMetaByPeriod, setMuayeneMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>(() =>
-    loadFromLocalStorage('muayeneMetaByPeriod', {})
-  );
-  const [ameliyatMetaByPeriod, setAmeliyatMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>(() =>
-    loadFromLocalStorage('ameliyatMetaByPeriod', {})
-  );
+  const [muayeneByPeriod, setMuayeneByPeriod] = useState<Record<string, Record<string, MuayeneMetrics>>>({});
+  const [ameliyatByPeriod, setAmeliyatByPeriod] = useState<Record<string, Record<string, number>>>({});
+  const [muayeneMetaByPeriod, setMuayeneMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>({});
+  const [ameliyatMetaByPeriod, setAmeliyatMetaByPeriod] = useState<Record<string, { fileName: string; uploadedAt: number }>>({});
 
-  const [scheduleVersions, setScheduleVersions] = useState<Record<string, Record<string, ScheduleVersion>>>(() =>
-    loadFromLocalStorage('scheduleVersions', {})
-  );
-  
+  // scheduleVersions no longer loaded from LocalStorage - stored in Storage only
+  const [scheduleVersions, setScheduleVersions] = useState<Record<string, Record<string, ScheduleVersion>>>({});
+
   const [planningProposals, setPlanningProposals] = useState<ScheduleProposal[]>([]);
   const [planningSourceMonth, setPlanningSourceMonth] = useState<string>('Kasım');
   const [planningSourceYear, setPlanningSourceYear] = useState<number>(2025);
@@ -198,15 +214,13 @@ const App: React.FC = () => {
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
-  
+
   const [isMhrsExpanded, setIsMhrsExpanded] = useState(true);
   const [isFinancialExpanded, setIsFinancialExpanded] = useState(true);
   const [isDevExpanded, setIsDevExpanded] = useState(true);
 
   // Sync for presentation "Add current screen"
-  const [slides, setSlides] = useState<PresentationSlide[]>(() =>
-    loadFromLocalStorage('presentationSlides', [])
-  );
+  const [slides, setSlides] = useState<PresentationSlide[]>([]);
 
   // Otomatik veri yükleme kaldırıldı - kullanıcı "Uygula" butonuna tıklayacak
 
@@ -368,35 +382,8 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [user, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, sutServiceData, slides]);
 
-  // IndexedDB removed - data now stored in Firestore for all users
-
-  useEffect(() => {
-    localStorage.setItem('muayeneByPeriod', JSON.stringify(muayeneByPeriod));
-  }, [muayeneByPeriod]);
-
-  useEffect(() => {
-    localStorage.setItem('ameliyatByPeriod', JSON.stringify(ameliyatByPeriod));
-  }, [ameliyatByPeriod]);
-
-  useEffect(() => {
-    localStorage.setItem('muayeneMetaByPeriod', JSON.stringify(muayeneMetaByPeriod));
-  }, [muayeneMetaByPeriod]);
-
-  useEffect(() => {
-    localStorage.setItem('ameliyatMetaByPeriod', JSON.stringify(ameliyatMetaByPeriod));
-  }, [ameliyatMetaByPeriod]);
-
-  useEffect(() => {
-    localStorage.setItem('scheduleVersions', JSON.stringify(scheduleVersions));
-  }, [scheduleVersions]);
-
-  useEffect(() => {
-    localStorage.setItem('sutServiceData', JSON.stringify(sutServiceData));
-  }, [sutServiceData]);
-
-  useEffect(() => {
-    localStorage.setItem('presentationSlides', JSON.stringify(slides));
-  }, [slides]);
+  // LocalStorage DISABLED - All data now stored in Firestore to prevent quota issues
+  // (LocalStorage was causing quota exceeded errors with large datasets)
 
   useEffect(() => {
     // Hastane değiştiğinde tüm filtreleri varsayılana döndür
