@@ -808,7 +808,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen text-slate-900 bg-[#F8FAFC] relative font-['Inter']">
+    <div className="flex min-h-screen text-slate-900 bg-slate-50 relative font-['Inter']">
       {toast && (
         <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
           {toast.message}
@@ -903,69 +903,77 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <aside className="w-72 h-screen sticky top-0 bg-slate-950 text-white flex flex-col border-r border-white/5 shadow-2xl shrink-0 no-print overflow-hidden">
-        <div className="flex flex-col h-full px-5 py-5 overflow-hidden">
-          <div className="flex items-center mb-10">
+      <aside className="w-56 h-screen sticky top-0 bg-[#f9f7f4] text-slate-900 flex flex-col shrink-0 no-print overflow-hidden">
+        <div className="flex flex-col h-full px-6 py-8 overflow-hidden">
+          <div className="flex items-center mb-12">
             <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setView('detailed-schedule')}>
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-lg shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform shrink-0">M</div>
-              <span className="text-lg font-black tracking-tight transition-opacity duration-300 whitespace-nowrap">MHRS Analiz</span>
+              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 text-white shadow-sm">M</div>
+              <span className="text-base font-semibold tracking-tight transition-opacity duration-300 whitespace-nowrap text-slate-900">MHRS Analiz</span>
             </div>
           </div>
-          <nav className="flex-1 space-y-4 custom-scrollbar overflow-y-auto overflow-x-hidden pr-2">
+          <nav className="flex-1 space-y-1 custom-scrollbar overflow-y-auto overflow-x-hidden">
             <div className="space-y-1">
-              <button onClick={() => setIsMhrsExpanded(!isMhrsExpanded)} className="w-full flex items-center justify-between px-3 py-3 rounded-xl transition-colors hover:bg-white/5">
-                <div className="flex items-center gap-3"><div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${isMhrsActive ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-500'}`}><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg></div><span className="text-sm font-black tracking-tight uppercase">MHRS</span></div>
-                <svg className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isMhrsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
+              <button onClick={() => setIsMhrsExpanded(!isMhrsExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
+                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isMhrsActive ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                  <svg className={`w-3 h-3 ${isMhrsActive ? 'text-white' : 'text-slate-500'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                </div>
+                <span className={`text-sm font-medium flex-1 ${isMhrsActive ? 'text-slate-900' : 'text-slate-600'}`}>MHRS</span>
+                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isMhrsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isMhrsExpanded ? 'max-h-[600px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1">
+              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isMhrsExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">
                   {hasModuleAccess('detailedSchedule') && <SubNavItem label="Detaylı Cetveller" active={view === 'detailed-schedule'} onClick={() => setView('detailed-schedule')} color="emerald" />}
                   {hasModuleAccess('physicianData') && <SubNavItem label="Hekim Verileri" active={view === 'physician-data'} onClick={() => setView('physician-data')} color="blue" />}
                   {hasModuleAccess('changeAnalysis') && <SubNavItem label="Değişim Analizleri" active={view === 'change-analysis'} onClick={() => setView('change-analysis')} color="blue" />}
                   {hasModuleAccess('efficiencyAnalysis') && <SubNavItem label="Verimlilik Analizleri" active={view === 'efficiency-analysis'} onClick={() => setView('efficiency-analysis')} color="indigo" />}
               </div></div>
             </div>
-            <div className="space-y-1">
-              <button onClick={() => setIsFinancialExpanded(!isFinancialExpanded)} className="w-full flex items-center justify-between px-3 py-3 rounded-xl transition-colors hover:bg-white/5">
-                <div className="flex items-center gap-3"><div className={`w-12 h-12 rounded-lg flex items-center justify-center font-black shrink-0 ${isFinancialExpandedActive ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20' : 'bg-white/5 text-slate-500'}`}><span className="text-xl font-bold">₺</span></div><span className="text-sm font-black tracking-tight uppercase">FİNANSAL ANALİZ</span></div>
-                <svg className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isFinancialExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
+            <div className="space-y-1 pt-2">
+              <button onClick={() => setIsFinancialExpanded(!isFinancialExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
+                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isFinancialExpandedActive ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                  <span className={`text-xs font-bold ${isFinancialExpandedActive ? 'text-white' : 'text-slate-500'}`}>₺</span>
+                </div>
+                <span className={`text-sm font-medium flex-1 ${isFinancialExpandedActive ? 'text-slate-900' : 'text-slate-600'}`}>Finansal</span>
+                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isFinancialExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isFinancialExpanded ? 'max-h-[200px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1">{hasModuleAccess('serviceAnalysis') && <SubNavItem label="Hizmet Girişim" active={view === 'service-analysis'} onClick={() => setView('service-analysis')} color="rose" />}</div></div>
+              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isFinancialExpanded ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">{hasModuleAccess('serviceAnalysis') && <SubNavItem label="Hizmet Girişim" active={view === 'service-analysis'} onClick={() => setView('service-analysis')} color="rose" />}</div></div>
             </div>
             <div className="space-y-1 pt-2">
-              <button onClick={() => setIsDevExpanded(!isDevExpanded)} className="w-full flex items-center justify-between px-3 py-3 rounded-xl transition-colors hover:bg-white/5">
-                <div className="flex items-center gap-3"><div className={`w-12 h-12 rounded-lg flex items-center justify-center font-black shrink-0 ${isDevActive ? 'bg-slate-100 text-slate-900 shadow-lg' : 'bg-white/5 text-slate-500'}`}><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg></div><span className="text-[11px] font-black tracking-tighter uppercase">Hazırlama Aşaması</span></div>
-                <svg className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isDevExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
+              <button onClick={() => setIsDevExpanded(!isDevExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
+                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isDevActive ? 'bg-slate-900' : 'bg-slate-200'}`}>
+                  <svg className={`w-3 h-3 ${isDevActive ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+                </div>
+                <span className={`text-sm font-medium flex-1 ${isDevActive ? 'text-slate-900' : 'text-slate-600'}`}>Hazırlama</span>
+                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isDevExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-1 ${isDevExpanded ? 'max-h-[450px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}><div className="ml-7 pl-4 border-l border-white/10 space-y-1">
+              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isDevExpanded ? 'max-h-[450px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">
                   {hasModuleAccess('analysisModule') && <SubNavItem label="Analiz Modülü" active={view === 'analysis-module'} onClick={() => setView('analysis-module')} color="indigo" />}
                   {hasModuleAccess('performancePlanning') && <SubNavItem label="AI Planlama" active={view === 'performance-planning'} onClick={() => setView('performance-planning')} color="blue" />}
-                  {hasModuleAccess('presentation') && <SubNavItem label="SUNUM" active={view === 'presentation'} onClick={() => setView('presentation')} color="slate" />}
+                  {hasModuleAccess('presentation') && <SubNavItem label="Sunum" active={view === 'presentation'} onClick={() => setView('presentation')} color="slate" />}
               </div></div>
             </div>
-            <div className="pt-4 space-y-1">
-              <div className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">DESTEK SİSTEMLERİ</div>
-              {hasModuleAccess('aiChatbot') && <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>} label="AI Sohbet" active={view === 'ai-chatbot'} onClick={() => setView('ai-chatbot')} color="indigo" />}
-              {hasModuleAccess('gorenBashekimlik') && <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} label="GÖREN Başarı" active={view === 'goren'} onClick={() => setView('goren')} color="amber" />}
+            <div className="pt-4 space-y-0.5 border-t border-slate-200 mt-4">
+              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Destek</div>
+              {hasModuleAccess('aiChatbot') && <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>} label="AI Sohbet" active={view === 'ai-chatbot'} onClick={() => setView('ai-chatbot')} color="indigo" />}
+              {hasModuleAccess('gorenBashekimlik') && <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} label="GÖREN Başarı" active={view === 'goren'} onClick={() => setView('goren')} color="amber" />}
               {isAdmin && (
-                <NavItem icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>} label="Kullanıcı Yönetimi" active={view === 'admin'} onClick={() => setView('admin')} color="rose" />
+                <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>} label="Kullanıcı Yönetimi" active={view === 'admin'} onClick={() => setView('admin')} color="rose" />
               )}
             </div>
           </nav>
-          <div className="mt-auto pt-6">
-            <div className="bg-white/5 rounded-2xl p-4 border-t border-white/5">
-              <span className="text-[10px] font-black text-slate-500 uppercase block mb-2">Aktif Kullanıcı</span>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-black text-sm">{user?.email?.charAt(0).toUpperCase()}</span>
+          <div className="mt-auto pt-6 border-t border-slate-200">
+            <div className="px-3 py-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="text-white font-semibold text-sm">{user?.email?.charAt(0).toUpperCase()}</span>
                 </div>
-                <span className="text-[10px] font-bold text-white truncate flex-1">{user?.email}</span>
+                <span className="text-xs font-medium text-slate-700 truncate flex-1">{user?.email}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center justify-center gap-2"
+                className="w-full bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 border border-slate-200"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
                 Çıkış Yap
               </button>
@@ -983,7 +991,7 @@ const App: React.FC = () => {
                 {view !== 'dashboard' && !view.startsWith('dashboard-') && (
                   <button
                     onClick={() => setView('dashboard')}
-                    className="p-3 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all flex items-center justify-center"
+                    className="p-3 bg-white hover:bg-slate-100 rounded-2xl transition-all flex items-center justify-center shadow-md border border-slate-200"
                     title="Dashboard'a Dön"
                   >
                     <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1017,21 +1025,18 @@ const App: React.FC = () => {
 };
 
 const NavItem = ({ icon, label, active, onClick, color }: any) => {
-  const colorMap: any = { blue: 'bg-blue-600', emerald: 'bg-emerald-600', rose: 'bg-rose-600', indigo: 'bg-indigo-600', amber: 'bg-amber-600', slate: 'bg-slate-500' };
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all group shrink-0 ${active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}>
-      <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-all shrink-0 ${active ? colorMap[color] + ' shadow-lg' : 'bg-white/5 group-hover:bg-white/10'}`}>{icon}</div>
-      <span className="text-sm font-bold transition-opacity duration-300 whitespace-nowrap opacity-100">{label}</span>
+    <button onClick={onClick} className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-white/60 text-slate-900' : 'text-slate-600 hover:bg-white/40 hover:text-slate-900'}`}>
+      <div className="shrink-0">{icon}</div>
+      <span className="text-sm font-medium whitespace-nowrap">{label}</span>
     </button>
   );
 };
 
 const SubNavItem = ({ label, active, onClick, color }: any) => {
-  const dotColor: any = { emerald: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]', indigo: 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]', blue: 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]', rose: 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]', amber: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]', slate: 'bg-slate-300 shadow-[0_0_8px_rgba(255,255,255,0.3)]' };
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs transition-all whitespace-nowrap ${active ? 'bg-white/5 text-white font-black' : 'text-slate-500 hover:text-slate-300 font-bold'}`}>
-      <div className={`w-1.5 h-1.5 rounded-full transition-all shrink-0 ${active ? dotColor[color] : 'bg-slate-700'}`}></div>
-      <span className="transition-opacity duration-300 opacity-100">{label}</span>
+    <button onClick={onClick} className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-all whitespace-nowrap ${active ? 'text-slate-900 font-medium bg-white/40' : 'text-slate-600 hover:text-slate-900 hover:bg-white/30 font-normal'}`}>
+      {label}
     </button>
   );
 };
