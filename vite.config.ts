@@ -14,4 +14,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, '.'),
     },
   },
+  build: {
+    sourcemap: true,
+    minify: false,
+  },
 });
