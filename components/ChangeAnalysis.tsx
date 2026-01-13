@@ -94,8 +94,11 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
         if (metadata && (metadata as any).fileUrl) {
           const fullData = await loadSingleVersionData((metadata as any).fileUrl);
           if (fullData) {
+            console.log(`✅ ${label} tam verisi yüklendi:`, {
+              physicianCount: Object.keys(fullData.physicians || {}).length,
+              physicians: fullData.physicians
+            });
             setLoadedFullVersions(prev => ({ ...prev, [label]: fullData }));
-            console.log(`✅ ${label} tam verisi yüklendi`);
           }
         }
       }
@@ -315,8 +318,11 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
     const topDoctorDrivers = filteredDocs
       .filter(p => p.capacity_delta < -0.1)
-      .map(p => ({ name: p.name, branch: p.branch, delta: p.capacity_delta, pct: p.baseline_capacity > 0 ? (p.capacity_delta / p.baseline_capacity) * 100 : -100 }))
-      .sort((a, b) => a.delta - b.delta) 
+      .map(p => {
+        console.log('🔍 Doctor driver:', { name: p.name, branch: p.branch, delta: p.capacity_delta });
+        return { name: p.name, branch: p.branch, delta: p.capacity_delta, pct: p.baseline_capacity > 0 ? (p.capacity_delta / p.baseline_capacity) * 100 : -100 };
+      })
+      .sort((a, b) => a.delta - b.delta)
       .slice(0, 5);
 
     // Cast the return object to 'any' to resolve inference issues in downstream useMemos and JSX.

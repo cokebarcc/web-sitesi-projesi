@@ -164,22 +164,27 @@ export async function loadSingleVersionData(fileUrl: string): Promise<ScheduleVe
     const storageRef = ref(storage, storagePath);
     const blob = await getBlob(storageRef);
 
-    // Check if it's an Excel file or JSON
-    if (fileUrl.includes('.xlsx') || fileUrl.includes('.xls')) {
-      // Parse Excel file
+    // Check if it's a JSON file (our saved format) or Excel file (legacy)
+    if (fileUrl.includes('.json')) {
+      // Parse JSON (our primary format)
+      const text = await blob.text();
+      const versionData = JSON.parse(text) as ScheduleVersion;
+      console.log('✅ [CHANGE-ANALYSIS] JSON verisi parse edildi:', fileUrl);
+      return versionData;
+    } else if (fileUrl.includes('.xlsx') || fileUrl.includes('.xls')) {
+      // Parse Excel file (legacy format - should not happen with new uploads)
       const arrayBuffer = await blob.arrayBuffer();
       const workbook = await import('xlsx').then(XLSX => XLSX.read(arrayBuffer, { type: 'array' }));
 
       // Import the parsing function
       const { parseExcelToScheduleVersion } = await import('./excelParser');
       const versionData = parseExcelToScheduleVersion(workbook, fileUrl);
+      console.log('✅ [CHANGE-ANALYSIS] Excel verisi parse edildi:', fileUrl);
 
       return versionData;
     } else {
-      // Parse JSON
-      const text = await blob.text();
-      const versionData = JSON.parse(text) as ScheduleVersion;
-      return versionData;
+      console.error('❌ [CHANGE-ANALYSIS] Bilinmeyen dosya formatı:', fileUrl);
+      return null;
     }
   } catch (error) {
     console.error('❌ Versiyon verisi yükleme hatası:', error);
