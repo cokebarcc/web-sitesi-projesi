@@ -19,7 +19,8 @@
       "Bash(if exist \"node_modules\\\\.cache\\\\gh-pages\" rmdir /s /q \"node_modules\\\\.cache\\\\gh-pages\")",
       "Bash(gh-pages:*)",
       "Bash(npx gh-pages-clean)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(ipconfig /flushdns)"
     ]
   }
 }

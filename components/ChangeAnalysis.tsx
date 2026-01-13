@@ -654,7 +654,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                       <table className="w-full text-[10px] text-left">
                                         <thead className="bg-slate-50 sticky top-0"><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
                                         <tbody className="divide-y divide-slate-50">
-                                          {p.bPhys?.rawRows?.map((r: any, i: number) => <tr key={i} className="hover:bg-slate-50"><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
+                                          {p.bPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:bg-slate-50"><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>
                                       </table>
                                     </div>
@@ -665,7 +665,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                       <table className="w-full text-[10px] text-left">
                                         <thead className="bg-rose-50/50 sticky top-0"><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
                                         <tbody className="divide-y divide-slate-50">
-                                          {p.uPhys?.rawRows?.map((r: any, i: number) => <tr key={i} className="hover:bg-rose-50/30"><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
+                                          {p.uPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:bg-rose-50/30"><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>
                                       </table>
                                     </div>
