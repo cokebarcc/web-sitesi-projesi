@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/fir
 import { storage, db } from '../../firebase';
 import * as XLSX from 'xlsx';
 import { MuayeneMetrics } from '../../types';
+import { getPeriodKey } from '../../utils/formatters';
 
 export interface PhysicianDataFile {
   id: string;
@@ -283,7 +284,9 @@ export async function loadAllMuayeneData(hospital?: string, month?: string, year
     console.log(`📦 [MUAYENE] ${files.length} dosya yüklenecek...`);
 
     for (const file of files) {
-      const periodKey = `${file.hospital}-${file.year}-${file.month}`;
+      // getPeriodKey ile uyumlu format: "2025-12" yerine month numarasını kullan
+      const formattedPeriod = getPeriodKey(file.year, file.month);
+      const periodKey = `${file.hospital}-${formattedPeriod}`;
       const data = await loadMuayeneDataFromUrl(file.fileUrl);
       allData[periodKey] = data;
       console.log(`✅ [MUAYENE] ${periodKey}: ${Object.keys(data).length} hekim`);
@@ -307,7 +310,9 @@ export async function loadAllAmeliyatData(hospital?: string, month?: string, yea
     console.log(`📦 [AMELIYAT] ${files.length} dosya yüklenecek...`);
 
     for (const file of files) {
-      const periodKey = `${file.hospital}-${file.year}-${file.month}`;
+      // getPeriodKey ile uyumlu format: "2025-12" yerine month numarasını kullan
+      const formattedPeriod = getPeriodKey(file.year, file.month);
+      const periodKey = `${file.hospital}-${formattedPeriod}`;
       const data = await loadAmeliyatDataFromUrl(file.fileUrl);
       allData[periodKey] = data;
       console.log(`✅ [AMELIYAT] ${periodKey}: ${Object.keys(data).length} hekim`);
