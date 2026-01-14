@@ -34,6 +34,7 @@ import EfficiencyAnalysis from './components/EfficiencyAnalysis';
 import PresentationModule from './components/PresentationModule';
 import DashboardHome from './components/DashboardHome';
 import DashboardCategory from './components/DashboardCategory';
+import BinanceTrading from './components/BinanceTrading';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -102,7 +103,8 @@ const App: React.FC = () => {
     'analysis-module': null,
     'presentation': null,
     'schedule': null,
-    'admin': null
+    'admin': null,
+    'binance-trading': null
   });
 
   // Her modül için ayrı ay/yıl seçimleri
@@ -122,7 +124,8 @@ const App: React.FC = () => {
     'analysis-module': currentMonth,
     'presentation': currentMonth,
     'schedule': currentMonth,
-    'admin': currentMonth
+    'admin': currentMonth,
+    'binance-trading': currentMonth
   });
 
   const [yearFilters, setYearFilters] = useState<Record<ViewType, number>>({
@@ -138,7 +141,8 @@ const App: React.FC = () => {
     'analysis-module': currentYear,
     'presentation': currentYear,
     'schedule': currentYear,
-    'admin': currentYear
+    'admin': currentYear,
+    'binance-trading': currentYear
   });
 
   // Her modül için cetvel seçimleri (ChangeAnalysis için)
@@ -155,7 +159,8 @@ const App: React.FC = () => {
     'analysis-module': '',
     'presentation': '',
     'schedule': '',
-    'admin': ''
+    'admin': '',
+    'binance-trading': ''
   });
 
   const [updatedLabels, setUpdatedLabels] = useState<Record<ViewType, string>>({
@@ -171,7 +176,8 @@ const App: React.FC = () => {
     'analysis-module': '',
     'presentation': '',
     'schedule': '',
-    'admin': ''
+    'admin': '',
+    'binance-trading': ''
   });
 
   // Mevcut modül için aktif filtreyi al
@@ -403,7 +409,8 @@ const App: React.FC = () => {
       'analysis-module': null,
       'presentation': null,
       'admin': null,
-      'schedule': null
+      'schedule': null,
+      'binance-trading': null
     });
 
     // Ay ve yıl filtrelerini de sıfırla
@@ -420,7 +427,8 @@ const App: React.FC = () => {
       'analysis-module': defaultMonth,
       'presentation': defaultMonth,
       'schedule': defaultMonth,
-      'admin': defaultMonth
+      'admin': defaultMonth,
+      'binance-trading': defaultMonth
     });
 
     setYearFilters({
@@ -436,7 +444,8 @@ const App: React.FC = () => {
       'analysis-module': defaultYear,
       'presentation': defaultYear,
       'schedule': defaultYear,
-      'admin': defaultYear
+      'admin': defaultYear,
+      'binance-trading': defaultYear
     });
 
     const newDeptList = HOSPITAL_DEPARTMENTS[selectedHospital] || DEPARTMENTS;
@@ -733,6 +742,7 @@ const App: React.FC = () => {
               );
             case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
             case 'admin': return <AdminPanel currentUserEmail={user?.email || ''} />;
+            case 'binance-trading': return <BinanceTrading />;
             default: return null;
           }
         })()}
@@ -952,6 +962,10 @@ const App: React.FC = () => {
               </div></div>
             </div>
             <div className="pt-4 space-y-0.5 border-t border-slate-200 mt-4">
+              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Diğer</div>
+              <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>} label="Binance Trading" active={view === 'binance-trading'} onClick={() => setView('binance-trading')} color="amber" />
+            </div>
+            <div className="pt-4 space-y-0.5 border-t border-slate-200 mt-4">
               <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Destek</div>
               {hasModuleAccess('aiChatbot') && <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>} label="AI Sohbet" active={view === 'ai-chatbot'} onClick={() => setView('ai-chatbot')} color="indigo" />}
               {hasModuleAccess('gorenBashekimlik') && <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} label="GÖREN Başarı" active={view === 'goren'} onClick={() => setView('goren')} color="amber" />}
@@ -1001,7 +1015,7 @@ const App: React.FC = () => {
                 )}
                 <div>
                   <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">
-                    {view === 'dashboard' ? 'Dashboard' : view === 'physician-data' ? 'Hekim Verileri' : view === 'efficiency-analysis' ? 'Verimlilik Analizleri' : view === 'detailed-schedule' ? 'Detaylı Takip' : view === 'change-analysis' ? 'Değişim Analizleri' : view === 'analysis-module' ? 'Analiz Modülü' : view === 'performance-planning' ? 'AI Planlama' : view === 'presentation' ? 'Sunum' : view === 'admin' ? 'Kullanıcı Yönetimi' : view === 'service-analysis' ? 'Hizmet Girişim' : view === 'ai-chatbot' ? 'AI Sohbet' : view === 'goren' ? 'GÖREN Başarı' : 'Modül Analiz'}
+                    {view === 'dashboard' ? 'Dashboard' : view === 'physician-data' ? 'Hekim Verileri' : view === 'efficiency-analysis' ? 'Verimlilik Analizleri' : view === 'detailed-schedule' ? 'Detaylı Takip' : view === 'change-analysis' ? 'Değişim Analizleri' : view === 'analysis-module' ? 'Analiz Modülü' : view === 'performance-planning' ? 'AI Planlama' : view === 'presentation' ? 'Sunum' : view === 'admin' ? 'Kullanıcı Yönetimi' : view === 'service-analysis' ? 'Hizmet Girişim' : view === 'ai-chatbot' ? 'AI Sohbet' : view === 'goren' ? 'GÖREN Başarı' : view === 'binance-trading' ? 'Binance Trading' : 'Modül Analiz'}
                   </h1>
                   <p className="text-slate-500 font-bold mt-1 uppercase text-xs tracking-widest">{selectedHospital} • {selectedBranch || 'TÜM BRANŞLAR'}</p>
                 </div>

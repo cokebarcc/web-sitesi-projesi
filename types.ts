@@ -198,4 +198,5 @@ export type ViewType =
   | 'analysis-module'
   | 'efficiency-analysis'
   | 'presentation'
-  | 'admin';
+  | 'admin'
+  | 'binance-trading';       // YENİ - Binance Trading Modülü
