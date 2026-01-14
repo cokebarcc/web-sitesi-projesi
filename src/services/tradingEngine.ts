@@ -1,5 +1,6 @@
 import binanceService from './binanceService';
 import { MomentumStrategy, BreakoutStrategy, StrategyFactory } from './tradingStrategy';
+import { adaptiveStrategySelector } from './adaptiveStrategy';
 import {
   StrategyConfig,
   TradingBotStatus,
@@ -24,9 +25,13 @@ export class TradingEngine {
   private activePositions: Position[] = [];
   private trades: Trade[] = [];
   private listeners: Map<string, Set<(data: any) => void>> = new Map();
+  private adaptiveMode: boolean = false;
+  private lastStrategyOptimization: number = 0;
+  private strategyOptimizationInterval: number = 24 * 60 * 60 * 1000; // 24 saat
 
-  constructor(config: StrategyConfig) {
+  constructor(config: StrategyConfig, adaptiveMode: boolean = false) {
     this.config = config;
+    this.adaptiveMode = adaptiveMode;
   }
 
   /**
@@ -45,10 +50,14 @@ export class TradingEngine {
 
     this.isRunning = true;
     this.startTime = Date.now();
+    this.lastStrategyOptimization = Date.now(); // İlk başlangıçta sıfırla
     this.log('SUCCESS', '🚀 Trading botu başlatıldı');
     this.log('INFO', `Strateji: ${this.config.name}`);
     this.log('INFO', `Semboller: ${this.config.symbols.join(', ')}`);
     this.log('INFO', `Zaman dilimi: ${this.config.timeframe}`);
+    if (this.adaptiveMode) {
+      this.log('INFO', '🤖 Adaptive mod aktif - Strateji otomatik optimize edilecek');
+    }
 
     // İlk analizi hemen yap
     await this.analyze();
@@ -89,6 +98,11 @@ export class TradingEngine {
   private async analyze(): Promise<void> {
     if (!this.isRunning) return;
 
+    // Adaptive mode'da periyodik olarak stratejiyi yeniden optimize et
+    if (this.adaptiveMode) {
+      await this.checkAndReoptimizeStrategy();
+    }
+
     this.log('INFO', '🔍 Piyasa analizi yapılıyor...');
 
     for (const symbol of this.config.symbols) {
@@ -116,6 +130,42 @@ export class TradingEngine {
         await this.handleSignal(signal);
       } catch (error: any) {
         this.log('ERROR', `${symbol} analiz hatası: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Adaptive mode'da stratejiyi periyodik olarak yeniden optimize eder
+   */
+  private async checkAndReoptimizeStrategy(): Promise<void> {
+    const now = Date.now();
+
+    // 24 saat geçmişse yeniden optimize et
+    if (now - this.lastStrategyOptimization >= this.strategyOptimizationInterval) {
+      this.log('INFO', '🔄 Strateji yeniden optimize ediliyor...');
+
+      try {
+        // İlk sembol için en iyi stratejiyi belirle
+        const symbol = this.config.symbols[0];
+        const bestStrategy = await adaptiveStrategySelector.selectBestStrategy(
+          symbol,
+          this.config.timeframe,
+          true // Force reoptimization
+        );
+
+        // Stratejiyi güncelle
+        this.config = {
+          ...this.config,
+          name: bestStrategy.config.name,
+          indicators: bestStrategy.config.indicators
+        };
+
+        this.lastStrategyOptimization = now;
+        this.log('SUCCESS', `✅ Strateji güncellendi: ${bestStrategy.config.name}`);
+        this.log('INFO', `📊 ${bestStrategy.reason.split('\n')[0]}`);
+        this.emit('strategyUpdated', bestStrategy);
+      } catch (error: any) {
+        this.log('ERROR', `Strateji optimizasyonu hatası: ${error.message}`);
       }
     }
   }
@@ -497,5 +547,23 @@ export class TradingEngine {
   updateConfig(newConfig: Partial<StrategyConfig>): void {
     this.config = { ...this.config, ...newConfig };
     this.log('INFO', 'Strateji yapılandırması güncellendi');
+  }
+
+  /**
+   * Adaptive mode durumunu döner
+   */
+  isAdaptiveModeEnabled(): boolean {
+    return this.adaptiveMode;
+  }
+
+  /**
+   * Adaptive mode'u açar/kapatır
+   */
+  setAdaptiveMode(enabled: boolean): void {
+    this.adaptiveMode = enabled;
+    this.log('INFO', `Adaptive mod ${enabled ? 'açıldı' : 'kapatıldı'}`);
+    if (enabled) {
+      this.lastStrategyOptimization = 0; // Bir sonraki analizde optimize edilsin
+    }
   }
 }

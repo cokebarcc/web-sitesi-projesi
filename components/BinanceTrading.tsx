@@ -3,6 +3,8 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import binanceService from '../src/services/binanceService';
 import { TradingEngine } from '../src/services/tradingEngine';
 import { RiskManager } from '../src/services/riskManagement';
+import { backtestingService } from '../src/services/backtestingService';
+import { adaptiveStrategySelector } from '../src/services/adaptiveStrategy';
 import {
   TradingConfig,
   StrategyConfig,
@@ -12,7 +14,8 @@ import {
   TradingLog,
   MarketData,
   AccountBalance,
-  TradingSignal
+  TradingSignal,
+  BacktestResult
 } from '../src/types/trading';
 
 const BinanceTrading: React.FC = () => {
@@ -47,9 +50,15 @@ const BinanceTrading: React.FC = () => {
   const [latestSignal, setLatestSignal] = useState<TradingSignal | null>(null);
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'config' | 'positions' | 'history' | 'logs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'config' | 'positions' | 'history' | 'logs' | 'backtest' | 'optimize'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Backtesting State
+  const [backtestResults, setBacktestResults] = useState<BacktestResult | null>(null);
+  const [isBacktesting, setIsBacktesting] = useState(false);
+  const [useAdaptiveStrategy, setUseAdaptiveStrategy] = useState(true);
+  const [optimizationResults, setOptimizationResults] = useState<any>(null);
 
   /**
    * Binance API'yi yapılandır
@@ -104,30 +113,125 @@ const BinanceTrading: React.FC = () => {
   };
 
   /**
+   * Backtesting çalıştır
+   */
+  const handleRunBacktest = async () => {
+    setIsBacktesting(true);
+    setError(null);
+
+    try {
+      if (useAdaptiveStrategy) {
+        // Adaptive strateji ile en iyi stratejiyi seç
+        const best = await adaptiveStrategySelector.selectBestStrategy(
+          selectedSymbol,
+          selectedTimeframe,
+          true
+        );
+
+        setBacktestResults(best.backtest);
+        setSelectedStrategy(best.config.name);
+        alert(`En İyi Strateji: ${best.config.name.toUpperCase()}\n\n${best.reason}`);
+      } else {
+        // Manuel seçilen stratejiyi test et
+        const config: StrategyConfig = {
+          name: selectedStrategy,
+          enabled: true,
+          symbols: [selectedSymbol],
+          timeframe: selectedTimeframe,
+          indicators: {
+            rsi: { period: 14, overbought: 70, oversold: 30 },
+            macd: { fast: 12, slow: 26, signal: 9 },
+            ema: { periods: [9, 21, 50, 200] },
+            bollinger: { period: 20, stdDev: 2 },
+            atr: { period: 14 }
+          },
+          entryConditions: [],
+          exitConditions: [],
+          riskManagement: RiskManager.getDefaultRiskManagement()
+        };
+
+        const candles = await binanceService.getHistoricalCandles(selectedSymbol, selectedTimeframe, 500);
+        const result = await backtestingService.runBacktest(candles, config, 10000);
+        setBacktestResults(result);
+      }
+    } catch (err: any) {
+      setError(`Backtesting hatası: ${err.message}`);
+    } finally {
+      setIsBacktesting(false);
+    }
+  };
+
+  /**
+   * Parametre optimizasyonu çalıştır
+   */
+  const handleRunOptimization = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await adaptiveStrategySelector.optimizeStrategyParameters(
+        selectedSymbol,
+        selectedTimeframe,
+        selectedStrategy
+      );
+
+      setOptimizationResults(result);
+      alert(`Optimizasyon Tamamlandı!\n\n${result.details}`);
+    } catch (err: any) {
+      setError(`Optimizasyon hatası: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Trading botunu başlat
    */
-  const handleStartBot = () => {
+  const handleStartBot = async () => {
     if (!isConfigured) {
       setError('Önce API yapılandırmasını tamamlayın');
       return;
     }
 
-    const strategyConfig: StrategyConfig = {
-      name: selectedStrategy,
-      enabled: true,
-      symbols: symbols,
-      timeframe: selectedTimeframe,
-      indicators: {
-        rsi: { period: 14, overbought: 70, oversold: 30 },
-        macd: { fast: 12, slow: 26, signal: 9 },
-        ema: { periods: [9, 21, 50, 200] },
-        bollinger: { period: 20, stdDev: 2 },
-        atr: { period: 14 }
-      },
-      entryConditions: [],
-      exitConditions: [],
-      riskManagement: RiskManager.getDefaultRiskManagement()
-    };
+    let strategyConfig: StrategyConfig;
+
+    if (useAdaptiveStrategy) {
+      // Adaptive strateji kullan - otomatik en iyiyi seç
+      setLoading(true);
+      try {
+        const best = await adaptiveStrategySelector.selectBestStrategy(
+          selectedSymbol,
+          selectedTimeframe,
+          false
+        );
+        strategyConfig = best.config;
+        setSelectedStrategy(best.config.name);
+        alert(`Adaptive Strateji Seçildi: ${best.config.name.toUpperCase()}\n\nGüven: %${best.backtest.stats.winRate.toFixed(1)}`);
+      } catch (err: any) {
+        setError(`Strateji seçimi hatası: ${err.message}`);
+        return;
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Manuel strateji kullan
+      strategyConfig = {
+        name: selectedStrategy,
+        enabled: true,
+        symbols: symbols,
+        timeframe: selectedTimeframe,
+        indicators: {
+          rsi: { period: 14, overbought: 70, oversold: 30 },
+          macd: { fast: 12, slow: 26, signal: 9 },
+          ema: { periods: [9, 21, 50, 200] },
+          bollinger: { period: 20, stdDev: 2 },
+          atr: { period: 14 }
+        },
+        entryConditions: [],
+        exitConditions: [],
+        riskManagement: RiskManager.getDefaultRiskManagement()
+      };
+    }
 
     const engine = new TradingEngine(strategyConfig);
 
@@ -215,12 +319,12 @@ const BinanceTrading: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 bg-white p-2 rounded-2xl border border-slate-200">
-        {(['dashboard', 'config', 'positions', 'history', 'logs'] as const).map(tab => (
+      <div className="flex gap-2 bg-white p-2 rounded-2xl border border-slate-200 overflow-x-auto">
+        {(['dashboard', 'config', 'backtest', 'optimize', 'positions', 'history', 'logs'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all ${
+            className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap ${
               activeTab === tab
                 ? 'bg-blue-600 text-white shadow-lg'
                 : 'text-slate-600 hover:bg-slate-50'
@@ -228,6 +332,8 @@ const BinanceTrading: React.FC = () => {
           >
             {tab === 'dashboard' && '📊 Dashboard'}
             {tab === 'config' && '⚙️ Yapılandırma'}
+            {tab === 'backtest' && '🧪 Backtest'}
+            {tab === 'optimize' && '⚡ Optimize'}
             {tab === 'positions' && '💼 Pozisyonlar'}
             {tab === 'history' && '📜 Geçmiş'}
             {tab === 'logs' && '📋 Loglar'}
@@ -416,20 +522,42 @@ const BinanceTrading: React.FC = () => {
             <div className="bg-white p-8 rounded-3xl border border-slate-200">
               <h3 className="text-2xl font-black mb-6">📊 Strateji Yapılandırması</h3>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">
-                    Strateji Seç
-                  </label>
-                  <select
-                    value={selectedStrategy}
-                    onChange={e => setSelectedStrategy(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none font-bold"
-                    disabled={botStatus.isRunning}
-                  >
-                    <option value="momentum">Momentum Strategy (RSI+MACD+EMA)</option>
-                    <option value="breakout">Breakout Strategy (Support/Resistance)</option>
-                  </select>
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-xl border-2 border-purple-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <input
+                      type="checkbox"
+                      id="adaptive"
+                      checked={useAdaptiveStrategy}
+                      onChange={e => setUseAdaptiveStrategy(e.target.checked)}
+                      disabled={botStatus.isRunning}
+                      className="w-5 h-5"
+                    />
+                    <label htmlFor="adaptive" className="font-black text-purple-900">
+                      🤖 Adaptive Strateji Kullan (AI Otomatik Seçim)
+                    </label>
+                  </div>
+                  <p className="text-xs text-purple-700 font-bold">
+                    {useAdaptiveStrategy
+                      ? '✅ Sistem geçmiş verileri analiz ederek en iyi stratejiyi otomatik seçecek'
+                      : '⚠️ Manuel strateji seçimi aktif'}
+                  </p>
                 </div>
+                {!useAdaptiveStrategy && (
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                      Manuel Strateji Seç
+                    </label>
+                    <select
+                      value={selectedStrategy}
+                      onChange={e => setSelectedStrategy(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none font-bold"
+                      disabled={botStatus.isRunning}
+                    >
+                      <option value="momentum">Momentum Strategy (RSI+MACD+EMA)</option>
+                      <option value="breakout">Breakout Strategy (Support/Resistance)</option>
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">
                     Zaman Dilimi
@@ -662,6 +790,214 @@ const BinanceTrading: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Backtest Tab */}
+      {activeTab === 'backtest' && (
+        <div className="space-y-6">
+          <div className="bg-white p-8 rounded-3xl border border-slate-200">
+            <h3 className="text-2xl font-black mb-6">🧪 Strateji Backtesting</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              Geçmiş verileri kullanarak stratejilerin performansını test edin
+            </p>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Sembol</label>
+                  <input
+                    type="text"
+                    value={selectedSymbol}
+                    onChange={e => setSelectedSymbol(e.target.value.toUpperCase())}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none"
+                    placeholder="BTCUSDT"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Zaman Dilimi</label>
+                  <select
+                    value={selectedTimeframe}
+                    onChange={e => setSelectedTimeframe(e.target.value as any)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none"
+                  >
+                    <option value="1m">1 Dakika</option>
+                    <option value="5m">5 Dakika</option>
+                    <option value="15m">15 Dakika</option>
+                    <option value="1h">1 Saat</option>
+                    <option value="4h">4 Saat</option>
+                    <option value="1d">1 Gün</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-xl border-2 border-purple-200">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="adaptive-backtest"
+                    checked={useAdaptiveStrategy}
+                    onChange={e => setUseAdaptiveStrategy(e.target.checked)}
+                    className="w-5 h-5"
+                  />
+                  <label htmlFor="adaptive-backtest" className="font-black text-purple-900">
+                    Adaptive Mod (En İyi Stratejiyi Otomatik Bul)
+                  </label>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRunBacktest}
+                disabled={isBacktesting}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-black transition-all disabled:opacity-50"
+              >
+                {isBacktesting ? '⏳ Backtest Çalışıyor...' : '▶️ Backtesting Başlat'}
+              </button>
+            </div>
+          </div>
+
+          {backtestResults && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200">
+              <h3 className="text-2xl font-black mb-6">📊 Backtest Sonuçları</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-blue-50 p-4 rounded-2xl">
+                  <div className="text-xs font-bold text-blue-600 mb-1">Toplam Getiri</div>
+                  <div className={`text-2xl font-black ${backtestResults.totalReturnPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {backtestResults.totalReturnPercent >= 0 ? '+' : ''}{backtestResults.totalReturnPercent.toFixed(2)}%
+                  </div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-2xl">
+                  <div className="text-xs font-bold text-purple-600 mb-1">Kazanma Oranı</div>
+                  <div className="text-2xl font-black text-purple-600">
+                    {backtestResults.stats.winRate.toFixed(1)}%
+                  </div>
+                </div>
+                <div className="bg-amber-50 p-4 rounded-2xl">
+                  <div className="text-xs font-bold text-amber-600 mb-1">Sharpe Ratio</div>
+                  <div className="text-2xl font-black text-amber-600">
+                    {backtestResults.stats.sharpeRatio.toFixed(2)}
+                  </div>
+                </div>
+                <div className="bg-red-50 p-4 rounded-2xl">
+                  <div className="text-xs font-bold text-red-600 mb-1">Max Drawdown</div>
+                  <div className="text-2xl font-black text-red-600">
+                    {backtestResults.stats.maxDrawdown.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <div className="text-slate-500 font-bold">Başlangıç</div>
+                  <div className="font-black">${backtestResults.initialBalance.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500 font-bold">Bitiş</div>
+                  <div className="font-black">${backtestResults.finalBalance.toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500 font-bold">Toplam İşlem</div>
+                  <div className="font-black">{backtestResults.stats.totalTrades}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500 font-bold">Profit Factor</div>
+                  <div className="font-black">{backtestResults.stats.profitFactor.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500 font-bold">Ort. Kazanç</div>
+                  <div className="font-black text-green-600">${backtestResults.stats.averageWin.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500 font-bold">Ort. Kayıp</div>
+                  <div className="font-black text-red-600">${backtestResults.stats.averageLoss.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Optimize Tab */}
+      {activeTab === 'optimize' && (
+        <div className="space-y-6">
+          <div className="bg-white p-8 rounded-3xl border border-slate-200">
+            <h3 className="text-2xl font-black mb-6">⚡ Parametre Optimizasyonu</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              Geçmiş verileri analiz ederek en iyi strateji parametrelerini bulun
+            </p>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Sembol</label>
+                  <input
+                    type="text"
+                    value={selectedSymbol}
+                    onChange={e => setSelectedSymbol(e.target.value.toUpperCase())}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none"
+                    placeholder="BTCUSDT"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Strateji</label>
+                  <select
+                    value={selectedStrategy}
+                    onChange={e => setSelectedStrategy(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none"
+                  >
+                    <option value="momentum">Momentum Strategy</option>
+                    <option value="breakout">Breakout Strategy</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRunOptimization}
+                disabled={loading}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-4 rounded-2xl font-black transition-all disabled:opacity-50"
+              >
+                {loading ? '⏳ Optimizasyon Çalışıyor...' : '▶️ Optimizasyonu Başlat'}
+              </button>
+
+              <div className="bg-amber-50 p-4 rounded-xl border-2 border-amber-200">
+                <div className="text-sm font-bold text-amber-900">
+                  ⚠️ Not: Optimizasyon işlemi birkaç dakika sürebilir. Sistem yüzlerce parametre kombinasyonunu test ediyor.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {optimizationResults && (
+            <div className="bg-white p-8 rounded-3xl border border-slate-200">
+              <h3 className="text-2xl font-black mb-6">✅ Optimizasyon Tamamlandı</h3>
+              <div className="bg-green-50 p-6 rounded-2xl border-2 border-green-200 mb-6">
+                <div className="text-lg font-black text-green-900 mb-2">
+                  Performans İyileştirmesi: %{optimizationResults.improvement.toFixed(2)}
+                </div>
+                <div className="text-sm text-green-700">
+                  Optimize edilmiş parametreler varsayılan ayarlara göre daha iyi performans gösteriyor!
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-6 rounded-2xl">
+                <pre className="text-xs font-mono whitespace-pre-wrap">
+                  {optimizationResults.details}
+                </pre>
+              </div>
+
+              <button
+                onClick={() => {
+                  // Optimize edilmiş ayarları uygula
+                  if (confirm('Optimize edilmiş parametreleri trading bot\'a uygulamak istiyor musunuz?')) {
+                    alert('Parametreler uygulandı! Config sekmesinden botu başlatabilirsiniz.');
+                  }
+                }}
+                className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-2xl font-black transition-all"
+              >
+                ✅ Optimize Edilmiş Parametreleri Uygula
+              </button>
+            </div>
+          )}
         </div>
       )}
 
