@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { uploadGreenAreaFile, loadMultipleDatesData, getAvailableDateParts, getAvailableGreenAreaDates, GreenAreaData } from '../src/services/greenAreaStorage';
 import html2canvas from 'html2canvas';
 import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
+import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
 
 interface EmergencyServiceProps {
   selectedMonth: string;
@@ -91,7 +92,10 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
-  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null });
+
+  // Aktif ay (takvim için) - birden fazla ay seçiliyse en son seçilen
+  const [activeMonth, setActiveMonth] = useState<number | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -126,29 +130,44 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     return Array.from(months).sort((a, b) => a - b);
   };
 
-  // Seçili yıl ve aylara göre gösterilecek günler
-  const displayableDays = (): number[] => {
-    if (selectedYears.length === 0 || selectedMonths.length === 0) return [];
-    const days = new Set<number>();
-    selectedYears.forEach(year => {
-      selectedMonths.forEach(month => {
-        const key = `${year}-${month}`;
-        (availableDays[key] || []).forEach(d => days.add(d));
-      });
+  // Takvim için müsait tarihler (aktif yıl + ay kombinasyonuna göre)
+  const availableDatesForCalendar = useMemo((): string[] => {
+    if (selectedYears.length === 0 || activeMonth === null) return [];
+
+    return allDates.filter(dateStr => {
+      const [year, month] = dateStr.split('-').map(Number);
+      return selectedYears.includes(year) && month === activeMonth;
     });
-    return Array.from(days).sort((a, b) => a - b);
-  };
+  }, [selectedYears, activeMonth, allDates]);
 
   // Seçimlere göre eşleşen tarihleri bul
   const getMatchingDates = (): string[] => {
     if (selectedYears.length === 0) return [];
 
+    // Tarih aralığı seçiliyse, aralıktaki tarihleri döndür
+    if (dateRange.start && dateRange.end) {
+      const dates: string[] = [];
+      const start = new Date(dateRange.start);
+      const end = new Date(dateRange.end);
+      const current = new Date(Math.min(start.getTime(), end.getTime()));
+      const endDate = new Date(Math.max(start.getTime(), end.getTime()));
+
+      while (current <= endDate) {
+        const dateStr = current.toISOString().split('T')[0];
+        if (allDates.includes(dateStr)) {
+          dates.push(dateStr);
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    }
+
+    // Sadece yıl ve ay seçiliyse (gün seçilmemişse) tüm günleri döndür
     return allDates.filter(dateStr => {
-      const [year, month, day] = dateStr.split('-').map(Number);
+      const [year, month] = dateStr.split('-').map(Number);
 
       if (!selectedYears.includes(year)) return false;
       if (selectedMonths.length > 0 && !selectedMonths.includes(month)) return false;
-      if (selectedDays.length > 0 && !selectedDays.includes(day)) return false;
 
       return true;
     });
@@ -243,9 +262,10 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     [selectedYears, availableMonths]
   );
 
-  const dayOptions: DropdownOption[] = useMemo(() =>
-    displayableDays().map(day => ({ value: day, label: String(day) })),
-    [selectedYears, selectedMonths, availableDays]
+  // Aktif ay seçenekleri (takvim için)
+  const activeMonthOptions: DropdownOption[] = useMemo(() =>
+    selectedMonths.map(month => ({ value: month, label: MONTH_NAMES[month] })),
+    [selectedMonths]
   );
 
   // Yıl değişimi handler
@@ -253,10 +273,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     const newYears = values.map(v => Number(v));
     setSelectedYears(newYears);
 
-    // Yıl değişince geçersiz ay ve gün seçimlerini temizle
+    // Yıl değişince geçersiz ay seçimlerini temizle ve tarih aralığını sıfırla
     if (newYears.length === 0) {
       setSelectedMonths([]);
-      setSelectedDays([]);
+      setActiveMonth(null);
+      setDateRange({ start: null, end: null });
     } else {
       // Seçili yıllarda mevcut olmayan ayları temizle
       const validMonths = new Set<number>();
@@ -266,7 +287,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       const newMonths = selectedMonths.filter(m => validMonths.has(m));
       if (newMonths.length !== selectedMonths.length) {
         setSelectedMonths(newMonths);
-        setSelectedDays([]);
+        // Aktif ay hala geçerliyse koru, değilse sıfırla
+        if (activeMonth !== null && !newMonths.includes(activeMonth)) {
+          setActiveMonth(newMonths.length > 0 ? newMonths[newMonths.length - 1] : null);
+        }
+        setDateRange({ start: null, end: null });
       }
     }
   };
@@ -276,27 +301,29 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     const newMonths = values.map(v => Number(v));
     setSelectedMonths(newMonths);
 
-    // Ay değişince geçersiz gün seçimlerini temizle
+    // Ay değişince aktif ayı güncelle ve tarih aralığını temizle
     if (newMonths.length === 0) {
-      setSelectedDays([]);
+      setActiveMonth(null);
+      setDateRange({ start: null, end: null });
     } else {
-      const validDays = new Set<number>();
-      selectedYears.forEach(year => {
-        newMonths.forEach(month => {
-          const key = `${year}-${month}`;
-          (availableDays[key] || []).forEach(d => validDays.add(d));
-        });
-      });
-      const newDays = selectedDays.filter(d => validDays.has(d));
-      if (newDays.length !== selectedDays.length) {
-        setSelectedDays(newDays);
-      }
+      // En son eklenen ayı aktif yap
+      const lastMonth = newMonths[newMonths.length - 1];
+      setActiveMonth(lastMonth);
+      setDateRange({ start: null, end: null });
     }
   };
 
-  // Gün değişimi handler
-  const handleDaysChange = (values: (string | number)[]) => {
-    setSelectedDays(values.map(v => Number(v)));
+  // Aktif ay değişimi handler
+  const handleActiveMonthChange = (values: (string | number)[]) => {
+    if (values.length > 0) {
+      setActiveMonth(Number(values[0]));
+      setDateRange({ start: null, end: null });
+    }
+  };
+
+  // Tarih aralığı değişimi handler
+  const handleDateRangeChange = (range: DateRange) => {
+    setDateRange(range);
   };
 
   // İl geneli hesapla
@@ -409,12 +436,13 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 {getMatchingDates().length} tarih seçili
               </span>
             )}
-            {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedDays.length > 0) && (
+            {(selectedYears.length > 0 || selectedMonths.length > 0 || dateRange.start) && (
               <button
                 onClick={() => {
                   setSelectedYears([]);
                   setSelectedMonths([]);
-                  setSelectedDays([]);
+                  setActiveMonth(null);
+                  setDateRange({ start: null, end: null });
                 }}
                 className="text-sm text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1"
               >
@@ -453,16 +481,32 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             showSearch={false}
           />
 
-          {/* Gün Seçimi */}
-          <MultiSelectDropdown
-            label="Gün Seçimi"
-            options={dayOptions}
-            selectedValues={selectedDays}
-            onChange={handleDaysChange}
-            placeholder="Gün seçiniz..."
+          {/* Aktif Ay Seçimi (birden fazla ay seçiliyse göster) */}
+          {selectedMonths.length > 1 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-600">Takvim Ayı</label>
+              <select
+                value={activeMonth || ''}
+                onChange={(e) => handleActiveMonthChange([Number(e.target.value)])}
+                className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
+              >
+                {selectedMonths.map(month => (
+                  <option key={month} value={month}>{MONTH_NAMES[month]}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Tarih Aralığı Takvimi */}
+          <DateRangeCalendar
+            label="Tarih Aralığı"
+            value={dateRange}
+            onChange={handleDateRangeChange}
+            availableDates={availableDatesForCalendar}
+            activeYear={selectedYears.length > 0 ? selectedYears[0] : null}
+            activeMonth={activeMonth}
             disabled={selectedMonths.length === 0}
-            emptyMessage={selectedMonths.length === 0 ? "Önce ay seçiniz" : "Seçili tarihlerde veri yok"}
-            maxDisplayItems={3}
+            placeholder={selectedMonths.length === 0 ? "Önce ay seçiniz..." : "Tarih aralığı seçiniz..."}
           />
 
           {/* Uygula Butonu */}
