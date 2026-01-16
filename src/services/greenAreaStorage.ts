@@ -1,5 +1,5 @@
 import { ref, uploadBytes, getDownloadURL, getBlob } from 'firebase/storage';
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { storage, db } from '../../firebase';
 import * as XLSX from 'xlsx';
 
@@ -112,15 +112,14 @@ export async function uploadGreenAreaFile(
     const recordCount = data.length;
     console.log('✅ [YEŞİL ALAN] Parse tamamlandı:', recordCount, 'hastane');
 
-    // Delete existing data for this date
-    const existingFiles = await getGreenAreaFiles(date);
-    for (const existingFile of existingFiles) {
-      await deleteDoc(doc(db, 'greenAreaFiles', existingFile.id));
-      console.log('🗑️ [YEŞİL ALAN] Eski veri silindi:', existingFile.id);
-    }
+    // Save to appData/greenArea document (using existing collection that has permissions)
+    const greenAreaDocRef = doc(db, 'appData', 'greenArea');
+    const existingDoc = await getDoc(greenAreaDocRef);
+    const existingData = existingDoc.exists() ? existingDoc.data() : { files: {} };
 
-    // Save metadata to Firestore
-    const metadata: Omit<GreenAreaFile, 'id'> = {
+    // Store data by date key
+    const filesMap = existingData.files || {};
+    filesMap[date] = {
       date,
       fileName: file.name,
       fileUrl,
@@ -130,7 +129,7 @@ export async function uploadGreenAreaFile(
       data
     };
 
-    await addDoc(collection(db, 'greenAreaFiles'), metadata);
+    await setDoc(greenAreaDocRef, { files: filesMap, lastUpdated: new Date().toISOString() });
     console.log('✅ [YEŞİL ALAN] Metadata Firestore\'a kaydedildi');
 
     return { success: true, data, recordCount };
@@ -146,25 +145,26 @@ export async function uploadGreenAreaFile(
  */
 export async function getGreenAreaFiles(date?: string): Promise<GreenAreaFile[]> {
   try {
-    let q;
-    if (date) {
-      q = query(collection(db, 'greenAreaFiles'), where('date', '==', date));
-    } else {
-      q = query(collection(db, 'greenAreaFiles'));
+    const greenAreaDocRef = doc(db, 'appData', 'greenArea');
+    const docSnap = await getDoc(greenAreaDocRef);
+
+    if (!docSnap.exists()) {
+      return [];
     }
 
-    const querySnapshot = await getDocs(q);
-    const files: GreenAreaFile[] = [];
+    const data = docSnap.data();
+    const filesMap = data.files || {};
 
-    querySnapshot.forEach((doc) => {
-      files.push({
-        id: doc.id,
-        ...doc.data()
-      } as GreenAreaFile);
-    });
+    const files: GreenAreaFile[] = Object.entries(filesMap).map(([key, value]: [string, any]) => ({
+      id: key,
+      ...value
+    }));
+
+    // Filter by date if specified
+    const filteredFiles = date ? files.filter(f => f.date === date) : files;
 
     // Sort by uploadedAt in memory
-    return files.sort((a, b) => b.uploadedAt - a.uploadedAt);
+    return filteredFiles.sort((a, b) => b.uploadedAt - a.uploadedAt);
   } catch (error) {
     console.error('❌ Dosya listesi yükleme hatası:', error);
     return [];
