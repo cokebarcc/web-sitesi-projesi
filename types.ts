@@ -186,6 +186,7 @@ export type ViewType =
   | 'dashboard-financial'    // YENİ - Finansal kategori dashboard'u
   | 'dashboard-preparation'  // YENİ - Hazırlama kategori dashboard'u
   | 'dashboard-support'      // YENİ - Destek modülleri dashboard'u
+  | 'dashboard-emergency'    // Acil Servis kategori dashboard'u
   | 'schedule'
   | 'performance-planning'
   | 'data-entry'
@@ -198,4 +199,5 @@ export type ViewType =
   | 'analysis-module'
   | 'efficiency-analysis'
   | 'presentation'
+  | 'emergency-service'      // Acil Servis modülü
   | 'admin';

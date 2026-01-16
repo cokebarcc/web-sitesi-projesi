@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ViewType } from '../types';
 
 interface DashboardCategoryProps {
-  category: 'mhrs' | 'financial' | 'preparation' | 'support';
+  category: 'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency';
   onBack: () => void;
   hasModuleAccess: (module: string) => boolean;
   onModuleSelect: (moduleId: string) => void;
@@ -111,6 +111,16 @@ const CATEGORY_MODULES: Record<string, ModuleDefinition[]> = {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
     }
+  ],
+  emergency: [
+    {
+      id: 'emergency-service',
+      label: 'Acil Servis',
+      permission: 'emergencyService',
+      icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    }
   ]
 };
 
@@ -118,7 +128,8 @@ const CATEGORY_TITLES: Record<string, string> = {
   mhrs: 'MHRS Analiz Sistemleri',
   financial: 'Finansal Analiz',
   preparation: 'Planlama ve Hazırlama',
-  support: 'Destek Sistemleri'
+  support: 'Destek Sistemleri',
+  emergency: 'Acil Servis'
 };
 
 const DashboardCategory: React.FC<DashboardCategoryProps> = ({

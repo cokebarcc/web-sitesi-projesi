@@ -2,7 +2,7 @@ import React from 'react';
 import { AppUser } from '../src/types/user';
 
 interface DashboardHomeProps {
-  onNavigateToCategory: (category: 'mhrs' | 'financial' | 'preparation' | 'support') => void;
+  onNavigateToCategory: (category: 'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency') => void;
   userPermissions: AppUser | null;
 }
 
@@ -10,7 +10,7 @@ interface CategoryCardProps {
   title: string;
   description: string;
   icon: React.ReactNode;
-  color: 'indigo' | 'rose' | 'slate' | 'amber';
+  color: 'indigo' | 'rose' | 'slate' | 'amber' | 'red';
   moduleCount: number;
   onClick: () => void;
   disabled: boolean;
@@ -29,7 +29,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     indigo: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
     rose: 'bg-rose-600 hover:bg-rose-700 shadow-rose-200',
     slate: 'bg-slate-900 hover:bg-slate-800 shadow-slate-200',
-    amber: 'bg-amber-600 hover:bg-amber-700 shadow-amber-200'
+    amber: 'bg-amber-600 hover:bg-amber-700 shadow-amber-200',
+    red: 'bg-red-600 hover:bg-red-700 shadow-red-200'
   };
 
   return (
@@ -101,6 +102,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
         return hasModuleAccess('aiChatbot') ||
                hasModuleAccess('gorenBashekimlik') ||
                userPermissions.role === 'admin'; // Admin paneli için
+      case 'emergency':
+        return hasModuleAccess('emergencyService');
       default:
         return false;
     }
@@ -182,6 +185,22 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
           moduleCount={3}
           onClick={() => onNavigateToCategory('support')}
           disabled={!canAccessCategory('support')}
+        />
+
+        {/* Acil Servis Kategorisi */}
+        <CategoryCard
+          title="ACİL SERVİS"
+          description="Acil servis verileri, hasta yoğunluğu ve performans analizleri"
+          icon={
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          color="red"
+          moduleCount={1}
+          onClick={() => onNavigateToCategory('emergency')}
+          disabled={!canAccessCategory('emergency')}
         />
       </div>
 

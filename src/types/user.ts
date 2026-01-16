@@ -14,6 +14,7 @@ export interface UserPermissions {
     analysisModule: boolean;
     performancePlanning: boolean;
     presentation: boolean;
+    emergencyService: boolean;
   };
 }
 
@@ -42,5 +43,6 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
     analysisModule: true,
     performancePlanning: true,
     presentation: true,
+    emergencyService: true,
   },
 };

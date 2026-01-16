@@ -34,6 +34,7 @@ import EfficiencyAnalysis from './components/EfficiencyAnalysis';
 import PresentationModule from './components/PresentationModule';
 import DashboardHome from './components/DashboardHome';
 import DashboardCategory from './components/DashboardCategory';
+import EmergencyService from './components/EmergencyService';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -80,7 +81,7 @@ const App: React.FC = () => {
   const { userPermissions, loading: permissionsLoading, hasModuleAccess, isAdmin } = useUserPermissions(user?.email || null);
 
   const [view, setView] = useState<ViewType>('dashboard');
-  const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | null>(null);
+  const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency' | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<string>(''); // Boş başlangıç - kullanıcı seçecek
 
   // Debug: selectedHospital değişimini logla
@@ -102,7 +103,8 @@ const App: React.FC = () => {
     'analysis-module': null,
     'presentation': null,
     'schedule': null,
-    'admin': null
+    'admin': null,
+    'emergency-service': null
   });
 
   // Her modül için ayrı ay/yıl seçimleri
@@ -122,7 +124,8 @@ const App: React.FC = () => {
     'analysis-module': currentMonth,
     'presentation': currentMonth,
     'schedule': currentMonth,
-    'admin': currentMonth
+    'admin': currentMonth,
+    'emergency-service': currentMonth
   });
 
   const [yearFilters, setYearFilters] = useState<Record<ViewType, number>>({
@@ -138,7 +141,8 @@ const App: React.FC = () => {
     'analysis-module': currentYear,
     'presentation': currentYear,
     'schedule': currentYear,
-    'admin': currentYear
+    'admin': currentYear,
+    'emergency-service': currentYear
   });
 
   // Her modül için cetvel seçimleri (ChangeAnalysis için)
@@ -155,7 +159,8 @@ const App: React.FC = () => {
     'analysis-module': '',
     'presentation': '',
     'schedule': '',
-    'admin': ''
+    'admin': '',
+    'emergency-service': ''
   });
 
   const [updatedLabels, setUpdatedLabels] = useState<Record<ViewType, string>>({
@@ -171,7 +176,8 @@ const App: React.FC = () => {
     'analysis-module': '',
     'presentation': '',
     'schedule': '',
-    'admin': ''
+    'admin': '',
+    'emergency-service': ''
   });
 
   // Mevcut modül için aktif filtreyi al
@@ -218,6 +224,7 @@ const App: React.FC = () => {
   const [isMhrsExpanded, setIsMhrsExpanded] = useState(true);
   const [isFinancialExpanded, setIsFinancialExpanded] = useState(true);
   const [isDevExpanded, setIsDevExpanded] = useState(true);
+  const [isEmergencyExpanded, setIsEmergencyExpanded] = useState(true);
 
   // Sync for presentation "Add current screen"
   const [slides, setSlides] = useState<PresentationSlide[]>([]);
@@ -566,6 +573,7 @@ const App: React.FC = () => {
             case 'dashboard-financial':
             case 'dashboard-preparation':
             case 'dashboard-support':
+            case 'dashboard-emergency':
               const category = dashboardCategory || 'mhrs';
               return (
                 <div>
@@ -733,6 +741,18 @@ const App: React.FC = () => {
               );
             case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
             case 'admin': return <AdminPanel currentUserEmail={user?.email || ''} />;
+            case 'emergency-service':
+              return (
+                <EmergencyService
+                  selectedMonth={selectedMonth}
+                  setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, 'emergency-service': m }))}
+                  selectedYear={selectedYear}
+                  setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, 'emergency-service': y }))}
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                />
+              );
             default: return null;
           }
         })()}
@@ -780,6 +800,7 @@ const App: React.FC = () => {
   const isMhrsActive = ['detailed-schedule', 'physician-data', 'efficiency-analysis', 'change-analysis'].includes(view);
   const isFinancialExpandedActive = ['service-analysis'].includes(view);
   const isDevActive = ['analysis-module', 'performance-planning', 'presentation'].includes(view);
+  const isEmergencyActive = ['emergency-service'].includes(view);
 
   const handleLogout = async () => {
     try {
@@ -936,6 +957,16 @@ const App: React.FC = () => {
                 <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isFinancialExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
               <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isFinancialExpanded ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">{hasModuleAccess('serviceAnalysis') && <SubNavItem label="Hizmet Girişim" active={view === 'service-analysis'} onClick={() => setView('service-analysis')} color="rose" />}</div></div>
+            </div>
+            <div className="space-y-1 pt-2">
+              <button onClick={() => setIsEmergencyExpanded(!isEmergencyExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
+                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isEmergencyActive ? 'bg-red-600' : 'bg-slate-200'}`}>
+                  <svg className={`w-3 h-3 ${isEmergencyActive ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span className={`text-sm font-medium flex-1 ${isEmergencyActive ? 'text-slate-900' : 'text-slate-600'}`}>Acil Servis</span>
+                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isEmergencyExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isEmergencyExpanded ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">{hasModuleAccess('emergencyService') && <SubNavItem label="Acil Servis" active={view === 'emergency-service'} onClick={() => setView('emergency-service')} color="red" />}</div></div>
             </div>
             <div className="space-y-1 pt-2">
               <button onClick={() => setIsDevExpanded(!isDevExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">

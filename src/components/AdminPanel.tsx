@@ -270,6 +270,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                     {user.permissions.modules.analysisModule && <span className="perm-badge">Analiz</span>}
                     {user.permissions.modules.performancePlanning && <span className="perm-badge">Planlama</span>}
                     {user.permissions.modules.presentation && <span className="perm-badge">Sunum</span>}
+                    {user.permissions.modules.emergencyService && <span className="perm-badge">Acil</span>}
                   </div>
                 </td>
                 <td>
@@ -450,6 +451,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                       })}
                     />
                     Sunum
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.modules.emergencyService}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        modules: { ...permissions.modules, emergencyService: e.target.checked }
+                      })}
+                    />
+                    Acil Servis
                   </label>
                 </div>
               </div>
