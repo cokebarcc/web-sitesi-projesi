@@ -1,8 +1,18 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { uploadGreenAreaFile, loadMultipleDatesData, getAvailableDateParts, getAvailableGreenAreaDates, GreenAreaData } from '../src/services/greenAreaStorage';
+import { uploadGreenAreaFile, loadMultipleDatesData, getAvailableDateParts, getAvailableGreenAreaDates, GreenAreaData, getGreenAreaFiles } from '../src/services/greenAreaStorage';
 import html2canvas from 'html2canvas';
 import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
 import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
+import GreenAreaDailyRateTable from './GreenAreaDailyRateTable';
+
+// Günlük tablo için veri yapısı
+interface DailyData {
+  date: string;
+  hospitalName: string;
+  greenAreaCount: number;
+  totalCount: number;
+  greenAreaRate: number;
+}
 
 interface EmergencyServiceProps {
   selectedMonth: string;
@@ -100,6 +110,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<GreenAreaData[] | null>(null);
+  const [dailyData, setDailyData] = useState<DailyData[]>([]); // Günlük tablo için
   const [selectedDatesForDisplay, setSelectedDatesForDisplay] = useState<string[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -212,14 +223,37 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
     setIsLoading(true);
     try {
+      // Toplu veri yükle (kartlar için)
       const loadedData = await loadMultipleDatesData(matchingDates);
+
+      // Günlük veri yükle (tablo için)
+      const allFiles = await getGreenAreaFiles();
+      const dailyDataArr: DailyData[] = [];
+
+      matchingDates.forEach(date => {
+        const fileForDate = allFiles.find(f => f.date === date);
+        if (fileForDate && fileForDate.data) {
+          fileForDate.data.forEach(hospital => {
+            dailyDataArr.push({
+              date,
+              hospitalName: hospital.hospitalName,
+              greenAreaCount: hospital.greenAreaCount,
+              totalCount: hospital.totalCount,
+              greenAreaRate: hospital.greenAreaRate
+            });
+          });
+        }
+      });
+
       if (loadedData) {
         setData(loadedData);
+        setDailyData(dailyDataArr);
         setSelectedDatesForDisplay(matchingDates);
         showToast(`${matchingDates.length} tarihten ${loadedData.length} hastane verisi yüklendi`, 'success');
       } else {
         showToast('Veri bulunamadı', 'error');
         setData(null);
+        setDailyData([]);
       }
     } catch (error: any) {
       showToast(error.message || 'Veri yükleme hatası', 'error');
@@ -622,6 +656,15 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Günlük Oran Tablosu */}
+          {selectedDatesForDisplay.length > 1 && dailyData.length > 0 && (
+            <GreenAreaDailyRateTable
+              data={dailyData}
+              selectedDates={selectedDatesForDisplay}
+              onCopy={() => showToast('Tablo panoya kopyalandı', 'success')}
+            />
+          )}
         </>
       )}
     </div>
