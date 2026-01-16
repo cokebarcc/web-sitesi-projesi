@@ -44,6 +44,34 @@ const getTextColor = (rate: number): string => {
   return 'text-red-600';
 };
 
+// Hastane sıralama - öncelikli hastaneler
+const priorityHospitals = [
+  'Şanlıurfa EAH',
+  'Mehmet Akif İnan EAH',
+  'Balıklıgöl DH'
+];
+
+const sortHospitals = (data: GreenAreaData[]): GreenAreaData[] => {
+  return [...data].sort((a, b) => {
+    const aShort = getShortName(a.hospitalName);
+    const bShort = getShortName(b.hospitalName);
+
+    const aIndex = priorityHospitals.indexOf(aShort);
+    const bIndex = priorityHospitals.indexOf(bShort);
+
+    // Her ikisi de öncelikli listede
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    // Sadece a öncelikli
+    if (aIndex !== -1) return -1;
+    // Sadece b öncelikli
+    if (bIndex !== -1) return 1;
+    // İkisi de öncelikli değil - alfabetik sırala
+    return aShort.localeCompare(bShort, 'tr-TR');
+  });
+};
+
 const EmergencyService: React.FC<EmergencyServiceProps> = ({
   selectedMonth,
   setSelectedMonth,
@@ -340,8 +368,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               />
             )}
 
-            {/* Hospital Cards */}
-            {data.map((hospital, index) => (
+            {/* Hospital Cards - Özel sıralama */}
+            {sortHospitals(data).map((hospital, index) => (
               <HospitalCard
                 key={index}
                 data={hospital}
