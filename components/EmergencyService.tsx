@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { uploadGreenAreaFile, loadGreenAreaData, getAvailableGreenAreaDates, GreenAreaData } from '../src/services/greenAreaStorage';
+import { uploadGreenAreaFile, loadMultipleDatesData, getAvailableDateParts, getAvailableGreenAreaDates, GreenAreaData } from '../src/services/greenAreaStorage';
 import html2canvas from 'html2canvas';
 
 interface EmergencyServiceProps {
@@ -28,6 +28,8 @@ const hospitalShortNames: Record<string, string> = {
   'Şanlıurfa Sağlık Bilimleri Üniversitesi Mehmet Akif İnan EAH': 'Şanlıurfa EAH',
   'Şanlıurfa Eğitim ve Araştırma Hastanesi': 'Mehmet Akif İnan EAH',
 };
+
+const MONTH_NAMES = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 
 const getShortName = (fullName: string): string => {
   return hospitalShortNames[fullName] || fullName.replace('Şanlıurfa ', '').replace(' Devlet Hastanesi', ' DH');
@@ -59,15 +61,11 @@ const sortHospitals = (data: GreenAreaData[]): GreenAreaData[] => {
     const aIndex = priorityHospitals.indexOf(aShort);
     const bIndex = priorityHospitals.indexOf(bShort);
 
-    // Her ikisi de öncelikli listede
     if (aIndex !== -1 && bIndex !== -1) {
       return aIndex - bIndex;
     }
-    // Sadece a öncelikli
     if (aIndex !== -1) return -1;
-    // Sadece b öncelikli
     if (bIndex !== -1) return 1;
-    // İkisi de öncelikli değil - alfabetik sırala
     return aShort.localeCompare(bShort, 'tr-TR');
   });
 };
@@ -81,23 +79,78 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   allowedHospitals,
   onHospitalChange,
 }) => {
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  // Upload için tarih
+  const [uploadDate, setUploadDate] = useState<string>(new Date().toISOString().split('T')[0]);
+
+  // Filtre için çoklu seçim
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<Record<number, number[]>>({});
+  const [availableDays, setAvailableDays] = useState<Record<string, number[]>>({});
+  const [allDates, setAllDates] = useState<string[]>([]);
+
+  const [selectedYears, setSelectedYears] = useState<number[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<GreenAreaData[] | null>(null);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [selectedDatesForDisplay, setSelectedDatesForDisplay] = useState<string[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Load available dates on mount
+  // Load available date parts on mount
   useEffect(() => {
-    loadAvailableDates();
+    loadDateParts();
   }, []);
 
-  const loadAvailableDates = async () => {
+  const loadDateParts = async () => {
+    const parts = await getAvailableDateParts();
+    setAvailableYears(parts.years);
+    setAvailableMonths(parts.monthsByYear);
+    setAvailableDays(parts.daysByYearMonth);
+
     const dates = await getAvailableGreenAreaDates();
-    setAvailableDates(dates);
+    setAllDates(dates);
+  };
+
+  // Seçili yıllara göre gösterilecek aylar
+  const displayableMonths = (): number[] => {
+    if (selectedYears.length === 0) return [];
+    const months = new Set<number>();
+    selectedYears.forEach(year => {
+      (availableMonths[year] || []).forEach(m => months.add(m));
+    });
+    return Array.from(months).sort((a, b) => a - b);
+  };
+
+  // Seçili yıl ve aylara göre gösterilecek günler
+  const displayableDays = (): number[] => {
+    if (selectedYears.length === 0 || selectedMonths.length === 0) return [];
+    const days = new Set<number>();
+    selectedYears.forEach(year => {
+      selectedMonths.forEach(month => {
+        const key = `${year}-${month}`;
+        (availableDays[key] || []).forEach(d => days.add(d));
+      });
+    });
+    return Array.from(days).sort((a, b) => a - b);
+  };
+
+  // Seçimlere göre eşleşen tarihleri bul
+  const getMatchingDates = (): string[] => {
+    if (selectedYears.length === 0) return [];
+
+    return allDates.filter(dateStr => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+
+      if (!selectedYears.includes(year)) return false;
+      if (selectedMonths.length > 0 && !selectedMonths.includes(month)) return false;
+      if (selectedDays.length > 0 && !selectedDays.includes(day)) return false;
+
+      return true;
+    });
   };
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -111,11 +164,12 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
     setIsUploading(true);
     try {
-      const result = await uploadGreenAreaFile(file, selectedDate, 'user');
+      const result = await uploadGreenAreaFile(file, uploadDate, 'user');
       if (result.success && result.data) {
         setData(result.data);
+        setSelectedDatesForDisplay([uploadDate]);
         showToast(`${result.recordCount} hastane verisi yüklendi`, 'success');
-        await loadAvailableDates();
+        await loadDateParts();
       } else {
         showToast(result.error || 'Yükleme hatası', 'error');
       }
@@ -130,14 +184,21 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   };
 
   const handleLoadData = async () => {
+    const matchingDates = getMatchingDates();
+    if (matchingDates.length === 0) {
+      showToast('Seçimlere uygun tarih bulunamadı', 'error');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const loadedData = await loadGreenAreaData(selectedDate);
+      const loadedData = await loadMultipleDatesData(matchingDates);
       if (loadedData) {
         setData(loadedData);
-        showToast(`${loadedData.length} hastane verisi yüklendi`, 'success');
+        setSelectedDatesForDisplay(matchingDates);
+        showToast(`${matchingDates.length} tarihten ${loadedData.length} hastane verisi yüklendi`, 'success');
       } else {
-        showToast('Bu tarih için veri bulunamadı', 'error');
+        showToast('Veri bulunamadı', 'error');
         setData(null);
       }
     } catch (error: any) {
@@ -158,13 +219,40 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       });
 
       const link = document.createElement('a');
-      link.download = `yesil-alan-oranlari-${selectedDate}.png`;
+      const dateStr = selectedDatesForDisplay.length === 1
+        ? selectedDatesForDisplay[0]
+        : `${selectedDatesForDisplay.length}-tarih`;
+      link.download = `yesil-alan-oranlari-${dateStr}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
       showToast('PNG indirildi', 'success');
     } catch (error) {
       showToast('PNG indirme hatası', 'error');
     }
+  };
+
+  // Toggle fonksiyonları
+  const toggleYear = (year: number) => {
+    setSelectedYears(prev =>
+      prev.includes(year) ? prev.filter(y => y !== year) : [...prev, year]
+    );
+    // Yıl değişince ay ve gün seçimlerini temizle
+    setSelectedMonths([]);
+    setSelectedDays([]);
+  };
+
+  const toggleMonth = (month: number) => {
+    setSelectedMonths(prev =>
+      prev.includes(month) ? prev.filter(m => m !== month) : [...prev, month]
+    );
+    // Ay değişince gün seçimlerini temizle
+    setSelectedDays([]);
+  };
+
+  const toggleDay = (day: number) => {
+    setSelectedDays(prev =>
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+    );
   };
 
   // İl geneli hesapla
@@ -179,10 +267,17 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     ilGeneli.greenAreaRate = ilGeneli.totalCount > 0 ? (ilGeneli.greenAreaCount / ilGeneli.totalCount) * 100 : 0;
   }
 
-  // Format date for display
-  const formatDate = (dateStr: string): string => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // Tarih gösterimi
+  const getDateRangeDisplay = (): string => {
+    if (selectedDatesForDisplay.length === 0) return '';
+    if (selectedDatesForDisplay.length === 1) {
+      const d = new Date(selectedDatesForDisplay[0]);
+      return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    const sorted = [...selectedDatesForDisplay].sort();
+    const first = new Date(sorted[0]);
+    const last = new Date(sorted[sorted.length - 1]);
+    return `${first.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })} - ${last.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })} (${selectedDatesForDisplay.length} gün)`;
   };
 
   return (
@@ -202,67 +297,24 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
         </div>
       </div>
 
-      {/* Date Selection & Upload */}
+      {/* Veri Yükleme Bölümü */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4">Veri Yükleme</h3>
         <div className="flex flex-wrap gap-4 items-end">
-          {/* Date Picker */}
+          {/* Yükleme için Tarih Picker */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-600">Tarih Seçin</label>
+            <label className="text-sm font-medium text-slate-600">Yükleme Tarihi</label>
             <input
               type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              value={uploadDate}
+              onChange={(e) => setUploadDate(e.target.value)}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
 
-          {/* Available Dates Dropdown */}
-          {availableDates.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-600">Kayıtlı Tarihler</label>
-              <select
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              >
-                <option value="">Tarih seçin...</option>
-                {availableDates.map(date => (
-                  <option key={date} value={date}>{formatDate(date)}</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Load Button */}
-          <button
-            onClick={handleLoadData}
-            disabled={isLoading || !selectedDate}
-            className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Yükleniyor...
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Uygula
-              </>
-            )}
-          </button>
-
-          {/* Divider */}
-          <div className="h-10 w-px bg-slate-200"></div>
-
           {/* Upload Button */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-600">Excel Yükle</label>
+            <label className="text-sm font-medium text-slate-600">Excel Dosyası</label>
             <input
               ref={fileInputRef}
               type="file"
@@ -272,7 +324,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading || !selectedDate}
+              disabled={isUploading || !uploadDate}
               className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isUploading ? (
@@ -293,22 +345,6 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               )}
             </button>
           </div>
-
-          {/* Download PNG Button */}
-          {data && (
-            <>
-              <div className="h-10 w-px bg-slate-200"></div>
-              <button
-                onClick={handleDownloadPng}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                PNG İndir
-              </button>
-            </>
-          )}
         </div>
 
         {/* Excel format info */}
@@ -317,6 +353,137 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             <span className="font-semibold">Excel Formatı:</span> Kurum Adı | Yeşil Alan Muayene Sayısı | Toplam Muayene Sayısı
           </p>
         </div>
+      </div>
+
+      {/* Veri Çekme Bölümü */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4">Veri Çekme (Çoklu Tarih Seçimi)</h3>
+
+        {availableYears.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            <p>Henüz yüklenmiş veri bulunmuyor.</p>
+            <p className="text-sm mt-1">Yukarıdan Excel yükleyerek başlayabilirsiniz.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Yıl Seçimi */}
+            <div>
+              <label className="text-sm font-medium text-slate-600 block mb-2">Yıl Seçin (birden fazla seçilebilir)</label>
+              <div className="flex flex-wrap gap-2">
+                {availableYears.map(year => (
+                  <button
+                    key={year}
+                    onClick={() => toggleYear(year)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedYears.includes(year)
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Ay Seçimi */}
+            {selectedYears.length > 0 && displayableMonths().length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-slate-600 block mb-2">Ay Seçin (birden fazla seçilebilir)</label>
+                <div className="flex flex-wrap gap-2">
+                  {displayableMonths().map(month => (
+                    <button
+                      key={month}
+                      onClick={() => toggleMonth(month)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        selectedMonths.includes(month)
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {MONTH_NAMES[month]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Gün Seçimi */}
+            {selectedMonths.length > 0 && displayableDays().length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-slate-600 block mb-2">Gün Seçin (birden fazla seçilebilir, boş bırakırsanız tüm günler seçilir)</label>
+                <div className="flex flex-wrap gap-2">
+                  {displayableDays().map(day => (
+                    <button
+                      key={day}
+                      onClick={() => toggleDay(day)}
+                      className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
+                        selectedDays.includes(day)
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Seçim Özeti ve Uygula Butonu */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <div className="text-sm text-slate-500">
+                {getMatchingDates().length > 0 ? (
+                  <span className="text-emerald-600 font-medium">{getMatchingDates().length} tarih seçildi</span>
+                ) : selectedYears.length > 0 ? (
+                  <span>Seçime uygun tarih bulunamadı</span>
+                ) : (
+                  <span>En az bir yıl seçin</span>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                {/* Temizle Butonu */}
+                {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedDays.length > 0) && (
+                  <button
+                    onClick={() => {
+                      setSelectedYears([]);
+                      setSelectedMonths([]);
+                      setSelectedDays([]);
+                    }}
+                    className="px-4 py-2 text-slate-600 rounded-xl font-medium text-sm hover:bg-slate-100 transition-all"
+                  >
+                    Temizle
+                  </button>
+                )}
+
+                {/* Uygula Butonu */}
+                <button
+                  onClick={handleLoadData}
+                  disabled={isLoading || getMatchingDates().length === 0}
+                  className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Yükleniyor...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      Uygula
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* No Data Message */}
@@ -339,59 +506,74 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       {/* Cards Container */}
       {data && (
-        <div ref={cardsContainerRef} className="bg-slate-50 p-8 rounded-2xl">
-          {/* Header for PNG */}
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-800">Acil Servis Yeşil Alan Oranları</h2>
-                <p className="text-slate-500">Şanlıurfa İl Sağlık Müdürlüğü</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-slate-800">{formatDate(selectedDate)}</p>
-            </div>
+        <>
+          {/* PNG İndir Butonu */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleDownloadPng}
+              className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              PNG İndir
+            </button>
           </div>
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* İl Geneli Card - First and Larger */}
-            {ilGeneli && (
-              <HospitalCard
-                data={ilGeneli}
-                isIlGeneli={true}
-              />
-            )}
+          <div ref={cardsContainerRef} className="bg-slate-50 p-8 rounded-2xl">
+            {/* Header for PNG */}
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">Acil Servis Yeşil Alan Oranları</h2>
+                  <p className="text-slate-500">Şanlıurfa İl Sağlık Müdürlüğü</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold text-slate-800">{getDateRangeDisplay()}</p>
+              </div>
+            </div>
 
-            {/* Hospital Cards - Özel sıralama */}
-            {sortHospitals(data).map((hospital, index) => (
-              <HospitalCard
-                key={index}
-                data={hospital}
-                isIlGeneli={false}
-              />
-            ))}
-          </div>
-
-          {/* Footer with formula */}
-          <div className="mt-8 pt-4 border-t border-slate-200">
-            <div className="bg-white rounded-xl p-4 text-center">
-              <p className="text-sm text-slate-600 font-medium">
-                Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-600">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
-              </p>
+            {/* Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* İl Geneli Card - First and Larger */}
               {ilGeneli && (
-                <p className="text-sm text-slate-500 mt-2">
-                  Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
-                </p>
+                <HospitalCard
+                  data={ilGeneli}
+                  isIlGeneli={true}
+                />
               )}
+
+              {/* Hospital Cards - Özel sıralama */}
+              {sortHospitals(data).map((hospital, index) => (
+                <HospitalCard
+                  key={index}
+                  data={hospital}
+                  isIlGeneli={false}
+                />
+              ))}
+            </div>
+
+            {/* Footer with formula */}
+            <div className="mt-8 pt-4 border-t border-slate-200">
+              <div className="bg-white rounded-xl p-4 text-center">
+                <p className="text-sm text-slate-600 font-medium">
+                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-600">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
+                </p>
+                {ilGeneli && (
+                  <p className="text-sm text-slate-500 mt-2">
+                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

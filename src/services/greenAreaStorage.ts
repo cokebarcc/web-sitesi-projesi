@@ -205,3 +205,93 @@ export async function getAvailableGreenAreaDates(): Promise<string[]> {
     return [];
   }
 }
+
+/**
+ * Get available years, months, and days from stored data
+ */
+export async function getAvailableDateParts(): Promise<{
+  years: number[];
+  monthsByYear: Record<number, number[]>;
+  daysByYearMonth: Record<string, number[]>;
+}> {
+  try {
+    const dates = await getAvailableGreenAreaDates();
+    const years = new Set<number>();
+    const monthsByYear: Record<number, Set<number>> = {};
+    const daysByYearMonth: Record<string, Set<number>> = {};
+
+    dates.forEach(dateStr => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      years.add(year);
+
+      if (!monthsByYear[year]) monthsByYear[year] = new Set();
+      monthsByYear[year].add(month);
+
+      const key = `${year}-${month}`;
+      if (!daysByYearMonth[key]) daysByYearMonth[key] = new Set();
+      daysByYearMonth[key].add(day);
+    });
+
+    return {
+      years: Array.from(years).sort((a, b) => b - a),
+      monthsByYear: Object.fromEntries(
+        Object.entries(monthsByYear).map(([y, m]) => [Number(y), Array.from(m).sort((a, b) => a - b)])
+      ),
+      daysByYearMonth: Object.fromEntries(
+        Object.entries(daysByYearMonth).map(([k, d]) => [k, Array.from(d).sort((a, b) => a - b)])
+      )
+    };
+  } catch (error) {
+    console.error('❌ Tarih parçaları yükleme hatası:', error);
+    return { years: [], monthsByYear: {}, daysByYearMonth: {} };
+  }
+}
+
+/**
+ * Load and merge green area data for multiple dates
+ */
+export async function loadMultipleDatesData(dates: string[]): Promise<GreenAreaData[] | null> {
+  try {
+    if (dates.length === 0) return null;
+
+    const allFiles = await getGreenAreaFiles();
+    const selectedFiles = allFiles.filter(f => dates.includes(f.date));
+
+    if (selectedFiles.length === 0) {
+      console.log('📭 [YEŞİL ALAN] Seçilen tarihler için veri bulunamadı');
+      return null;
+    }
+
+    // Merge data from all selected dates
+    const mergedData: Record<string, GreenAreaData> = {};
+
+    selectedFiles.forEach(file => {
+      file.data.forEach(hospital => {
+        if (!mergedData[hospital.hospitalName]) {
+          mergedData[hospital.hospitalName] = {
+            hospitalName: hospital.hospitalName,
+            greenAreaCount: 0,
+            totalCount: 0,
+            greenAreaRate: 0
+          };
+        }
+        mergedData[hospital.hospitalName].greenAreaCount += hospital.greenAreaCount;
+        mergedData[hospital.hospitalName].totalCount += hospital.totalCount;
+      });
+    });
+
+    // Calculate rates
+    const result = Object.values(mergedData).map(hospital => ({
+      ...hospital,
+      greenAreaRate: hospital.totalCount > 0
+        ? (hospital.greenAreaCount / hospital.totalCount) * 100
+        : 0
+    }));
+
+    console.log(`✅ [YEŞİL ALAN] ${dates.length} tarihten ${result.length} hastane verisi birleştirildi`);
+    return result;
+  } catch (error) {
+    console.error('❌ Çoklu tarih verisi yükleme hatası:', error);
+    return null;
+  }
+}
