@@ -33,16 +33,14 @@ const getShortName = (fullName: string): string => {
   return hospitalShortNames[fullName] || fullName.replace('Şanlıurfa ', '').replace(' Devlet Hastanesi', ' DH');
 };
 
-// Progress bar rengi belirleme
+// Progress bar rengi belirleme - %60 altı kırmızı, %60 ve üzeri yeşil
 const getProgressColor = (rate: number): string => {
-  if (rate >= 70) return 'bg-emerald-500';
-  if (rate >= 50) return 'bg-amber-500';
+  if (rate >= 60) return 'bg-emerald-500';
   return 'bg-red-500';
 };
 
 const getTextColor = (rate: number): string => {
-  if (rate >= 70) return 'text-emerald-600';
-  if (rate >= 50) return 'text-amber-600';
+  if (rate >= 60) return 'text-emerald-600';
   return 'text-red-600';
 };
 
