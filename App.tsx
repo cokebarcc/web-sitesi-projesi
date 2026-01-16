@@ -966,7 +966,7 @@ const App: React.FC = () => {
                 <span className={`text-sm font-medium flex-1 ${isEmergencyActive ? 'text-slate-900' : 'text-slate-600'}`}>Acil Servis</span>
                 <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isEmergencyExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isEmergencyExpanded ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">{hasModuleAccess('emergencyService') && <SubNavItem label="Acil Servis" active={view === 'emergency-service'} onClick={() => setView('emergency-service')} color="red" />}</div></div>
+              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isEmergencyExpanded ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">{hasModuleAccess('emergencyService') && <SubNavItem label="Yeşil Alan Oranları" active={view === 'emergency-service'} onClick={() => setView('emergency-service')} color="red" />}</div></div>
             </div>
             <div className="space-y-1 pt-2">
               <button onClick={() => setIsDevExpanded(!isDevExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
