@@ -356,111 +356,120 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       </div>
 
       {/* Filtreler */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-4">
-        <div className="flex flex-wrap gap-4 items-center">
-          {/* Yıl Filtresi */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-slate-600">Yıl:</label>
-            <div className="relative">
-              <select
-                multiple
-                value={selectedYears.map(String)}
-                onChange={(e) => {
-                  const values = Array.from(e.target.selectedOptions, option => Number(option.value));
-                  setSelectedYears(values);
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-800">Veri Filtreleme</h3>
+          <div className="flex items-center gap-3">
+            {getMatchingDates().length > 0 && (
+              <span className="text-sm text-emerald-600 font-medium bg-emerald-50 px-3 py-1 rounded-full">
+                {getMatchingDates().length} tarih seçili
+              </span>
+            )}
+            {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedDays.length > 0) && (
+              <button
+                onClick={() => {
+                  setSelectedYears([]);
                   setSelectedMonths([]);
                   setSelectedDays([]);
                 }}
-                className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[100px]"
-                size={1}
+                className="text-sm text-slate-500 hover:text-slate-700 font-medium"
               >
-                {availableYears.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-            {selectedYears.length > 0 && (
-              <div className="flex gap-1">
-                {selectedYears.map(year => (
-                  <span key={year} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium flex items-center gap-1">
-                    {year}
-                    <button onClick={() => setSelectedYears(prev => prev.filter(y => y !== year))} className="hover:text-emerald-900">×</button>
-                  </span>
-                ))}
-              </div>
+                Temizle
+              </button>
             )}
           </div>
+        </div>
 
-          {/* Ay Filtresi */}
+        <div className="space-y-4">
+          {/* Yıl Checkbox'ları */}
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm font-medium text-slate-600 w-12">Yıl:</label>
+            <div className="flex flex-wrap gap-2">
+              {availableYears.map(year => (
+                <label
+                  key={year}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                    selectedYears.includes(year)
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedYears.includes(year)}
+                    onChange={() => toggleYear(year)}
+                    className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                  />
+                  <span className="text-sm font-medium">{year}</span>
+                </label>
+              ))}
+              {availableYears.length === 0 && (
+                <span className="text-sm text-slate-400 italic">Kayıtlı veri yok</span>
+              )}
+            </div>
+          </div>
+
+          {/* Ay Checkbox'ları */}
           {selectedYears.length > 0 && displayableMonths().length > 0 && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-600">Ay:</label>
-              <select
-                value=""
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  if (value && !selectedMonths.includes(value)) {
-                    setSelectedMonths(prev => [...prev, value]);
-                    setSelectedDays([]);
-                  }
-                }}
-                className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              >
-                <option value="">Ay seçin...</option>
-                {displayableMonths().filter(m => !selectedMonths.includes(m)).map(month => (
-                  <option key={month} value={month}>{MONTH_NAMES[month]}</option>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-sm font-medium text-slate-600 w-12">Ay:</label>
+              <div className="flex flex-wrap gap-2">
+                {displayableMonths().map(month => (
+                  <label
+                    key={month}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                      selectedMonths.includes(month)
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMonths.includes(month)}
+                      onChange={() => toggleMonth(month)}
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                    />
+                    <span className="text-sm font-medium">{MONTH_NAMES[month]}</span>
+                  </label>
                 ))}
-              </select>
-              {selectedMonths.length > 0 && (
-                <div className="flex gap-1 flex-wrap">
-                  {selectedMonths.map(month => (
-                    <span key={month} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium flex items-center gap-1">
-                      {MONTH_NAMES[month]}
-                      <button onClick={() => { setSelectedMonths(prev => prev.filter(m => m !== month)); setSelectedDays([]); }} className="hover:text-emerald-900">×</button>
-                    </span>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
           )}
 
-          {/* Gün Filtresi */}
+          {/* Gün Checkbox'ları */}
           {selectedMonths.length > 0 && displayableDays().length > 0 && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-600">Gün:</label>
-              <select
-                value=""
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  if (value && !selectedDays.includes(value)) {
-                    setSelectedDays(prev => [...prev, value]);
-                  }
-                }}
-                className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              >
-                <option value="">Tüm günler</option>
-                {displayableDays().filter(d => !selectedDays.includes(d)).map(day => (
-                  <option key={day} value={day}>{day}</option>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-sm font-medium text-slate-600 w-12">Gün:</label>
+              <div className="flex flex-wrap gap-2">
+                {displayableDays().map(day => (
+                  <label
+                    key={day}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
+                      selectedDays.includes(day)
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDays.includes(day)}
+                      onChange={() => toggleDay(day)}
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                    />
+                    <span className="text-sm font-medium">{day}</span>
+                  </label>
                 ))}
-              </select>
-              {selectedDays.length > 0 && (
-                <div className="flex gap-1 flex-wrap">
-                  {selectedDays.map(day => (
-                    <span key={day} className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium flex items-center gap-1">
-                      {day}
-                      <button onClick={() => setSelectedDays(prev => prev.filter(d => d !== day))} className="hover:text-emerald-900">×</button>
-                    </span>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
           )}
+        </div>
 
-          {/* Uygula Butonu */}
+        {/* Uygula Butonu */}
+        <div className="mt-6 pt-4 border-t border-slate-100">
           <button
             onClick={handleLoadData}
             disabled={isLoading || getMatchingDates().length === 0}
-            className="px-5 py-2 bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isLoading ? (
               <>
@@ -468,32 +477,17 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
+                Yükleniyor...
               </>
             ) : (
-              'Uygula'
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Veriyi Getir
+              </>
             )}
           </button>
-
-          {/* Temizle */}
-          {(selectedYears.length > 0 || selectedMonths.length > 0 || selectedDays.length > 0) && (
-            <button
-              onClick={() => {
-                setSelectedYears([]);
-                setSelectedMonths([]);
-                setSelectedDays([]);
-              }}
-              className="px-3 py-2 text-slate-500 hover:text-slate-700 text-sm font-medium"
-            >
-              Temizle
-            </button>
-          )}
-
-          {/* Seçim bilgisi */}
-          {getMatchingDates().length > 0 && (
-            <span className="text-xs text-emerald-600 font-medium ml-auto">
-              {getMatchingDates().length} tarih
-            </span>
-          )}
         </div>
       </div>
 
