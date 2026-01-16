@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { uploadGreenAreaFile, loadMultipleDatesData, getAvailableDateParts, getAvailableGreenAreaDates, GreenAreaData } from '../src/services/greenAreaStorage';
 import html2canvas from 'html2canvas';
+import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
 
 interface EmergencyServiceProps {
   selectedMonth: string;
@@ -231,28 +232,71 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     }
   };
 
-  // Toggle fonksiyonları
-  const toggleYear = (year: number) => {
-    setSelectedYears(prev =>
-      prev.includes(year) ? prev.filter(y => y !== year) : [...prev, year]
-    );
-    // Yıl değişince ay ve gün seçimlerini temizle
-    setSelectedMonths([]);
-    setSelectedDays([]);
+  // Dropdown options için memoized değerler
+  const yearOptions: DropdownOption[] = useMemo(() =>
+    availableYears.map(year => ({ value: year, label: String(year) })),
+    [availableYears]
+  );
+
+  const monthOptions: DropdownOption[] = useMemo(() =>
+    displayableMonths().map(month => ({ value: month, label: MONTH_NAMES[month] })),
+    [selectedYears, availableMonths]
+  );
+
+  const dayOptions: DropdownOption[] = useMemo(() =>
+    displayableDays().map(day => ({ value: day, label: String(day) })),
+    [selectedYears, selectedMonths, availableDays]
+  );
+
+  // Yıl değişimi handler
+  const handleYearsChange = (values: (string | number)[]) => {
+    const newYears = values.map(v => Number(v));
+    setSelectedYears(newYears);
+
+    // Yıl değişince geçersiz ay ve gün seçimlerini temizle
+    if (newYears.length === 0) {
+      setSelectedMonths([]);
+      setSelectedDays([]);
+    } else {
+      // Seçili yıllarda mevcut olmayan ayları temizle
+      const validMonths = new Set<number>();
+      newYears.forEach(year => {
+        (availableMonths[year] || []).forEach(m => validMonths.add(m));
+      });
+      const newMonths = selectedMonths.filter(m => validMonths.has(m));
+      if (newMonths.length !== selectedMonths.length) {
+        setSelectedMonths(newMonths);
+        setSelectedDays([]);
+      }
+    }
   };
 
-  const toggleMonth = (month: number) => {
-    setSelectedMonths(prev =>
-      prev.includes(month) ? prev.filter(m => m !== month) : [...prev, month]
-    );
-    // Ay değişince gün seçimlerini temizle
-    setSelectedDays([]);
+  // Ay değişimi handler
+  const handleMonthsChange = (values: (string | number)[]) => {
+    const newMonths = values.map(v => Number(v));
+    setSelectedMonths(newMonths);
+
+    // Ay değişince geçersiz gün seçimlerini temizle
+    if (newMonths.length === 0) {
+      setSelectedDays([]);
+    } else {
+      const validDays = new Set<number>();
+      selectedYears.forEach(year => {
+        newMonths.forEach(month => {
+          const key = `${year}-${month}`;
+          (availableDays[key] || []).forEach(d => validDays.add(d));
+        });
+      });
+      const newDays = selectedDays.filter(d => validDays.has(d));
+      if (newDays.length !== selectedDays.length) {
+        setSelectedDays(newDays);
+      }
+    }
   };
 
-  const toggleDay = (day: number) => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
+  // Gün değişimi handler
+  const handleDaysChange = (values: (string | number)[]) => {
+    setSelectedDays(values.map(v => Number(v)));
   };
 
   // İl geneli hesapla
@@ -357,7 +401,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       {/* Filtreler */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-slate-800">Veri Filtreleme</h3>
           <div className="flex items-center gap-3">
             {getMatchingDates().length > 0 && (
@@ -372,104 +416,60 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   setSelectedMonths([]);
                   setSelectedDays([]);
                 }}
-                className="text-sm text-slate-500 hover:text-slate-700 font-medium"
+                className="text-sm text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1"
               >
-                Temizle
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Tümünü Temizle
               </button>
             )}
           </div>
         </div>
 
-        <div className="space-y-4">
-          {/* Yıl Checkbox'ları */}
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm font-medium text-slate-600 w-12">Yıl:</label>
-            <div className="flex flex-wrap gap-2">
-              {availableYears.map(year => (
-                <label
-                  key={year}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
-                    selectedYears.includes(year)
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedYears.includes(year)}
-                    onChange={() => toggleYear(year)}
-                    className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
-                  />
-                  <span className="text-sm font-medium">{year}</span>
-                </label>
-              ))}
-              {availableYears.length === 0 && (
-                <span className="text-sm text-slate-400 italic">Kayıtlı veri yok</span>
-              )}
-            </div>
-          </div>
+        {/* Multi-Select Dropdowns */}
+        <div className="flex flex-wrap gap-4 items-end">
+          {/* Yıl Seçimi */}
+          <MultiSelectDropdown
+            label="Yıl Seçimi"
+            options={yearOptions}
+            selectedValues={selectedYears}
+            onChange={handleYearsChange}
+            placeholder="Yıl seçiniz..."
+            disabled={availableYears.length === 0}
+            emptyMessage="Kayıtlı veri yok"
+            showSearch={false}
+          />
 
-          {/* Ay Checkbox'ları */}
-          {selectedYears.length > 0 && displayableMonths().length > 0 && (
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="text-sm font-medium text-slate-600 w-12">Ay:</label>
-              <div className="flex flex-wrap gap-2">
-                {displayableMonths().map(month => (
-                  <label
-                    key={month}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
-                      selectedMonths.includes(month)
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedMonths.includes(month)}
-                      onChange={() => toggleMonth(month)}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
-                    />
-                    <span className="text-sm font-medium">{MONTH_NAMES[month]}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Ay Seçimi */}
+          <MultiSelectDropdown
+            label="Ay Seçimi"
+            options={monthOptions}
+            selectedValues={selectedMonths}
+            onChange={handleMonthsChange}
+            placeholder="Ay seçiniz..."
+            disabled={selectedYears.length === 0}
+            emptyMessage={selectedYears.length === 0 ? "Önce yıl seçiniz" : "Seçili yıllarda veri yok"}
+            showSearch={false}
+          />
 
-          {/* Gün Checkbox'ları */}
-          {selectedMonths.length > 0 && displayableDays().length > 0 && (
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="text-sm font-medium text-slate-600 w-12">Gün:</label>
-              <div className="flex flex-wrap gap-2">
-                {displayableDays().map(day => (
-                  <label
-                    key={day}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all ${
-                      selectedDays.includes(day)
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedDays.includes(day)}
-                      onChange={() => toggleDay(day)}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
-                    />
-                    <span className="text-sm font-medium">{day}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+          {/* Gün Seçimi */}
+          <MultiSelectDropdown
+            label="Gün Seçimi"
+            options={dayOptions}
+            selectedValues={selectedDays}
+            onChange={handleDaysChange}
+            placeholder="Gün seçiniz..."
+            disabled={selectedMonths.length === 0}
+            emptyMessage={selectedMonths.length === 0 ? "Önce ay seçiniz" : "Seçili tarihlerde veri yok"}
+            maxDisplayItems={3}
+          />
 
-        {/* Uygula Butonu */}
-        <div className="mt-6 pt-4 border-t border-slate-100">
+          {/* Uygula Butonu */}
           <button
             onClick={handleLoadData}
             disabled={isLoading || getMatchingDates().length === 0}
-            className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 h-[42px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
           >
             {isLoading ? (
               <>
@@ -482,9 +482,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Veriyi Getir
+                Uygula
               </>
             )}
           </button>
