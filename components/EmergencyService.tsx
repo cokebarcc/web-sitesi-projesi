@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { uploadGreenAreaFile, loadMultipleDatesData, getAvailableDateParts, getAvailableGreenAreaDates, GreenAreaData, getGreenAreaFiles } from '../src/services/greenAreaStorage';
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
 import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
-import GreenAreaDailyRateTable from './GreenAreaDailyRateTable';
+import GreenAreaDailyRateTable, { GreenAreaDailyRateTableRef } from './GreenAreaDailyRateTable';
 
 // Günlük tablo için veri yapısı
 interface DailyData {
@@ -115,6 +116,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
+  const dailyTableRef = useRef<GreenAreaDailyRateTableRef>(null);
 
   // Load available date parts on mount
   useEffect(() => {
@@ -282,6 +284,108 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       showToast('PNG indirildi', 'success');
     } catch (error) {
       showToast('PNG indirme hatası', 'error');
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!cardsContainerRef.current) return;
+
+    try {
+      // A4 boyutları (mm)
+      const pageWidth = 297; // Landscape A4
+      const pageHeight = 210;
+      const margin = 10;
+      const contentWidth = pageWidth - (margin * 2);
+      const contentHeight = pageHeight - (margin * 2);
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Sayfa 1: Kartlar
+      const cardsCanvas = await html2canvas(cardsContainerRef.current, {
+        backgroundColor: '#f8fafc',
+        scale: 2,
+        useCORS: true,
+      });
+
+      const cardsImgData = cardsCanvas.toDataURL('image/png');
+      const cardsAspectRatio = cardsCanvas.width / cardsCanvas.height;
+
+      let cardsWidth = contentWidth;
+      let cardsHeight = cardsWidth / cardsAspectRatio;
+
+      // Yükseklik fazlaysa yüksekliğe göre ölçekle
+      if (cardsHeight > contentHeight) {
+        cardsHeight = contentHeight;
+        cardsWidth = cardsHeight * cardsAspectRatio;
+      }
+
+      // Ortalamak için offset hesapla
+      const cardsX = margin + (contentWidth - cardsWidth) / 2;
+      const cardsY = margin + (contentHeight - cardsHeight) / 2;
+
+      pdf.addImage(cardsImgData, 'PNG', cardsX, cardsY, cardsWidth, cardsHeight);
+
+      // Sayfa 2: Günlük tablo (eğer varsa)
+      const tableElement = dailyTableRef.current?.getTableElement();
+      if (tableElement && selectedDatesForDisplay.length > 1) {
+        pdf.addPage('a4', 'landscape');
+
+        // Export için geçici olarak overflow'u kaldır
+        const tableWrapper = tableElement.querySelector('.overflow-x-auto') as HTMLElement;
+        const originalOverflow = tableWrapper?.style.overflow;
+        const originalWidth = tableElement.style.width;
+
+        if (tableWrapper) {
+          tableWrapper.style.overflow = 'visible';
+        }
+        tableElement.style.width = 'fit-content';
+        tableElement.style.minWidth = '100%';
+
+        const tableCanvas = await html2canvas(tableElement, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true,
+          windowWidth: tableElement.scrollWidth + 100
+        });
+
+        // Stilleri geri al
+        if (tableWrapper) {
+          tableWrapper.style.overflow = originalOverflow || '';
+        }
+        tableElement.style.width = originalWidth;
+        tableElement.style.minWidth = '';
+
+        const tableImgData = tableCanvas.toDataURL('image/png');
+        const tableAspectRatio = tableCanvas.width / tableCanvas.height;
+
+        let tableWidth = contentWidth;
+        let tableHeight = tableWidth / tableAspectRatio;
+
+        // Yükseklik fazlaysa yüksekliğe göre ölçekle
+        if (tableHeight > contentHeight) {
+          tableHeight = contentHeight;
+          tableWidth = tableHeight * tableAspectRatio;
+        }
+
+        // Ortalamak için offset hesapla
+        const tableX = margin + (contentWidth - tableWidth) / 2;
+        const tableY = margin + (contentHeight - tableHeight) / 2;
+
+        pdf.addImage(tableImgData, 'PNG', tableX, tableY, tableWidth, tableHeight);
+      }
+
+      const dateStr = selectedDatesForDisplay.length === 1
+        ? selectedDatesForDisplay[0]
+        : `${selectedDatesForDisplay[0]}_${selectedDatesForDisplay[selectedDatesForDisplay.length - 1]}`;
+      pdf.save(`yesil-alan-raporu-${dateStr}.pdf`);
+      showToast('PDF indirildi', 'success');
+    } catch (error) {
+      console.error('PDF hatası:', error);
+      showToast('PDF indirme hatası', 'error');
     }
   };
 
@@ -590,16 +694,25 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       {/* Cards Container */}
       {data && (
         <>
-          {/* PNG İndir Butonu */}
-          <div className="flex justify-end">
+          {/* İndirme Butonları */}
+          <div className="flex justify-end gap-2">
             <button
               onClick={handleDownloadPng}
-              className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition-all flex items-center gap-2"
+              className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-all flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              PNG İndir
+              PNG
+            </button>
+            <button
+              onClick={handleDownloadPdf}
+              className="px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              PDF İndir
             </button>
           </div>
 
@@ -629,6 +742,20 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 <HospitalCard
                   data={ilGeneli}
                   isIlGeneli={true}
+                  dailyDetails={
+                    // İl geneli için tüm hastanelerin günlük toplamları
+                    selectedDatesForDisplay.map(date => {
+                      const dayData = dailyData.filter(d => d.date === date);
+                      const totalGreen = dayData.reduce((sum, d) => sum + d.greenAreaCount, 0);
+                      const totalCount = dayData.reduce((sum, d) => sum + d.totalCount, 0);
+                      return {
+                        date,
+                        greenAreaCount: totalGreen,
+                        totalCount: totalCount,
+                        greenAreaRate: totalCount > 0 ? (totalGreen / totalCount) * 100 : 0
+                      };
+                    })
+                  }
                 />
               )}
 
@@ -638,6 +765,16 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   key={index}
                   data={hospital}
                   isIlGeneli={false}
+                  dailyDetails={
+                    dailyData
+                      .filter(d => d.hospitalName === hospital.hospitalName)
+                      .map(d => ({
+                        date: d.date,
+                        greenAreaCount: d.greenAreaCount,
+                        totalCount: d.totalCount,
+                        greenAreaRate: d.greenAreaRate
+                      }))
+                  }
                 />
               ))}
             </div>
@@ -660,6 +797,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           {/* Günlük Oran Tablosu */}
           {selectedDatesForDisplay.length > 1 && dailyData.length > 0 && (
             <GreenAreaDailyRateTable
+              ref={dailyTableRef}
               data={dailyData}
               selectedDates={selectedDatesForDisplay}
               onCopy={() => showToast('Tablo panoya kopyalandı', 'success')}
@@ -672,15 +810,41 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 };
 
 // Hospital Card Component
+interface HospitalDailyDetail {
+  date: string;
+  greenAreaCount: number;
+  totalCount: number;
+  greenAreaRate: number;
+}
+
 interface HospitalCardProps {
   data: GreenAreaData;
   isIlGeneli: boolean;
+  dailyDetails?: HospitalDailyDetail[];
 }
 
-const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli }) => {
+const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDetails = [] }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const shortName = isIlGeneli ? data.hospitalName : getShortName(data.hospitalName);
   const progressColor = getProgressColor(data.greenAreaRate);
   const textColor = getTextColor(data.greenAreaRate);
+
+  // Tarihleri sırala
+  const sortedDetails = [...dailyDetails].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Tarih formatla (gün/ay)
+  const formatDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}.${month}`;
+  };
+
+  // Oran için renk
+  const getRateColor = (rate: number): string => {
+    if (rate >= 70) return 'bg-emerald-100 text-emerald-700';
+    if (rate >= 60) return 'bg-yellow-100 text-yellow-700';
+    if (rate >= 50) return 'bg-orange-100 text-orange-700';
+    return 'bg-red-100 text-red-700';
+  };
 
   return (
     <div className={`bg-white rounded-2xl shadow-sm border border-slate-200/60 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/20' : ''}`}>
@@ -719,6 +883,66 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli }) => {
           />
         </div>
       </div>
+
+      {/* Günlük Detay Accordion */}
+      {dailyDetails.length > 1 && (
+        <div className="mt-4 pt-4 border-t border-slate-100">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center justify-between text-sm text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            <span className="font-medium flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Günlük Detay ({dailyDetails.length} gün)
+            </span>
+            <svg
+              className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {isExpanded && (
+            <div className="mt-3 -mx-2 overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="sticky left-0 bg-slate-50 px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap">Tarih</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Yeşil Alan</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Toplam</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Oran</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedDetails.map((detail, idx) => (
+                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-700 whitespace-nowrap">
+                        {formatDate(detail.date)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
+                        {detail.greenAreaCount.toLocaleString('tr-TR')}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
+                        {detail.totalCount.toLocaleString('tr-TR')}
+                      </td>
+                      <td className="px-2 py-1.5 text-right whitespace-nowrap">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${getRateColor(detail.greenAreaRate)}`}>
+                          %{detail.greenAreaRate.toFixed(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -38,6 +38,10 @@ import EmergencyService from './components/EmergencyService';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
+// Logolar
+import sbLogo from './logo/sb logo.png';
+import medisLogo from './logo/medis logo.svg';
+
 const App: React.FC = () => {
   // Clean up localStorage on app start - remove large data
   useEffect(() => {
@@ -927,9 +931,16 @@ const App: React.FC = () => {
       <aside className="w-56 h-screen sticky top-0 bg-[#f9f7f4] text-slate-900 flex flex-col shrink-0 no-print overflow-hidden">
         <div className="flex flex-col h-full px-6 py-8 overflow-hidden">
           <div className="flex items-center mb-12">
-            <div className="flex items-center gap-3 group cursor-pointer" onClick={() => setView('detailed-schedule')}>
-              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 text-white shadow-sm">M</div>
-              <span className="text-base font-semibold tracking-tight transition-opacity duration-300 whitespace-nowrap text-slate-900">MHRS Analiz</span>
+            <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setView('dashboard')}>
+              <img
+                src={medisLogo}
+                alt="MEDİS Logo"
+                className="w-12 h-12 rounded-xl"
+              />
+              <div className="flex flex-col">
+                <span className="text-lg font-black tracking-tight text-slate-900">MEDİS</span>
+                <span className="text-[9px] font-semibold text-slate-500 leading-tight -mt-0.5">Merkezi Dijital<br/>Sağlık Sistemi</span>
+              </div>
             </div>
           </div>
           <nav className="flex-1 space-y-1 custom-scrollbar overflow-y-auto overflow-x-hidden">
@@ -1037,15 +1048,32 @@ const App: React.FC = () => {
                   <p className="text-slate-500 font-bold mt-1 uppercase text-xs tracking-widest">{selectedHospital} • {selectedBranch || 'TÜM BRANŞLAR'}</p>
                 </div>
               </div>
-              {view !== 'presentation' && view !== 'admin' && view !== 'dashboard' && !view.startsWith('dashboard-') && (
-                <button
-                  onClick={addCurrentToPresentation}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-                  SUNUMA EKLE
-                </button>
-              )}
+
+              {/* Sağ Taraf - Sağlık Bakanlığı Logosu ve Sunuma Ekle Butonu */}
+              <div className="flex items-center gap-6">
+                {view !== 'presentation' && view !== 'admin' && view !== 'dashboard' && !view.startsWith('dashboard-') && (
+                  <button
+                    onClick={addCurrentToPresentation}
+                    className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
+                    SUNUMA EKLE
+                  </button>
+                )}
+
+                {/* Sağlık Bakanlığı Logo ve Yazı */}
+                <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
+                  <img
+                    src={sbLogo}
+                    alt="T.C. Sağlık Bakanlığı"
+                    className="h-12 w-auto object-contain"
+                  />
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-red-600 tracking-wide">T.C. SAĞLIK BAKANLIĞI</p>
+                    <p className="text-xs font-semibold text-slate-700">ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </header>
           <section className="animate-in fade-in slide-in-from-top-4 duration-500">{renderView()}</section>
