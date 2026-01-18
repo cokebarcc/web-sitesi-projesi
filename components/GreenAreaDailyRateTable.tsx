@@ -175,15 +175,15 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
     };
   }, [data, sortedDates]);
 
-  // Renk hesapla (oran bazlı) - 65+ yeşil, 60-65 sarı, 60 altı kırmızı
+  // Renk hesapla (oran bazlı) - 65+ yeşil, 60-65 sarı, 60 altı kırmızı (dark tema)
   const getRateColor = (rate: number | null): string => {
-    if (rate === null) return 'bg-slate-50 text-slate-400';
-    if (rate >= 65) return 'bg-emerald-100 text-emerald-700';
-    if (rate >= 60) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-red-100 text-red-700';
+    if (rate === null) return 'bg-slate-700/30 text-slate-500';
+    if (rate >= 65) return 'bg-emerald-500/20 text-emerald-400';
+    if (rate >= 60) return 'bg-yellow-500/20 text-yellow-400';
+    return 'bg-red-500/20 text-red-400';
   };
 
-  // PNG olarak indir
+  // PNG olarak indir (açık tema ile)
   const handlePngExport = async () => {
     if (!containerRef.current) return;
 
@@ -201,6 +201,51 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       container.style.width = 'fit-content';
       container.style.minWidth = '100%';
 
+      // Export için geçici olarak açık tema uygula
+      const originalClasses = container.className;
+      container.className = container.className
+        .replace(/bg-slate-800\/50/g, 'bg-white')
+        .replace(/border-slate-700\/60/g, 'border-slate-200')
+        .replace(/border-slate-700/g, 'border-slate-200');
+
+      // İç elementlere de açık tema uygula
+      const allElements = container.querySelectorAll('*');
+      const originalStyles: { el: Element; classes: string }[] = [];
+
+      allElements.forEach(el => {
+        const htmlEl = el as HTMLElement;
+        originalStyles.push({ el, classes: htmlEl.className });
+        htmlEl.className = htmlEl.className
+          .replace(/bg-slate-800\/50/g, 'bg-white')
+          .replace(/bg-slate-800\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-700\/50/g, 'bg-slate-100')
+          .replace(/bg-slate-700\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-700\/20/g, 'bg-slate-50')
+          .replace(/bg-slate-600\/50/g, 'bg-slate-100')
+          .replace(/bg-slate-600\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-600\/20/g, 'bg-slate-50')
+          .replace(/border-slate-700\/60/g, 'border-slate-200')
+          .replace(/border-slate-700\/50/g, 'border-slate-200')
+          .replace(/border-slate-700/g, 'border-slate-200')
+          .replace(/border-slate-600\/60/g, 'border-slate-200')
+          .replace(/border-slate-600\/50/g, 'border-slate-200')
+          .replace(/border-slate-600/g, 'border-slate-200')
+          .replace(/text-white/g, 'text-slate-800')
+          .replace(/text-slate-400/g, 'text-slate-600')
+          .replace(/text-slate-300/g, 'text-slate-700')
+          .replace(/text-emerald-400/g, 'text-emerald-600')
+          .replace(/bg-emerald-500\/20/g, 'bg-emerald-100')
+          .replace(/bg-emerald-500\/10/g, 'bg-emerald-50')
+          .replace(/bg-emerald-500\/30/g, 'bg-emerald-100')
+          .replace(/bg-yellow-500\/20/g, 'bg-yellow-100')
+          .replace(/bg-yellow-500\/30/g, 'bg-yellow-100')
+          .replace(/bg-red-500\/20/g, 'bg-red-100')
+          .replace(/bg-red-500\/30/g, 'bg-red-100')
+          .replace(/text-yellow-400/g, 'text-yellow-600')
+          .replace(/text-red-400/g, 'text-red-600')
+          .replace(/text-slate-500/g, 'text-slate-400');
+      });
+
       const canvas = await html2canvas(container, {
         scale: 2,
         backgroundColor: '#ffffff',
@@ -210,6 +255,11 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       });
 
       // Stilleri geri al
+      container.className = originalClasses;
+      originalStyles.forEach(({ el, classes }) => {
+        (el as HTMLElement).className = classes;
+      });
+
       if (tableWrapper) {
         tableWrapper.style.overflow = originalOverflow || '';
       }
@@ -299,7 +349,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
 
   if (sortedDates.length === 0 || hospitalRows.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center">
+      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-8 text-center">
         <div className="text-slate-400 text-sm">
           Günlük tablo için tarih aralığı seçin
         </div>
@@ -308,22 +358,22 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
   }
 
   return (
-    <div ref={containerRef} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div ref={containerRef} className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 overflow-hidden">
       {/* Başlık */}
-      <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-emerald-50 to-teal-50">
+      <div className="px-6 py-4 border-b border-slate-700 bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-lg font-bold text-white">
               ŞANLIURFA İLİ ACİL SERVİS GÜNLÜK YEŞİL ALAN HASTA ORANLARI %
             </h3>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               {sortedDates.length} günlük veri • {hospitalRows.length} kurum
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-700/50 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -332,7 +382,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </button>
             <button
               onClick={handlePngExport}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-700/50 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -341,7 +391,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </button>
             <button
               onClick={handleExcelExport}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -356,19 +406,19 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       <div ref={tableRef} className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50">
-              <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 text-left font-semibold text-slate-700 border-b border-slate-200 min-w-[200px]">
+            <tr className="bg-slate-700/50">
+              <th className="sticky left-0 z-10 bg-slate-700/50 px-4 py-3 text-left font-semibold text-slate-300 border-b border-slate-600 min-w-[200px]">
                 Kurum
               </th>
               {sortedDates.map(date => (
                 <th
                   key={date}
-                  className="px-2 py-3 text-center font-semibold text-slate-700 border-b border-slate-200 min-w-[60px]"
+                  className="px-2 py-3 text-center font-semibold text-slate-300 border-b border-slate-600 min-w-[60px]"
                 >
                   {formatDateHeader(date)}
                 </th>
               ))}
-              <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 text-center font-semibold text-slate-700 border-b border-slate-200 min-w-[140px]">
+              <th className="sticky right-0 z-10 bg-slate-700/50 px-4 py-3 text-center font-semibold text-slate-300 border-b border-slate-600 min-w-[140px]">
                 Trend Eğrisi
               </th>
             </tr>
@@ -377,9 +427,9 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             {hospitalRows.map((row, idx) => (
               <tr
                 key={row.hospitalName}
-                className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}
+                className={idx % 2 === 0 ? 'bg-slate-800/30' : 'bg-slate-700/20'}
               >
-                <td className="sticky left-0 z-10 px-4 py-2 font-medium text-slate-800 border-b border-slate-100 bg-inherit">
+                <td className="sticky left-0 z-10 px-4 py-2 font-medium text-white border-b border-slate-700/50 bg-inherit">
                   <div className="truncate max-w-[200px]" title={row.hospitalName}>
                     {getShortHospitalName(row.hospitalName)}
                   </div>
@@ -389,13 +439,13 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                   return (
                     <td
                       key={date}
-                      className={`px-2 py-2 text-center border-b border-slate-100 font-medium ${getRateColor(rate)}`}
+                      className={`px-2 py-2 text-center border-b border-slate-700/50 font-medium ${getRateColor(rate)}`}
                     >
                       {rate !== null ? `${rate.toFixed(1)}` : '-'}
                     </td>
                   );
                 })}
-                <td className="sticky right-0 z-10 px-4 py-2 border-b border-slate-100 bg-inherit">
+                <td className="sticky right-0 z-10 px-4 py-2 border-b border-slate-700/50 bg-inherit">
                   <div className="flex justify-center">
                     <Sparkline
                       values={row.trend}
@@ -409,8 +459,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               </tr>
             ))}
             {/* İl Geneli Satırı */}
-            <tr className="bg-emerald-50 font-bold">
-              <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-800 border-t-2 border-emerald-200 bg-emerald-50">
+            <tr className="bg-emerald-500/10 font-bold">
+              <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-400 border-t-2 border-emerald-500/30 bg-emerald-500/10">
                 {provinceTotals.hospitalName}
               </td>
               {sortedDates.map(date => {
@@ -418,19 +468,19 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                 return (
                   <td
                     key={date}
-                    className="px-2 py-3 text-center border-t-2 border-emerald-200 text-emerald-800"
+                    className="px-2 py-3 text-center border-t-2 border-emerald-500/30 text-emerald-400"
                   >
                     {rate !== null ? `${rate.toFixed(1)}` : '-'}
                   </td>
                 );
               })}
-              <td className="sticky right-0 z-10 px-4 py-3 border-t-2 border-emerald-200 bg-emerald-50">
+              <td className="sticky right-0 z-10 px-4 py-3 border-t-2 border-emerald-500/30 bg-emerald-500/10">
                 <div className="flex justify-center">
                   <Sparkline
                     values={provinceTotals.trend}
                     width={120}
                     height={28}
-                    color="#059669"
+                    color="#34d399"
                     showDots={true}
                   />
                 </div>
@@ -441,16 +491,16 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       </div>
 
       {/* Renk açıklaması */}
-      <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center gap-4 text-xs text-slate-600">
+      <div className="px-6 py-3 border-t border-slate-700 bg-slate-700/30 flex items-center gap-4 text-xs text-slate-400">
         <span className="font-medium">Oran Renkleri:</span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-emerald-100"></span> %65+
+          <span className="w-3 h-3 rounded bg-emerald-500/30"></span> %65+
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-yellow-100"></span> %60-64
+          <span className="w-3 h-3 rounded bg-yellow-500/30"></span> %60-64
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-red-100"></span> %0-59
+          <span className="w-3 h-3 rounded bg-red-500/30"></span> %0-59
         </span>
       </div>
     </div>

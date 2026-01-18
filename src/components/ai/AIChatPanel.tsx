@@ -16,7 +16,7 @@ import {
   generateChatTitle,
   archiveChat
 } from '../../services/ai/aiChatService';
-import { getVoiceChatManager, VoiceChatManager } from '../../services/voice';
+import { getVoiceChatManager, VoiceChatManager, VOICE_OPTIONS, TTSProvider } from '../../services/voice';
 import AIChatMessage from './AIChatMessage';
 import AIChatInput from './AIChatInput';
 import AIQuickCommands from './AIQuickCommands';
@@ -66,11 +66,20 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
 
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'claude' | 'voice'>('claude');
   const [isConnected, setIsConnected] = useState(false);
   const [chatHistory, setChatHistory] = useState<{ id: string; title: string; updatedAt: Date }[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [streamingText, setStreamingText] = useState('');
   const [voiceSupport, setVoiceSupport] = useState({ stt: false, tts: false });
+
+  // ElevenLabs State
+  const [elevenLabsApiKey, setElevenLabsApiKeyInput] = useState('');
+  const [hasElevenLabsKey, setHasElevenLabsKey] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState(VOICE_OPTIONS[0]?.id || '');
+  const [ttsProvider, setTtsProvider] = useState<TTSProvider>('browser');
+  const [elevenLabsCredits, setElevenLabsCredits] = useState<{ used: number; limit: number; remaining: number } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const voiceChatRef = useRef<VoiceChatManager | null>(null);
@@ -92,6 +101,17 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
 
     if (support.stt || support.tts) {
       voiceChatRef.current = getVoiceChatManager();
+
+      // ElevenLabs durumunu kontrol et
+      const hasElKey = voiceChatRef.current.hasElevenLabsApiKey();
+      setHasElevenLabsKey(hasElKey);
+      if (hasElKey) {
+        setTtsProvider('elevenlabs');
+        // Kredi bilgisini al
+        voiceChatRef.current.getElevenLabsCredits().then(credits => {
+          if (credits) setElevenLabsCredits(credits);
+        });
+      }
 
       // Callbacks ayarla
       voiceChatRef.current.setCallbacks({
@@ -204,6 +224,55 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
         ...prev,
         error: 'API key kaydedilemedi.'
       }));
+    }
+  };
+
+  // ElevenLabs API Key kaydet
+  const handleSaveElevenLabsKey = async () => {
+    if (!elevenLabsApiKey.trim() || !voiceChatRef.current) return;
+
+    const key = elevenLabsApiKey.trim();
+
+    // Basit format kontrolu
+    if (!key.startsWith('sk_') || key.length < 30) {
+      alert('Gecersiz format! ElevenLabs API anahtari "sk_" ile baslamali ve en az 30 karakter olmalidir.');
+      return;
+    }
+
+    // Key'i kaydet
+    voiceChatRef.current.setElevenLabsApiKey(key);
+    setHasElevenLabsKey(true);
+    setTtsProvider('elevenlabs');
+    setElevenLabsApiKeyInput('');
+
+    // Kredi bilgisini guncelle
+    const credits = await voiceChatRef.current.getElevenLabsCredits();
+    if (credits) setElevenLabsCredits(credits);
+  };
+
+  // ElevenLabs API Key temizle
+  const handleClearElevenLabsKey = () => {
+    if (voiceChatRef.current) {
+      voiceChatRef.current.clearElevenLabsApiKey();
+      setHasElevenLabsKey(false);
+      setTtsProvider('browser');
+      setElevenLabsCredits(null);
+    }
+  };
+
+  // Ses secimi degistir
+  const handleVoiceChange = (voiceId: string) => {
+    setSelectedVoice(voiceId);
+    if (voiceChatRef.current) {
+      voiceChatRef.current.setElevenLabsVoice(voiceId);
+    }
+  };
+
+  // TTS Provider degistir
+  const handleTTSProviderChange = (provider: TTSProvider) => {
+    setTtsProvider(provider);
+    if (voiceChatRef.current) {
+      voiceChatRef.current.setTTSProvider(provider);
     }
   };
 
@@ -465,6 +534,236 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
         </div>
       )}
 
+      {/* Settings Modal - Hem Claude hem ElevenLabs ayarlari */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
+                Ayarlar
+              </h3>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Tab Buttons */}
+            <div className="flex gap-2 mb-6 bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
+              <button
+                onClick={() => setSettingsTab('claude')}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  settingsTab === 'claude'
+                    ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                }`}
+              >
+                Claude AI
+              </button>
+              <button
+                onClick={() => setSettingsTab('voice')}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  settingsTab === 'voice'
+                    ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+                }`}
+              >
+                Ses Ayarlari
+              </button>
+            </div>
+
+            {/* Claude Tab */}
+            {settingsTab === 'claude' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    {isConnected ? 'Claude Bagli' : 'Baglanti Yok'}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  AI Asistan'i kullanmak icin Anthropic Claude API key'inizi girin.
+                  <a
+                    href="https://console.anthropic.com/settings/keys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-600 hover:text-emerald-700 ml-1"
+                  >
+                    API key al →
+                  </a>
+                </p>
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder="sk-ant-..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <button
+                  onClick={handleSaveApiKey}
+                  disabled={!apiKeyInput.trim()}
+                  className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
+                >
+                  Claude API Key Kaydet
+                </button>
+              </div>
+            )}
+
+            {/* Voice Tab */}
+            {settingsTab === 'voice' && (
+              <div className="space-y-6">
+                {/* TTS Provider Secimi */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Ses Motoru
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => handleTTSProviderChange('browser')}
+                      className={`p-4 rounded-xl border-2 transition-all ${
+                        ttsProvider === 'browser'
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                          : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">🌐</div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-white">Tarayici</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">Ucretsiz</div>
+                    </button>
+                    <button
+                      onClick={() => hasElevenLabsKey && handleTTSProviderChange('elevenlabs')}
+                      className={`p-4 rounded-xl border-2 transition-all ${
+                        ttsProvider === 'elevenlabs'
+                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
+                          : hasElevenLabsKey
+                            ? 'border-slate-200 dark:border-slate-600 hover:border-slate-300'
+                            : 'border-slate-200 dark:border-slate-600 opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">🎙️</div>
+                      <div className="text-sm font-medium text-slate-800 dark:text-white">ElevenLabs</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {hasElevenLabsKey ? 'Aktif' : 'API Key Gerekli'}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* ElevenLabs API Key */}
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      ElevenLabs API Key
+                    </label>
+                    {hasElevenLabsKey && (
+                      <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Bagli
+                      </span>
+                    )}
+                  </div>
+
+                  {!hasElevenLabsKey ? (
+                    <>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                        Daha dogal ve kaliteli Turkce seslendirme icin ElevenLabs kullanin.
+                        <a
+                          href="https://elevenlabs.io"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-emerald-600 hover:text-emerald-700 ml-1"
+                        >
+                          Ucretsiz hesap olustur →
+                        </a>
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="password"
+                          value={elevenLabsApiKey}
+                          onChange={(e) => setElevenLabsApiKeyInput(e.target.value)}
+                          placeholder="sk_..."
+                          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                        <button
+                          onClick={handleSaveElevenLabsKey}
+                          disabled={!elevenLabsApiKey.trim()}
+                          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium text-sm transition-colors"
+                        >
+                          Kaydet
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Kredi Bilgisi */}
+                      {elevenLabsCredits && (
+                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-slate-600 dark:text-slate-400">Kullanilan</span>
+                            <span className="text-slate-800 dark:text-white font-medium">
+                              {elevenLabsCredits.used.toLocaleString()} / {elevenLabsCredits.limit.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                            <div
+                              className="bg-emerald-500 h-2 rounded-full transition-all"
+                              style={{ width: `${(elevenLabsCredits.used / elevenLabsCredits.limit) * 100}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                            {elevenLabsCredits.remaining.toLocaleString()} karakter kaldi
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Ses Secimi */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Ses Secimi
+                        </label>
+                        <select
+                          value={selectedVoice}
+                          onChange={(e) => handleVoiceChange(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                          {VOICE_OPTIONS.map((voice) => (
+                            <option key={voice.id} value={voice.id}>
+                              {voice.name} - {voice.description}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* API Key Kaldir */}
+                      <button
+                        onClick={handleClearElevenLabsKey}
+                        className="w-full px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-sm font-medium transition-colors"
+                      >
+                        ElevenLabs API Key'i Kaldir
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bilgi Notu */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <strong>Not:</strong> ElevenLabs ucretsiz hesap ile aylik 10.000 karakter seslendirme hakki sunar.
+                    Daha dogal ve kaliteli Turkce sesler icin onerilir.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div className="flex items-center gap-3">
@@ -543,7 +842,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({
 
           {/* Settings */}
           <button
-            onClick={() => setShowApiKeyModal(true)}
+            onClick={() => setShowSettingsModal(true)}
             className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             title="Ayarlar"
           >

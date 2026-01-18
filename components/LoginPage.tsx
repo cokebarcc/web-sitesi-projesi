@@ -75,166 +75,435 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-[48px] shadow-2xl p-10 animate-in zoom-in-95 duration-500">
-          {/* Logo & Title */}
-          <div className="text-center mb-10">
-            <div className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-3xl text-white shadow-lg mx-auto mb-4">
-              M
-            </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">
-              MHRS Analiz
-            </h1>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">
-              Yönetim Paneli
-            </p>
+    <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #020405 0%, #040810 50%, #060d18 100%)' }}>
+      {/* EKG Rhythm Animation - Centered */}
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+        <svg className="absolute w-[80%] h-16 opacity-[0.06]" viewBox="0 0 800 50" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <linearGradient id="ekgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="transparent" />
+              <stop offset="20%" stopColor="#10B7C6" />
+              <stop offset="50%" stopColor="#10B7C6" />
+              <stop offset="80%" stopColor="#10B7C6" />
+              <stop offset="100%" stopColor="transparent" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0,25 L60,25 L70,25 L75,10 L80,40 L85,3 L90,47 L95,25 L105,25 L180,25 L190,25 L195,10 L200,40 L205,3 L210,47 L215,25 L225,25 L300,25 L310,25 L315,10 L320,40 L325,3 L330,47 L335,25 L345,25 L420,25 L430,25 L435,10 L440,40 L445,3 L450,47 L455,25 L465,25 L540,25 L550,25 L555,10 L560,40 L565,3 L570,47 L575,25 L585,25 L660,25 L670,25 L675,10 L680,40 L685,3 L690,47 L695,25 L705,25 L800,25"
+            fill="none"
+            stroke="url(#ekgGradient)"
+            strokeWidth="1.5"
+            className="ekg-line"
+          />
+        </svg>
+      </div>
+
+      {/* Aurora Gradient Glows */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Left teal glow */}
+        <div
+          className="absolute -left-40 top-1/4 w-[600px] h-[600px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(16, 183, 198, 0.15) 0%, rgba(16, 183, 198, 0.05) 40%, transparent 70%)',
+            filter: 'blur(60px)'
+          }}
+        />
+        {/* Right blue glow */}
+        <div
+          className="absolute -right-40 top-1/3 w-[500px] h-[500px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 60%)',
+            filter: 'blur(80px)'
+          }}
+        />
+        {/* Bottom subtle glow */}
+        <div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px]"
+          style={{
+            background: 'radial-gradient(ellipse, rgba(16, 183, 198, 0.05) 0%, transparent 70%)',
+            filter: 'blur(40px)'
+          }}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row">
+
+        {/* LEFT HERO SECTION */}
+        <div className="lg:w-[55%] flex flex-col justify-center px-8 lg:px-16 xl:px-24 py-12 lg:py-0">
+          {/* Radar circles decoration */}
+          <div className="absolute left-0 bottom-0 w-[400px] h-[400px] pointer-events-none opacity-20">
+            <svg viewBox="0 0 400 400" className="w-full h-full">
+              <circle cx="50" cy="350" r="80" fill="none" stroke="rgba(16, 183, 198, 0.3)" strokeWidth="1" />
+              <circle cx="50" cy="350" r="140" fill="none" stroke="rgba(16, 183, 198, 0.2)" strokeWidth="1" />
+              <circle cx="50" cy="350" r="200" fill="none" stroke="rgba(16, 183, 198, 0.1)" strokeWidth="1" />
+              <circle cx="50" cy="350" r="260" fill="none" stroke="rgba(16, 183, 198, 0.05)" strokeWidth="1" />
+            </svg>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                E-posta
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 ring-blue-500 transition-all"
-                placeholder="ornek@saglik.gov.tr"
-                required
-                autoComplete="email"
-              />
-            </div>
+          {/* Code decoration - bottom left */}
+          <div className="absolute left-8 bottom-8 text-[10px] font-mono text-white/10 leading-relaxed hidden lg:block">
+            <div>// AI-Powered Healthcare Analytics</div>
+            <div>const medis = new HealthAI();</div>
+            <div>await medis.analyze(data);</div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                Şifre
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 ring-blue-500 transition-all"
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-              />
-            </div>
+          {/* Hero Content */}
+          <div className="relative max-w-xl">
+            {/* Icon Badge with Rotating Squares */}
+            <div className="mb-8">
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                {/* Rotating square frames */}
+                <div
+                  className="absolute w-20 h-20 rounded-xl border border-[#10B7C6]/40"
+                  style={{ animation: 'rotateSquare1 8s linear infinite' }}
+                />
+                <div
+                  className="absolute w-[72px] h-[72px] rounded-xl border border-[#10B7C6]/30"
+                  style={{ animation: 'rotateSquare2 6s linear infinite reverse' }}
+                />
+                <div
+                  className="absolute w-16 h-16 rounded-lg border border-[#10B7C6]/20"
+                  style={{ animation: 'rotateSquare1 10s linear infinite' }}
+                />
 
-            {error && (
-              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4 animate-in slide-in-from-top-2">
-                <p className="text-sm font-bold text-rose-600 text-center">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 animate-in slide-in-from-top-2">
-                <p className="text-sm font-bold text-emerald-600 text-center">{success}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Giriş Yapılıyor...
+                {/* Main icon container */}
+                <div
+                  className="relative w-14 h-14 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(16, 183, 198, 0.15) 0%, rgba(16, 183, 198, 0.05) 100%)',
+                    border: '1px solid rgba(16, 183, 198, 0.3)',
+                    boxShadow: '0 0 30px rgba(16, 183, 198, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
+                  }}
+                >
+                  <svg className="w-7 h-7 text-[#10B7C6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
                 </div>
-              ) : (
-                'Giriş Yap'
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowForgotPassword(true)}
-              className="w-full text-slate-500 hover:text-blue-600 text-sm font-bold transition-colors"
-            >
-              Şifremi Unuttum
-            </button>
-          </form>
-
-          {/* Forgot Password Modal */}
-          {showForgotPassword && (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4" onClick={() => setShowForgotPassword(false)}>
-              <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl p-8 animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
-                <h2 className="text-2xl font-black text-slate-900 mb-2">Şifremi Unuttum</h2>
-                <p className="text-sm font-bold text-slate-500 mb-6">
-                  E-posta adresinizi girin, şifre sıfırlama linki gönderelim.
-                </p>
-
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                      E-posta
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold outline-none focus:ring-2 ring-blue-500 transition-all"
-                      placeholder="ornek@saglik.gov.tr"
-                      required
-                      autoFocus
-                    />
-                  </div>
-
-                  {error && (
-                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4">
-                      <p className="text-sm font-bold text-rose-600 text-center">{error}</p>
-                    </div>
-                  )}
-
-                  {success && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-                      <p className="text-sm font-bold text-emerald-600 text-center">{success}</p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowForgotPassword(false)}
-                      className="flex-1 bg-slate-100 text-slate-600 px-6 py-3 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all"
-                    >
-                      İptal
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Gönderiliyor...
-                        </div>
-                      ) : (
-                        'Gönder'
-                      )}
-                    </button>
-                  </div>
-                </form>
               </div>
             </div>
-          )}
 
-          {/* Footer */}
-          <div className="mt-10 pt-6 border-t border-slate-100 text-center">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">
-              T.C. Sağlık Bakanlığı
+            {/* Main Title */}
+            <h1 className="text-5xl lg:text-6xl font-black text-white tracking-tight mb-4">
+              MEDİS
+            </h1>
+
+            {/* Subtitle */}
+            <h2 className="text-xl lg:text-2xl font-semibold mb-8">
+              <span className="text-[#10B7C6]">Yapay Zekâ Destekli</span>
+              <br />
+              <span className="text-[#1AB57A]">Sağlık Analiz Platformu</span>
+            </h2>
+
+            {/* Feature Pills */}
+            <div className="flex flex-wrap gap-3">
+              {['Yapay Zekâ Analizi', 'Sesli Asistan', 'Akıllı Raporlar'].map((feature, i) => (
+                <div
+                  key={i}
+                  className="px-4 py-2 rounded-full text-sm font-medium text-[#10B7C6] border border-[#10B7C6]/30 bg-[#10B7C6]/5 hover:bg-[#10B7C6]/10 hover:border-[#10B7C6]/50 transition-all duration-300 cursor-default"
+                  style={{ boxShadow: 'inset 0 1px 0 rgba(16, 183, 198, 0.1)' }}
+                >
+                  {feature}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT LOGIN SECTION */}
+        <div className="lg:w-[45%] flex flex-col justify-center items-center px-6 lg:px-12 py-12 lg:py-0">
+          {/* Glass Card */}
+          <div
+            className="w-full max-w-md rounded-3xl p-8 lg:p-10 relative"
+            style={{
+              background: 'rgba(10, 20, 35, 0.55)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 100px rgba(16, 183, 198, 0.05)'
+            }}
+          >
+            {/* Card Header */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Hoş Geldiniz</h2>
+              <p className="text-[#9AA8B5] text-sm">Devam etmek için giriş yapın</p>
+            </div>
+
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-5">
+              {/* Email Field */}
+              <div>
+                <label className="block text-[11px] font-semibold text-[#9AA8B5] mb-2 tracking-[0.1em] uppercase">
+                  E-posta Adresi
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3.5 rounded-xl text-white placeholder-[#5A6A7A] outline-none transition-all duration-200"
+                  style={{
+                    background: 'rgba(7, 17, 28, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.border = '1px solid rgba(16, 183, 198, 0.4)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 183, 198, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  placeholder="ornek@saglik.gov.tr"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label className="block text-[11px] font-semibold text-[#9AA8B5] mb-2 tracking-[0.1em] uppercase">
+                  Şifre
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3.5 rounded-xl text-white placeholder-[#5A6A7A] outline-none transition-all duration-200"
+                  style={{
+                    background: 'rgba(7, 17, 28, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.border = '1px solid rgba(16, 183, 198, 0.4)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 183, 198, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="rounded-xl p-4" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {success && (
+                <div className="rounded-xl p-4" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <p className="text-sm text-emerald-400">{success}</p>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-4 rounded-xl font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+                style={{
+                  background: 'linear-gradient(135deg, #10B7C6 0%, #1AB57A 100%)',
+                  boxShadow: '0 10px 40px -10px rgba(16, 183, 198, 0.5)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 15px 50px -10px rgba(16, 183, 198, 0.6)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #12D0C7 0%, #1EC97A 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 10px 40px -10px rgba(16, 183, 198, 0.5)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #10B7C6 0%, #1AB57A 100%)';
+                }}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  {isLoading ? (
+                    <>
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Giriş Yapılıyor...
+                    </>
+                  ) : (
+                    <>
+                      Giriş Yap
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </>
+                  )}
+                </span>
+              </button>
+
+              {/* Forgot Password Link */}
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="w-full text-center text-[#9AA8B5] hover:text-[#10B7C6] text-sm font-medium transition-colors py-2"
+              >
+                Şifremi Unuttum
+              </button>
+            </form>
+
+            {/* Secure Login Divider */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-[10px] text-[#5A6A7A] font-medium tracking-[0.15em] uppercase">Güvenli Giriş</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            {/* SSL Badge */}
+            <div className="flex items-center justify-center gap-2 text-[#5A6A7A]">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span className="text-xs">256-bit SSL ile korunmaktadır</span>
+            </div>
+          </div>
+
+          {/* Footer Info */}
+          <div className="mt-8 text-center">
+            <p className="text-[#5A6A7A] text-xs mb-2">
+              T.C. Sağlık Bakanlığı - Şanlıurfa İl Sağlık Müdürlüğü
             </p>
-            <p className="text-xs font-bold text-slate-300 uppercase tracking-tight mt-1">
-              Şanlıurfa İl Sağlık Müdürlüğü
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-emerald-500 text-xs font-medium">Sistem Aktif</span>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(5, 7, 11, 0.9)', backdropFilter: 'blur(8px)' }}
+          onClick={() => setShowForgotPassword(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-8 relative"
+            style={{
+              background: 'rgba(10, 20, 35, 0.8)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold text-white mb-2">Şifremi Unuttum</h2>
+            <p className="text-[#9AA8B5] text-sm mb-6">
+              E-posta adresinizi girin, şifre sıfırlama linki gönderelim.
+            </p>
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#9AA8B5] mb-2 tracking-[0.1em] uppercase">
+                  E-posta Adresi
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3.5 rounded-xl text-white placeholder-[#5A6A7A] outline-none transition-all duration-200"
+                  style={{
+                    background: 'rgba(7, 17, 28, 0.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.border = '1px solid rgba(16, 183, 198, 0.4)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 183, 198, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  placeholder="ornek@saglik.gov.tr"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              {error && (
+                <div className="rounded-xl p-4" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+
+              {success && (
+                <div className="rounded-xl p-4" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <p className="text-sm text-emerald-400">{success}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="flex-1 py-3 rounded-xl font-medium text-[#9AA8B5] transition-all hover:bg-white/5"
+                  style={{ border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-3 rounded-xl font-medium text-white transition-all disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, #10B7C6 0%, #1AB57A 100%)' }}
+                >
+                  {isLoading ? 'Gönderiliyor...' : 'Gönder'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes rotateSquare1 {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes rotateSquare2 {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
+        }
+        .ekg-line {
+          stroke-dasharray: 1400;
+          stroke-dashoffset: 1400;
+          animation: ekgDraw 4s ease-in-out infinite;
+        }
+        .ekg-line-2 {
+          stroke-dasharray: 1400;
+          stroke-dashoffset: 1400;
+          animation: ekgDraw 5s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+        @keyframes ekgDraw {
+          0% {
+            stroke-dashoffset: 1400;
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          50% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            stroke-dashoffset: -1400;
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };

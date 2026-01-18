@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { AppointmentData, HBYSData } from '../types';
+import elevenLabsService, { TURKISH_VOICES } from '../services/elevenLabsService';
 
 interface Message {
   role: 'user' | 'model';
@@ -24,8 +25,66 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+
   const chatRef = useRef<any>(null);
+
+  // TTS State
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingMessageIndex, setSpeakingMessageIndex] = useState<number | null>(null);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState(TURKISH_VOICES.ARIA);
+
+  // API key kontrolü
+  useEffect(() => {
+    const key = elevenLabsService.getApiKey();
+    setHasApiKey(!!key);
+  }, []);
+
+  // Mesajı seslendir
+  const handleSpeak = async (text: string, index: number) => {
+    if (!hasApiKey) {
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    if (isSpeaking && speakingMessageIndex === index) {
+      elevenLabsService.stop();
+      setIsSpeaking(false);
+      setSpeakingMessageIndex(null);
+      return;
+    }
+
+    elevenLabsService.stop();
+    setIsSpeaking(true);
+    setSpeakingMessageIndex(index);
+
+    try {
+      await elevenLabsService.speak(text, { voiceId: selectedVoice });
+    } catch (error: any) {
+      console.error('TTS Error:', error);
+      alert(error.message || 'Seslendirme hatası oluştu');
+    } finally {
+      setIsSpeaking(false);
+      setSpeakingMessageIndex(null);
+    }
+  };
+
+  // API key kaydet
+  const handleSaveApiKey = async () => {
+    if (!apiKeyInput.trim()) return;
+
+    const isValid = await elevenLabsService.validateApiKey(apiKeyInput.trim());
+    if (isValid) {
+      elevenLabsService.saveApiKey(apiKeyInput.trim());
+      setHasApiKey(true);
+      setShowApiKeyModal(false);
+      setApiKeyInput('');
+    } else {
+      alert('Geçersiz API anahtarı. Lütfen kontrol edin.');
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -38,9 +97,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
     if (appointmentData.length === 0) return "Sistemde henüz yüklenmiş bir cetvel verisi bulunmamaktadır.";
 
     const branches = Array.from(new Set(appointmentData.map(a => a.specialty)));
-    
+
     let summary = `HASTANE ORGANİZASYON VE PERFORMANS VERİLERİ:\n\n`;
-    
+
     summary += `1. BRANŞ VE HEKİM YAPISI:\n`;
     branches.forEach(branch => {
       const branchDocs = Array.from(new Set(
@@ -51,21 +110,21 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
 
     summary += `\n2. PERFORMANS VE KAPASİTE ÖZETİ (HEKİM BAZLI):\n`;
     const uniqueDocs = Array.from(new Set(appointmentData.map(a => a.doctorName)));
-    
+
     uniqueDocs.forEach(name => {
       const docAppts = appointmentData.filter(a => a.doctorName === name);
       const docHbys = hbysData.find(h => h.doctorName === name);
       const specialty = docAppts[0]?.specialty;
-      
+
       const normalize = (val: any) => (val ? String(val).toLowerCase() : '');
 
       const pDays = docAppts.filter(a => normalize(a.actionType).includes('muayene') || normalize(a.actionType).includes('poliklinik')).reduce((a, b) => a + (b.daysCount || 0), 0);
       const sDays = docAppts.filter(a => normalize(a.actionType).includes('ameliyat')).reduce((a, b) => a + (b.daysCount || 0), 0);
       const plannedCapacity = docAppts.reduce((a, b) => a + (b.totalSlots || 0), 0);
-      
+
       const actualExams = docHbys?.totalExams || 0;
       const actualSurgeries = docHbys?.surgeryABC || 0;
-      
+
       summary += `- ${name} (${specialty}): Planlanan ${pDays}G Poli (${plannedCapacity} Kapasite), ${sDays}G Ameliyat. Gerçekleşen: ${actualExams} muayene, ${actualSurgeries} vaka.\n`;
     });
 
@@ -121,34 +180,76 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Organizasyon ve Performans Analizi</p>
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-2">
-           <div className={`w-2 h-2 rounded-full ${appointmentData.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
-           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-             {appointmentData.length > 0 ? `${appointmentData.length} Kayıt Bağlı` : 'Veri Yok'}
-           </span>
+        <div className="hidden md:flex items-center gap-4">
+          <button
+            onClick={() => setShowApiKeyModal(true)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+              hasApiKey
+                ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+            }`}
+            title="Ses Ayarları"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+            <span className="text-[10px] font-black uppercase tracking-wider">
+              {hasApiKey ? 'Ses Aktif' : 'Ses Ayarla'}
+            </span>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${appointmentData.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+              {appointmentData.length > 0 ? `${appointmentData.length} Kayıt Bağlı` : 'Veri Yok'}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 bg-white border-x border-slate-100 overflow-y-auto p-8 custom-scrollbar space-y-6"
       >
         {messages.map((msg, idx) => (
-          <div 
-            key={idx} 
+          <div
+            key={idx}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}
           >
             <div className={`max-w-[80%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className={`p-6 rounded-[32px] shadow-sm text-sm leading-relaxed ${
-                msg.role === 'user' 
-                ? 'bg-indigo-600 text-white rounded-br-none shadow-indigo-100' 
+                msg.role === 'user'
+                ? 'bg-indigo-600 text-white rounded-br-none shadow-indigo-100'
                 : 'bg-slate-50 text-slate-700 rounded-bl-none border border-slate-100'
               }`}>
                 {msg.text}
               </div>
-              <span className="text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-tighter">
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                {msg.role === 'model' && (
+                  <button
+                    onClick={() => handleSpeak(msg.text, idx)}
+                    className={`p-1.5 rounded-lg transition-all ${
+                      isSpeaking && speakingMessageIndex === idx
+                        ? 'bg-indigo-100 text-indigo-600'
+                        : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                    }`}
+                    title={isSpeaking && speakingMessageIndex === idx ? 'Durdur' : 'Seslendir'}
+                  >
+                    {isSpeaking && speakingMessageIndex === idx ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -167,14 +268,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
 
       <div className="bg-white p-8 rounded-b-[48px] border-x border-b border-slate-100 shadow-xl">
         <form onSubmit={handleSend} className="relative flex items-center gap-4">
-          <input 
+          <input
             type="text"
             className="flex-1 bg-slate-50 border border-slate-100 rounded-[28px] px-8 py-5 text-sm font-medium focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400"
             placeholder="Örn: 'Üroloji branşında hangi hekimler var?' veya 'En verimli cerrah kim?'"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-          <button 
+          <button
             type="submit"
             disabled={!input.trim() || isTyping}
             className="w-14 h-14 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-indigo-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
@@ -186,6 +287,97 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
         </form>
         <p className="text-[10px] text-center text-slate-300 mt-4 font-bold uppercase tracking-[0.2em]">Yapay zeka tüm yanıtlarını cetvellerdeki gerçek verilere dayandırır.</p>
       </div>
+
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[32px] p-8 max-w-md w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-slate-900">Doğal Ses Ayarları</h3>
+                <p className="text-sm text-slate-500">ElevenLabs API anahtarı gerekli</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">API Anahtarı</label>
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  placeholder="sk_..."
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition-all"
+                />
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  <strong>ElevenLabs</strong> ücretsiz hesap ile aylık 10.000 karakter seslendirme hakkı sunar.
+                  <a
+                    href="https://elevenlabs.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 font-bold ml-1 hover:underline"
+                  >
+                    Hesap oluştur →
+                  </a>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">Ses Seçimi</label>
+                <select
+                  value={selectedVoice}
+                  onChange={(e) => setSelectedVoice(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition-all bg-white"
+                >
+                  <option value={TURKISH_VOICES.ARIA}>Aria (Multilingual Kadın - Önerilen)</option>
+                  <option value={TURKISH_VOICES.ROGER}>Roger (Multilingual Erkek)</option>
+                  <option value={TURKISH_VOICES.ADAM}>Adam (Doğal Erkek)</option>
+                  <option value={TURKISH_VOICES.DOMI}>Domi (Genç Kadın)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowApiKeyModal(false);
+                  setApiKeyInput('');
+                }}
+                className="flex-1 px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleSaveApiKey}
+                disabled={!apiKeyInput.trim()}
+                className="flex-1 px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Kaydet
+              </button>
+            </div>
+
+            {hasApiKey && (
+              <button
+                onClick={() => {
+                  elevenLabsService.clearApiKey();
+                  setHasApiKey(false);
+                }}
+                className="w-full mt-3 text-xs text-rose-500 font-bold hover:text-rose-600 transition-colors"
+              >
+                Mevcut API Anahtarını Kaldır
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

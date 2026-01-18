@@ -31,8 +31,8 @@ Kurallar:
 
 // Default config
 export const DEFAULT_CLAUDE_CONFIG: AIServiceConfig = {
-  model: 'claude-sonnet-4-20250514' as any,
-  maxTokens: 4096,
+  model: 'claude-3-5-sonnet-20241022' as any,
+  maxTokens: 1024,
   temperature: 0.7,
   systemPrompt: SYSTEM_PROMPT_TR
 };

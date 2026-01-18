@@ -268,10 +268,59 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     if (!cardsContainerRef.current) return;
 
     try {
-      const canvas = await html2canvas(cardsContainerRef.current, {
-        backgroundColor: '#f8fafc',
+      const container = cardsContainerRef.current;
+
+      // Export için geçici olarak açık tema uygula
+      const originalClasses = container.className;
+      container.className = container.className
+        .replace(/bg-slate-800\/50/g, 'bg-white')
+        .replace(/border-slate-700\/60/g, 'border-slate-200')
+        .replace(/border-slate-700/g, 'border-slate-200')
+        .replace(/text-white/g, 'text-slate-800')
+        .replace(/text-slate-400/g, 'text-slate-600')
+        .replace(/text-slate-300/g, 'text-slate-700')
+        .replace(/bg-slate-700\/30/g, 'bg-slate-100');
+
+      // İç elementlere de açık tema uygula
+      const allElements = container.querySelectorAll('*');
+      const originalStyles: { el: Element; classes: string }[] = [];
+
+      allElements.forEach(el => {
+        const htmlEl = el as HTMLElement;
+        originalStyles.push({ el, classes: htmlEl.className });
+        htmlEl.className = htmlEl.className
+          .replace(/bg-slate-800\/50/g, 'bg-white')
+          .replace(/bg-slate-800\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-700\/50/g, 'bg-slate-100')
+          .replace(/bg-slate-700\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-700\/20/g, 'bg-slate-50')
+          .replace(/bg-slate-600\/50/g, 'bg-slate-100')
+          .replace(/bg-slate-600\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-600\/20/g, 'bg-slate-50')
+          .replace(/border-slate-700\/60/g, 'border-slate-200')
+          .replace(/border-slate-700\/50/g, 'border-slate-200')
+          .replace(/border-slate-700/g, 'border-slate-200')
+          .replace(/border-slate-600\/60/g, 'border-slate-200')
+          .replace(/border-slate-600\/50/g, 'border-slate-200')
+          .replace(/border-slate-600/g, 'border-slate-200')
+          .replace(/text-white/g, 'text-slate-800')
+          .replace(/text-slate-400/g, 'text-slate-600')
+          .replace(/text-slate-300/g, 'text-slate-700')
+          .replace(/text-emerald-400/g, 'text-emerald-600')
+          .replace(/bg-emerald-500\/20/g, 'bg-emerald-100')
+          .replace(/bg-emerald-500\/10/g, 'bg-emerald-50');
+      });
+
+      const canvas = await html2canvas(container, {
+        backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true,
+      });
+
+      // Stilleri geri al
+      container.className = originalClasses;
+      originalStyles.forEach(({ el, classes }) => {
+        (el as HTMLElement).className = classes;
       });
 
       const link = document.createElement('a');
@@ -304,11 +353,60 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
         format: 'a4'
       });
 
+      const container = cardsContainerRef.current;
+
+      // Export için geçici olarak açık tema uygula
+      const originalClasses = container.className;
+      container.className = container.className
+        .replace(/bg-slate-800\/50/g, 'bg-white')
+        .replace(/border-slate-700\/60/g, 'border-slate-200')
+        .replace(/border-slate-700/g, 'border-slate-200')
+        .replace(/text-white/g, 'text-slate-800')
+        .replace(/text-slate-400/g, 'text-slate-600')
+        .replace(/text-slate-300/g, 'text-slate-700')
+        .replace(/bg-slate-700\/30/g, 'bg-slate-100');
+
+      // İç elementlere de açık tema uygula
+      const allElements = container.querySelectorAll('*');
+      const originalStyles: { el: Element; classes: string }[] = [];
+
+      allElements.forEach(el => {
+        const htmlEl = el as HTMLElement;
+        originalStyles.push({ el, classes: htmlEl.className });
+        htmlEl.className = htmlEl.className
+          .replace(/bg-slate-800\/50/g, 'bg-white')
+          .replace(/bg-slate-800\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-700\/50/g, 'bg-slate-100')
+          .replace(/bg-slate-700\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-700\/20/g, 'bg-slate-50')
+          .replace(/bg-slate-600\/50/g, 'bg-slate-100')
+          .replace(/bg-slate-600\/30/g, 'bg-slate-50')
+          .replace(/bg-slate-600\/20/g, 'bg-slate-50')
+          .replace(/border-slate-700\/60/g, 'border-slate-200')
+          .replace(/border-slate-700\/50/g, 'border-slate-200')
+          .replace(/border-slate-700/g, 'border-slate-200')
+          .replace(/border-slate-600\/60/g, 'border-slate-200')
+          .replace(/border-slate-600\/50/g, 'border-slate-200')
+          .replace(/border-slate-600/g, 'border-slate-200')
+          .replace(/text-white/g, 'text-slate-800')
+          .replace(/text-slate-400/g, 'text-slate-600')
+          .replace(/text-slate-300/g, 'text-slate-700')
+          .replace(/text-emerald-400/g, 'text-emerald-600')
+          .replace(/bg-emerald-500\/20/g, 'bg-emerald-100')
+          .replace(/bg-emerald-500\/10/g, 'bg-emerald-50');
+      });
+
       // Sayfa 1: Kartlar
-      const cardsCanvas = await html2canvas(cardsContainerRef.current, {
-        backgroundColor: '#f8fafc',
+      const cardsCanvas = await html2canvas(container, {
+        backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true,
+      });
+
+      // Stilleri geri al
+      container.className = originalClasses;
+      originalStyles.forEach(({ el, classes }) => {
+        (el as HTMLElement).className = classes;
       });
 
       const cardsImgData = cardsCanvas.toDataURL('image/png');
@@ -501,29 +599,29 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Yeşil Alan Oranları</h1>
-          <p className="text-slate-500 mt-1">Acil servise başvuran hastaların yeşil alan oranları</p>
+          <h1 className="text-2xl font-bold text-emerald-400">Yeşil Alan Oranları</h1>
+          <p className="text-slate-400 mt-1">Acil servise başvuran hastaların yeşil alan oranları</p>
         </div>
       </div>
 
       {/* Veri Yükleme Bölümü */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4">Veri Yükleme</h3>
+      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Veri Yükleme</h3>
         <div className="flex flex-wrap gap-4 items-end">
           {/* Yükleme için Tarih Picker */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-600">Yükleme Tarihi</label>
+            <label className="text-sm font-medium text-slate-400">Yükleme Tarihi</label>
             <input
               type="date"
               value={uploadDate}
               onChange={(e) => setUploadDate(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
             />
           </div>
 
           {/* Upload Button */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-600">Excel Dosyası</label>
+            <label className="text-sm font-medium text-slate-400">Excel Dosyası</label>
             <input
               ref={fileInputRef}
               type="file"
@@ -557,20 +655,20 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
         </div>
 
         {/* Excel format info */}
-        <div className="mt-4 p-4 bg-slate-50 rounded-xl">
-          <p className="text-xs text-slate-500">
+        <div className="mt-4 p-4 bg-slate-700/30 rounded-xl">
+          <p className="text-xs text-slate-400">
             <span className="font-semibold">Excel Formatı:</span> Kurum Adı | Yeşil Alan Muayene Sayısı | Toplam Muayene Sayısı
           </p>
         </div>
       </div>
 
       {/* Filtreler */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
+      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-slate-800">Veri Filtreleme</h3>
+          <h3 className="text-lg font-semibold text-white">Veri Filtreleme</h3>
           <div className="flex items-center gap-3">
             {getMatchingDates().length > 0 && (
-              <span className="text-sm text-emerald-600 font-medium bg-emerald-50 px-3 py-1 rounded-full">
+              <span className="text-sm text-emerald-400 font-medium bg-emerald-500/20 px-3 py-1 rounded-full">
                 {getMatchingDates().length} tarih seçili
               </span>
             )}
@@ -582,7 +680,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   setActiveMonth(null);
                   setDateRange({ start: null, end: null });
                 }}
-                className="text-sm text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1"
+                className="text-sm text-slate-400 hover:text-slate-200 font-medium flex items-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -622,11 +720,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           {/* Aktif Ay Seçimi (birden fazla ay seçiliyse göster) */}
           {selectedMonths.length > 1 && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-600">Takvim Ayı</label>
+              <label className="text-sm font-medium text-slate-400">Takvim Ayı</label>
               <select
                 value={activeMonth || ''}
                 onChange={(e) => handleActiveMonthChange([Number(e.target.value)])}
-                className="px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
+                className="px-3 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
               >
                 {selectedMonths.map(month => (
                   <option key={month} value={month}>{MONTH_NAMES[month]}</option>
@@ -675,15 +773,15 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       {/* No Data Message */}
       {!data && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-12">
+        <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-12">
           <div className="flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-slate-800 mb-2">Veri Yüklenmedi</h2>
-            <p className="text-slate-500 max-w-md">
+            <h2 className="text-xl font-semibold text-white mb-2">Veri Yüklenmedi</h2>
+            <p className="text-slate-400 max-w-md">
               Yukarıdan tarih seçip "Uygula" butonuna tıklayarak mevcut veriyi yükleyebilir
               veya yeni bir Excel dosyası yükleyebilirsiniz.
             </p>
@@ -698,7 +796,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           <div className="flex justify-end gap-2">
             <button
               onClick={handleDownloadPng}
-              className="px-4 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+              className="px-4 py-2.5 bg-slate-700/50 text-slate-200 border border-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-700 transition-all flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -716,9 +814,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </button>
           </div>
 
-          <div ref={cardsContainerRef} className="bg-slate-50 p-8 rounded-2xl">
+          <div ref={cardsContainerRef} className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/60">
             {/* Header for PNG */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-700">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -726,12 +824,12 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Acil Servis Yeşil Alan Oranları</h2>
-                  <p className="text-slate-500">Şanlıurfa İl Sağlık Müdürlüğü</p>
+                  <h2 className="text-2xl font-bold text-white">Acil Servis Yeşil Alan Oranları</h2>
+                  <p className="text-slate-400">Şanlıurfa İl Sağlık Müdürlüğü</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-slate-800">{getDateRangeDisplay()}</p>
+                <p className="text-xl font-bold text-white">{getDateRangeDisplay()}</p>
               </div>
             </div>
 
@@ -780,14 +878,14 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </div>
 
             {/* Footer with formula */}
-            <div className="mt-8 pt-4 border-t border-slate-200">
-              <div className="bg-white rounded-xl p-4 text-center">
-                <p className="text-sm text-slate-600 font-medium">
-                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-600">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
+            <div className="mt-8 pt-4 border-t border-slate-700">
+              <div className="bg-slate-700/30 rounded-xl p-4 text-center">
+                <p className="text-sm text-slate-300 font-medium">
+                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-400">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
                 </p>
                 {ilGeneli && (
-                  <p className="text-sm text-slate-500 mt-2">
-                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
+                  <p className="text-sm text-slate-400 mt-2">
+                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-white">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
                   </p>
                 )}
               </div>
@@ -838,45 +936,45 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
     return `${day}.${month}`;
   };
 
-  // Oran için renk
+  // Oran için renk (dark tema)
   const getRateColor = (rate: number): string => {
-    if (rate >= 70) return 'bg-emerald-100 text-emerald-700';
-    if (rate >= 60) return 'bg-yellow-100 text-yellow-700';
-    if (rate >= 50) return 'bg-orange-100 text-orange-700';
-    return 'bg-red-100 text-red-700';
+    if (rate >= 70) return 'bg-emerald-500/20 text-emerald-400';
+    if (rate >= 60) return 'bg-yellow-500/20 text-yellow-400';
+    if (rate >= 50) return 'bg-orange-500/20 text-orange-400';
+    return 'bg-red-500/20 text-red-400';
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border border-slate-200/60 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/20' : ''}`}>
+    <div className={`bg-slate-700/50 rounded-2xl shadow-sm border border-slate-600/60 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/30' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-100' : 'bg-slate-100'}`}>
-          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-600' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-500/20' : 'bg-slate-600/50'}`}>
+          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-800' : 'text-slate-800'}`}>{shortName}</h3>
+        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-400' : 'text-white'}`}>{shortName}</h3>
       </div>
 
       {/* Stats */}
       <div className="space-y-2 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-500">Toplam Hasta</span>
-          <span className="font-bold text-slate-800">{data.totalCount.toLocaleString('tr-TR')}</span>
+          <span className="text-sm text-slate-400">Toplam Hasta</span>
+          <span className="font-bold text-white">{data.totalCount.toLocaleString('tr-TR')}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-500">Yeşil Alan</span>
-          <span className="font-bold text-slate-800">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
+          <span className="text-sm text-slate-400">Yeşil Alan</span>
+          <span className="font-bold text-white">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-500">Yeşil Alan Oranı</span>
+          <span className="text-sm text-slate-400">Yeşil Alan Oranı</span>
           <span className={`font-bold text-lg ${textColor}`}>%{data.greenAreaRate.toFixed(1)}</span>
         </div>
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-600/50 rounded-full overflow-hidden">
           <div
             className={`h-full ${progressColor} rounded-full transition-all duration-500`}
             style={{ width: `${Math.min(data.greenAreaRate, 100)}%` }}
@@ -886,10 +984,10 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
 
       {/* Günlük Detay Accordion */}
       {dailyDetails.length > 1 && (
-        <div className="mt-4 pt-4 border-t border-slate-100">
+        <div className="mt-4 pt-4 border-t border-slate-600/50">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between text-sm text-slate-600 hover:text-slate-800 transition-colors"
+            className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-slate-200 transition-colors"
           >
             <span className="font-medium flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -911,23 +1009,23 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
             <div className="mt-3 -mx-2 overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-slate-50">
-                    <th className="sticky left-0 bg-slate-50 px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap">Tarih</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Yeşil Alan</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Toplam</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Oran</th>
+                  <tr className="bg-slate-600/30">
+                    <th className="sticky left-0 bg-slate-600/30 px-2 py-1.5 text-left font-semibold text-slate-300 whitespace-nowrap">Tarih</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Yeşil Alan</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Toplam</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Oran</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedDetails.map((detail, idx) => (
-                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-700 whitespace-nowrap">
+                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-slate-700/30' : 'bg-slate-600/20'}>
+                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-300 whitespace-nowrap">
                         {formatDate(detail.date)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
+                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
                         {detail.greenAreaCount.toLocaleString('tr-TR')}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
+                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
                         {detail.totalCount.toLocaleString('tr-TR')}
                       </td>
                       <td className="px-2 py-1.5 text-right whitespace-nowrap">

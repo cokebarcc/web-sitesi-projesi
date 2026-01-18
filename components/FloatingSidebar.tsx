@@ -7,6 +7,8 @@ interface FloatingSidebarProps {
   onLogout: () => void;
   isAdmin?: boolean;
   hasModuleAccess: (module: string) => boolean;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
 }
 
 const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
@@ -15,7 +17,9 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
   userEmail,
   onLogout,
   isAdmin = false,
-  hasModuleAccess
+  hasModuleAccess,
+  theme = 'dark',
+  onToggleTheme
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['mhrs']);
@@ -144,24 +148,30 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     return group?.items?.some(item => isViewActive(item.view));
   };
 
+  const isDark = theme === 'dark';
+
   return (
     <>
       {/* Floating Sidebar */}
       <div
         className={`
           fixed left-4 top-4 bottom-4 z-[500]
-          bg-[#0a0a14] backdrop-blur-2xl
-          rounded-3xl border border-slate-700/30
-          shadow-2xl shadow-black/50
+          backdrop-blur-2xl
+          rounded-3xl border
+          shadow-2xl
           transition-all duration-300 ease-out
           flex flex-col overflow-hidden
           ${isExpanded ? 'w-64' : 'w-[72px]'}
+          ${isDark
+            ? 'bg-[#0a0a14] border-slate-700/30 shadow-black/50'
+            : 'bg-white/95 border-slate-200/60 shadow-slate-300/50'
+          }
         `}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
       >
         {/* Logo */}
-        <div className="p-4 border-b border-slate-700/30">
+        <div className={`p-4 border-b ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
           <button
             onClick={() => onNavigate('welcome')}
             className="flex items-center gap-3 group"
@@ -171,8 +181,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             </div>
             {isExpanded && (
               <div className="flex flex-col overflow-hidden">
-                <span className="text-lg font-bold text-white tracking-tight whitespace-nowrap">MEDİS</span>
-                <span className="text-[9px] text-slate-500 whitespace-nowrap">Merkezi Dijital Sağlık</span>
+                <span className={`text-lg font-bold tracking-tight whitespace-nowrap ${isDark ? 'text-white' : 'text-slate-800'}`}>MEDİS</span>
+                <span className={`text-[9px] whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Merkezi Dijital Sağlık</span>
               </div>
             )}
           </button>
@@ -188,8 +198,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
               className={`
                 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                 ${isViewActive(item.view)
-                  ? 'bg-slate-700/50 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  ? isDark ? 'bg-slate-700/50 text-white' : 'bg-blue-50 text-blue-700'
+                  : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }
               `}
               title={!isExpanded ? item.label : undefined}
@@ -204,7 +214,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           ))}
 
           {/* Divider */}
-          <div className="h-px bg-slate-700/30 my-3" />
+          <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
 
           {/* Groups */}
           {menuGroups.map(group => {
@@ -221,8 +231,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                   className={`
                     w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                     ${hasActiveChild
-                      ? 'bg-slate-800/50 text-white'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/30'
+                      ? isDark ? 'bg-slate-800/50 text-white' : 'bg-blue-50 text-blue-700'
+                      : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }
                   `}
                   title={!isExpanded ? group.label : undefined}
@@ -256,7 +266,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                     overflow-hidden transition-all duration-300
                     ${isOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}
                   `}>
-                    <div className="ml-5 pl-3 border-l border-slate-700/30 mt-1 space-y-0.5">
+                    <div className={`ml-5 pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
                       {visibleItems.map(item => (
                         <button
                           key={item.id}
@@ -264,8 +274,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                           className={`
                             w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 whitespace-nowrap
                             ${isViewActive(item.view)
-                              ? 'text-white bg-slate-700/30 font-medium'
-                              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
+                              ? isDark ? 'text-white bg-slate-700/30 font-medium' : 'text-blue-700 bg-blue-50 font-medium'
+                              : isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                             }
                           `}
                         >
@@ -280,12 +290,12 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           })}
 
           {/* Divider */}
-          <div className="h-px bg-slate-700/30 my-3" />
+          <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
 
           {/* Support */}
           <div className="space-y-1">
             {isExpanded && (
-              <p className="px-3 py-1 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+              <p className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
                 Destek
               </p>
             )}
@@ -296,8 +306,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                 className={`
                   w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                   ${isViewActive(item.view)
-                    ? 'bg-slate-700/50 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? isDark ? 'bg-slate-700/50 text-white' : 'bg-blue-50 text-blue-700'
+                    : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }
                 `}
                 title={!isExpanded ? item.label : undefined}
@@ -318,8 +328,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                 className={`
                   w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                   ${isViewActive('admin')
-                    ? 'bg-slate-700/50 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? isDark ? 'bg-slate-700/50 text-white' : 'bg-blue-50 text-blue-700'
+                    : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }
                 `}
                 title={!isExpanded ? 'Kullanıcı Yönetimi' : undefined}
@@ -338,10 +348,58 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-slate-700/30">
+        <div className={`p-3 border-t ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
+          {/* Theme Toggle - iOS Style */}
+          {onToggleTheme && (
+            <button
+              onClick={onToggleTheme}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-2 ${
+                isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+              title={!isExpanded ? (theme === 'dark' ? 'Açık Mod' : 'Koyu Mod') : undefined}
+            >
+              {/* Toggle Switch */}
+              <div className="relative shrink-0">
+                <div
+                  className={`
+                    w-10 h-6 rounded-full transition-all duration-300 flex items-center
+                    ${theme === 'dark' ? 'bg-slate-600' : 'bg-amber-400'}
+                  `}
+                >
+                  <div
+                    className={`
+                      w-5 h-5 rounded-full shadow-md transition-all duration-300 flex items-center justify-center
+                      ${theme === 'dark'
+                        ? 'translate-x-0.5 bg-slate-300'
+                        : 'translate-x-[18px] bg-white'
+                      }
+                    `}
+                  >
+                    {theme === 'dark' ? (
+                      <svg className="w-3 h-3 text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {isExpanded && (
+                <span className="text-sm font-medium">
+                  {theme === 'dark' ? 'Koyu Mod' : 'Açık Mod'}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Settings */}
           <button
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all duration-200 mb-2"
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-2 ${
+              isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
             title={!isExpanded ? 'Ayarlar' : undefined}
           >
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,8 +411,9 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
 
           {/* User */}
           <div className={`
-            flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-800/30
+            flex items-center gap-3 px-3 py-2.5 rounded-xl
             ${!isExpanded ? 'justify-center' : ''}
+            ${isDark ? 'bg-slate-800/30' : 'bg-slate-100'}
           `}>
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shrink-0">
               <span className="text-white font-semibold text-sm">
@@ -363,10 +422,10 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             </div>
             {isExpanded && (
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white truncate">
+                <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
                   {userEmail || 'Kullanıcı'}
                 </p>
-                <p className="text-[10px] text-slate-500">Oturum açık</p>
+                <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Oturum açık</p>
               </div>
             )}
           </div>
@@ -374,7 +433,11 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           {/* Logout */}
           <button
             onClick={onLogout}
-            className="w-full flex items-center justify-center gap-2 mt-2 px-3 py-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-200 border border-slate-700/30 hover:border-rose-500/30"
+            className={`w-full flex items-center justify-center gap-2 mt-2 px-3 py-2 rounded-xl transition-all duration-200 border ${
+              isDark
+                ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-slate-700/30 hover:border-rose-500/30'
+                : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50 border-slate-200 hover:border-rose-300'
+            }`}
             title={!isExpanded ? 'Çıkış Yap' : undefined}
           >
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

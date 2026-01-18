@@ -1,4 +1,5 @@
 // Voice Chat Manager - STT + TTS + AI Entegrasyonu
+// ElevenLabs ve Web Speech API destegi
 import {
   VoiceChatState,
   VoiceChatStatus,
@@ -8,10 +9,15 @@ import {
 } from '../../types/voice';
 import { SpeechRecognitionService, getSpeechRecognitionService } from './speechRecognition';
 import { SpeechSynthesisService, getSpeechSynthesisService } from './speechSynthesis';
+import { getElevenLabsTTSService, VOICE_OPTIONS } from './elevenLabsTTS';
+
+export type TTSProvider = 'browser' | 'elevenlabs';
 
 export class VoiceChatManager {
   private stt: SpeechRecognitionService;
   private tts: SpeechSynthesisService;
+  private elevenLabsTTS = getElevenLabsTTSService();
+  private ttsProvider: TTSProvider = 'browser';
   private state: VoiceChatState;
   private callbacks: Partial<VoiceChatCallbacks> = {};
 
@@ -22,6 +28,12 @@ export class VoiceChatManager {
     this.state = { ...DEFAULT_VOICE_CHAT_STATE };
     this.stt = getSpeechRecognitionService();
     this.tts = getSpeechSynthesisService();
+
+    // ElevenLabs API key varsa onu kullan
+    if (this.elevenLabsTTS.hasApiKey()) {
+      this.ttsProvider = 'elevenlabs';
+    }
+
     this.setupCallbacks();
   }
 
@@ -148,23 +160,104 @@ export class VoiceChatManager {
 
   // Metni seslendir
   public async speak(text: string): Promise<void> {
-    if (!SpeechSynthesisService.isSupported()) {
-      console.warn('Ses sentezi bu tarayıcıda desteklenmiyor');
+    if (this.state.isMuted) {
+      console.log('Ses kapali, seslendirme atlaniyor');
       return;
     }
 
-    if (this.state.isMuted) {
-      console.log('Ses kapalı, seslendirme atlanıyor');
+    // ElevenLabs kullan
+    if (this.ttsProvider === 'elevenlabs' && this.elevenLabsTTS.hasApiKey()) {
+      try {
+        this.state.isSpeaking = true;
+        this.setStatus('speaking');
+        this.callbacks.onSpeakStart?.();
+
+        await this.elevenLabsTTS.speakLong(text);
+
+        this.state.isSpeaking = false;
+        this.setStatus('idle');
+        this.callbacks.onSpeakEnd?.();
+      } catch (error) {
+        console.error('ElevenLabs TTS hatasi:', error);
+        this.state.isSpeaking = false;
+        this.state.error = error instanceof Error ? error.message : 'TTS hatasi';
+        this.setStatus('error');
+        this.callbacks.onError?.(this.state.error);
+      }
+      return;
+    }
+
+    // Browser TTS kullan (fallback)
+    if (!SpeechSynthesisService.isSupported()) {
+      console.warn('Ses sentezi bu tarayicida desteklenmiyor');
       return;
     }
 
     await this.tts.speakLong(text);
   }
 
-  // Konuşmayı durdur
+  // Konusmay\u0131 durdur
   public stopSpeaking(): void {
-    this.tts.stop();
+    if (this.ttsProvider === 'elevenlabs') {
+      this.elevenLabsTTS.stop();
+    } else {
+      this.tts.stop();
+    }
     this.state.isSpeaking = false;
+  }
+
+  // TTS provider ayarla
+  public setTTSProvider(provider: TTSProvider): void {
+    this.ttsProvider = provider;
+    localStorage.setItem('tts_provider', provider);
+  }
+
+  // TTS provider al
+  public getTTSProvider(): TTSProvider {
+    const stored = localStorage.getItem('tts_provider') as TTSProvider;
+    if (stored) {
+      this.ttsProvider = stored;
+    }
+    return this.ttsProvider;
+  }
+
+  // ElevenLabs API key ayarla
+  public setElevenLabsApiKey(key: string): void {
+    this.elevenLabsTTS.setApiKey(key);
+    this.ttsProvider = 'elevenlabs';
+    localStorage.setItem('tts_provider', 'elevenlabs');
+  }
+
+  // ElevenLabs API key var mi?
+  public hasElevenLabsApiKey(): boolean {
+    return this.elevenLabsTTS.hasApiKey();
+  }
+
+  // ElevenLabs API key dogrula
+  public async validateElevenLabsApiKey(key: string): Promise<boolean> {
+    return this.elevenLabsTTS.validateApiKey(key);
+  }
+
+  // ElevenLabs API key temizle
+  public clearElevenLabsApiKey(): void {
+    this.elevenLabsTTS.clearApiKey();
+    this.ttsProvider = 'browser';
+    localStorage.setItem('tts_provider', 'browser');
+  }
+
+  // ElevenLabs ses secimi
+  public setElevenLabsVoice(voiceId: string): void {
+    this.elevenLabsTTS.setVoice(voiceId);
+  }
+
+  // ElevenLabs ses listesi
+  public getElevenLabsVoices() {
+    return VOICE_OPTIONS;
+  }
+
+  // ElevenLabs kalan kredi
+  public async getElevenLabsCredits() {
+    return this.elevenLabsTTS.getRemainingCredits();
   }
 
   // Konuşmayı duraklat
