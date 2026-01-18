@@ -211,11 +211,11 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <KpiCard title="Toplam Kapasite Sayısı" value={isPeriodSelected ? stats.totalCapacityCount : null} source="Detaylı Cetveller" accent="capacity" isEmpty={!isPeriodSelected} />
-        <KpiCard title="Toplam Muayene Sayısı" value={isPeriodSelected ? stats.totalExamsCount : null} source="Hekim Verileri" accent="visits" isEmpty={!isPeriodSelected} isWarning={isPeriodSelected && !stats.hasMuayene} warningText="Eksik Veri" />
+        <KpiCard title="Toplam Muayene Sayısı" value={isPeriodSelected ? stats.totalExamsCount : null} source="Hekim Verileri" accent="visits" isEmpty={!isPeriodSelected} />
         <KpiCard title="Randevulu Muayene Oranı" value={appointmentRate !== null ? `${appointmentRate.toFixed(1).replace('.', ',')}%` : null} source="Hekim Verileri" accent="ratio" subtitle="(MHRS / TOPLAM)" isEmpty={!isPeriodSelected || stats.totalExamsCount === 0} />
-        <KpiCard title="Planlanan Ameliyat Gün" value={isPeriodSelected ? stats.totalSurgeryDays : null} source="Detaylı Cetveller" accent="surgery" isEmpty={!isPeriodSelected} />
-        <KpiCard title="Toplam A+B+C Ameliyat" value={isPeriodSelected ? stats.totalAbcSurgeriesCount : null} source="Hekim Verileri" accent="surgery" isEmpty={!isPeriodSelected} isWarning={isPeriodSelected && !stats.hasAmeliyat} warningText="Eksik Veri" />
-        <KpiCard title="Ameliyat Cetvel Verimi" value={isPeriodSelected ? avgHoursPerSurgery.toFixed(2).replace('.', ',') : null} source="Cetvel + Hekim Verileri" accent="surgery" subtitle="SAAT / AMELİYAT" isEmpty={!isPeriodSelected || stats.totalAbcSurgeriesCount === 0} />
+        <KpiCard title="MHRS'de Planlanan Ameliyat Gün Sayısı" value={isPeriodSelected ? stats.totalSurgeryDays : null} source="Detaylı Cetveller" accent="surgeryDay" isEmpty={!isPeriodSelected} />
+        <KpiCard title="Yapılan Toplam A+B+C Grubu Ameliyat Sayısı" value={isPeriodSelected ? stats.totalAbcSurgeriesCount : null} source="Hekim Verileri" accent="surgeryCount" isEmpty={!isPeriodSelected} />
+        <KpiCard title="Ameliyat Başına Düşen Saat" value={isPeriodSelected ? avgHoursPerSurgery.toFixed(2).replace('.', ',') : null} source="Cetvel + Hekim Verileri" accent="surgeryHour" subtitle="SAAT / AMELİYAT" isEmpty={!isPeriodSelected || stats.totalAbcSurgeriesCount === 0} />
       </div>
 
       <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
@@ -332,9 +332,18 @@ const CustomizedXAxisTick = ({ x, y, payload, onClick }: any) => {
 };
 
 const KpiCard = ({ title, value, subtitle, source, accent, isEmpty, isWarning, warningText }: any) => {
-  const p = { capacity: 'border-t-indigo-500 text-indigo-400 bg-indigo-500', visits: 'border-t-blue-500 text-blue-400 bg-blue-500', surgery: 'border-t-emerald-500 text-emerald-400 bg-emerald-500', ratio: 'border-t-violet-500 text-violet-400 bg-violet-500' }[accent as keyof typeof p];
+  const colorMap: Record<string, string> = {
+    capacity: 'border-t-sky-400 text-sky-300 bg-sky-400',
+    visits: 'border-t-cyan-400 text-cyan-300 bg-cyan-400',
+    ratio: 'border-t-purple-400 text-purple-300 bg-purple-400',
+    surgery: 'border-t-teal-400 text-teal-300 bg-teal-400',
+    surgeryDay: 'border-t-teal-400 text-teal-300 bg-teal-400',
+    surgeryCount: 'border-t-lime-400 text-lime-300 bg-lime-400',
+    surgeryHour: 'border-t-amber-400 text-amber-300 bg-amber-400'
+  };
+  const p = colorMap[accent] || colorMap.capacity;
   const [b, t, d] = p.split(' ');
-  return <div className={`bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] border-t-[3px] ${b} rounded-[20px] p-6 shadow-lg flex flex-col justify-between h-[180px] transition-all hover:shadow-xl group relative overflow-hidden`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-[var(--text-3)] uppercase tracking-widest">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black text-rose-400 uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-[var(--text-muted)] mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-[var(--border-1)] pt-3 relative z-10"><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity blur-2xl`}></div></div>;
+  return <div className={`bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] border-t-[3px] ${b} rounded-[20px] p-6 shadow-lg flex flex-col justify-between h-[180px] transition-all hover:shadow-xl group relative overflow-hidden`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-[var(--text-2)] uppercase tracking-wide leading-tight">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black text-rose-400 uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-[var(--text-muted)] mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-[var(--border-1)] pt-3 relative z-10"><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.08] group-hover:opacity-[0.15] transition-opacity blur-2xl`}></div></div>;
 };
 
 const LocalFilters = ({ value, onChange, limit, onLimitChange, currentPage, totalPages, onPageChange, branches }: any) => (

@@ -48,7 +48,9 @@
       "Bash(start https://github.com/cokebarcc/web-sitesi-projesi/pull/new/vigorous-leavitt)",
       "Bash(start https://github.com/cokebarcc/web-sitesi-projesi/pulls)",
       "Bash(git pull:*)",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "Bash(timeout:*)",
+      "Bash(cd:*)"
     ]
   }
 }

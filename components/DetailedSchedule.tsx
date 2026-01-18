@@ -22,6 +22,7 @@ interface DetailedScheduleProps {
 interface DoctorSummary {
   actionDays: { [action: string]: number };
   totalCapacity: number;
+  branch: string;
 }
 
 const AM_WINDOW = { start: 8 * 60, end: 12 * 60 };
@@ -54,25 +55,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
     }).sort((a, b) => b.year - a.year || MONTHS.indexOf(b.month) - MONTHS.indexOf(a.month));
   }, [data]);
 
-  // Mevcut yıllar (veri içinden)
-  const availableYears = useMemo(() => {
-    const years = new Set<number>();
-    data.forEach(d => years.add(d.year));
-    return Array.from(years).sort((a, b) => b - a);
-  }, [data]);
-
-  // Seçili yıllara göre mevcut aylar
-  const availableMonths = useMemo(() => {
-    if (selectedYears.length === 0) return [];
-    const months = new Set<number>();
-    data
-      .filter(d => selectedYears.includes(d.year))
-      .forEach(d => {
-        const monthIndex = MONTHS.indexOf(d.month) + 1;
-        if (monthIndex > 0) months.add(monthIndex);
-      });
-    return Array.from(months).sort((a, b) => a - b);
-  }, [data, selectedYears]);
+  // Yıl ve ay filtreleri sabit YEARS ve MONTHS listelerinden gelir (DataFilterPanel içinde)
 
   const handleApply = async () => {
     if (!selectedHospital || selectedYears.length === 0 || selectedMonths.length === 0) {
@@ -152,11 +135,12 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
 
   const summaryData = useMemo(() => {
     const summary: { [doctor: string]: DoctorSummary } = {};
-    const dailyMap: Record<string, Record<string, { 
+    const dailyMap: Record<string, Record<string, {
       AM: Record<string, { mins: number, firstStart: number }>,
       PM: Record<string, { mins: number, firstStart: number }>
     }>> = {};
     const docCap: Record<string, number> = {};
+    const docBranch: Record<string, string> = {};
 
     filteredData.forEach(item => {
       const d = item.doctorName; const t = item.startDate; const a = item.action.trim().toLocaleUpperCase('tr-TR');
@@ -177,10 +161,11 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
         dailyMap[d][t].PM[a].firstStart = Math.min(dailyMap[d][t].PM[a].firstStart, rowStart);
       }
       docCap[d] = (docCap[d] || 0) + (item.capacity || 0);
+      if (item.specialty && !docBranch[d]) docBranch[d] = item.specialty;
     });
 
     Object.entries(dailyMap).forEach(([docName, dates]) => {
-      summary[docName] = { actionDays: {}, totalCapacity: docCap[docName] || 0 };
+      summary[docName] = { actionDays: {}, totalCapacity: docCap[docName] || 0, branch: docBranch[docName] || '' };
       Object.entries(dates).forEach(([dateStr, sessions]) => {
         let amWinner = ""; let amMaxMins = -1; let amEarliest = Infinity;
         Object.entries(sessions.AM).forEach(([act, stats]) => {
@@ -222,11 +207,10 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
         onHospitalChange={onHospitalChange}
         showYearFilter={true}
         selectedYears={selectedYears}
-        availableYears={availableYears.length > 0 ? availableYears : YEARS}
+        availableYears={YEARS}
         onYearsChange={setSelectedYears}
         showMonthFilter={true}
         selectedMonths={selectedMonths}
-        availableMonths={availableMonths.length > 0 ? availableMonths : undefined}
         onMonthsChange={setSelectedMonths}
         showApplyButton={true}
         onApply={handleApply}
@@ -292,7 +276,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
               <thead className="bg-[var(--table-header-bg)] border-b border-[var(--table-border)]">
                 <tr>
                   <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest sticky left-0 bg-[var(--table-header-bg)] shadow-[2px_0_5px_rgba(0,0,0,0.1)]">Hekim Ad Soyad</th>
-                  <th className="px-10 py-5 text-[11px] font-black text-blue-400 uppercase tracking-widest text-center bg-blue-500/10">TOPLAM KAPASİTE</th>
+                  <th className="px-10 py-5 text-[11px] font-black text-sky-300 uppercase tracking-widest text-center bg-sky-500/10">TOPLAM KAPASİTE</th>
                   {activeActions.map(action => (
                     <th key={action} className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center border-l border-[var(--table-border)]">{action} (GÜN)</th>
                   ))}
@@ -303,9 +287,10 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                   <tr key={name} className="hover:bg-[var(--table-row-hover)] transition-colors">
                     <td className="px-10 py-5 sticky left-0 bg-[var(--surface-1)] z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)]">
                       <p className="font-black text-[var(--text-1)] uppercase text-sm leading-normal">{name}</p>
+                      {stats.branch && <p className="text-[10px] font-medium text-[var(--text-muted)] mt-0.5">{stats.branch}</p>}
                     </td>
                     <td className="px-10 py-5 text-center">
-                       <span className="bg-blue-500/20 text-blue-300 px-4 py-1.5 rounded-xl font-black text-xs border border-blue-500/30">{stats.totalCapacity.toLocaleString('tr-TR')}</span>
+                       <span className="bg-sky-500/20 text-white px-4 py-1.5 rounded-xl font-black text-xs border border-sky-400/30">{stats.totalCapacity.toLocaleString('tr-TR')}</span>
                     </td>
                     {activeActions.map(action => {
                       const dayCount = stats.actionDays[action] || 0;
@@ -335,7 +320,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Hekim Ad Soyad</th>
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon</th>
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Başlangıç / Bitiş (Süre)</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-blue-400 uppercase tracking-widest text-center">Kapasite</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-sky-300 uppercase tracking-widest text-center">Kapasite</th>
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">İşlem</th>
                 </tr>
               </thead>
@@ -351,7 +336,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                       {item.startTime} - {item.endTime}
                       <span className="ml-2 text-indigo-400 font-black">({item.duration} dk)</span>
                     </td>
-                    <td className="px-8 py-4 text-center"><span className="font-black text-[var(--text-1)] text-sm">{item.capacity || '-'}</span></td>
+                    <td className="px-8 py-4 text-center"><span className="font-black text-sky-200 text-sm">{item.capacity || '-'}</span></td>
                     <td className="px-8 py-4 text-center">
                       <button onClick={() => onDelete(item.id)} className="text-rose-400/50 hover:text-rose-400 p-2 rounded-xl transition-all">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>

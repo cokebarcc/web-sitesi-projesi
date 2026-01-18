@@ -12,6 +12,7 @@ export interface UserPermissions {
     aiChatbot: boolean;
     gorenBashekimlik: boolean;
     analysisModule: boolean;
+    schedulePlanning: boolean;
     performancePlanning: boolean;
     presentation: boolean;
     emergencyService: boolean;
@@ -41,6 +42,7 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
     aiChatbot: true,
     gorenBashekimlik: true,
     analysisModule: true,
+    schedulePlanning: true,
     performancePlanning: true,
     presentation: true,
     emergencyService: true,

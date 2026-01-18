@@ -658,13 +658,13 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       )}
 
       {!comparison && !isProcessing && (
-        <div className="bg-white p-32 rounded-[56px] border-4 border-dashed border-slate-100 text-center flex flex-col items-center gap-8 shadow-inner animate-in fade-in duration-1000">
-           <div className="w-24 h-24 bg-slate-50 rounded-[40px] flex items-center justify-center text-slate-200 shadow-inner group">
+        <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-32 rounded-[56px] border-4 border-dashed border-[var(--glass-border)] text-center flex flex-col items-center gap-8 shadow-inner animate-in fade-in duration-1000">
+           <div className="w-24 h-24 bg-[var(--surface-2)] rounded-[40px] flex items-center justify-center text-[var(--text-muted)] shadow-inner group">
              <svg className="w-12 h-12 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
            </div>
            <div>
-             <h4 className="text-2xl font-black text-slate-400 uppercase tracking-[0.2em]">KIYASLANACAK VERİ BULUNAMADI</h4>
-             <p className="text-slate-400 font-medium max-w-md mx-auto mt-3 italic">Lütfen sağ taraftaki "Yeni Sürüm Yükle" butonu ile iki farklı aylık cetvel yükleyiniz.</p>
+             <h4 className="text-2xl font-black text-[var(--text-2)] uppercase tracking-[0.2em]">KIYASLANACAK VERİ BULUNAMADI</h4>
+             <p className="text-[var(--text-muted)] font-medium max-w-md mx-auto mt-3 italic">Lütfen önce hastane, yıl ve ay seçip "Yükle" butonuna tıklayın, ardından eski ve yeni sürüm seçin.</p>
            </div>
         </div>
       )}

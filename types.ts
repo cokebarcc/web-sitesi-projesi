@@ -201,4 +201,5 @@ export type ViewType =
   | 'efficiency-analysis'
   | 'presentation'
   | 'emergency-service'      // Acil Servis modülü
+  | 'schedule-planning'      // Cetvel Planlama modülü
   | 'admin';

@@ -24,6 +24,7 @@ import FilterPanel from './components/common/FilterPanel';
 
 import PlanningModule from './components/PlanningModule';
 import ChatBot from './components/ChatBot';
+import { AIChatPanel } from './src/components/ai';
 import ServiceInterventionAnalysis from './components/ServiceInterventionAnalysis';
 import DetailedSchedule from './components/DetailedSchedule';
 import ChangeAnalysis from './components/ChangeAnalysis';
@@ -37,6 +38,7 @@ import DashboardCategory from './components/DashboardCategory';
 import EmergencyService from './components/EmergencyService';
 import WelcomeDashboard from './components/WelcomeDashboard';
 import FloatingSidebar from './components/FloatingSidebar';
+import SchedulePlanning from './components/SchedulePlanning';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -708,15 +710,19 @@ const App: React.FC = () => {
 
             case 'ai-chatbot':
               return (
-                <>
-                  <FilterPanel
-                    selectedHospital={selectedHospital}
-                    onHospitalChange={setSelectedHospital}
-                    allowedHospitals={allowedHospitals}
-                    showHospitalFilter={true}
+                <div className="h-[calc(100vh-120px)]">
+                  <AIChatPanel
+                    userId={user?.uid || user?.email || 'anonymous'}
+                    hospitalId={selectedHospital || 'all'}
+                    currentView={view}
+                    selectedFilters={{
+                      hospital: selectedHospital,
+                      years: globalAppliedYears,
+                      months: globalAppliedMonths,
+                      branch: branchFilters[view] || undefined
+                    }}
                   />
-                  <ChatBot appointmentData={appointmentData} hbysData={hbysData} />
-                </>
+                </div>
               );
 
             case 'goren':
@@ -753,6 +759,14 @@ const App: React.FC = () => {
                   setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, 'emergency-service': m }))}
                   selectedYear={selectedYear}
                   setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, 'emergency-service': y }))}
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                />
+              );
+            case 'schedule-planning':
+              return (
+                <SchedulePlanning
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
