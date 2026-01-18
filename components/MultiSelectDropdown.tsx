@@ -15,6 +15,8 @@ interface MultiSelectDropdownProps {
   maxDisplayItems?: number;
   showSearch?: boolean;
   emptyMessage?: string;
+  compact?: boolean;
+  singleSelect?: boolean; // Tek seçim modu
 }
 
 const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
@@ -26,7 +28,9 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   disabled = false,
   maxDisplayItems = 2,
   showSearch = true,
-  emptyMessage = 'Seçenek bulunamadı'
+  emptyMessage = 'Seçenek bulunamadı',
+  compact = false,
+  singleSelect = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,12 +67,25 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
   // Seçim toggle
   const toggleOption = useCallback((value: string | number) => {
-    if (selectedValues.includes(value)) {
-      onChange(selectedValues.filter(v => v !== value));
+    if (singleSelect) {
+      // Tek seçim modunda: seçili olanı tekrar tıklarsa temizle, değilse yeni değeri seç
+      if (selectedValues.includes(value)) {
+        onChange([]);
+      } else {
+        onChange([value]);
+      }
+      setIsOpen(false); // Tek seçimde otomatik kapat
+      setSearchTerm('');
+      setFocusedIndex(-1);
     } else {
-      onChange([...selectedValues, value]);
+      // Çoklu seçim modu
+      if (selectedValues.includes(value)) {
+        onChange(selectedValues.filter(v => v !== value));
+      } else {
+        onChange([...selectedValues, value]);
+      }
     }
-  }, [selectedValues, onChange]);
+  }, [selectedValues, onChange, singleSelect]);
 
   // Tümünü seç / kaldır
   const selectAll = () => {
@@ -142,10 +159,21 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   // Seçili değerlerin görüntülenmesi
   const renderSelectedDisplay = () => {
     if (selectedValues.length === 0) {
-      return <span className="text-slate-400">{placeholder}</span>;
+      return <span className="text-[var(--text-placeholder)]">{placeholder}</span>;
     }
 
     const selectedOptions = options.filter(o => selectedValues.includes(o.value));
+
+    // Tek seçim modunda sadece metin göster
+    if (singleSelect) {
+      return (
+        <span className="text-[var(--text-1)] truncate">
+          {selectedOptions[0]?.label || placeholder}
+        </span>
+      );
+    }
+
+    // Çoklu seçim modunda badge'ler göster
     const displayedOptions = selectedOptions.slice(0, maxDisplayItems);
     const remainingCount = selectedOptions.length - maxDisplayItems;
 
@@ -154,7 +182,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         {displayedOptions.map(opt => (
           <span
             key={opt.value}
-            className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-medium"
+            className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-xs font-medium border border-emerald-500/30"
           >
             {opt.label}
             <button
@@ -163,7 +191,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 e.stopPropagation();
                 toggleOption(opt.value);
               }}
-              className="hover:text-emerald-900 focus:outline-none"
+              className="hover:text-emerald-100 focus:outline-none"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -172,7 +200,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           </span>
         ))}
         {remainingCount > 0 && (
-          <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-medium">
+          <span className="inline-flex items-center px-2 py-0.5 bg-[var(--surface-3)] text-[var(--text-2)] rounded text-xs font-medium border border-[var(--border-1)]">
             +{remainingCount}
           </span>
         )}
@@ -181,8 +209,8 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-1.5" ref={containerRef}>
-      <label className="text-sm font-medium text-slate-600">{label}</label>
+    <div className={`flex flex-col ${compact ? 'gap-1' : 'gap-1.5'}`} ref={containerRef}>
+      <label className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-[var(--text-3)]`}>{label}</label>
       <div className="relative">
         {/* Trigger Button */}
         <button
@@ -191,23 +219,23 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           className={`
-            w-full min-w-[180px] px-3 py-2.5 text-left rounded-xl border transition-all
+            w-full ${compact ? 'min-w-[140px] px-3 py-2 rounded-lg h-[38px]' : 'min-w-[180px] px-3 py-2.5 rounded-xl'} text-left border transition-all
             flex items-center justify-between gap-2
             ${disabled
-              ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-60'
+              ? 'bg-[var(--surface-2)] border-[var(--border-1)] cursor-not-allowed opacity-60'
               : isOpen
-                ? 'bg-white border-emerald-500 ring-2 ring-emerald-500/20'
-                : 'bg-white border-slate-200 hover:border-slate-300'
+                ? 'bg-[var(--input-bg)] border-blue-500/50 ring-2 ring-blue-500/20'
+                : 'bg-[var(--input-bg)] border-[var(--input-border)] hover:border-[var(--input-border-hover)]'
             }
           `}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
-          <div className="flex-1 min-w-0 truncate text-sm">
+          <div className="flex-1 min-w-0 truncate text-sm text-[var(--text-1)]">
             {renderSelectedDisplay()}
           </div>
           <svg
-            className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 text-[var(--text-muted)] transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -219,15 +247,15 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         {/* Dropdown Menu */}
         {isOpen && (
           <div
-            className="absolute z-50 mt-1 w-full min-w-[220px] bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden"
+            className="absolute z-[9999] mt-1 w-full min-w-[220px] bg-[#0f172a] border border-[var(--glass-border-light)] rounded-xl shadow-2xl overflow-hidden"
             role="listbox"
             aria-multiselectable="true"
           >
             {/* Search Input */}
             {showSearch && options.length > 5 && (
-              <div className="p-2 border-b border-slate-100">
+              <div className="p-2 border-b border-slate-700/50 bg-[#0f172a]">
                 <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
@@ -240,19 +268,19 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     }}
                     onKeyDown={handleKeyDown}
                     placeholder="Ara..."
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-[#1e293b] border border-slate-600/50 rounded-lg text-[var(--text-1)] placeholder-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50"
                   />
                 </div>
               </div>
             )}
 
-            {/* Select All / Clear All */}
-            {filteredOptions.length > 0 && (
-              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 bg-slate-50">
+            {/* Select All / Clear All - Sadece çoklu seçimde göster */}
+            {!singleSelect && filteredOptions.length > 0 && (
+              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50 bg-[#1e293b]">
                 <button
                   type="button"
                   onClick={selectAll}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
                 >
                   Tümünü Seç
                 </button>
@@ -260,7 +288,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                   <button
                     type="button"
                     onClick={clearAll}
-                    className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                    className="text-xs text-[var(--text-muted)] hover:text-[var(--text-2)] font-medium"
                   >
                     Temizle
                   </button>
@@ -271,10 +299,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
             {/* Options List */}
             <div
               ref={listRef}
-              className="max-h-[240px] overflow-y-auto"
+              className="max-h-[240px] overflow-y-auto bg-[#0f172a]"
             >
               {filteredOptions.length === 0 ? (
-                <div className="px-3 py-4 text-sm text-slate-400 text-center">
+                <div className="px-3 py-4 text-sm text-[var(--text-muted)] text-center bg-[#0f172a]">
                   {emptyMessage}
                 </div>
               ) : (
@@ -289,24 +317,28 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                       onClick={() => toggleOption(option.value)}
                       className={`
                         w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors
-                        ${isSelected ? 'bg-emerald-50 text-emerald-700' : 'text-slate-700'}
-                        ${isFocused ? 'bg-slate-100' : ''}
-                        ${!isSelected && !isFocused ? 'hover:bg-slate-50' : ''}
+                        ${isSelected ? 'bg-emerald-600/30 text-emerald-300' : 'text-[var(--text-2)] bg-[#0f172a]'}
+                        ${isFocused ? 'bg-slate-700/50' : ''}
+                        ${!isSelected && !isFocused ? 'hover:bg-slate-700/50' : ''}
                       `}
                       role="option"
                       aria-selected={isSelected}
                     >
                       <div className={`
-                        w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors
+                        w-4 h-4 ${singleSelect ? 'rounded-full' : 'rounded'} border flex items-center justify-center flex-shrink-0 transition-colors
                         ${isSelected
                           ? 'bg-emerald-500 border-emerald-500'
-                          : 'border-slate-300'
+                          : 'border-[var(--border-2)]'
                         }
                       `}>
                         {isSelected && (
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
+                          singleSelect ? (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          ) : (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )
                         )}
                       </div>
                       <span className="truncate font-medium">{option.label}</span>

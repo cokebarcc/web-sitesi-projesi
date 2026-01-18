@@ -6,6 +6,7 @@ import { MONTHS, YEARS } from '../constants';
 import { normalizeDoctorName, getPeriodKey } from '../utils/formatters';
 import { uploadMuayeneFile, uploadAmeliyatFile } from '../src/services/physicianDataStorage';
 import { auth } from '../firebase';
+import DataFilterPanel from './common/DataFilterPanel';
 
 interface PhysicianDataProps {
   data: DetailedScheduleData[];
@@ -215,215 +216,180 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
         </div>
       )}
 
-      <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-8">
-        <div className="flex flex-col xl:flex-row justify-between items-end gap-6">
-          <div className="flex flex-wrap items-end gap-4 w-full xl:w-auto">
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HASTANE</p>
-              <select
-                value={selectedHospital}
-                onChange={(e) => onHospitalChange(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer min-w-[240px]"
-              >
-                <option value="">Hastane Seçin</option>
-                {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">YIL</p>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-slate-900 text-white rounded-2xl px-6 py-4 text-sm font-black outline-none transition-all cursor-pointer"
-              >
-                <option value={0}>Yıl Seçin</option>
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-            <div className="flex items-end gap-3">
-              <div className="flex flex-col gap-2">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY</p>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none focus:ring-4 ring-indigo-50 transition-all cursor-pointer"
-                >
-                  <option value="">Ay Seçin</option>
-                  {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-                </select>
-              </div>
-              <button
-                onClick={async () => {
-                  if (selectedHospital && selectedYear > 0 && selectedMonth) {
-                    await onLoadPeriodData(selectedHospital, selectedYear, selectedMonth);
-                  } else {
-                    showToast('Lütfen hastane, yıl ve ay seçin', 'warning');
-                  }
-                }}
-                disabled={!selectedHospital || selectedYear === 0 || !selectedMonth}
-                className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 ${
-                  selectedHospital && selectedYear > 0 && selectedMonth
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-xl hover:scale-105 cursor-pointer'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                </svg>
-                UYGULA
-              </button>
-            </div>
-            <div className="flex flex-col gap-2 flex-1 md:min-w-[300px]">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HEKİM / BRANŞ ARA</p>
+      {/* Veri Filtreleme */}
+      <DataFilterPanel
+        title="Veri Filtreleme"
+        showHospitalFilter={true}
+        selectedHospital={selectedHospital}
+        availableHospitals={allowedHospitals}
+        onHospitalChange={onHospitalChange}
+        showYearFilter={true}
+        selectedYears={selectedYear > 0 ? [selectedYear] : []}
+        availableYears={YEARS}
+        onYearsChange={(years) => setSelectedYear(years.length > 0 ? years[0] as number : 0)}
+        showMonthFilter={true}
+        selectedMonths={selectedMonth ? [MONTHS.indexOf(selectedMonth) + 1] : []}
+        onMonthsChange={(months) => setSelectedMonth(months.length > 0 ? MONTHS[(months[0] as number) - 1] : '')}
+        showApplyButton={true}
+        onApply={async () => {
+          if (selectedHospital && selectedYear > 0 && selectedMonth) {
+            await onLoadPeriodData(selectedHospital, selectedYear, selectedMonth);
+          } else {
+            showToast('Lütfen hastane, yıl ve ay seçin', 'warning');
+          }
+        }}
+        applyDisabled={!selectedHospital || selectedYear === 0 || !selectedMonth}
+        customFilters={
+          <>
+            {/* Hekim Ara */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[var(--text-3)]">Ara</label>
               <div className="relative">
                 <input
-                  type="text" placeholder="Hekim veya Branş adı..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-12 py-4 text-sm font-bold outline-none focus:ring-4 ring-indigo-50 transition-all"
+                  type="text" placeholder="Hekim / Branş..."
+                  className="pl-8 pr-3 py-2 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 w-[160px] h-[38px] placeholder-[var(--text-placeholder)]"
                   value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <svg className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto justify-end">
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">MUAYENE DOSYASI</p>
-              <div className="flex items-center gap-2">
-                <label className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest cursor-pointer transition-all active:scale-95 shadow-lg ${activeMuayeneFile ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  {activeMuayeneFile ? 'Güncelle' : 'Excel Yükle'}
-                  <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => handleFileUpload(e.target.files, 'muayene')} />
-                </label>
-                {activeMuayeneFile && (
-                  <button onClick={() => clearPeriodData('muayene')} className="p-4 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-colors border border-rose-100">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                )}
+                <svg className="w-4 h-4 text-[var(--text-muted)] absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AMELİYAT DOSYASI</p>
-              <div className="flex items-center gap-2">
-                <label className={`flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest cursor-pointer transition-all active:scale-95 shadow-lg ${activeAmeliyatFile ? 'bg-emerald-600 text-white shadow-emerald-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.183.319l-3.08 1.925a1 1 0 001.06 1.698l3.08-1.925a2 2 0 011.183-.319l2.533.362a6 6 0 003.86-.517l.318-.158a6 6 0 013.86-.517l2.387.477a2 2 0 011.022.547l3.08 1.925a1 1 0 001.06-1.698l-3.08-1.925z" /></svg>
-                  {activeAmeliyatFile ? 'Güncelle' : 'Excel Yükle'}
-                  <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => handleFileUpload(e.target.files, 'ameliyat')} />
-                </label>
-                {activeAmeliyatFile && (
-                  <button onClick={() => clearPeriodData('ameliyat')} className="p-4 bg-rose-50 text-rose-600 rounded-2xl hover:bg-rose-100 transition-colors border border-rose-100">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                )}
-              </div>
+            {/* Muayene Dosyası */}
+            <div className="flex items-center gap-1">
+              <label className={`flex items-center gap-2 px-3 py-2 h-[38px] rounded-lg font-semibold text-xs cursor-pointer transition-all active:scale-95 shadow-lg ${activeMuayeneFile ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-[var(--surface-2)] border border-[var(--border-2)] text-[var(--text-2)] hover:bg-[var(--surface-hover)]'}`}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                {activeMuayeneFile ? 'Muayene ✓' : 'Muayene'}
+                <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => handleFileUpload(e.target.files, 'muayene')} />
+              </label>
+              {activeMuayeneFile && (
+                <button onClick={() => clearPeriodData('muayene')} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-colors border border-rose-500/30">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
             </div>
-          </div>
-        </div>
 
-        {(activeMuayeneFile || activeAmeliyatFile) && (
-          <div className="flex gap-4 pt-4 border-t border-slate-50">
+            {/* Ameliyat Dosyası */}
+            <div className="flex items-center gap-1">
+              <label className={`flex items-center gap-2 px-3 py-2 h-[38px] rounded-lg font-semibold text-xs cursor-pointer transition-all active:scale-95 shadow-lg ${activeAmeliyatFile ? 'bg-emerald-600 text-white shadow-emerald-500/20' : 'bg-[var(--surface-2)] border border-[var(--border-2)] text-[var(--text-2)] hover:bg-[var(--surface-hover)]'}`}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 12V3" /></svg>
+                {activeAmeliyatFile ? 'Ameliyat ✓' : 'Ameliyat'}
+                <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => handleFileUpload(e.target.files, 'ameliyat')} />
+              </label>
+              {activeAmeliyatFile && (
+                <button onClick={() => clearPeriodData('ameliyat')} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-colors border border-rose-500/30">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
+          </>
+        }
+      />
+
+      {/* Yüklü dosya bilgileri */}
+      {(activeMuayeneFile || activeAmeliyatFile) && (
+        <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-4">
+          <div className="flex gap-4">
             {activeMuayeneFile && (
-              <div className="flex items-center gap-2 bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-tight">Muayene: {activeMuayeneFile.fileName}</span>
+              <div className="flex items-center gap-2 bg-indigo-500/20 px-4 py-2 rounded-xl border border-indigo-500/30">
+                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
+                <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-tight">Muayene: {activeMuayeneFile.fileName}</span>
               </div>
             )}
             {activeAmeliyatFile && (
-              <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-tight">Ameliyat: {activeAmeliyatFile.fileName}</span>
+              <div className="flex items-center gap-2 bg-emerald-500/20 px-4 py-2 rounded-xl border border-emerald-500/30">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-tight">Ameliyat: {activeAmeliyatFile.fileName}</span>
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {rosterForPeriod.length > 0 ? (
-        <div className="bg-white rounded-[40px] shadow-xl border border-slate-100 overflow-hidden">
-          <div className="p-10 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center">
+        <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+          <div className="p-8 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex justify-between items-center">
             <div>
-              <h4 className="text-xl font-black text-slate-900 uppercase italic">Performans Listesi: {selectedMonth} {selectedYear}</h4>
-              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Dönem hekim kadrosu detaylı cetvellerden otomatik oluşturulmuştur.</p>
+              <h4 className="text-xl font-black text-[var(--text-1)] uppercase italic">Performans Listesi: {selectedMonth} {selectedYear}</h4>
+              <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest mt-2">Dönem hekim kadrosu detaylı cetvellerden otomatik oluşturulmuştur.</p>
             </div>
             <div className="flex gap-4">
-               <div className="bg-white px-6 py-3 rounded-2xl border border-slate-200 text-center shadow-sm">
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Toplam Hekim</p>
-                  <p className="text-xl font-black text-slate-900">{rosterForPeriod.length}</p>
+               <div className="bg-[var(--surface-1)] px-6 py-3 rounded-2xl border border-[var(--border-2)] text-center">
+                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Toplam Hekim</p>
+                  <p className="text-xl font-black text-[var(--text-1)]">{rosterForPeriod.length}</p>
                </div>
-               <div className="bg-white px-6 py-3 rounded-2xl border border-slate-200 text-center shadow-sm">
-                  <p className="text-[9px] font-black text-slate-400 uppercase">Aktif Branş</p>
-                  <p className="text-xl font-black text-slate-900">{new Set(rosterForPeriod.map(m => normalizeDoctorName(m.branch))).size}</p>
+               <div className="bg-[var(--surface-1)] px-6 py-3 rounded-2xl border border-[var(--border-2)] text-center">
+                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Aktif Branş</p>
+                  <p className="text-xl font-black text-[var(--text-1)]">{new Set(rosterForPeriod.map(m => normalizeDoctorName(m.branch))).size}</p>
                </div>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-white border-b border-slate-100">
+              <thead className="bg-[var(--table-header-bg)] border-b border-[var(--table-border)]">
                 <tr>
-                  <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600" onClick={() => { setSortKey('name'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest cursor-pointer hover:text-blue-400 transition-colors" onClick={() => { setSortKey('name'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                     <div className="flex items-center gap-2">Hekim Ad Soyad {sortKey === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Branş</th>
-                  <th className="px-6 py-6 text-[11px] font-black text-indigo-500 uppercase tracking-widest text-center cursor-pointer hover:bg-slate-50" onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Branş</th>
+                  <th className="px-6 py-5 text-[11px] font-black text-indigo-400 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-2">MHRS Muayene {sortKey === 'mhrsMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-6 py-6 text-[11px] font-black text-indigo-500 uppercase tracking-widest text-center cursor-pointer hover:bg-slate-50" onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-6 py-5 text-[11px] font-black text-indigo-400 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-2">Ayaktan Muayene {sortKey === 'ayaktanMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-6 py-6 text-[11px] font-black text-indigo-700 uppercase tracking-widest text-center cursor-pointer hover:bg-slate-50" onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-6 py-5 text-[11px] font-black text-indigo-300 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-2">Toplam Muayene {sortKey === 'toplamMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-10 py-6 text-[11px] font-black text-emerald-600 uppercase tracking-widest text-center cursor-pointer hover:bg-slate-50" onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-10 py-5 text-[11px] font-black text-emerald-400 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                     <div className="flex items-center justify-center gap-2">A+B+C Ameliyat {sortKey === 'ameliyatCount' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-[var(--table-border)]">
                 {processedList.length > 0 ? processedList.map((p, idx) => (
-                  <tr key={idx} className="hover:bg-blue-50/20 transition-colors group">
-                    <td className="px-10 py-6"><p className="font-black text-slate-900 uppercase text-sm">{p.name}</p></td>
-                    <td className="px-10 py-6"><span className="text-xs font-bold text-slate-500 uppercase">{p.branch}</span></td>
-                    <td className="px-6 py-6 text-center">
-                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.mhrsMuayene > 0 ? 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-sm' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>
+                  <tr key={idx} className="hover:bg-[var(--table-row-hover)] transition-colors group">
+                    <td className="px-10 py-5"><p className="font-black text-[var(--text-1)] uppercase text-sm">{p.name}</p></td>
+                    <td className="px-10 py-5"><span className="text-xs font-bold text-[var(--text-3)] uppercase">{p.branch}</span></td>
+                    <td className="px-6 py-5 text-center">
+                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.mhrsMuayene > 0 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
                         {p.mhrsMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
-                    <td className="px-6 py-6 text-center">
-                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.ayaktanMuayene > 0 ? 'bg-indigo-50 text-indigo-600 border-indigo-100 shadow-sm' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>
+                    <td className="px-6 py-5 text-center">
+                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.ayaktanMuayene > 0 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
                         {p.ayaktanMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
-                    <td className="px-6 py-6 text-center">
-                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.toplamMuayene > 0 ? 'bg-indigo-100 text-indigo-800 border-indigo-200 shadow-md' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>
+                    <td className="px-6 py-5 text-center">
+                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.toplamMuayene > 0 ? 'bg-indigo-500/30 text-indigo-200 border-indigo-500/40 shadow-lg shadow-indigo-500/10' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
                         {p.toplamMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
-                    <td className="px-10 py-6 text-center">
-                      <span className={`inline-block min-w-[80px] px-4 py-2 rounded-xl font-black text-sm border ${p.ameliyatCount > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-100 shadow-sm' : 'bg-slate-50 text-slate-300 border-slate-100'}`}>
+                    <td className="px-10 py-5 text-center">
+                      <span className={`inline-block min-w-[80px] px-4 py-2 rounded-xl font-black text-sm border ${p.ameliyatCount > 0 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
                         {p.ameliyatCount.toLocaleString('tr-TR')}
                       </span>
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={6} className="px-12 py-32 text-center text-slate-300 font-black uppercase tracking-widest text-lg opacity-50 italic">Kayıtlı hekim veya arama sonucu bulunamadı</td></tr>
+                  <tr><td colSpan={6} className="px-12 py-32 text-center text-[var(--text-muted)] font-black uppercase tracking-widest text-lg italic">Kayıtlı hekim veya arama sonucu bulunamadı</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
       ) : (
-        <div className="bg-white p-32 rounded-[48px] border-2 border-dashed border-slate-200 text-center flex flex-col items-center gap-8 shadow-inner animate-in fade-in duration-500">
-           <div className="w-24 h-24 bg-rose-50 rounded-[40px] flex items-center justify-center text-rose-200 shadow-inner">
+        <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-24 rounded-[24px] border border-dashed border-[var(--border-2)] text-center flex flex-col items-center gap-8 animate-in fade-in duration-500">
+           <div className="w-24 h-24 bg-rose-500/10 rounded-[24px] flex items-center justify-center text-rose-400/50 border border-rose-500/20">
              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
            </div>
            <div>
-             <h4 className="text-2xl font-black text-slate-400 uppercase tracking-widest">BU DÖNEM İÇİN KADRO BULUNAMADI</h4>
-             <p className="text-slate-400 font-medium max-w-md mx-auto mt-2 italic">Lütfen önce <strong>Detaylı Cetveller</strong> modülünden {selectedMonth} {selectedYear} dönemine ait verileri yükleyiniz.</p>
+             <h4 className="text-2xl font-black text-[var(--text-muted)] uppercase tracking-widest">BU DÖNEM İÇİN KADRO BULUNAMADI</h4>
+             <p className="text-[var(--text-muted)] font-medium max-w-md mx-auto mt-2 italic">Lütfen önce <strong className="text-[var(--text-2)]">Detaylı Cetveller</strong> modülünden {selectedMonth} {selectedYear} dönemine ait verileri yükleyiniz.</p>
            </div>
-           <button 
+           <button
              onClick={onNavigateToDetailed}
-             className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95"
+             className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-500/20 active:scale-95"
            >
              CETVELLERE GİT
            </button>

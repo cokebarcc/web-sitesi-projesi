@@ -181,6 +181,7 @@ export interface PresentationSlide {
 }
 
 export type ViewType =
+  | 'welcome'                // Leonardo AI tarzı karşılama ekranı
   | 'dashboard'              // YENİ - Ana dashboard
   | 'dashboard-mhrs'         // YENİ - MHRS kategori dashboard'u
   | 'dashboard-financial'    // YENİ - Finansal kategori dashboard'u

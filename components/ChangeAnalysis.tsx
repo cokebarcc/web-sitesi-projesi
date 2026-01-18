@@ -10,6 +10,7 @@ import {
 import { MONTHS, YEARS } from '../constants';
 import { saveVersionAsJson, loadAllChangeAnalysisVersions, loadSingleVersionData, saveExcelFileToStorage } from '../src/services/changeAnalysisStorage';
 import { auth } from '../firebase';
+import DataFilterPanel from './common/DataFilterPanel';
 
 interface ChangeAnalysisProps {
   versions: Record<string, Record<string, ScheduleVersion>>;
@@ -359,126 +360,82 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
         </div>
       )}
 
-      <div className="bg-white p-8 lg:p-12 rounded-[48px] shadow-xl border border-slate-100 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50 rounded-full -mr-40 -mt-40 blur-3xl opacity-60"></div>
-        <div className="relative z-10 space-y-8">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-tight italic mb-6">CETVEL KIYASLAMA MERKEZİ</h2>
-
-            {/* Filtreler: Hastane → Yıl → Ay → Eski Sürüm → Yeni Sürüm → Uygula */}
-            <div className="flex flex-wrap gap-2 items-end">
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">HASTANE</label>
-                <select
-                  value={selectedHospital}
-                  onChange={(e) => onHospitalChange(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-[11px] outline-none uppercase transition-colors hover:border-indigo-200 min-w-[140px]"
-                >
-                  <option value="">Hastane</option>
-                  {allowedHospitals.map(h => (
-                    <option key={h} value={h}>{h}</option>
-                  ))}
+      {/* Veri Filtreleme */}
+      <DataFilterPanel
+        title="Veri Filtreleme"
+        showHospitalFilter={true}
+        selectedHospital={selectedHospital}
+        availableHospitals={allowedHospitals}
+        onHospitalChange={onHospitalChange}
+        showYearFilter={true}
+        selectedYears={selectedYear > 0 ? [selectedYear] : []}
+        availableYears={YEARS}
+        onYearsChange={(years) => setSelectedYear(years.length > 0 ? years[0] as number : 0)}
+        showMonthFilter={true}
+        selectedMonths={selectedMonth ? [MONTHS.indexOf(selectedMonth) + 1] : []}
+        onMonthsChange={(months) => setSelectedMonth(months.length > 0 ? MONTHS[(months[0] as number) - 1] : '')}
+        showApplyButton={true}
+        onApply={handleLoadPeriodData}
+        isLoading={isProcessing}
+        applyDisabled={!selectedHospital || selectedYear === 0 || !selectedMonth}
+        customFilters={
+          <>
+            {/* Eski Sürüm */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[var(--text-3)]">Eski Sürüm</label>
+              <div className="flex gap-1">
+                <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 min-w-[150px] h-[38px]">
+                  <option value="" className="bg-[var(--surface-1)]">Eski Sürüm Seçiniz</option>
+                  {availableVersions.map(v => <option key={v} value={v} className="bg-[var(--surface-1)]">{v}</option>)}
                 </select>
+                {isAdmin && baselineLabel && (
+                  <button onClick={() => handleDeleteVersion(baselineLabel)} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-all border border-rose-500/30" title="Sürümü Sil">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                )}
               </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">YIL</label>
-                <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="bg-slate-900 text-white rounded-xl px-3 py-2 font-bold text-[11px] outline-none uppercase min-w-[90px]">
-                  <option value={0}>Yıl</option>
-                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">AY</label>
-                <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-[11px] outline-none uppercase transition-colors hover:border-indigo-200 min-w-[100px]">
-                  <option value="">Ay</option>
-                  {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">ESKİ SÜRÜM</label>
-                <div className="flex gap-1">
-                  <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold shadow-sm outline-none focus:border-indigo-500 transition-all min-w-[180px]">
-                    <option value="">Eski Sürüm Seçiniz</option>
-                    {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                  {isAdmin && baselineLabel && (
-                    <button
-                      onClick={() => handleDeleteVersion(baselineLabel)}
-                      className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
-                      title="Sürümü Sil"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1">YENİ SÜRÜM</label>
-                <div className="flex gap-1">
-                  <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="bg-white border border-rose-200 rounded-xl px-3 py-2 text-[11px] font-bold text-rose-600 shadow-sm outline-none focus:border-rose-500 transition-all min-w-[180px]">
-                    <option value="">Yeni Sürüm Seçiniz</option>
-                    {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
-                  </select>
-                  {isAdmin && updatedLabel && (
-                    <button
-                      onClick={() => handleDeleteVersion(updatedLabel)}
-                      className="p-2 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-all border border-rose-200"
-                      title="Sürümü Sil"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={handleLoadPeriodData}
-                disabled={!selectedHospital || selectedYear === 0 || !selectedMonth || isProcessing}
-                className={`px-5 py-2 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 ${
-                  selectedHospital && selectedYear > 0 && selectedMonth && !isProcessing
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-xl hover:scale-105 cursor-pointer'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                </svg>
-                {isProcessing ? 'YÜKLENİYOR...' : 'UYGULA'}
-              </button>
             </div>
-          </div>
 
-          {/* Sürüm Yükleme Butonları */}
-          {isAdmin && (
-            <div className="flex flex-wrap gap-3 justify-end">
-              <label htmlFor="oldVersionUpload" className="bg-slate-700 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg cursor-pointer hover:bg-slate-800 active:scale-95 flex items-center gap-2 uppercase transition-all">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                <span>ESKİ SÜRÜM YÜKLE</span>
-              </label>
-              <input id="oldVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
-
-              <label htmlFor="newVersionUpload" className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg cursor-pointer hover:bg-indigo-700 active:scale-95 flex items-center gap-2 uppercase transition-all">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                <span>YENİ SÜRÜM YÜKLE</span>
-              </label>
-              <input id="newVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
+            {/* Yeni Sürüm */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-rose-400">Yeni Sürüm</label>
+              <div className="flex gap-1">
+                <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="px-3 py-2 rounded-lg border border-rose-500/30 bg-[var(--input-bg)] text-rose-300 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/50 min-w-[150px] h-[38px]">
+                  <option value="" className="bg-[var(--surface-1)] text-[var(--text-1)]">Yeni Sürüm Seçiniz</option>
+                  {availableVersions.map(v => <option key={v} value={v} className="bg-[var(--surface-1)] text-[var(--text-1)]">{v}</option>)}
+                </select>
+                {isAdmin && updatedLabel && (
+                  <button onClick={() => handleDeleteVersion(updatedLabel)} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-all border border-rose-500/30" title="Sürümü Sil">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
+
+            {/* Sürüm Yükleme Butonları */}
+            {isAdmin && (
+              <>
+                <label htmlFor="oldVersionUpload" className="bg-slate-700 text-white px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer hover:bg-slate-800 active:scale-95 flex items-center gap-2 transition-all">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                  Eski Yükle
+                </label>
+                <input id="oldVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
+
+                <label htmlFor="newVersionUpload" className="bg-indigo-600 text-white px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer hover:bg-indigo-700 active:scale-95 flex items-center gap-2 transition-all">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                  Yeni Yükle
+                </label>
+                <input id="newVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
+              </>
+            )}
+          </>
+        }
+      />
 
       {isProcessing && (
-        <div className="p-32 text-center bg-white rounded-[48px] border-2 border-dashed border-indigo-100 shadow-inner animate-in fade-in zoom-in-95">
-           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-           <p className="font-black text-xl text-slate-900 uppercase tracking-tighter">Excel Verisi Analiz Ediliyor...</p>
+        <div className="p-32 text-center bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] border border-dashed border-indigo-500/30 animate-in fade-in zoom-in-95">
+           <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+           <p className="font-black text-xl text-[var(--text-1)] uppercase tracking-tighter">Excel Verisi Analiz Ediliyor...</p>
         </div>
       )}
 
@@ -507,26 +464,26 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-200/60 shadow-sm flex flex-col">
+            <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-[24px] border border-[var(--glass-border)] shadow-lg flex flex-col">
               <div className="flex items-center justify-between mb-6 px-2">
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-tighter flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div>
+                <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-tighter flex items-center gap-2">
+                  <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
                   BRANŞ BAZLI KAPASİTE DEĞİŞİMİ
                 </h3>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TOP 5</span>
+                <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">TOP 5</span>
               </div>
               <div className="space-y-2.5">
                 {comparison.topBranchChanges.map((br: any, idx: number) => (
-                  <div key={br.name} className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col gap-2 shadow-sm hover:bg-slate-50 transition-all group">
+                  <div key={br.name} className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-3.5 flex flex-col gap-2 hover:bg-[var(--surface-hover)] transition-all group">
                     <div className="flex items-center gap-4">
-                      <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-black shrink-0">{idx + 1}</div>
-                      <div className="flex-1 min-w-0"><p className="text-[11px] font-bold uppercase text-slate-800 leading-tight break-words">{br.name}</p></div>
+                      <div className="w-7 h-7 rounded-lg bg-slate-700 text-white flex items-center justify-center text-[10px] font-black shrink-0">{idx + 1}</div>
+                      <div className="flex-1 min-w-0"><p className="text-[11px] font-bold uppercase text-[var(--text-1)] leading-tight break-words">{br.name}</p></div>
                       <div className="text-right shrink-0">
-                        <p className={`text-[12px] font-black leading-none ${br.delta >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{br.delta > 0 ? '+' : ''}{br.delta.toLocaleString('tr-TR')}</p>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase leading-none">{formatPct(br.pct)}</p>
+                        <p className={`text-[12px] font-black leading-none ${br.delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{br.delta > 0 ? '+' : ''}{br.delta.toLocaleString('tr-TR')}</p>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase leading-none">{formatPct(br.pct)}</p>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                    <div className="w-full bg-[var(--surface-3)] h-1 rounded-full overflow-hidden">
                        <div className={`h-full transition-all duration-1000 ${br.delta >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ width: `${(Math.abs(br.delta) / maxAbsBranchDelta) * 100}%` }}></div>
                     </div>
                   </div>
@@ -534,29 +491,29 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
               </div>
             </div>
 
-            <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-200/60 shadow-sm flex flex-col">
+            <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-[24px] border border-[var(--glass-border)] shadow-lg flex flex-col">
               <div className="flex items-center justify-between mb-6 px-2">
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-tighter flex items-center gap-2">
-                  <div className="w-1.5 h-4 bg-rose-600 rounded-full"></div>
+                <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-tighter flex items-center gap-2">
+                  <div className="w-1.5 h-4 bg-rose-500 rounded-full"></div>
                   EN BÜYÜK HEKİM DRIVERLARI
                 </h3>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">EN YÜKSEK KAYIPLAR</span>
+                <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">EN YÜKSEK KAYIPLAR</span>
               </div>
               <div className="space-y-2.5">
                 {comparison.topDoctorDrivers.map((doc: any, idx: number) => (
-                  <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-3.5 flex flex-col gap-2 shadow-sm hover:bg-slate-50 transition-all group">
+                  <div key={idx} className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-3.5 flex flex-col gap-2 hover:bg-[var(--surface-hover)] transition-all group">
                     <div className="flex items-center gap-4">
                       <div className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">{idx + 1}</div>
                       <div className="flex-1 min-0">
-                        <p className="text-[11px] font-bold uppercase text-slate-800 leading-tight truncate">{doc.name}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5 truncate">{doc.branch}</p>
+                        <p className="text-[11px] font-bold uppercase text-[var(--text-1)] leading-tight truncate">{doc.name}</p>
+                        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tighter mt-0.5 truncate">{doc.branch}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[12px] font-black text-rose-600 leading-none">{doc.delta.toLocaleString('tr-TR')}</p>
-                        <p className="text-[10px] font-bold text-rose-400 mt-1 uppercase leading-none">{formatPct(doc.pct)}</p>
+                        <p className="text-[12px] font-black text-rose-400 leading-none">{doc.delta.toLocaleString('tr-TR')}</p>
+                        <p className="text-[10px] font-bold text-rose-400/70 mt-1 uppercase leading-none">{formatPct(doc.pct)}</p>
                       </div>
                     </div>
-                    <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                    <div className="w-full bg-[var(--surface-3)] h-1 rounded-full overflow-hidden">
                        <div className="h-full bg-rose-500 transition-all duration-1000" style={{ width: `${(Math.abs(doc.delta) / maxAbsDoctorDelta) * 100}%` }}></div>
                     </div>
                   </div>
@@ -565,24 +522,24 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-[48px] shadow-xl border border-slate-100 overflow-hidden">
-            <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-               <h4 className="text-xl font-black text-slate-900 uppercase italic">Hekim Bazlı Değişim Detayları</h4>
-               <div className="bg-slate-900 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">{comparison.phys_compare.length} HEKİMDE DEĞİŞİM</div>
+          <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+            <div className="p-8 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)]">
+               <h4 className="text-xl font-black text-[var(--text-1)] uppercase italic">Hekim Bazlı Değişim Detayları</h4>
+               <div className="bg-slate-700 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">{comparison.phys_compare.length} HEKİMDE DEĞİŞİM</div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-white">
+                <thead className="bg-[var(--table-header-bg)]">
                   <tr>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Hekim & Branş</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Eski Kap</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Yeni Kap</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Fark</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Aksiyon Değişimleri (GÜN)</th>
-                    <th className="px-10 py-6"></th>
+                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Hekim & Branş</th>
+                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Kap</th>
+                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Kap</th>
+                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
+                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon Değişimleri (GÜN)</th>
+                    <th className="px-10 py-5"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-[var(--table-border)]">
                   {comparison.phys_compare.map((p: any) => {
                     const sortedDeltas = Object.entries(p.action_deltas).sort((a, b) => Math.abs(Number(b[1])) - Math.abs(Number(a[1])));
                     const displayedDeltas = sortedDeltas.slice(0, 3);
@@ -590,54 +547,54 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
 
                     return (
                       <React.Fragment key={p.id}>
-                        <tr className={`hover:bg-indigo-50/30 cursor-pointer transition-colors group ${expandedDoc === p.id ? 'bg-indigo-50/50' : ''}`} onClick={() => setExpandedDoc(expandedDoc === p.id ? null : p.id)}>
-                          <td className="px-10 py-7">
-                            <p className="font-black text-slate-900 uppercase text-xs tracking-tight">{p.name}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-tighter">{p.branch}</p>
+                        <tr className={`hover:bg-[var(--table-row-hover)] cursor-pointer transition-colors group ${expandedDoc === p.id ? 'bg-indigo-500/10' : ''}`} onClick={() => setExpandedDoc(expandedDoc === p.id ? null : p.id)}>
+                          <td className="px-10 py-6">
+                            <p className="font-black text-[var(--text-1)] uppercase text-xs tracking-tight">{p.name}</p>
+                            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-1 tracking-tighter">{p.branch}</p>
                           </td>
-                          <td className="px-10 py-7 text-center text-xs font-bold text-slate-300">{p.baseline_capacity}</td>
-                          <td className="px-10 py-7 text-center text-xs font-black text-slate-700">{p.updated_capacity}</td>
-                          <td className="px-10 py-7 text-center">
-                            <span className={`px-4 py-1.5 rounded-full font-black text-[11px] border ${p.capacity_delta >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                          <td className="px-10 py-6 text-center text-xs font-bold text-[var(--text-muted)]">{p.baseline_capacity}</td>
+                          <td className="px-10 py-6 text-center text-xs font-black text-[var(--text-1)]">{p.updated_capacity}</td>
+                          <td className="px-10 py-6 text-center">
+                            <span className={`px-4 py-1.5 rounded-full font-black text-[11px] border ${p.capacity_delta >= 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
                               {p.capacity_delta > 0 ? '+' : ''}{p.capacity_delta}
                             </span>
                           </td>
-                          <td className="px-10 py-7">
+                          <td className="px-10 py-6">
                             <div className="flex flex-wrap gap-1.5">
                               {sortedDeltas.length > 0 ? (
                                 <>
                                   {displayedDeltas.map(([act, d]) => (
-                                    <span key={act} className={`text-[9px] font-black px-2 py-0.5 rounded-md border shadow-sm ${Number(d) > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                                    <span key={act} className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${Number(d) > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
                                       {act} {Number(d) > 0 ? '+' : ''}{d.toString().replace('.', ',')}
                                     </span>
                                   ))}
-                                  {remainingCount > 0 && <span className="text-[9px] font-black text-slate-400 px-1 py-0.5">+{remainingCount} daha...</span>}
+                                  {remainingCount > 0 && <span className="text-[9px] font-black text-[var(--text-muted)] px-1 py-0.5">+{remainingCount} daha...</span>}
                                 </>
-                              ) : <span className="text-[10px] text-slate-300 font-bold italic">Aksiyon gün dağılımı değişmedi</span>}
+                              ) : <span className="text-[10px] text-[var(--text-muted)] font-bold italic">Aksiyon gün dağılımı değişmedi</span>}
                             </div>
                           </td>
-                          <td className="px-10 py-7 text-right">
-                             <div className={`p-2 rounded-full bg-slate-100 text-slate-400 transition-transform ${expandedDoc === p.id ? 'rotate-180' : ''}`}>
+                          <td className="px-10 py-6 text-right">
+                             <div className={`p-2 rounded-full bg-[var(--surface-3)] text-[var(--text-muted)] transition-transform ${expandedDoc === p.id ? 'rotate-180' : ''}`}>
                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"/></svg>
                              </div>
                           </td>
                         </tr>
                         {expandedDoc === p.id && (
-                          <tr className="bg-slate-50/50 animate-in slide-in-from-top-2 duration-300">
+                          <tr className="bg-[var(--surface-2)] animate-in slide-in-from-top-2 duration-300">
                             <td colSpan={6} className="px-12 py-10">
                               <div className="space-y-8">
-                                <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-200">
-                                  <h5 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                                <div className="bg-[var(--surface-1)] p-8 rounded-[24px] border border-[var(--border-1)]">
+                                  <h5 className="text-[11px] font-black text-[var(--text-1)] uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                                     <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
                                     Aksiyon Kıyas Tablosu
                                   </h5>
                                   <table className="w-full text-left">
                                     <thead>
-                                      <tr className="border-b-2 border-slate-100">
-                                        <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Aksiyon</th>
-                                        <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Eski Gün</th>
-                                        <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Yeni Gün</th>
-                                        <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Fark</th>
+                                      <tr className="border-b-2 border-[var(--border-1)]">
+                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon</th>
+                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Gün</th>
+                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Gün</th>
+                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
                                       </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">

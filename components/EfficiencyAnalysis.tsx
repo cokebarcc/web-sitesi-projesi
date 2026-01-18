@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DetailedScheduleData, MuayeneMetrics, ScheduleVersion, ProcessedPhysicianSummary } from '../types';
 import { MONTHS, YEARS } from '../constants';
 import { getPeriodKey, normalizeDoctorName } from '../utils/formatters';
+import DataFilterPanel from './common/DataFilterPanel';
 
 interface EfficiencyAnalysisProps {
   detailedScheduleData: DetailedScheduleData[];
@@ -11,15 +12,20 @@ interface EfficiencyAnalysisProps {
   muayeneMetaByPeriod: Record<string, { fileName: string; uploadedAt: number }>;
   ameliyatMetaByPeriod: Record<string, { fileName: string; uploadedAt: number }>;
   versions: Record<string, Record<string, ScheduleVersion>>;
-  // Global month/year filters
-  selectedMonth: string;
-  setSelectedMonth: (month: string) => void;
-  selectedYear: number;
-  setSelectedYear: (year: number) => void;
+  // Global filtre state'leri
+  globalSelectedYears: number[];
+  setGlobalSelectedYears: (years: number[]) => void;
+  globalSelectedMonths: number[];
+  setGlobalSelectedMonths: (months: number[]) => void;
+  globalAppliedYears: number[];
+  globalAppliedMonths: number[];
   // Hospital filter
   selectedHospital: string;
   allowedHospitals: string[];
   onHospitalChange: (hospital: string) => void;
+  // Merkezi veri yükleme fonksiyonu
+  onCentralDataLoad: (hospital: string, years: number[], months: number[]) => Promise<void>;
+  isLoading?: boolean;
   // Optional overrides for controlled rendering (e.g. for Presentation snapshots)
   overrideMonth?: string;
   overrideYear?: number;
@@ -49,22 +55,24 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   muayeneMetaByPeriod,
   ameliyatMetaByPeriod,
   versions,
-  selectedMonth: propMonth,
-  setSelectedMonth: propSetMonth,
-  selectedYear: propYear,
-  setSelectedYear: propSetYear,
+  globalSelectedYears,
+  setGlobalSelectedYears,
+  globalSelectedMonths,
+  setGlobalSelectedMonths,
+  globalAppliedYears,
+  globalAppliedMonths,
   selectedHospital,
   allowedHospitals,
   onHospitalChange,
+  onCentralDataLoad,
+  isLoading = false,
   overrideMonth,
   overrideYear,
   overrideBranch
 }) => {
-  // Use override if provided (for presentation), otherwise use global filter
-  const selectedMonth = overrideMonth || propMonth.toString();
-  const selectedYear = overrideYear ? overrideYear.toString() : propYear.toString();
-  const setSelectedMonth = (val: string) => { if (!overrideMonth) { propSetMonth(val); } };
-  const setSelectedYear = (val: string) => { if (!overrideYear) { propSetYear(parseInt(val)); } };
+  // Uygulanan filtrelerden ilk değerleri al (geriye uyumluluk için)
+  const selectedMonth = overrideMonth || (globalAppliedMonths.length > 0 ? MONTHS[globalAppliedMonths[0] - 1] : '');
+  const selectedYear = overrideYear ? String(overrideYear) : (globalAppliedYears.length > 0 ? String(globalAppliedYears[0]) : '');
 
   const [selectedBranch, setSelectedBranch] = useState<string>(overrideBranch || 'ALL');
   
@@ -85,10 +93,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   const [selectedDoctorForDetail, setSelectedDoctorForDetail] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedMonth(e.target.value); };
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedYear(e.target.value); };
-
-  // Auto-load data when month, year, or branch changes
+  // Filtre değişimlerinde sayfalamayı sıfırla
   useEffect(() => {
     if (selectedMonth && selectedYear) {
       setCurrentPage(1);
@@ -163,24 +168,45 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
     } 
   };
 
+  // Merkezi Uygula butonu handler
+  const handleApply = async () => {
+    if (!selectedHospital || globalSelectedYears.length === 0 || globalSelectedMonths.length === 0) {
+      alert('Lütfen hastane, yıl ve ay seçiniz!');
+      return;
+    }
+    // Merkezi veri yükleme fonksiyonunu çağır
+    await onCentralDataLoad(selectedHospital, globalSelectedYears, globalSelectedMonths);
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-24">
       {!overrideMonth && (
-        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 flex flex-wrap gap-6 items-end">
-          <div className="flex flex-col gap-2">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">HASTANE</p>
-            <select
-              value={selectedHospital}
-              onChange={(e) => onHospitalChange(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[240px]"
-            >
-              {allowedHospitals.map(h => <option key={h} value={h}>{h}</option>)}
-            </select>
-          </div>
-          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">YIL</p><select value={selectedYear} onChange={handleYearChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[140px]">{YEARS.map(y => <option key={y} value={y}>{y}</option>)}</select></div>
-          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">AY</p><select value={selectedMonth} onChange={handleMonthChange} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[180px]">{MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}</select></div>
-          <div className="flex flex-col gap-2"><p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">BRANŞ</p><select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black outline-none min-w-[240px]"><option value="ALL">Tüm Branşlar</option>{availableBranches.map(br => <option key={br} value={br}>{br}</option>)}</select></div>
-        </div>
+        <>
+          <DataFilterPanel
+            title="Veri Filtreleme (Merkezi)"
+            showHospitalFilter={true}
+            selectedHospital={selectedHospital}
+            availableHospitals={allowedHospitals}
+            onHospitalChange={onHospitalChange}
+            showYearFilter={true}
+            selectedYears={globalSelectedYears}
+            availableYears={YEARS}
+            onYearsChange={setGlobalSelectedYears}
+            showMonthFilter={true}
+            selectedMonths={globalSelectedMonths}
+            onMonthsChange={setGlobalSelectedMonths}
+            showBranchFilter={true}
+            selectedBranch={selectedBranch === 'ALL' ? null : selectedBranch}
+            availableBranches={availableBranches}
+            onBranchChange={(branch) => setSelectedBranch(branch || 'ALL')}
+            showApplyButton={true}
+            onApply={handleApply}
+            isLoading={isLoading}
+            applyDisabled={!selectedHospital || globalSelectedYears.length === 0 || globalSelectedMonths.length === 0}
+            selectionCount={globalAppliedYears.length * globalAppliedMonths.length}
+            selectionLabel="dönem yüklendi"
+          />
+        </>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
@@ -192,25 +218,25 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
         <KpiCard title="Ameliyat Cetvel Verimi" value={isPeriodSelected ? avgHoursPerSurgery.toFixed(2).replace('.', ',') : null} source="Cetvel + Hekim Verileri" accent="surgery" subtitle="SAAT / AMELİYAT" isEmpty={!isPeriodSelected || stats.totalAbcSurgeriesCount === 0} />
       </div>
 
-      <div className="bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 space-y-8">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
-          <div><h3 className="text-xl font-black text-slate-900 uppercase">KAPASİTE KULLANIM GRAFİĞİ</h3><p className="text-[10px] font-bold text-slate-400 uppercase">Hekim bazında kapasite ve muayene karşılaştırması</p></div>
+          <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">KAPASİTE KULLANIM GRAFİĞİ</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Hekim bazında kapasite ve muayene karşılaştırması</p></div>
           {isPeriodSelected && <LocalFilters value={chartBranchFilter} onChange={setChartBranchFilter} limit={viewLimit} onLimitChange={setViewLimit} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} branches={availableBranches} />}
         </div>
         {!isPeriodSelected ? <EmptyState /> : <CapacityUsageChart data={paginatedChartData} onClick={handleBarClick} />}
       </div>
 
-      <div className="bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 space-y-8">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
-          <div><h3 className="text-xl font-black text-slate-900 uppercase">CERRAHİ VERİMLİLİK GRAFİĞİ</h3><p className="text-[10px] font-bold text-slate-400 uppercase">Planlanan ameliyat günleri ve gerçekleşen vaka sayısı</p></div>
+          <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">CERRAHİ VERİMLİLİK GRAFİĞİ</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Planlanan ameliyat günleri ve gerçekleşen vaka sayısı</p></div>
           {isPeriodSelected && <LocalFilters value={surgBranchFilter} onChange={setSurgBranchFilter} limit={surgViewLimit} onLimitChange={setSurgViewLimit} currentPage={surgCurrentPage} totalPages={totalSurgPages} onPageChange={setSurgCurrentPage} branches={eligibleSurgicalBranches} />}
         </div>
         {!isPeriodSelected ? <EmptyState /> : <SurgicalEfficiencyChart data={paginatedSurgData} />}
       </div>
 
-      <div className="bg-white p-10 rounded-[48px] shadow-sm border border-slate-100 space-y-8">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
-          <div><h3 className="text-xl font-black text-slate-900 uppercase">AMELİYAT BAŞINA DÜŞEN CETVEL SÜRESİ</h3><p className="text-[10px] font-bold text-slate-400 uppercase">Vaka başına düşen ortalama cetvel saati</p></div>
+          <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">AMELİYAT BAŞINA DÜŞEN CETVEL SÜRESİ</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Vaka başına düşen ortalama cetvel saati</p></div>
           {isPeriodSelected && <LocalFilters value={hoursBranchFilter} onChange={setHoursBranchFilter} limit={hoursViewLimit} onLimitChange={setHoursViewLimit} currentPage={hoursCurrentPage} totalPages={totalHoursPages} onPageChange={setHoursCurrentPage} branches={availableBranches} />}
         </div>
         {!isPeriodSelected ? <EmptyState /> : <SurgHoursChart data={paginatedHoursData} />}
@@ -234,23 +260,23 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
 };
 
 export const CapacityUsageChart = ({ data, onClick }: any) => (
-  <div className="bg-slate-50/50 p-8 rounded-[40px] border border-slate-100 h-[550px]">
+  <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 100 }} barGap={8}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick onClick={onClick} />} axisLine={false} tickLine={false} height={100} />
-        <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-        <Tooltip cursor={{fill: '#f1f5f9'}} content={({ active, payload }) => {
+        <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+        <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} content={({ active, payload }) => {
           if (active && payload && payload.length) {
             const d = payload[0].payload;
             const f = d.capacity > 0 ? (d.totalExam - d.capacity) : null;
-            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan', val: d.capacity > 0 ? d.capacity.toLocaleString('tr-TR') : 'Tanımsız', color:'text-indigo-600'}, {label:'Gerçekleşen', val: d.totalExam.toLocaleString('tr-TR'), color:d.status==='UNDER'?'text-rose-600':'text-emerald-600'}, {label:'Verim', val: d.usageRatePct !== null ? `%${formatMetric(d.usageRatePct)}` : '-', color:'text-blue-600'}]} footerLabel="FARK" footer={f === null ? 'Tanımsız' : (f >= 0 ? `+${f.toLocaleString('tr-TR')}` : f.toLocaleString('tr-TR'))} />;
+            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan', val: d.capacity > 0 ? d.capacity.toLocaleString('tr-TR') : 'Tanımsız', color:'text-indigo-400'}, {label:'Gerçekleşen', val: d.totalExam.toLocaleString('tr-TR'), color:d.status==='UNDER'?'text-rose-400':'text-emerald-400'}, {label:'Verim', val: d.usageRatePct !== null ? `%${formatMetric(d.usageRatePct)}` : '-', color:'text-blue-400'}]} footerLabel="FARK" footer={f === null ? 'Tanımsız' : (f >= 0 ? `+${f.toLocaleString('tr-TR')}` : f.toLocaleString('tr-TR'))} />;
           }
           return null;
         }} />
         <Bar name="Randevu Kapasitesi" dataKey="capacity" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={25} onClick={(d) => onClick?.(d)} className="cursor-pointer" />
         <Bar name="Toplam Muayene" dataKey="totalExam" radius={[4, 4, 0, 0]} barSize={25} onClick={(d) => onClick?.(d)} className="cursor-pointer">
-          {data.map((e: any, cellIdx: number) => <Cell key={`cell-${cellIdx}`} fill={e.status==='UNDER'?'#ef4444':e.status==='NO_CAP'?'#94a3b8':'#10b981'} />)}
+          {data.map((e: any, cellIdx: number) => <Cell key={`cell-${cellIdx}`} fill={e.status==='UNDER'?'#ef4444':e.status==='NO_CAP'?'#64748b':'#10b981'} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -258,17 +284,17 @@ export const CapacityUsageChart = ({ data, onClick }: any) => (
 );
 
 export const SurgicalEfficiencyChart = ({ data }: any) => (
-  <div className="bg-slate-50/50 p-8 rounded-[40px] border border-slate-100 h-[550px]">
+  <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 100 }} barGap={8}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick />} axisLine={false} tickLine={false} height={100} />
-        <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} />
-        <YAxis yAxisId="right" orientation="right" fontSize={10} axisLine={false} tickLine={false} />
-        <Tooltip cursor={{fill: '#f1f5f9'}} content={({ active, payload }) => {
+        <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+        <YAxis yAxisId="right" orientation="right" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+        <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} content={({ active, payload }) => {
           if (active && payload && payload.length) {
             const d = payload[0].payload;
-            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan Gün', val: formatMetric(d.plannedDays), color:'text-indigo-600'}, {label:'A+B+C Vaka', val: formatMetric(d.performedABC), color:'text-emerald-600'}]} footerLabel="Verimlilik" footer={formatMetric(d.efficiencyVal)} footerColor="text-[#ef4444]" />;
+            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan Gün', val: formatMetric(d.plannedDays), color:'text-indigo-400'}, {label:'A+B+C Vaka', val: formatMetric(d.performedABC), color:'text-emerald-400'}]} footerLabel="Verimlilik" footer={formatMetric(d.efficiencyVal)} footerColor="text-rose-400" />;
           }
           return null;
         }} />
@@ -281,16 +307,16 @@ export const SurgicalEfficiencyChart = ({ data }: any) => (
 );
 
 export const SurgHoursChart = ({ data }: any) => (
-  <div className="bg-slate-50/50 p-8 rounded-[40px] border border-slate-100 h-[550px]">
+  <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 100 }} barGap={8}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick />} axisLine={false} tickLine={false} height={100} />
-        <YAxis fontSize={10} axisLine={false} tickLine={false} />
-        <Tooltip cursor={{fill: '#f1f5f9'}} content={({ active, payload }) => {
+        <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+        <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} content={({ active, payload }) => {
           if (active && payload && payload.length) {
             const d = payload[0].payload;
-            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Cerrahi Süre', val:`${formatMetric(d.totalSurgHours)} Saat`, color:'text-indigo-600'}, {label:'Vaka Sayısı', val:formatMetric(d.surgCaseCount), color:'text-emerald-600'}]} footerLabel="Ortalama" footer={`${formatMetric(d.avgHoursPerCase)} S/V`} />;
+            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Cerrahi Süre', val:`${formatMetric(d.totalSurgHours)} Saat`, color:'text-indigo-400'}, {label:'Vaka Sayısı', val:formatMetric(d.surgCaseCount), color:'text-emerald-400'}]} footerLabel="Ortalama" footer={`${formatMetric(d.avgHoursPerCase)} S/V`} />;
           }
           return null;
         }} />
@@ -306,26 +332,26 @@ const CustomizedXAxisTick = ({ x, y, payload, onClick }: any) => {
 };
 
 const KpiCard = ({ title, value, subtitle, source, accent, isEmpty, isWarning, warningText }: any) => {
-  const p = { capacity: 'border-t-indigo-500 text-indigo-600 bg-indigo-500', visits: 'border-t-blue-500 text-blue-600 bg-blue-500', surgery: 'border-t-emerald-500 text-emerald-600 bg-emerald-500', ratio: 'border-t-violet-500 text-violet-600 bg-violet-500' }[accent as keyof typeof p];
+  const p = { capacity: 'border-t-indigo-500 text-indigo-400 bg-indigo-500', visits: 'border-t-blue-500 text-blue-400 bg-blue-500', surgery: 'border-t-emerald-500 text-emerald-400 bg-emerald-500', ratio: 'border-t-violet-500 text-violet-400 bg-violet-500' }[accent as keyof typeof p];
   const [b, t, d] = p.split(' ');
-  return <div className={`bg-white border border-slate-200 border-t-[3px] ${b} rounded-[28px] p-6 shadow-sm flex flex-col justify-between h-[180px] transition-all hover:shadow-md group relative overflow-hidden`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black text-rose-600 uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-slate-400 mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-slate-50 pt-3 relative z-10"><span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.03] group-hover:opacity-[0.06] transition-opacity blur-2xl`}></div></div>;
+  return <div className={`bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] border-t-[3px] ${b} rounded-[20px] p-6 shadow-lg flex flex-col justify-between h-[180px] transition-all hover:shadow-xl group relative overflow-hidden`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-[var(--text-3)] uppercase tracking-widest">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black text-rose-400 uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-[var(--text-muted)] mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-[var(--border-1)] pt-3 relative z-10"><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.06] group-hover:opacity-[0.1] transition-opacity blur-2xl`}></div></div>;
 };
 
 const LocalFilters = ({ value, onChange, limit, onLimitChange, currentPage, totalPages, onPageChange, branches }: any) => (
-  <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-    <div className="flex items-center gap-2 px-3 border-r border-slate-200"><span className="text-[9px] font-black text-slate-400 uppercase">BRANŞ:</span><select value={value} onChange={(e) => { onChange(e.target.value); onPageChange(1); }} className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-[10px] font-black outline-none min-w-[140px]"><option value="ALL">Tüm Hastane</option>{branches.map((br:string) => <option key={br} value={br}>{br}</option>)}</select></div>
-    <div className="flex items-center gap-2 px-3"><span className="text-[9px] font-black text-slate-400 uppercase">GÖSTER:</span><select value={limit} onChange={(e) => { const val = e.target.value === 'ALL' ? 'ALL' : Number(e.target.value); onLimitChange(val); onPageChange(1); }} className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-[10px] font-black outline-none"><option value={12}>12</option><option value={25}>25</option><option value={50}>50</option><option value="ALL">Tümü</option></select></div>
-    {limit !== 'ALL' && totalPages > 1 && <div className="flex items-center gap-2 border-l border-slate-200 pl-3 pr-1"><button onClick={() => onPageChange((p:number) => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 hover:bg-white rounded-lg disabled:opacity-30"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg></button><span className="text-[9px] font-black text-slate-500 min-w-[50px] text-center uppercase">SAYFA {currentPage} / {totalPages}</span><button onClick={() => onPageChange((p:number) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 hover:bg-white rounded-lg disabled:opacity-30"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg></button></div>}
+  <div className="flex flex-wrap items-center gap-3 bg-[var(--surface-2)] p-2 rounded-2xl border border-[var(--border-1)]">
+    <div className="flex items-center gap-2 px-3 border-r border-[var(--border-2)]"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">BRANŞ:</span><select value={value} onChange={(e) => { onChange(e.target.value); onPageChange(1); }} className="bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none min-w-[140px]"><option value="ALL">Tüm Hastane</option>{branches.map((br:string) => <option key={br} value={br}>{br}</option>)}</select></div>
+    <div className="flex items-center gap-2 px-3"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">GÖSTER:</span><select value={limit} onChange={(e) => { const val = e.target.value === 'ALL' ? 'ALL' : Number(e.target.value); onLimitChange(val); onPageChange(1); }} className="bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none"><option value={12}>12</option><option value={25}>25</option><option value={50}>50</option><option value="ALL">Tümü</option></select></div>
+    {limit !== 'ALL' && totalPages > 1 && <div className="flex items-center gap-2 border-l border-[var(--border-2)] pl-3 pr-1"><button onClick={() => onPageChange((p:number) => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 hover:bg-[var(--surface-hover)] text-[var(--text-2)] rounded-lg disabled:opacity-30"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg></button><span className="text-[9px] font-black text-[var(--text-muted)] min-w-[50px] text-center uppercase">SAYFA {currentPage} / {totalPages}</span><button onClick={() => onPageChange((p:number) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 hover:bg-[var(--surface-hover)] text-[var(--text-2)] rounded-lg disabled:opacity-30"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg></button></div>}
   </div>
 );
 
-const TooltipCard = ({ name, branch, metrics, footerLabel, footer, footerColor = "text-blue-600" }: any) => (
-  <div className="bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 space-y-4 min-w-[240px]"><div><p className="font-black text-slate-900 uppercase text-xs leading-normal">{name}</p><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{branch}</p></div><div className="space-y-1.5 border-t border-slate-50 pt-3">{metrics.map((m:any, i:number) => <div key={i} className={`flex justify-between items-center gap-8`}><span className="text-[10px] font-bold text-slate-500 uppercase">{m.label}:</span><span className={`text-xs font-black ${m.color}`}>{m.val}</span></div>)}<div className="flex justify-between items-center gap-8 pt-1.5 mt-1.5 border-t border-slate-100"><span className="text-[11px] font-black text-slate-700 uppercase">{footerLabel}:</span><span className={`text-sm font-black ${footerColor}`}>{footer}</span></div></div></div>
+const TooltipCard = ({ name, branch, metrics, footerLabel, footer, footerColor = "text-blue-400" }: any) => (
+  <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-[var(--glass-border-light)] space-y-4 min-w-[240px]"><div><p className="font-black text-[var(--text-1)] uppercase text-xs leading-normal">{name}</p><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{branch}</p></div><div className="space-y-1.5 border-t border-[var(--border-1)] pt-3">{metrics.map((m:any, i:number) => <div key={i} className={`flex justify-between items-center gap-8`}><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{m.label}:</span><span className={`text-xs font-black ${m.color}`}>{m.val}</span></div>)}<div className="flex justify-between items-center gap-8 pt-1.5 mt-1.5 border-t border-[var(--border-2)]"><span className="text-[11px] font-black text-[var(--text-2)] uppercase">{footerLabel}:</span><span className={`text-sm font-black ${footerColor}`}>{footer}</span></div></div></div>
 );
 
-const LegendItem = ({ color, label }: any) => <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }}></div><span className="text-[9px] font-black text-slate-500 uppercase whitespace-nowrap">{label}</span></div>;
-const EmptyState = () => <div className="bg-slate-50 border-2 border-dashed border-slate-200 p-24 rounded-[40px] text-center"><p className="text-slate-300 font-black uppercase tracking-[0.2em] text-lg italic">Dönem seçimi bekleniyor</p></div>;
-const NoResults = ({text}:any) => <div className="bg-amber-50 border-2 border-dashed border-amber-200 p-24 rounded-[40px] text-center"><p className="text-amber-800 font-black uppercase tracking-tight">KAYIT BULUNAMADI</p><p className="text-amber-600 font-bold mt-2 italic">{text || 'Filtrelere uygun hekim bulunamadı.'}</p></div>;
+const LegendItem = ({ color, label }: any) => <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }}></div><span className="text-[9px] font-black text-[var(--text-muted)] uppercase whitespace-nowrap">{label}</span></div>;
+const EmptyState = () => <div className="bg-[var(--surface-2)] border-2 border-dashed border-[var(--border-2)] p-24 rounded-[40px] text-center"><p className="text-[var(--text-muted)] font-black uppercase tracking-[0.2em] text-lg italic">Dönem seçimi bekleniyor</p></div>;
+const NoResults = ({text}:any) => <div className="bg-amber-500/10 border-2 border-dashed border-amber-500/30 p-24 rounded-[40px] text-center"><p className="text-amber-400 font-black uppercase tracking-tight">KAYIT BULUNAMADI</p><p className="text-amber-500/80 font-bold mt-2 italic">{text || 'Filtrelere uygun hekim bulunamadı.'}</p></div>;
 
 const DoctorDetailModal = ({ 
   doctor,
@@ -421,47 +447,47 @@ const DoctorDetailModal = ({
 
   return (
     <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 lg:p-8">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
-      <div className="relative w-full max-w-[1200px] max-h-[90vh] bg-white rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-10 border-b border-slate-50 flex justify-between items-start bg-slate-50/30">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative w-full max-w-[1200px] max-h-[90vh] bg-[var(--glass-bg)] backdrop-blur-xl rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-[var(--glass-border)]">
+        <div className="p-10 border-b border-[var(--border-1)] flex justify-between items-start bg-[var(--surface-2)]">
           <div>
-            <h3 className="text-3xl font-black uppercase text-slate-900 tracking-tight">{doctor.doctorName}</h3>
+            <h3 className="text-3xl font-black uppercase text-[var(--text-1)] tracking-tight">{doctor.doctorName}</h3>
             <div className="flex items-center gap-3 mt-1">
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{doctor.branchName}</p>
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-              <p className="text-sm font-black text-indigo-600 uppercase tracking-widest">{periodMonth} {periodYear}</p>
+              <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-widest">{doctor.branchName}</p>
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--border-2)]"></div>
+              <p className="text-sm font-black text-indigo-400 uppercase tracking-widest">{periodMonth} {periodYear}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-4 bg-white border border-slate-200 rounded-full hover:bg-slate-100 transition-all shadow-sm group">
-            <svg className="w-6 h-6 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          <button onClick={onClose} className="p-4 bg-[var(--surface-3)] border border-[var(--border-2)] rounded-full hover:bg-[var(--surface-hover)] transition-all shadow-sm group">
+            <svg className="w-6 h-6 text-[var(--text-muted)] group-hover:text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
           <div className="space-y-6">
-            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+            <h4 className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] flex items-center gap-2">
               <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
               Kapasite Kullanım Özeti
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-indigo-50 border border-indigo-100 rounded-[32px] p-8">
+              <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-[32px] p-8">
                 <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">RANDEVU KAPASİTESİ</p>
-                <h5 className="text-4xl font-black text-indigo-600">{plannedCapacity.toLocaleString('tr-TR')}</h5>
-                <p className="text-[11px] font-bold text-indigo-400 mt-2">DÖNEMLİK TOPLAM SLOT</p>
+                <h5 className="text-4xl font-black text-indigo-400">{plannedCapacity.toLocaleString('tr-TR')}</h5>
+                <p className="text-[11px] font-bold text-indigo-500/70 mt-2">DÖNEMLİK TOPLAM SLOT</p>
               </div>
-              <div className="bg-emerald-50 border border-emerald-100 rounded-[32px] p-8">
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-[32px] p-8">
                 <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">GERÇEKLEŞEN MUAYENE</p>
-                <h5 className="text-4xl font-black text-emerald-600">{muayeneMetrics.toplam.toLocaleString('tr-TR')}</h5>
-                <p className="text-[11px] font-bold text-emerald-400 mt-2">
+                <h5 className="text-4xl font-black text-emerald-400">{muayeneMetrics.toplam.toLocaleString('tr-TR')}</h5>
+                <p className="text-[11px] font-bold text-emerald-500/70 mt-2">
                   MHRS: {muayeneMetrics.mhrs} • AYAKTAN: {muayeneMetrics.ayaktan}
                 </p>
               </div>
-              <div className={`rounded-[32px] p-8 border ${usageRate !== null && (usageRate as number) < 100 ? 'bg-rose-50 border-rose-100' : 'bg-blue-50 border-blue-100'}`}>
+              <div className={`rounded-[32px] p-8 border ${usageRate !== null && (usageRate as number) < 100 ? 'bg-rose-500/10 border-rose-500/30' : 'bg-blue-500/10 border-blue-500/30'}`}>
                 <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-400' : 'text-blue-400'}`}>KAPASİTE VERİMLİLİĞİ</p>
-                <h5 className={`text-4xl font-black ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-600' : 'text-blue-600'}`}>
+                <h5 className={`text-4xl font-black ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-400' : 'text-blue-400'}`}>
                   {usageRate !== null ? `%${usageRate.toFixed(1).replace('.', ',')}` : '—'}
                 </h5>
-                <p className={`text-[11px] font-bold mt-2 ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-400' : 'text-blue-400'}`}>
+                <p className={`text-[11px] font-bold mt-2 ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-500/70' : 'text-blue-500/70'}`}>
                   FARK: {diff !== null ? (diff >= 0 ? `+${diff}` : diff) : '—'}
                 </p>
               </div>
@@ -469,37 +495,37 @@ const DoctorDetailModal = ({
           </div>
 
           <div className="space-y-6">
-            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+            <h4 className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] flex items-center gap-2">
               <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
               Aylık Faaliyet Analiz Raporu
             </h4>
-            <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 divide-x divide-y divide-slate-50">
+            <div className="bg-[var(--surface-2)] rounded-[40px] border border-[var(--border-1)] overflow-hidden shadow-sm">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 divide-x divide-y divide-[var(--border-1)]">
                 {Object.entries(activitySummary).length > 0 ? Object.entries(activitySummary).map(([act, days]) => (
-                  <div key={act} className="p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors">
-                    <p className="text-[9px] font-black text-slate-400 uppercase mb-2 line-clamp-1 h-3">{act}</p>
-                    <p className="text-2xl font-black text-slate-800">{days.toString().replace('.', ',')}</p>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">GÜN</p>
+                  <div key={act} className="p-6 flex flex-col items-center justify-center text-center hover:bg-[var(--surface-hover)] transition-colors">
+                    <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-2 line-clamp-1 h-3">{act}</p>
+                    <p className="text-2xl font-black text-[var(--text-1)]">{days.toString().replace('.', ',')}</p>
+                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-1">GÜN</p>
                   </div>
                 )) : (
-                  <div className="col-span-full p-12 text-center text-slate-300 font-black uppercase italic tracking-widest">Cetvel kaydı bulunamadı</div>
+                  <div className="col-span-full p-12 text-center text-[var(--text-muted)] font-black uppercase italic tracking-widest">Cetvel kaydı bulunamadı</div>
                 )}
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
-            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+            <h4 className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] flex items-center gap-2">
               <span className="w-2 h-2 bg-rose-500 rounded-full"></span>
               Sürüm Değişim Analizi
             </h4>
             {changeData ? (
-              <div className="bg-slate-900 text-white rounded-[40px] p-10 relative overflow-hidden">
+              <div className="bg-[var(--surface-1)] text-white rounded-[40px] p-10 relative overflow-hidden border border-[var(--border-1)]">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full -mr-48 -mt-48 blur-3xl opacity-60"></div>
                 <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                   <div className="lg:col-span-5 text-center lg:text-left space-y-6">
                     <div>
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">NET KAPASİTE DEĞİŞİMİ</p>
+                      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">NET KAPASİTE DEĞİŞİMİ</p>
                       <div className="flex items-center justify-center lg:justify-start gap-4">
                         <h5 className={`text-6xl font-black ${changeData.capDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {changeData.capDelta > 0 ? '+' : ''}{changeData.capDelta}
@@ -509,20 +535,20 @@ const DoctorDetailModal = ({
                     </div>
                     <div className="grid grid-cols-2 gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
                       <div className="text-center border-r border-white/10">
-                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">BAŞLANGIÇ</p>
-                        <p className="text-lg font-black text-white">{changeData.baselineCap}</p>
+                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">BAŞLANGIÇ</p>
+                        <p className="text-lg font-black text-[var(--text-1)]">{changeData.baselineCap}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1">GÜNCEL</p>
-                        <p className="text-lg font-black text-white">{changeData.updatedCap}</p>
+                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">GÜNCEL</p>
+                        <p className="text-lg font-black text-[var(--text-1)]">{changeData.updatedCap}</p>
                       </div>
                     </div>
-                    <p className="text-[10px] font-bold text-slate-500 italic">
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] italic">
                       {changeData.baseLabel} → {changeData.updLabel}
                     </p>
                   </div>
                   <div className="lg:col-span-7">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6">AKSİYON GÜN FARKLARI</p>
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-6">AKSİYON GÜN FARKLARI</p>
                     <div className="flex flex-wrap gap-3">
                       {Object.entries(changeData.actionDeltas).map(([act, delta]) => (
                         <div key={act} className={`px-6 py-3 rounded-2xl border flex items-center gap-3 transition-all hover:scale-105 ${delta > 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
@@ -535,8 +561,8 @@ const DoctorDetailModal = ({
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[40px] p-16 text-center">
-                <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-sm">
+              <div className="bg-[var(--surface-2)] border-2 border-dashed border-[var(--border-2)] rounded-[40px] p-16 text-center">
+                <p className="text-[var(--text-muted)] font-black uppercase tracking-[0.2em] text-sm">
                   Bu dönemde kapasite değişimi bulunmamaktadır.
                 </p>
               </div>
@@ -544,10 +570,10 @@ const DoctorDetailModal = ({
           </div>
         </div>
 
-        <div className="p-8 border-t border-slate-50 bg-slate-50/50 flex justify-end gap-4">
-          <button 
+        <div className="p-8 border-t border-[var(--border-1)] bg-[var(--surface-2)] flex justify-end gap-4">
+          <button
             onClick={onClose}
-            className="bg-slate-900 text-white px-12 py-5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all active:scale-95"
+            className="bg-[var(--surface-1)] text-[var(--text-1)] border border-[var(--border-2)] px-12 py-5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-[var(--surface-hover)] transition-all active:scale-95"
           >
             KAPAT
           </button>

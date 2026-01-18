@@ -35,6 +35,8 @@ import PresentationModule from './components/PresentationModule';
 import DashboardHome from './components/DashboardHome';
 import DashboardCategory from './components/DashboardCategory';
 import EmergencyService from './components/EmergencyService';
+import WelcomeDashboard from './components/WelcomeDashboard';
+import FloatingSidebar from './components/FloatingSidebar';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -84,16 +86,30 @@ const App: React.FC = () => {
   // User Permissions
   const { userPermissions, loading: permissionsLoading, hasModuleAccess, isAdmin } = useUserPermissions(user?.email || null);
 
-  const [view, setView] = useState<ViewType>('dashboard');
+  const [view, setView] = useState<ViewType>('welcome');
   const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency' | null>(null);
+
+  // ========== GLOBAL FİLTRE STATE (TÜM MODÜLLER İÇİN TEK MERKEZ) ==========
+  // Modül değişiminde bu state'ler KORUNUR - sıfırlanmaz
   const [selectedHospital, setSelectedHospital] = useState<string>(''); // Boş başlangıç - kullanıcı seçecek
+  const [globalSelectedYears, setGlobalSelectedYears] = useState<number[]>([]); // Çoklu yıl seçimi
+  const [globalSelectedMonths, setGlobalSelectedMonths] = useState<number[]>([]); // Çoklu ay seçimi (1-12)
+  const [globalAppliedYears, setGlobalAppliedYears] = useState<number[]>([]); // Uygulanan yıllar
+  const [globalAppliedMonths, setGlobalAppliedMonths] = useState<number[]>([]); // Uygulanan aylar
+  const [globalSelectedBranch, setGlobalSelectedBranch] = useState<string | null>(null); // Branş filtresi
 
-  // Debug: selectedHospital değişimini logla
+  // Debug: Global filtre değişimini logla
   useEffect(() => {
-    console.log('🏥 selectedHospital değişti:', selectedHospital);
-  }, [selectedHospital]);
+    console.log('🎯 Global Filtre Değişti:', {
+      selectedHospital,
+      globalSelectedYears,
+      globalSelectedMonths,
+      globalAppliedYears,
+      globalAppliedMonths
+    });
+  }, [selectedHospital, globalSelectedYears, globalSelectedMonths, globalAppliedYears, globalAppliedMonths]);
 
-  // Her modül için ayrı filtreleme state'i
+  // Eski yapı ile uyumluluk için (modüller yavaş yavaş güncellenecek)
   const [branchFilters, setBranchFilters] = useState<Record<ViewType, string | null>>({
     'detailed-schedule': null,
     'physician-data': null,
@@ -111,42 +127,42 @@ const App: React.FC = () => {
     'emergency-service': null
   });
 
-  // Her modül için ayrı ay/yıl seçimleri
+  // Eski yapı ile uyumluluk - modüller güncellenene kadar kullanılacak
   const currentMonth = MONTHS[new Date().getMonth()];
   const currentYear = new Date().getFullYear();
 
   const [monthFilters, setMonthFilters] = useState<Record<ViewType, string>>({
-    'detailed-schedule': currentMonth,
-    'physician-data': '', // Boş başlangıç - kullanıcı seçecek
-    'efficiency-analysis': currentMonth,
-    'change-analysis': '', // Boş başlangıç - kullanıcı seçecek
-    'performance-planning': currentMonth,
-    'data-entry': currentMonth,
-    'ai-chatbot': currentMonth,
-    'service-analysis': currentMonth,
-    'goren': currentMonth,
-    'analysis-module': currentMonth,
-    'presentation': currentMonth,
-    'schedule': currentMonth,
-    'admin': currentMonth,
-    'emergency-service': currentMonth
+    'detailed-schedule': '',
+    'physician-data': '',
+    'efficiency-analysis': '',
+    'change-analysis': '',
+    'performance-planning': '',
+    'data-entry': '',
+    'ai-chatbot': '',
+    'service-analysis': '',
+    'goren': '',
+    'analysis-module': '',
+    'presentation': '',
+    'schedule': '',
+    'admin': '',
+    'emergency-service': ''
   });
 
   const [yearFilters, setYearFilters] = useState<Record<ViewType, number>>({
-    'detailed-schedule': currentYear,
-    'physician-data': 0, // Boş başlangıç - kullanıcı seçecek
-    'efficiency-analysis': currentYear,
-    'change-analysis': 0, // Boş başlangıç - kullanıcı seçecek
-    'performance-planning': currentYear,
-    'data-entry': currentYear,
-    'ai-chatbot': currentYear,
-    'service-analysis': currentYear,
-    'goren': currentYear,
-    'analysis-module': currentYear,
-    'presentation': currentYear,
-    'schedule': currentYear,
-    'admin': currentYear,
-    'emergency-service': currentYear
+    'detailed-schedule': 0,
+    'physician-data': 0,
+    'efficiency-analysis': 0,
+    'change-analysis': 0,
+    'performance-planning': 0,
+    'data-entry': 0,
+    'ai-chatbot': 0,
+    'service-analysis': 0,
+    'goren': 0,
+    'analysis-module': 0,
+    'presentation': 0,
+    'schedule': 0,
+    'admin': 0,
+    'emergency-service': 0
   });
 
   // Her modül için cetvel seçimleri (ChangeAnalysis için)
@@ -234,23 +250,7 @@ const App: React.FC = () => {
   const [slides, setSlides] = useState<PresentationSlide[]>([]);
 
   // Otomatik veri yükleme kaldırıldı - kullanıcı "Uygula" butonuna tıklayacak
-
-  // Physician-data modülüne her geçişte filtreleri sıfırla
-  useEffect(() => {
-    if (view === 'physician-data' && !permissionsLoading) {
-      // İlk açılışta veya modüle geçişte filtreleri sıfırla
-      console.log('🔄 Physician-data modülü açıldı, filtreler sıfırlanıyor...');
-      console.log('📊 Mevcut selectedHospital:', selectedHospital);
-
-      // setTimeout ile tüm re-render'lar bittikten sonra sıfırla
-      setTimeout(() => {
-        setSelectedHospital('');
-        setMonthFilters(prev => ({ ...prev, 'physician-data': '' }));
-        setYearFilters(prev => ({ ...prev, 'physician-data': 0 }));
-        console.log('✅ Filtreler sıfırlandı');
-      }, 0);
-    }
-  }, [view, permissionsLoading]);
+  // Modül geçişlerinde filtreler ve veriler KORUNUR - sıfırlama kaldırıldı
 
   // Firebase Authentication Listener
   useEffect(() => {
@@ -354,6 +354,46 @@ const App: React.FC = () => {
     }
   };
 
+  // ========== VERİMLİLİK ANALİZLERİ İÇİN MERKEZİ VERİ YÜKLEME ==========
+  // Bu fonksiyon tek bir Uygula butonu ile tüm bağlı modüllerin verilerini yükler:
+  // - Detaylı Cetveller
+  // - Hekim Verileri
+  // - Değişim Analizleri
+  const handleCentralDataLoad = async (hospital: string, years: number[], months: number[]) => {
+    if (!hospital || years.length === 0 || months.length === 0) {
+      showToast('Lütfen hastane, yıl ve ay seçiniz', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingText('Tüm modüller için veriler yükleniyor...');
+
+    try {
+      console.log('🚀 Merkezi veri yükleme başladı:', { hospital, years, months });
+
+      // Global filtreleri güncelle
+      setGlobalAppliedYears(years);
+      setGlobalAppliedMonths(months);
+
+      // Her yıl/ay kombinasyonu için veri yükle
+      for (const year of years) {
+        for (const monthIdx of months) {
+          const month = MONTHS[monthIdx - 1];
+          await handleLoadPeriodData(hospital, year, month);
+        }
+      }
+
+      showToast(`${hospital} için ${months.length * years.length} dönem verisi yüklendi`, 'success');
+      console.log('✅ Merkezi veri yükleme tamamlandı');
+    } catch (error) {
+      console.error('❌ Merkezi veri yükleme hatası:', error);
+      showToast('Veri yükleme hatası', 'error');
+    } finally {
+      setIsLoading(false);
+      setLoadingText('Veriler Güncelleniyor...');
+    }
+  };
+
   // Save data to Firestore whenever it changes (debounced)
   // detailedScheduleData excluded - stored in Firebase Storage
   useEffect(() => {
@@ -396,66 +436,12 @@ const App: React.FC = () => {
   // LocalStorage DISABLED - All data now stored in Firestore to prevent quota issues
   // (LocalStorage was causing quota exceeded errors with large datasets)
 
+  // Hastane değiştiğinde sadece hastaneye özel verileri güncelle
+  // FİLTRELER SIIFIRLANMAZ - kullanıcı seçimlerini korur
   useEffect(() => {
-    // Hastane değiştiğinde tüm filtreleri varsayılana döndür
-    const defaultMonth = MONTHS[new Date().getMonth()];
-    const defaultYear = new Date().getFullYear();
-
-    setBranchFilters({
-      'detailed-schedule': null,
-      'physician-data': null,
-      'efficiency-analysis': null,
-      'change-analysis': null,
-      'performance-planning': null,
-      'data-entry': null,
-      'ai-chatbot': null,
-      'service-analysis': null,
-      'goren': null,
-      'analysis-module': null,
-      'presentation': null,
-      'admin': null,
-      'schedule': null
-    });
-
-    // Ay ve yıl filtrelerini de sıfırla
-    setMonthFilters({
-      'detailed-schedule': defaultMonth,
-      'physician-data': '', // Boş başlangıç
-      'efficiency-analysis': defaultMonth,
-      'change-analysis': '', // Boş başlangıç
-      'performance-planning': defaultMonth,
-      'data-entry': defaultMonth,
-      'ai-chatbot': defaultMonth,
-      'service-analysis': defaultMonth,
-      'goren': defaultMonth,
-      'analysis-module': defaultMonth,
-      'presentation': defaultMonth,
-      'schedule': defaultMonth,
-      'admin': defaultMonth
-    });
-
-    setYearFilters({
-      'detailed-schedule': defaultYear,
-      'physician-data': 0, // Boş başlangıç
-      'efficiency-analysis': defaultYear,
-      'change-analysis': 0, // Boş başlangıç
-      'performance-planning': defaultYear,
-      'data-entry': defaultYear,
-      'ai-chatbot': defaultYear,
-      'service-analysis': defaultYear,
-      'goren': defaultYear,
-      'analysis-module': defaultYear,
-      'presentation': defaultYear,
-      'schedule': defaultYear,
-      'admin': defaultYear
-    });
-
     const newDeptList = HOSPITAL_DEPARTMENTS[selectedHospital] || DEPARTMENTS;
     setDepartments(newDeptList);
     setAppointmentData(MOCK_DATA.filter(d => d.hospital === selectedHospital));
-    setHbysData([]);
-    setPlanningProposals([]);
-    setSutRiskAnalysis(null);
   }, [selectedHospital]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -562,6 +548,15 @@ const App: React.FC = () => {
       <div key={selectedHospital} className="w-full">
         {(() => {
           switch (view) {
+            case 'welcome':
+              return (
+                <WelcomeDashboard
+                  userName={user?.email?.split('@')[0]}
+                  userEmail={user?.email || ''}
+                  onNavigate={(v) => setView(v as ViewType)}
+                />
+              );
+
             case 'dashboard':
               return (
                 <DashboardHome
@@ -628,13 +623,19 @@ const App: React.FC = () => {
                   muayeneMetaByPeriod={muayeneMetaByPeriod}
                   ameliyatMetaByPeriod={ameliyatMetaByPeriod}
                   versions={scheduleVersions}
-                  selectedMonth={selectedMonth}
-                  setSelectedMonth={(m) => setMonthFilters(prev => ({ ...prev, [view]: m }))}
-                  selectedYear={selectedYear}
-                  setSelectedYear={(y) => setYearFilters(prev => ({ ...prev, [view]: y }))}
+                  // Global filtre state'leri
+                  globalSelectedYears={globalSelectedYears}
+                  setGlobalSelectedYears={setGlobalSelectedYears}
+                  globalSelectedMonths={globalSelectedMonths}
+                  setGlobalSelectedMonths={setGlobalSelectedMonths}
+                  globalAppliedYears={globalAppliedYears}
+                  globalAppliedMonths={globalAppliedMonths}
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
+                  // Merkezi veri yükleme fonksiyonu
+                  onCentralDataLoad={handleCentralDataLoad}
+                  isLoading={isLoading}
                 />
               );
             case 'detailed-schedule':
@@ -832,17 +833,38 @@ const App: React.FC = () => {
     return <LoginPage onLoginSuccess={() => setAuthLoading(false)} />;
   }
 
+  // Welcome ekranı için özel tam ekran layout
+  if (view === 'welcome') {
+    return (
+      <div className="min-h-screen font-['Inter']">
+        {toast && (
+          <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+            {toast.message}
+          </div>
+        )}
+        <WelcomeDashboard
+          userName={user?.email?.split('@')[0]}
+          userEmail={user?.email || ''}
+          onNavigate={(v) => setView(v as ViewType)}
+          onLogout={handleLogout}
+          isAdmin={isAdmin}
+          hasModuleAccess={hasModuleAccess}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen text-slate-900 bg-slate-50 relative font-['Inter']">
+    <div className="flex min-h-screen text-slate-200 bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] relative font-['Inter']">
       {toast && (
-        <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+        <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-rose-600 text-white border-rose-500'}`}>
           {toast.message}
         </div>
       )}
-      
+
       {isLoading && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[250] flex items-center justify-center">
-          <div className="bg-white p-10 rounded-[32px] shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in-95 min-w-[400px]">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] flex items-center justify-center">
+          <div className="bg-[#12121a] border border-slate-700/50 p-10 rounded-[32px] shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in-95 min-w-[400px]">
              {/* ECG Kalp Ritmi Animasyonu */}
              <div className="relative w-full h-24 flex items-center justify-center overflow-hidden">
                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
@@ -870,7 +892,7 @@ const App: React.FC = () => {
                  </svg>
                </div>
              </div>
-             <p className="font-black text-slate-700 text-center">{loadingText}</p>
+             <p className="font-black text-slate-200 text-center">{loadingText}</p>
           </div>
         </div>
       )}
@@ -916,163 +938,43 @@ const App: React.FC = () => {
       `}</style>
 
       {isBranchModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl p-8">
-            <h2 className="text-xl font-black mb-4">Yeni Branş Ekle</h2>
-            <input autoFocus className="w-full border p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-blue-500 font-bold" value={newBranchName} onChange={e => setNewBranchName(e.target.value)} placeholder="Branş adı..." />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-[#12121a] border border-slate-700/50 w-full max-w-md rounded-[32px] shadow-2xl p-8">
+            <h2 className="text-xl font-black mb-4 text-white">Yeni Branş Ekle</h2>
+            <input autoFocus className="w-full border border-slate-700 bg-slate-800/50 text-white p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-blue-500 font-bold placeholder-slate-500" value={newBranchName} onChange={e => setNewBranchName(e.target.value)} placeholder="Branş adı..." />
             <div className="flex gap-2">
-               <button onClick={() => setIsBranchModalOpen(false)} className="flex-1 p-4 font-bold text-slate-500">İptal</button>
-               <button onClick={() => { if (newBranchName) { setDepartments(prev => [...prev, newBranchName].sort()); setBranchFilters(prev => ({ ...prev, [view]: newBranchName })); setNewBranchName(''); setIsBranchModalOpen(false); } }} className="flex-1 bg-blue-600 text-white p-4 rounded-2xl font-black">Ekle</button>
+               <button onClick={() => setIsBranchModalOpen(false)} className="flex-1 p-4 font-bold text-slate-400 hover:text-white transition-colors">İptal</button>
+               <button onClick={() => { if (newBranchName) { setDepartments(prev => [...prev, newBranchName].sort()); setBranchFilters(prev => ({ ...prev, [view]: newBranchName })); setNewBranchName(''); setIsBranchModalOpen(false); } }} className="flex-1 bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 transition-colors">Ekle</button>
             </div>
           </div>
         </div>
       )}
 
-      <aside className="w-56 h-screen sticky top-0 bg-[#f9f7f4] text-slate-900 flex flex-col shrink-0 no-print overflow-hidden">
-        <div className="flex flex-col h-full px-6 py-8 overflow-hidden">
-          <div className="flex items-center mb-12">
-            <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setView('dashboard')}>
+      {/* Floating Sidebar */}
+      <FloatingSidebar
+        currentView={view}
+        onNavigate={(v) => setView(v as ViewType)}
+        userEmail={user?.email || ''}
+        onLogout={handleLogout}
+        isAdmin={isAdmin}
+        hasModuleAccess={hasModuleAccess}
+      />
+
+      {/* Main Content - Sidebar için padding-left eklendi */}
+      <main className="flex-1 min-w-0 overflow-y-auto w-full custom-scrollbar ml-[88px]">
+        <div className="w-full px-8 py-6">
+          {/* Üst Bar - Logo sağda */}
+          <header className="mb-6 flex justify-end items-center no-print">
+            {/* Sağlık Bakanlığı Logo ve Yazı - Sağda (Logo solda, yazı sağda) */}
+            <div className="flex items-center gap-3 bg-[#12121a]/80 backdrop-blur-xl px-4 py-2 rounded-2xl border border-slate-700/30">
               <img
-                src={medisLogo}
-                alt="MEDİS Logo"
-                className="w-12 h-12 rounded-xl"
+                src={sbLogo}
+                alt="T.C. Sağlık Bakanlığı"
+                className="h-8 w-auto object-contain brightness-0 invert"
               />
-              <div className="flex flex-col">
-                <span className="text-lg font-black tracking-tight text-slate-900">MEDİS</span>
-                <span className="text-[9px] font-semibold text-slate-500 leading-tight -mt-0.5">Merkezi Dijital<br/>Sağlık Sistemi</span>
-              </div>
-            </div>
-          </div>
-          <nav className="flex-1 space-y-1 custom-scrollbar overflow-y-auto overflow-x-hidden">
-            <div className="space-y-1">
-              <button onClick={() => setIsMhrsExpanded(!isMhrsExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
-                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isMhrsActive ? 'bg-slate-900' : 'bg-slate-200'}`}>
-                  <svg className={`w-3 h-3 ${isMhrsActive ? 'text-white' : 'text-slate-500'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
-                </div>
-                <span className={`text-sm font-medium flex-1 ${isMhrsActive ? 'text-slate-900' : 'text-slate-600'}`}>MHRS</span>
-                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isMhrsExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isMhrsExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">
-                  {hasModuleAccess('detailedSchedule') && <SubNavItem label="Detaylı Cetveller" active={view === 'detailed-schedule'} onClick={() => setView('detailed-schedule')} color="emerald" />}
-                  {hasModuleAccess('physicianData') && <SubNavItem label="Hekim Verileri" active={view === 'physician-data'} onClick={() => setView('physician-data')} color="blue" />}
-                  {hasModuleAccess('changeAnalysis') && <SubNavItem label="Değişim Analizleri" active={view === 'change-analysis'} onClick={() => setView('change-analysis')} color="blue" />}
-                  {hasModuleAccess('efficiencyAnalysis') && <SubNavItem label="Verimlilik Analizleri" active={view === 'efficiency-analysis'} onClick={() => setView('efficiency-analysis')} color="indigo" />}
-              </div></div>
-            </div>
-            <div className="space-y-1 pt-2">
-              <button onClick={() => setIsFinancialExpanded(!isFinancialExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
-                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isFinancialExpandedActive ? 'bg-slate-900' : 'bg-slate-200'}`}>
-                  <span className={`text-xs font-bold ${isFinancialExpandedActive ? 'text-white' : 'text-slate-500'}`}>₺</span>
-                </div>
-                <span className={`text-sm font-medium flex-1 ${isFinancialExpandedActive ? 'text-slate-900' : 'text-slate-600'}`}>Finansal</span>
-                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isFinancialExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isFinancialExpanded ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">{hasModuleAccess('serviceAnalysis') && <SubNavItem label="Hizmet Girişim" active={view === 'service-analysis'} onClick={() => setView('service-analysis')} color="rose" />}</div></div>
-            </div>
-            <div className="space-y-1 pt-2">
-              <button onClick={() => setIsEmergencyExpanded(!isEmergencyExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
-                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isEmergencyActive ? 'bg-red-600' : 'bg-slate-200'}`}>
-                  <svg className={`w-3 h-3 ${isEmergencyActive ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <span className={`text-sm font-medium flex-1 ${isEmergencyActive ? 'text-slate-900' : 'text-slate-600'}`}>Acil Servis</span>
-                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isEmergencyExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isEmergencyExpanded ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">{hasModuleAccess('emergencyService') && <SubNavItem label="Yeşil Alan Oranları" active={view === 'emergency-service'} onClick={() => setView('emergency-service')} color="red" />}</div></div>
-            </div>
-            <div className="space-y-1 pt-2">
-              <button onClick={() => setIsDevExpanded(!isDevExpanded)} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all hover:bg-white/60 group">
-                <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isDevActive ? 'bg-slate-900' : 'bg-slate-200'}`}>
-                  <svg className={`w-3 h-3 ${isDevActive ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
-                </div>
-                <span className={`text-sm font-medium flex-1 ${isDevActive ? 'text-slate-900' : 'text-slate-600'}`}>Hazırlama</span>
-                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isDevExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div className={`overflow-hidden transition-all duration-300 space-y-0.5 ${isDevExpanded ? 'max-h-[450px] opacity-100' : 'max-h-0 opacity-0'}`}><div className="space-y-0.5 pl-10">
-                  {hasModuleAccess('analysisModule') && <SubNavItem label="Analiz Modülü" active={view === 'analysis-module'} onClick={() => setView('analysis-module')} color="indigo" />}
-                  {hasModuleAccess('performancePlanning') && <SubNavItem label="AI Planlama" active={view === 'performance-planning'} onClick={() => setView('performance-planning')} color="blue" />}
-                  {hasModuleAccess('presentation') && <SubNavItem label="Sunum" active={view === 'presentation'} onClick={() => setView('presentation')} color="slate" />}
-              </div></div>
-            </div>
-            <div className="pt-4 space-y-0.5 border-t border-slate-200 mt-4">
-              <div className="px-3 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Destek</div>
-              {hasModuleAccess('aiChatbot') && <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>} label="AI Sohbet" active={view === 'ai-chatbot'} onClick={() => setView('ai-chatbot')} color="indigo" />}
-              {hasModuleAccess('gorenBashekimlik') && <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>} label="GÖREN Başarı" active={view === 'goren'} onClick={() => setView('goren')} color="amber" />}
-              {isAdmin && (
-                <NavItem icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>} label="Kullanıcı Yönetimi" active={view === 'admin'} onClick={() => setView('admin')} color="rose" />
-              )}
-            </div>
-          </nav>
-          <div className="mt-auto pt-6 border-t border-slate-200">
-            <div className="px-3 py-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-sm">
-                  <span className="text-white font-semibold text-sm">{user?.email?.charAt(0).toUpperCase()}</span>
-                </div>
-                <span className="text-xs font-medium text-slate-700 truncate flex-1">{user?.email}</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-full bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 px-3 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-2 border border-slate-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Çıkış Yap
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <main className="flex-1 min-w-0 overflow-y-auto w-full custom-scrollbar">
-        <div className="w-full px-10 py-10">
-          <header className="mb-6 flex flex-col gap-4 no-print">
-            {/* Title Row with Dashboard Button */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                {view !== 'dashboard' && !view.startsWith('dashboard-') && (
-                  <button
-                    onClick={() => setView('dashboard')}
-                    className="p-3 bg-white hover:bg-slate-100 rounded-2xl transition-all flex items-center justify-center shadow-md border border-slate-200"
-                    title="Dashboard'a Dön"
-                  >
-                    <svg className="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                  </button>
-                )}
-                <div>
-                  <h1 className="text-4xl font-black text-slate-900 tracking-tight uppercase">
-                    {view === 'dashboard' ? 'Dashboard' : view === 'physician-data' ? 'Hekim Verileri' : view === 'efficiency-analysis' ? 'Verimlilik Analizleri' : view === 'detailed-schedule' ? 'Detaylı Takip' : view === 'change-analysis' ? 'Değişim Analizleri' : view === 'analysis-module' ? 'Analiz Modülü' : view === 'performance-planning' ? 'AI Planlama' : view === 'presentation' ? 'Sunum' : view === 'admin' ? 'Kullanıcı Yönetimi' : view === 'service-analysis' ? 'Hizmet Girişim' : view === 'ai-chatbot' ? 'AI Sohbet' : view === 'goren' ? 'GÖREN Başarı' : 'Modül Analiz'}
-                  </h1>
-                  <p className="text-slate-500 font-bold mt-1 uppercase text-xs tracking-widest">{selectedHospital} • {selectedBranch || 'TÜM BRANŞLAR'}</p>
-                </div>
-              </div>
-
-              {/* Sağ Taraf - Sağlık Bakanlığı Logosu ve Sunuma Ekle Butonu */}
-              <div className="flex items-center gap-6">
-                {view !== 'presentation' && view !== 'admin' && view !== 'dashboard' && !view.startsWith('dashboard-') && (
-                  <button
-                    onClick={addCurrentToPresentation}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-xs shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-                    SUNUMA EKLE
-                  </button>
-                )}
-
-                {/* Sağlık Bakanlığı Logo ve Yazı */}
-                <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-                  <img
-                    src={sbLogo}
-                    alt="T.C. Sağlık Bakanlığı"
-                    className="h-12 w-auto object-contain"
-                  />
-                  <div className="text-left">
-                    <p className="text-xs font-bold text-red-600 tracking-wide">T.C. SAĞLIK BAKANLIĞI</p>
-                    <p className="text-xs font-semibold text-slate-700">ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
-                  </div>
-                </div>
+              <div className="text-left">
+                <p className="text-[9px] font-bold text-white tracking-wide">T.C. SAĞLIK BAKANLIĞI</p>
+                <p className="text-[9px] font-semibold text-white/80">ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
               </div>
             </div>
           </header>
