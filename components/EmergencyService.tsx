@@ -405,6 +405,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       allElements.forEach(el => {
         const htmlEl = el as HTMLElement;
+        // SVG elementleri için className string değil, kontrol et
+        if (typeof htmlEl.className !== 'string') return;
+
         originalStyles.push({ el, classes: htmlEl.className });
         htmlEl.className = htmlEl.className
           .replace(/bg-slate-800\/50/g, 'bg-white')
@@ -490,6 +493,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       allElements.forEach(el => {
         const htmlEl = el as HTMLElement;
+        // SVG elementleri için className string değil, kontrol et
+        if (typeof htmlEl.className !== 'string') return;
+
         originalStyles.push({ el, classes: htmlEl.className });
         htmlEl.className = htmlEl.className
           .replace(/bg-slate-800\/50/g, 'bg-white')
@@ -932,9 +938,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </button>
           </div>
 
-          <div ref={cardsContainerRef} className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/60">
+          <div ref={cardsContainerRef} className="bg-white p-8 rounded-2xl border border-slate-200 shadow-lg">
             {/* Header for PNG */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-700">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -942,12 +948,12 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Acil Servis Yeşil Alan Oranları</h2>
-                  <p className="text-slate-400">Şanlıurfa İl Sağlık Müdürlüğü</p>
+                  <h2 className="text-2xl font-bold text-slate-800">Acil Servis Yeşil Alan Oranları</h2>
+                  <p className="text-slate-500">Şanlıurfa İl Sağlık Müdürlüğü</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-white">{getDateRangeDisplay()}</p>
+                <p className="text-xl font-bold text-slate-800">{getDateRangeDisplay()}</p>
               </div>
             </div>
 
@@ -996,14 +1002,14 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </div>
 
             {/* Footer with formula */}
-            <div className="mt-8 pt-4 border-t border-slate-700">
-              <div className="bg-slate-700/30 rounded-xl p-4 text-center">
-                <p className="text-sm text-slate-300 font-medium">
-                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-400">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
+            <div className="mt-8 pt-4 border-t border-slate-200">
+              <div className="bg-slate-100 rounded-xl p-4 text-center">
+                <p className="text-sm text-slate-600 font-medium">
+                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-600">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
                 </p>
                 {ilGeneli && (
-                  <p className="text-sm text-slate-400 mt-2">
-                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-white">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
+                  <p className="text-sm text-slate-500 mt-2">
+                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-slate-800">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
                   </p>
                 )}
               </div>
@@ -1156,45 +1162,45 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
     return `${day}.${month}`;
   };
 
-  // Oran için renk (dark tema)
+  // Oran için renk (beyaz tema)
   const getRateColor = (rate: number): string => {
-    if (rate >= 70) return 'bg-emerald-500/20 text-emerald-400';
-    if (rate >= 60) return 'bg-yellow-500/20 text-yellow-400';
-    if (rate >= 50) return 'bg-orange-500/20 text-orange-400';
-    return 'bg-red-500/20 text-red-400';
+    if (rate >= 70) return 'bg-emerald-100 text-emerald-700';
+    if (rate >= 60) return 'bg-yellow-100 text-yellow-700';
+    if (rate >= 50) return 'bg-orange-100 text-orange-700';
+    return 'bg-red-100 text-red-700';
   };
 
   return (
-    <div className={`bg-slate-700/50 rounded-2xl shadow-sm border border-slate-600/60 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/30' : ''}`}>
+    <div className={`bg-slate-50 rounded-2xl shadow-sm border border-slate-200 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-500/20' : 'bg-slate-600/50'}`}>
-          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-100' : 'bg-slate-200'}`}>
+          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-600' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-400' : 'text-white'}`}>{shortName}</h3>
+        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-600' : 'text-slate-800'}`}>{shortName}</h3>
       </div>
 
       {/* Stats */}
       <div className="space-y-2 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">Toplam Hasta</span>
-          <span className="font-bold text-white">{data.totalCount.toLocaleString('tr-TR')}</span>
+          <span className="text-sm text-slate-500">Toplam Hasta</span>
+          <span className="font-bold text-slate-800">{data.totalCount.toLocaleString('tr-TR')}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">Yeşil Alan</span>
-          <span className="font-bold text-white">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
+          <span className="text-sm text-slate-500">Yeşil Alan</span>
+          <span className="font-bold text-slate-800">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">Yeşil Alan Oranı</span>
+          <span className="text-sm text-slate-500">Yeşil Alan Oranı</span>
           <span className={`font-bold text-lg ${textColor}`}>%{data.greenAreaRate.toFixed(1)}</span>
         </div>
-        <div className="h-2 bg-slate-600/50 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
             className={`h-full ${progressColor} rounded-full transition-all duration-500`}
             style={{ width: `${Math.min(data.greenAreaRate, 100)}%` }}
@@ -1204,10 +1210,10 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
 
       {/* Günlük Detay Accordion */}
       {dailyDetails.length > 1 && (
-        <div className="mt-4 pt-4 border-t border-slate-600/50">
+        <div className="mt-4 pt-4 border-t border-slate-200">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-slate-200 transition-colors"
+            className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors"
           >
             <span className="font-medium flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1229,23 +1235,23 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
             <div className="mt-3 -mx-2 overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-slate-600/30">
-                    <th className="sticky left-0 bg-slate-600/30 px-2 py-1.5 text-left font-semibold text-slate-300 whitespace-nowrap">Tarih</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Yeşil Alan</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Toplam</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Oran</th>
+                  <tr className="bg-slate-100">
+                    <th className="sticky left-0 bg-slate-100 px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap">Tarih</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Yeşil Alan</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Toplam</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Oran</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedDetails.map((detail, idx) => (
-                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-slate-700/30' : 'bg-slate-600/20'}>
-                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-300 whitespace-nowrap">
+                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-700 whitespace-nowrap">
                         {formatDate(detail.date)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
+                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
                         {detail.greenAreaCount.toLocaleString('tr-TR')}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
+                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
                         {detail.totalCount.toLocaleString('tr-TR')}
                       </td>
                       <td className="px-2 py-1.5 text-right whitespace-nowrap">
