@@ -208,12 +208,12 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
     }
   };
 
-  // Renk hesapla (oran bazlı) - 65+ yeşil, 60-65 sarı, 60 altı kırmızı (beyaz yazı ile)
+  // Renk hesapla (oran bazlı) - 65+ yeşil, 60-65 sarı, 60 altı kırmızı (beyaz tema)
   const getRateColor = (rate: number | null): string => {
-    if (rate === null) return 'bg-slate-700/30 text-slate-400';
-    if (rate >= 65) return 'bg-emerald-500/30 text-white';
-    if (rate >= 60) return 'bg-yellow-500/30 text-white';
-    return 'bg-red-500/30 text-white';
+    if (rate === null) return 'bg-slate-100 text-slate-400';
+    if (rate >= 65) return 'bg-emerald-100 text-emerald-700';
+    if (rate >= 60) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-red-100 text-red-700';
   };
 
   // PNG olarak indir (açık tema ile)
@@ -382,8 +382,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
 
   if (sortedDates.length === 0 || hospitalRows.length === 0) {
     return (
-      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-8 text-center">
-        <div className="text-slate-400 text-sm">
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+        <div className="text-slate-500 text-sm">
           Günlük tablo için tarih aralığı seçin
         </div>
       </div>
@@ -391,15 +391,15 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
   }
 
   return (
-    <div ref={containerRef} className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 overflow-hidden">
+    <div ref={containerRef} className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
       {/* Başlık */}
-      <div className="px-6 py-4 border-b border-slate-700 bg-gradient-to-r from-emerald-500/10 to-teal-500/10">
+      <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-teal-50">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h3 className="text-lg font-bold text-white">
+            <h3 className="text-lg font-bold text-slate-800">
               ŞANLIURFA İLİ ACİL SERVİS GÜNLÜK YEŞİL ALAN HASTA ORANLARI %
             </h3>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-slate-500 mt-1">
               {sortedDates.length} günlük veri • {hospitalRows.length} kurum
               {localSelectedHospitals.length > 0 && ` (${localSelectedHospitals.length} seçili)`}
             </p>
@@ -411,8 +411,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors border ${
                   localSelectedHospitals.length > 0
-                    ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/50 hover:bg-emerald-500/30'
-                    : 'text-slate-300 bg-slate-700/50 border-slate-600 hover:bg-slate-700'
+                    ? 'text-emerald-600 bg-emerald-100 border-emerald-300 hover:bg-emerald-200'
+                    : 'text-slate-600 bg-slate-100 border-slate-300 hover:bg-slate-200'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -430,20 +430,20 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               </button>
 
               {isFilterDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-slate-800 border border-slate-600 rounded-xl shadow-xl z-50 overflow-hidden">
-                  <div className="p-3 border-b border-slate-700 flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">Kurum Seçin</span>
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="p-3 border-b border-slate-200 flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-800">Kurum Seçin</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleSelectAll}
-                        className="text-xs text-emerald-400 hover:text-emerald-300"
+                        className="text-xs text-emerald-600 hover:text-emerald-700"
                       >
                         {localSelectedHospitals.length === allHospitals.length ? 'Hiçbirini Seçme' : 'Tümünü Seç'}
                       </button>
                       {localSelectedHospitals.length > 0 && (
                         <button
                           onClick={() => setLocalSelectedHospitals([])}
-                          className="text-xs text-red-400 hover:text-red-300"
+                          className="text-xs text-red-500 hover:text-red-600"
                         >
                           Temizle
                         </button>
@@ -454,15 +454,15 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                     {allHospitals.map(hospital => (
                       <label
                         key={hospital}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-700/50 cursor-pointer"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 cursor-pointer"
                       >
                         <input
                           type="checkbox"
                           checked={localSelectedHospitals.includes(hospital)}
                           onChange={() => handleHospitalToggle(hospital)}
-                          className="w-4 h-4 rounded border-slate-500 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-800"
+                          className="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
                         />
-                        <span className="text-sm text-white truncate">
+                        <span className="text-sm text-slate-700 truncate">
                           {getShortHospitalName(hospital)}
                         </span>
                       </label>
@@ -473,7 +473,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </div>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-700/50 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -482,7 +482,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </button>
             <button
               onClick={handlePngExport}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-300 bg-slate-700/50 border border-slate-600 rounded-lg hover:bg-slate-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -506,19 +506,19 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       <div ref={tableRef} className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-700/50">
-              <th className="sticky left-0 z-10 bg-slate-700/50 px-4 py-3 text-left font-semibold text-white border-b border-slate-600 min-w-[200px]">
+            <tr className="bg-slate-100">
+              <th className="sticky left-0 z-10 bg-slate-100 px-4 py-3 text-left font-semibold text-slate-700 border-b border-slate-200 min-w-[200px]">
                 Kurum
               </th>
               {sortedDates.map(date => (
                 <th
                   key={date}
-                  className="px-2 py-3 text-center font-semibold text-white border-b border-slate-600 min-w-[60px]"
+                  className="px-2 py-3 text-center font-semibold text-slate-700 border-b border-slate-200 min-w-[60px]"
                 >
                   {formatDateHeader(date)}
                 </th>
               ))}
-              <th className="sticky right-0 z-10 bg-slate-700/50 px-4 py-3 text-center font-semibold text-white border-b border-slate-600 min-w-[140px]">
+              <th className="sticky right-0 z-10 bg-slate-100 px-4 py-3 text-center font-semibold text-slate-700 border-b border-slate-200 min-w-[140px]">
                 Trend Eğrisi
               </th>
             </tr>
@@ -527,9 +527,9 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             {hospitalRows.map((row, idx) => (
               <tr
                 key={row.hospitalName}
-                className={idx % 2 === 0 ? 'bg-slate-800/30' : 'bg-slate-700/20'}
+                className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
               >
-                <td className="sticky left-0 z-10 px-4 py-2 font-medium text-white border-b border-slate-700/50 bg-inherit">
+                <td className="sticky left-0 z-10 px-4 py-2 font-medium text-slate-800 border-b border-slate-100 bg-inherit">
                   <div className="truncate max-w-[200px]" title={row.hospitalName}>
                     {getShortHospitalName(row.hospitalName)}
                   </div>
@@ -539,13 +539,13 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                   return (
                     <td
                       key={date}
-                      className={`px-2 py-2 text-center border-b border-slate-700/50 font-medium ${getRateColor(rate)}`}
+                      className={`px-2 py-2 text-center border-b border-slate-100 font-medium ${getRateColor(rate)}`}
                     >
                       {rate !== null ? `${rate.toFixed(1)}` : '-'}
                     </td>
                   );
                 })}
-                <td className="sticky right-0 z-10 px-4 py-2 border-b border-slate-700/50 bg-inherit">
+                <td className="sticky right-0 z-10 px-4 py-2 border-b border-slate-100 bg-inherit">
                   <div className="flex justify-center">
                     <Sparkline
                       values={row.trend}
@@ -559,8 +559,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               </tr>
             ))}
             {/* İl Geneli Satırı */}
-            <tr className="bg-emerald-500/10 font-bold">
-              <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-400 border-t-2 border-emerald-500/30 bg-emerald-500/10">
+            <tr className="bg-emerald-50 font-bold">
+              <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-600 border-t-2 border-emerald-200 bg-emerald-50">
                 {provinceTotals.hospitalName}
               </td>
               {sortedDates.map(date => {
@@ -568,19 +568,19 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                 return (
                   <td
                     key={date}
-                    className="px-2 py-3 text-center border-t-2 border-emerald-500/30 text-emerald-400"
+                    className="px-2 py-3 text-center border-t-2 border-emerald-200 text-emerald-600 font-bold"
                   >
                     {rate !== null ? `${rate.toFixed(1)}` : '-'}
                   </td>
                 );
               })}
-              <td className="sticky right-0 z-10 px-4 py-3 border-t-2 border-emerald-500/30 bg-emerald-500/10">
+              <td className="sticky right-0 z-10 px-4 py-3 border-t-2 border-emerald-200 bg-emerald-50">
                 <div className="flex justify-center">
                   <Sparkline
                     values={provinceTotals.trend}
                     width={120}
                     height={28}
-                    color="#34d399"
+                    color="#059669"
                     showDots={true}
                   />
                 </div>
@@ -591,16 +591,16 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       </div>
 
       {/* Renk açıklaması */}
-      <div className="px-6 py-3 border-t border-slate-700 bg-slate-700/30 flex items-center gap-4 text-xs text-slate-400">
+      <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center gap-4 text-xs text-slate-600">
         <span className="font-medium">Oran Renkleri:</span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-emerald-500/30"></span> %65+
+          <span className="w-3 h-3 rounded bg-emerald-200"></span> %65+
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-yellow-500/30"></span> %60-64
+          <span className="w-3 h-3 rounded bg-yellow-200"></span> %60-64
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-red-500/30"></span> %0-59
+          <span className="w-3 h-3 rounded bg-red-200"></span> %0-59
         </span>
       </div>
     </div>
