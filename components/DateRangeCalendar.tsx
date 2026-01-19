@@ -273,7 +273,7 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
 
         {/* Calendar Popover */}
         {isOpen && (
-          <div className="absolute left-0 z-50 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-lg p-4 min-w-[300px]">
+          <div className="absolute left-0 bottom-full z-50 mb-1 bg-slate-800 border border-slate-700 rounded-xl shadow-lg p-4 min-w-[300px] max-h-[400px] overflow-y-auto">
             {/* Header - Ay/Yıl Navigasyonu */}
             <div className="flex items-center justify-between mb-4">
               <button

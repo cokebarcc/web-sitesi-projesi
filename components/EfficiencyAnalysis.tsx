@@ -12,6 +12,7 @@ interface EfficiencyAnalysisProps {
   muayeneMetaByPeriod: Record<string, { fileName: string; uploadedAt: number }>;
   ameliyatMetaByPeriod: Record<string, { fileName: string; uploadedAt: number }>;
   versions: Record<string, Record<string, ScheduleVersion>>;
+  changeAnalysisPhysCompare?: any[];
   // Global filtre state'leri
   globalSelectedYears: number[];
   setGlobalSelectedYears: (years: number[]) => void;
@@ -55,6 +56,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   muayeneMetaByPeriod,
   ameliyatMetaByPeriod,
   versions,
+  changeAnalysisPhysCompare = [],
   globalSelectedYears,
   setGlobalSelectedYears,
   globalSelectedMonths,
@@ -247,6 +249,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
           doctor={selectedDoctorForDetail}
           onClose={() => setIsDetailModalOpen(false)}
           versions={versions}
+          changeAnalysisPhysCompare={changeAnalysisPhysCompare}
           detailedScheduleData={detailedScheduleData}
           periodMonth={selectedMonth}
           periodYear={Number(selectedYear)}
@@ -259,10 +262,21 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   );
 };
 
+const LegendItem = ({ color, label }: any) => <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }}></div><span className="text-[9px] font-black text-[var(--text-muted)] uppercase whitespace-nowrap">{label}</span></div>;
+
 export const CapacityUsageChart = ({ data, onClick }: any) => (
   <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 100 }} barGap={8}>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-wide">Kapasite Kullanım Grafiği</h3>
+      <div className="flex items-center gap-4">
+        <LegendItem color="#818cf8" label="Randevu Kapasitesi" />
+        <LegendItem color="#10b981" label="Gerçekleşen (Hedef Üstü)" />
+        <LegendItem color="#ef4444" label="Gerçekleşen (Hedef Altı)" />
+        <LegendItem color="#64748b" label="Kapasite Tanımsız" />
+      </div>
+    </div>
+    <ResponsiveContainer width="100%" height="90%">
+      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={8}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick onClick={onClick} />} axisLine={false} tickLine={false} height={100} />
         <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
@@ -285,8 +299,19 @@ export const CapacityUsageChart = ({ data, onClick }: any) => (
 
 export const SurgicalEfficiencyChart = ({ data }: any) => (
   <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
-    <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 100 }} barGap={8}>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-wide">Cerrahi Verimlilik Grafiği</h3>
+      <div className="flex items-center gap-4">
+        <LegendItem color="#818cf8" label="Planlanan Gün" />
+        <LegendItem color="#10b981" label="A+B+C Vaka Sayısı" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-0.5 rounded" style={{ backgroundColor: '#ef4444' }}></div>
+          <span className="text-[9px] font-black text-[var(--text-muted)] uppercase whitespace-nowrap">Verimlilik Oranı</span>
+        </div>
+      </div>
+    </div>
+    <ResponsiveContainer width="100%" height="90%">
+      <ComposedChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={8}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick />} axisLine={false} tickLine={false} height={100} />
         <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
@@ -308,8 +333,14 @@ export const SurgicalEfficiencyChart = ({ data }: any) => (
 
 export const SurgHoursChart = ({ data }: any) => (
   <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 40, right: 30, left: 20, bottom: 100 }} barGap={8}>
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-wide">Cerrahi Süre Grafiği</h3>
+      <div className="flex items-center gap-4">
+        <LegendItem color="#6366f1" label="Ortalama Cerrahi Süresi (Saat/Vaka)" />
+      </div>
+    </div>
+    <ResponsiveContainer width="100%" height="90%">
+      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={8}>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
         <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick />} axisLine={false} tickLine={false} height={100} />
         <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
@@ -358,14 +389,14 @@ const TooltipCard = ({ name, branch, metrics, footerLabel, footer, footerColor =
   <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-[var(--glass-border-light)] space-y-4 min-w-[240px]"><div><p className="font-black text-[var(--text-1)] uppercase text-xs leading-normal">{name}</p><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{branch}</p></div><div className="space-y-1.5 border-t border-[var(--border-1)] pt-3">{metrics.map((m:any, i:number) => <div key={i} className={`flex justify-between items-center gap-8`}><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{m.label}:</span><span className={`text-xs font-black ${m.color}`}>{m.val}</span></div>)}<div className="flex justify-between items-center gap-8 pt-1.5 mt-1.5 border-t border-[var(--border-2)]"><span className="text-[11px] font-black text-[var(--text-2)] uppercase">{footerLabel}:</span><span className={`text-sm font-black ${footerColor}`}>{footer}</span></div></div></div>
 );
 
-const LegendItem = ({ color, label }: any) => <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }}></div><span className="text-[9px] font-black text-[var(--text-muted)] uppercase whitespace-nowrap">{label}</span></div>;
 const EmptyState = () => <div className="bg-[var(--surface-2)] border-2 border-dashed border-[var(--border-2)] p-24 rounded-[40px] text-center"><p className="text-[var(--text-muted)] font-black uppercase tracking-[0.2em] text-lg italic">Dönem seçimi bekleniyor</p></div>;
 const NoResults = ({text}:any) => <div className="bg-amber-500/10 border-2 border-dashed border-amber-500/30 p-24 rounded-[40px] text-center"><p className="text-amber-400 font-black uppercase tracking-tight">KAYIT BULUNAMADI</p><p className="text-amber-500/80 font-bold mt-2 italic">{text || 'Filtrelere uygun hekim bulunamadı.'}</p></div>;
 
-const DoctorDetailModal = ({ 
+const DoctorDetailModal = ({
   doctor,
   onClose,
   versions,
+  changeAnalysisPhysCompare,
   detailedScheduleData,
   periodMonth,
   periodYear,
@@ -376,6 +407,7 @@ const DoctorDetailModal = ({
   doctor: any;
   onClose: () => void;
   versions: Record<string, Record<string, ScheduleVersion>>;
+  changeAnalysisPhysCompare: any[];
   detailedScheduleData: DetailedScheduleData[];
   periodMonth: string;
   periodYear: number;
@@ -385,11 +417,11 @@ const DoctorDetailModal = ({
 }) => {
   const normName = normalizeDoctorName(doctor.doctorName);
   const periodKey = periodHospital ? `${periodHospital}-${getPeriodKey(periodYear, periodMonth)}` : getPeriodKey(periodYear, periodMonth);
-  
+
   const docSchedules = useMemo(() => {
-    return detailedScheduleData.filter(d => 
-      normalizeDoctorName(d.doctorName) === normName && 
-      d.month === periodMonth && 
+    return detailedScheduleData.filter(d =>
+      normalizeDoctorName(d.doctorName) === normName &&
+      d.month === periodMonth &&
       d.year === periodYear
     ).sort((a, b) => {
       const parseDate = (s: string) => {
@@ -409,16 +441,14 @@ const DoctorDetailModal = ({
     const counts: Record<string, number> = {};
     const dailyMap: Record<string, { AM?: string, PM?: string }> = {};
     const getTimeMins = (t: string) => { const p = t.split(':'); return parseInt(p[0])*60 + parseInt(p[1]); };
-    
+
     docSchedules.forEach(s => {
       const start = getTimeMins(s.startTime);
       const end = start + (s.duration || 0);
       const act = s.action.trim().toLocaleUpperCase('tr-TR');
       if (!dailyMap[s.startDate]) dailyMap[s.startDate] = {};
       const overlap = (s1:number, e1:number, s2:number, e2:number) => Math.max(0, Math.min(e1, e2) - Math.max(s1, s2));
-      // Fix: Cast result to Number to avoid unknown comparison errors on line 484
       if (Number(overlap(start, end, 8*60, 12*60)) >= 30) dailyMap[s.startDate].AM = act;
-      // Fix: Cast result to Number to avoid unknown comparison errors on line 484
       if (Number(overlap(start, end, 13*60, 17*60)) >= 30) dailyMap[s.startDate].PM = act;
     });
 
@@ -429,34 +459,29 @@ const DoctorDetailModal = ({
     return counts;
   }, [docSchedules]);
 
-  const changeData = useMemo(() => {
-    const monthKey = `${periodYear}-${periodMonth}`;
-    const periodVersions = versions[monthKey] || {};
-    const labels = Object.keys(periodVersions).sort((a,b) => periodVersions[b].timestamp - periodVersions[a].timestamp);
-    console.log('🔍 ChangeData Debug:', { monthKey, periodVersions, labels, versionsKeys: Object.keys(versions), normName });
-    if (labels.length < 2) return null;
-    const updLabel = labels[0];
-    const baseLabel = labels[labels.length - 1];
-    const baseV = periodVersions[baseLabel];
-    const updV = periodVersions[updLabel];
-    if (!baseV || !updV) return null;
-    const bPhys = (Object.values(baseV.physicians) as ProcessedPhysicianSummary[]).find(p => normalizeDoctorName(p.name) === normName);
-    const uPhys = (Object.values(updV.physicians) as ProcessedPhysicianSummary[]).find(p => normalizeDoctorName(p.name) === normName);
-    if (!bPhys || !uPhys) return null;
-    const capDelta = uPhys.totalCapacity - bPhys.totalCapacity;
-    const actionDeltas: Record<string, number> = {};
-    const allActs = Array.from(new Set([...Object.keys(bPhys.actionDays), ...Object.keys(uPhys.actionDays)]));
-    allActs.forEach(a => {
-      const d = (uPhys.actionDays[a] || 0) - (bPhys.actionDays[a] || 0);
-      if (Math.abs(d) >= 0.1) actionDeltas[a] = d;
-    });
-    if (Math.abs(capDelta) < 0.1 && Object.keys(actionDeltas).length === 0) return null;
-    return { capDelta, actionDeltas, baseLabel, updLabel, baselineCap: bPhys.totalCapacity, updatedCap: uPhys.totalCapacity };
-  }, [versions, periodMonth, periodYear, normName]);
+  // Değişim Analizleri modülündeki phys_compare'dan ilgili hekimi bul
+  const physicianChangeData = useMemo(() => {
+    if (!changeAnalysisPhysCompare || changeAnalysisPhysCompare.length === 0) return null;
+
+    // Hekim ismini normalize edip karşılaştır
+    const matchingPhys = changeAnalysisPhysCompare.find(p =>
+      normalizeDoctorName(p.name) === normName
+    );
+
+    return matchingPhys || null;
+  }, [changeAnalysisPhysCompare, normName]);
+
+  // Modal açıkken arka plan scrollunu engelle
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 lg:p-8">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose}></div>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 lg:p-8">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={onClose}></div>
       <div className="relative w-full max-w-[1200px] max-h-[90vh] bg-[var(--glass-bg)] backdrop-blur-xl rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-[var(--glass-border)]">
         <div className="p-10 border-b border-[var(--border-1)] flex justify-between items-start bg-[var(--surface-2)]">
           <div>
@@ -526,53 +551,145 @@ const DoctorDetailModal = ({
           <div className="space-y-6">
             <h4 className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] flex items-center gap-2">
               <span className="w-2 h-2 bg-rose-500 rounded-full"></span>
-              Sürüm Değişim Analizi
+              Değişim Analizleri
             </h4>
-            {changeData ? (
-              <div className="bg-[var(--surface-1)] text-white rounded-[40px] p-10 relative overflow-hidden border border-[var(--border-1)]">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full -mr-48 -mt-48 blur-3xl opacity-60"></div>
-                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                  <div className="lg:col-span-5 text-center lg:text-left space-y-6">
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-4">NET KAPASİTE DEĞİŞİMİ</p>
-                      <div className="flex items-center justify-center lg:justify-start gap-4">
-                        <h5 className={`text-6xl font-black ${changeData.capDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {changeData.capDelta > 0 ? '+' : ''}{changeData.capDelta}
-                        </h5>
-                        <span className="bg-white/10 px-3 py-1 rounded-xl text-[10px] font-black uppercase border border-white/10">SLOT</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
-                      <div className="text-center border-r border-white/10">
-                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">BAŞLANGIÇ</p>
-                        <p className="text-lg font-black text-[var(--text-1)]">{changeData.baselineCap}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">GÜNCEL</p>
-                        <p className="text-lg font-black text-[var(--text-1)]">{changeData.updatedCap}</p>
-                      </div>
-                    </div>
-                    <p className="text-[10px] font-bold text-[var(--text-muted)] italic">
-                      {changeData.baseLabel} → {changeData.updLabel}
+            {physicianChangeData ? (
+              <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+                {/* Özet Kartları */}
+                <div className="p-6 border-b border-[var(--border-1)] bg-[var(--surface-2)]">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                      İLK CETVEL → SON CETVEL
                     </p>
+                    <span className={`px-4 py-1.5 rounded-full font-black text-[11px] border ${physicianChangeData.capacity_delta >= 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
+                      {physicianChangeData.capacity_delta > 0 ? '+' : ''}{physicianChangeData.capacity_delta} SLOT
+                    </span>
                   </div>
-                  <div className="lg:col-span-7">
-                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-6">AKSİYON GÜN FARKLARI</p>
-                    <div className="flex flex-wrap gap-3">
-                      {Object.entries(changeData.actionDeltas).map(([act, delta]) => (
-                        <div key={act} className={`px-6 py-3 rounded-2xl border flex items-center gap-3 transition-all hover:scale-105 ${delta > 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
-                          <span className="text-xs font-black uppercase tracking-tight">{act}</span>
-                          <span className="text-sm font-black">{delta > 0 ? '+' : ''}{delta.toString().replace('.', ',')} G</span>
-                        </div>
-                      ))}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-[var(--surface-1)] rounded-2xl p-4 text-center border border-[var(--border-1)]">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">ESKİ KAPASİTE</p>
+                      <p className="text-2xl font-black text-[var(--text-1)]">{physicianChangeData.baseline_capacity}</p>
+                    </div>
+                    <div className="bg-[var(--surface-1)] rounded-2xl p-4 text-center border border-[var(--border-1)]">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">YENİ KAPASİTE</p>
+                      <p className="text-2xl font-black text-[var(--text-1)]">{physicianChangeData.updated_capacity}</p>
+                    </div>
+                    <div className={`rounded-2xl p-4 text-center border ${physicianChangeData.capacity_delta >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`}>
+                      <p className={`text-[9px] font-black uppercase mb-1 ${physicianChangeData.capacity_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>FARK</p>
+                      <p className={`text-2xl font-black ${physicianChangeData.capacity_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {physicianChangeData.capacity_delta > 0 ? '+' : ''}{physicianChangeData.capacity_delta}
+                      </p>
                     </div>
                   </div>
                 </div>
+
+                {/* Aksiyon Değişimleri */}
+                {physicianChangeData.action_deltas && Object.keys(physicianChangeData.action_deltas).length > 0 && (
+                  <div className="p-6 border-b border-[var(--border-1)]">
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4">AKSİYON DEĞİŞİMLERİ</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(physicianChangeData.action_deltas)
+                        .sort((a, b) => Math.abs(Number(b[1])) - Math.abs(Number(a[1])))
+                        .map(([act, delta]) => (
+                          <span key={act} className={`text-[10px] font-black px-3 py-1.5 rounded-lg border ${Number(delta) > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
+                            {act} {Number(delta) > 0 ? '+' : ''}{String(delta).replace('.', ',')} G
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Aksiyon Kıyas Tablosu */}
+                {physicianChangeData.baseline_action_days && physicianChangeData.updated_action_days && (
+                  <div className="p-6">
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <span className="w-1 h-3 bg-indigo-500 rounded-full"></span>
+                      Aksiyon Kıyas Tablosu
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b-2 border-[var(--border-1)]">
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon</th>
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Gün</th>
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Gün</th>
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--border-1)]">
+                          {Array.from(new Set([...Object.keys(physicianChangeData.baseline_action_days || {}), ...Object.keys(physicianChangeData.updated_action_days || {})])).sort().map(act => {
+                            const oldD = physicianChangeData.baseline_action_days?.[act] || 0;
+                            const newD = physicianChangeData.updated_action_days?.[act] || 0;
+                            const actionDiff = newD - oldD;
+                            if (oldD === 0 && newD === 0) return null;
+                            return (
+                              <tr key={act} className="hover:bg-[var(--surface-hover)] transition-colors">
+                                <td className="py-3 text-[11px] font-bold text-[var(--text-1)] uppercase">{act}</td>
+                                <td className="py-3 text-[11px] font-black text-[var(--text-muted)] text-center">{String(oldD).replace('.', ',')} G</td>
+                                <td className="py-3 text-[11px] font-black text-[var(--text-1)] text-center">{String(newD).replace('.', ',')} G</td>
+                                <td className="py-3 text-center">
+                                  <span className={`text-[11px] font-black ${actionDiff > 0 ? 'text-emerald-400' : actionDiff < 0 ? 'text-rose-400' : 'text-[var(--text-muted)]'}`}>
+                                    {actionDiff > 0 ? '+' : ''}{String(actionDiff).replace('.', ',')} G
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Oturum Detayları */}
+                {(physicianChangeData.bPhys?.rawRows || physicianChangeData.uPhys?.rawRows) && (
+                  <div className="p-6 border-t border-[var(--border-1)]">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="bg-[var(--surface-1)] p-6 rounded-[24px] border border-[var(--border-1)]">
+                        <p className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-4 tracking-widest">ESKİ OTURUMLAR (İLK CETVEL)</p>
+                        <div className="max-h-48 overflow-y-auto custom-scrollbar border border-[var(--border-1)] rounded-xl">
+                          <table className="w-full text-[10px] text-left">
+                            <thead className="bg-[var(--surface-2)] sticky top-0"><tr><th className="p-2">TARİH</th><th className="p-2">AKSİYON</th><th className="p-2 text-center">KAP</th></tr></thead>
+                            <tbody className="divide-y divide-[var(--border-1)]">
+                              {physicianChangeData.bPhys?.rawRows?.map((r: any, rowIdx: number) => (
+                                <tr key={rowIdx} className="hover:bg-[var(--surface-hover)]">
+                                  <td className="p-2 font-bold text-[var(--text-1)]">{r.startDate}</td>
+                                  <td className="p-2 uppercase text-[var(--text-muted)]">{r.action}</td>
+                                  <td className="p-2 text-center font-black text-[var(--text-1)]">{r.capacity}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div className="bg-[var(--surface-1)] p-6 rounded-[24px] border border-rose-500/30">
+                        <p className="text-[10px] font-black text-rose-400 uppercase mb-4 tracking-widest">YENİ OTURUMLAR (SON CETVEL)</p>
+                        <div className="max-h-48 overflow-y-auto custom-scrollbar border border-rose-500/20 rounded-xl">
+                          <table className="w-full text-[10px] text-left">
+                            <thead className="bg-rose-500/10 sticky top-0"><tr><th className="p-2">TARİH</th><th className="p-2">AKSİYON</th><th className="p-2 text-center">KAP</th></tr></thead>
+                            <tbody className="divide-y divide-rose-500/10">
+                              {physicianChangeData.uPhys?.rawRows?.map((r: any, rowIdx: number) => (
+                                <tr key={rowIdx} className="hover:bg-rose-500/5">
+                                  <td className="p-2 font-bold text-[var(--text-1)]">{r.startDate}</td>
+                                  <td className="p-2 uppercase text-[var(--text-muted)]">{r.action}</td>
+                                  <td className="p-2 text-center font-black text-[var(--text-1)]">{r.capacity}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-[var(--surface-2)] border-2 border-dashed border-[var(--border-2)] rounded-[40px] p-16 text-center">
                 <p className="text-[var(--text-muted)] font-black uppercase tracking-[0.2em] text-sm">
-                  Bu dönemde kapasite değişimi bulunmamaktadır.
+                  Bu hekim için değişim verisi bulunmamaktadır.
+                </p>
+                <p className="text-[var(--text-muted)] text-xs mt-2 italic">
+                  Değişim Analizleri modülünden veri yüklendiğinde burada görünecektir.
                 </p>
               </div>
             )}

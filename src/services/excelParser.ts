@@ -259,12 +259,12 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
     const originalName = rawScheduleData.find(r => normalizeStr(r.physicianName) === normalizedKey)?.physicianName || "";
 
     physicianMap[normalizedKey] = {
-      physicianName: originalName,
+      name: originalName, // ProcessedPhysicianSummary type'ına uygun
       branch: docBranch[normalizedKey] || "",
       totalCapacity: docCap[normalizedKey] || 0,
-      totalSessions: Object.keys(dates).length, // Total unique dates
-      sessionsByAction: actionDays, // Now contains day counts instead of session counts!
-      sessionsByDay: {}
+      totalWorkDays: Object.keys(dates).length, // Total unique dates
+      actionDays: actionDays, // ProcessedPhysicianSummary type'ına uygun
+      rawRows: [] // Type uyumu için
     };
   });
 

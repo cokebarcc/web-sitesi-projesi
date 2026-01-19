@@ -551,9 +551,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       pdf.addImage(cardsImgData, 'PNG', cardsX, cardsY, cardsWidth, cardsHeight);
 
-      // Sayfa 2: Günlük tablo (eğer varsa)
+      // Sayfa 2: Günlük tablo (eğer varsa - bağımsız tablo verisi kontrolü)
       const tableElement = dailyTableRef.current?.getTableElement();
-      if (tableElement && selectedDatesForDisplay.length > 1) {
+      if (tableElement && tableDates.length > 0 && tableData.length > 0) {
         pdf.addPage('a4', 'landscape');
 
         // Export için geçici olarak overflow'u kaldır

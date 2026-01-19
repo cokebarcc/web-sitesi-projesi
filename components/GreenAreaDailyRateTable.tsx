@@ -94,6 +94,27 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
     return [...selectedDates].sort((a, b) => a.localeCompare(b));
   }, [selectedDates]);
 
+  // Tarih aralığını formatla (başlık için)
+  const formatDateRange = useMemo(() => {
+    if (sortedDates.length === 0) return '';
+
+    const formatFullDate = (dateStr: string) => {
+      const [year, month, day] = dateStr.split('-');
+      const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+                      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+      return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
+    };
+
+    const firstDate = sortedDates[0];
+    const lastDate = sortedDates[sortedDates.length - 1];
+
+    if (firstDate === lastDate) {
+      return formatFullDate(firstDate);
+    }
+
+    return `${formatFullDate(firstDate)} - ${formatFullDate(lastDate)}`;
+  }, [sortedDates]);
+
   // Tüm hastanelerin listesi (filtre için)
   const allHospitals = useMemo(() => {
     const hospitals = [...new Set(data.map(item => item.hospitalName))];
@@ -247,6 +268,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
 
       allElements.forEach(el => {
         const htmlEl = el as HTMLElement;
+        // SVG elementleri için className string değil, kontrol et
+        if (typeof htmlEl.className !== 'string') return;
         originalStyles.push({ el, classes: htmlEl.className });
         htmlEl.className = htmlEl.className
           .replace(/bg-slate-800\/50/g, 'bg-white')
@@ -399,7 +422,12 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             <h3 className="text-lg font-bold text-slate-800">
               ŞANLIURFA İLİ ACİL SERVİS GÜNLÜK YEŞİL ALAN HASTA ORANLARI %
             </h3>
-            <p className="text-sm text-slate-500 mt-1">
+            {formatDateRange && (
+              <p className="text-sm font-medium text-emerald-600 mt-1">
+                {formatDateRange}
+              </p>
+            )}
+            <p className="text-xs text-slate-500 mt-1">
               {sortedDates.length} günlük veri • {hospitalRows.length} kurum
               {localSelectedHospitals.length > 0 && ` (${localSelectedHospitals.length} seçili)`}
             </p>
@@ -507,7 +535,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-100">
-              <th className="sticky left-0 z-10 bg-slate-100 px-4 py-3 text-left font-semibold text-slate-700 border-b border-slate-200 min-w-[200px]">
+              <th className="sticky left-0 z-10 bg-slate-100 px-4 py-3 text-left font-semibold text-slate-700 border-b border-slate-200 min-w-[180px] whitespace-nowrap">
                 Kurum
               </th>
               {sortedDates.map(date => (
@@ -529,10 +557,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                 key={row.hospitalName}
                 className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
               >
-                <td className="sticky left-0 z-10 px-4 py-2 font-medium text-slate-800 border-b border-slate-100 bg-inherit">
-                  <div className="truncate max-w-[200px]" title={row.hospitalName}>
-                    {getShortHospitalName(row.hospitalName)}
-                  </div>
+                <td className="sticky left-0 z-10 px-4 py-2 font-medium text-slate-800 border-b border-slate-100 bg-inherit whitespace-nowrap">
+                  {getShortHospitalName(row.hospitalName)}
                 </td>
                 {sortedDates.map(date => {
                   const rate = row.dailyRates[date];

@@ -32,11 +32,16 @@ interface ChangeAnalysisProps {
   setUpdatedLabel: (label: string) => void;
   // Admin check
   isAdmin: boolean;
+  // Loaded full versions (global state - persists across module changes)
+  loadedFullVersions: Record<string, ScheduleVersion>;
+  setLoadedFullVersions: React.Dispatch<React.SetStateAction<Record<string, ScheduleVersion>>>;
+  // Callback to send phys_compare data to parent (App.tsx)
+  onPhysCompareUpdate?: (physCompare: any[]) => void;
 }
 
 const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
-  versions: _unused_versions,
-  setVersions: _unused_setVersions,
+  versions,
+  setVersions,
   selectedBranch,
   selectedHospital,
   allowedHospitals,
@@ -49,18 +54,17 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   setBaselineLabel,
   updatedLabel,
   setUpdatedLabel,
-  isAdmin
+  isAdmin,
+  loadedFullVersions,
+  setLoadedFullVersions,
+  onPhysCompareUpdate
 }) => {
-  // Local state for versions - NOT shared with App.tsx to prevent Firestore issues
-  const [versions, setVersions] = useState<Record<string, Record<string, ScheduleVersion>>>({});
+  // versions ve loadedFullVersions artık App.tsx'ten geliyor - modül değişiminde korunur
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-
-  // Cached full version data (loaded on demand for comparison)
-  const [loadedFullVersions, setLoadedFullVersions] = useState<Record<string, ScheduleVersion>>({});
 
   // Calculate monthKey before any useEffect that needs it
   const monthKey = selectedHospital && selectedYear && selectedMonth
@@ -72,11 +76,8 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Clear version selections when hospital changes
-  useEffect(() => {
-    setBaselineLabel('');
-    setUpdatedLabel('');
-  }, [selectedHospital]);
+  // NOT: Hastane değişiminde label'ları temizleme kaldırıldı
+  // Artık global state kullanıyoruz, modül değişimlerinde veriler korunacak
 
   // Load full version data when baseline or updated labels change
   useEffect(() => {
@@ -128,7 +129,26 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
           ...prev,
           [monthKey]: loadedVersions[monthKey]
         }));
-        showToast(`${Object.keys(loadedVersions[monthKey]).length} versiyon yüklendi`, 'success');
+
+        // Otomatik olarak İLK CETVEL ve SON CETVEL'i seç
+        const versionLabels = Object.keys(loadedVersions[monthKey]);
+        const findLabelByKeyword = (keyword: string) =>
+          versionLabels.find(l => l.toLocaleUpperCase('tr-TR').includes(keyword));
+
+        // İLK CETVEL'i eski sürüm olarak seç
+        const ilkCetvel = findLabelByKeyword('İLK') || findLabelByKeyword('ILK');
+        if (ilkCetvel) {
+          setBaselineLabel(ilkCetvel);
+        }
+
+        // SON CETVEL'i yeni sürüm olarak seç
+        const sonCetvel = findLabelByKeyword('SON');
+        if (sonCetvel) {
+          setUpdatedLabel(sonCetvel);
+        }
+
+        const autoSelectedCount = (ilkCetvel ? 1 : 0) + (sonCetvel ? 1 : 0);
+        showToast(`${Object.keys(loadedVersions[monthKey]).length} versiyon yüklendi${autoSelectedCount > 0 ? `, ${autoSelectedCount} sürüm otomatik seçildi` : ''}`, 'success');
       } else {
         showToast('Bu dönem için kayıtlı versiyon bulunamadı', 'warning');
       }
@@ -334,6 +354,13 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       totalUpdCap: filteredDocs.reduce((s: number, p) => s + p.updated_capacity, 0),
     } as any;
   }, [loadedFullVersions, baselineLabel, updatedLabel, selectedBranch]);
+
+  // phys_compare verisi değiştiğinde parent'a bildir (EfficiencyAnalysis'te kullanılacak)
+  useEffect(() => {
+    if (onPhysCompareUpdate && comparison?.phys_compare) {
+      onPhysCompareUpdate(comparison.phys_compare);
+    }
+  }, [comparison?.phys_compare, onPhysCompareUpdate]);
 
   // Fix: Added explicit casting and Number() conversion for arithmetic reliability.
   const maxAbsBranchDelta = useMemo(() => {

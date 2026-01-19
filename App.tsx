@@ -22,7 +22,6 @@ import LoginPage from './components/LoginPage';
 import AdminPanel from './src/components/AdminPanel';
 import FilterPanel from './components/common/FilterPanel';
 
-import PlanningModule from './components/PlanningModule';
 import ChatBot from './components/ChatBot';
 import { AIChatPanel } from './src/components/ai';
 import ServiceInterventionAnalysis from './components/ServiceInterventionAnalysis';
@@ -228,12 +227,11 @@ const App: React.FC = () => {
   // scheduleVersions no longer loaded from LocalStorage - stored in Storage only
   const [scheduleVersions, setScheduleVersions] = useState<Record<string, Record<string, ScheduleVersion>>>({});
 
-  const [planningProposals, setPlanningProposals] = useState<ScheduleProposal[]>([]);
-  const [planningSourceMonth, setPlanningSourceMonth] = useState<string>('Kasım');
-  const [planningSourceYear, setPlanningSourceYear] = useState<number>(2025);
-  const [planningTargetMonth, setPlanningTargetMonth] = useState<string>('Aralık');
-  const [planningTargetYear, setPlanningTargetYear] = useState<number>(2025);
-  const [planningTargetWorkDays, setPlanningTargetWorkDays] = useState<number>(20);
+  // ChangeAnalysis için yüklenmiş tam versiyon verileri (modül değişiminde korunur)
+  const [changeAnalysisLoadedVersions, setChangeAnalysisLoadedVersions] = useState<Record<string, ScheduleVersion>>({});
+
+  // ChangeAnalysis'ten hesaplanmış hekim karşılaştırma verisi (phys_compare)
+  const [changeAnalysisPhysCompare, setChangeAnalysisPhysCompare] = useState<any[]>([]);
 
   const [sutRiskAnalysis, setSutRiskAnalysis] = useState<string | null>(null);
 
@@ -382,6 +380,75 @@ const App: React.FC = () => {
         for (const monthIdx of months) {
           const month = MONTHS[monthIdx - 1];
           await handleLoadPeriodData(hospital, year, month);
+
+          // Değişim Analizleri verilerini de yükle (Verimlilik Analizleri için)
+          // Tam veriyi yükle - metadata değil physicians içeren veri
+          try {
+            const { loadAllChangeAnalysisVersions, loadSingleVersionData } = await import('./src/services/changeAnalysisStorage');
+            const loadedVersionsMetadata = await loadAllChangeAnalysisVersions(hospital, month, year);
+
+            // Dönen tüm monthKey'leri kontrol et (Firestore'daki format)
+            const allMonthKeys = Object.keys(loadedVersionsMetadata);
+            console.log('🔍 [CHANGE-ANALYSIS] Bulunan monthKey\'ler:', allMonthKeys);
+
+            for (const monthKey of allMonthKeys) {
+              const versionLabels = Object.keys(loadedVersionsMetadata[monthKey]);
+
+              if (versionLabels.length > 0) {
+                const fullVersions: Record<string, ScheduleVersion> = {};
+
+                // Her versiyon için tam veriyi yükle
+                for (const label of versionLabels) {
+                  const metadata = loadedVersionsMetadata[monthKey][label];
+                  if ((metadata as any).fileUrl) {
+                    const fullData = await loadSingleVersionData((metadata as any).fileUrl);
+                    if (fullData) {
+                      fullVersions[label] = fullData;
+                      console.log(`✅ ${label} tam verisi yüklendi (${Object.keys(fullData.physicians || {}).length} hekim)`);
+                    }
+                  }
+                }
+
+                if (Object.keys(fullVersions).length > 0) {
+                  setScheduleVersions(prev => ({
+                    ...prev,
+                    [monthKey]: fullVersions
+                  }));
+                  console.log(`✅ ${monthKey} için ${Object.keys(fullVersions).length} versiyon tam verisi yüklendi`);
+
+                  // Otomatik olarak İLK CETVEL ve SON CETVEL'i seç (ChangeAnalysis için)
+                  const findLabelByKeyword = (keyword: string) =>
+                    versionLabels.find(l => l.toLocaleUpperCase('tr-TR').includes(keyword));
+
+                  const ilkCetvel = findLabelByKeyword('İLK') || findLabelByKeyword('ILK');
+                  const sonCetvel = findLabelByKeyword('SON');
+
+                  if (ilkCetvel) {
+                    setBaselineLabels(prev => ({ ...prev, 'change-analysis': ilkCetvel }));
+                    // İlk cetvel'in full verisini changeAnalysisLoadedVersions'a kaydet
+                    if (fullVersions[ilkCetvel]) {
+                      setChangeAnalysisLoadedVersions(prev => ({ ...prev, [ilkCetvel]: fullVersions[ilkCetvel] }));
+                    }
+                    console.log(`🔄 Eski sürüm otomatik seçildi: ${ilkCetvel}`);
+                  }
+                  if (sonCetvel) {
+                    setUpdatedLabels(prev => ({ ...prev, 'change-analysis': sonCetvel }));
+                    // Son cetvel'in full verisini changeAnalysisLoadedVersions'a kaydet
+                    if (fullVersions[sonCetvel]) {
+                      setChangeAnalysisLoadedVersions(prev => ({ ...prev, [sonCetvel]: fullVersions[sonCetvel] }));
+                    }
+                    console.log(`🔄 Yeni sürüm otomatik seçildi: ${sonCetvel}`);
+                  }
+
+                  // ChangeAnalysis modülü için ay/yıl filtrelerini de güncelle
+                  setMonthFilters(prev => ({ ...prev, 'change-analysis': month }));
+                  setYearFilters(prev => ({ ...prev, 'change-analysis': year }));
+                }
+              }
+            }
+          } catch (versionError) {
+            console.warn('Değişim analizi verileri yüklenemedi:', versionError);
+          }
         }
       }
 
@@ -625,6 +692,7 @@ const App: React.FC = () => {
                   muayeneMetaByPeriod={muayeneMetaByPeriod}
                   ameliyatMetaByPeriod={ameliyatMetaByPeriod}
                   versions={scheduleVersions}
+                  changeAnalysisPhysCompare={changeAnalysisPhysCompare}
                   // Global filtre state'leri
                   globalSelectedYears={globalSelectedYears}
                   setGlobalSelectedYears={setGlobalSelectedYears}
@@ -674,25 +742,10 @@ const App: React.FC = () => {
                   updatedLabel={selectedUpdatedLabel}
                   setUpdatedLabel={(label) => setUpdatedLabels(prev => ({ ...prev, [view]: label }))}
                   isAdmin={isAdmin}
+                  loadedFullVersions={changeAnalysisLoadedVersions}
+                  setLoadedFullVersions={setChangeAnalysisLoadedVersions}
+                  onPhysCompareUpdate={setChangeAnalysisPhysCompare}
                 />
-              );
-
-            /* Correcting property names to match state setters in PlanningModule */
-            case 'performance-planning':
-              return (
-                <>
-                  <FilterPanel
-                    selectedHospital={selectedHospital}
-                    onHospitalChange={setSelectedHospital}
-                    allowedHospitals={allowedHospitals}
-                    selectedBranch={selectedBranch}
-                    onBranchChange={(branch) => setBranchFilters(prev => ({ ...prev, [view]: branch }))}
-                    branchOptions={currentBranchOptions}
-                    showHospitalFilter={true}
-                    showBranchFilter={true}
-                  />
-                  <PlanningModule selectedBranch={selectedBranch} appointmentData={appointmentData} hbysData={hbysData} detailedScheduleData={filteredDetailedScheduleData} proposals={planningProposals} setProposals={setPlanningProposals} sourceMonth={planningSourceMonth} setSourceMonth={setPlanningSourceMonth} sourceYear={planningSourceYear} setSourceYear={setPlanningSourceYear} targetMonth={planningTargetMonth} setTargetMonth={setPlanningTargetMonth} targetYear={planningTargetYear} setTargetYear={setPlanningTargetYear} targetWorkDays={planningTargetWorkDays} setTargetWorkDays={setPlanningTargetWorkDays} />
-                </>
               );
 
             case 'service-analysis':
@@ -747,7 +800,7 @@ const App: React.FC = () => {
                     allowedHospitals={allowedHospitals}
                     showHospitalFilter={true}
                   />
-                  <AnalysisModule appointmentData={appointmentData} hbysData={hbysData} planningProposals={planningProposals} pastChangesInitialData={null} pastChangesFinalData={null} onClearPastChanges={() => {}} selectedHospital={selectedHospital} />
+                  <AnalysisModule appointmentData={appointmentData} hbysData={hbysData} planningProposals={[]} pastChangesInitialData={null} pastChangesFinalData={null} onClearPastChanges={() => {}} selectedHospital={selectedHospital} />
                 </>
               );
             case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
@@ -770,6 +823,8 @@ const App: React.FC = () => {
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
+                  selectedBranch={selectedBranch}
+                  detailedScheduleData={detailedScheduleData}
                 />
               );
             default: return null;

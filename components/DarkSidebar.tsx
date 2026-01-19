@@ -196,7 +196,6 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
       badge: 'BETA',
       items: [
         { id: 'analysis-module', label: 'Analiz Modülü', view: 'analysis-module', hasAccess: hasModuleAccess('analysisModule') },
-        { id: 'performance-planning', label: 'AI Planlama', view: 'performance-planning', hasAccess: hasModuleAccess('performancePlanning') },
         { id: 'presentation', label: 'Sunum', view: 'presentation', hasAccess: hasModuleAccess('presentation') }
       ]
     }
