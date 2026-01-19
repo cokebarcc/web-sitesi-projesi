@@ -118,6 +118,15 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const dailyTableRef = useRef<GreenAreaDailyRateTableRef>(null);
 
+  // Bağımsız günlük tablo için state'ler
+  const [tableDateRange, setTableDateRange] = useState<DateRange>({ start: null, end: null });
+  const [tableData, setTableData] = useState<DailyData[]>([]);
+  const [tableDates, setTableDates] = useState<string[]>([]);
+  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [tableSelectedYears, setTableSelectedYears] = useState<number[]>([]);
+  const [tableSelectedMonths, setTableSelectedMonths] = useState<number[]>([]);
+  const [tableActiveMonth, setTableActiveMonth] = useState<number | null>(null);
+
   // Load available date parts on mount
   useEffect(() => {
     loadDateParts();
@@ -184,6 +193,115 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       return true;
     });
+  };
+
+  // Bağımsız tablo için takvim tarihleri
+  const tableAvailableDatesForCalendar = useMemo((): string[] => {
+    if (tableSelectedYears.length === 0 || tableActiveMonth === null) return [];
+
+    return allDates.filter(dateStr => {
+      const [year, month] = dateStr.split('-').map(Number);
+      return tableSelectedYears.includes(year) && month === tableActiveMonth;
+    });
+  }, [tableSelectedYears, tableActiveMonth, allDates]);
+
+  // Bağımsız tablo için ay seçenekleri
+  const tableMonthOptions: DropdownOption[] = useMemo(() => {
+    if (tableSelectedYears.length === 0) return [];
+    const months = new Set<number>();
+    tableSelectedYears.forEach(year => {
+      (availableMonths[year] || []).forEach(m => months.add(m));
+    });
+    return Array.from(months).sort((a, b) => a - b).map(m => ({
+      value: m,
+      label: MONTH_NAMES[m]
+    }));
+  }, [tableSelectedYears, availableMonths]);
+
+  // Bağımsız tablo için eşleşen tarihleri bul
+  const getTableMatchingDates = (): string[] => {
+    if (tableSelectedYears.length === 0) return [];
+
+    if (tableDateRange.start && tableDateRange.end) {
+      const dates: string[] = [];
+      const start = new Date(tableDateRange.start);
+      const end = new Date(tableDateRange.end);
+      const current = new Date(Math.min(start.getTime(), end.getTime()));
+      const endDate = new Date(Math.max(start.getTime(), end.getTime()));
+
+      while (current <= endDate) {
+        const dateStr = current.toISOString().split('T')[0];
+        if (allDates.includes(dateStr)) {
+          dates.push(dateStr);
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    }
+
+    return allDates.filter(dateStr => {
+      const [year, month] = dateStr.split('-').map(Number);
+      if (!tableSelectedYears.includes(year)) return false;
+      if (tableSelectedMonths.length > 0 && !tableSelectedMonths.includes(month)) return false;
+      return true;
+    });
+  };
+
+  // Bağımsız tablo veri yükleme
+  const handleLoadTableData = async () => {
+    const matchingDates = getTableMatchingDates();
+    if (matchingDates.length === 0) {
+      showToast('Seçimlere uygun tarih bulunamadı', 'error');
+      return;
+    }
+
+    setIsTableLoading(true);
+    try {
+      const allFiles = await getGreenAreaFiles();
+      const dailyDataArr: DailyData[] = [];
+
+      matchingDates.forEach(date => {
+        const fileForDate = allFiles.find(f => f.date === date);
+        if (fileForDate && fileForDate.data) {
+          fileForDate.data.forEach(hospital => {
+            dailyDataArr.push({
+              date,
+              hospitalName: hospital.hospitalName,
+              greenAreaCount: hospital.greenAreaCount,
+              totalCount: hospital.totalCount,
+              greenAreaRate: hospital.greenAreaRate
+            });
+          });
+        }
+      });
+
+      setTableData(dailyDataArr);
+      setTableDates(matchingDates);
+      showToast(`${matchingDates.length} günlük tablo verisi yüklendi`, 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Tablo verisi yükleme hatası', 'error');
+    } finally {
+      setIsTableLoading(false);
+    }
+  };
+
+  // Tablo yıl değişimi
+  const handleTableYearsChange = (years: number[]) => {
+    setTableSelectedYears(years);
+    setTableSelectedMonths([]);
+    setTableActiveMonth(null);
+    setTableDateRange({ start: null, end: null });
+  };
+
+  // Tablo ay değişimi
+  const handleTableMonthsChange = (months: number[]) => {
+    setTableSelectedMonths(months);
+    if (months.length > 0) {
+      setTableActiveMonth(months[months.length - 1]);
+    } else {
+      setTableActiveMonth(null);
+    }
+    setTableDateRange({ start: null, end: null });
   };
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -892,17 +1010,119 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </div>
           </div>
 
-          {/* Günlük Oran Tablosu */}
-          {selectedDatesForDisplay.length > 1 && dailyData.length > 0 && (
-            <GreenAreaDailyRateTable
-              ref={dailyTableRef}
-              data={dailyData}
-              selectedDates={selectedDatesForDisplay}
-              onCopy={() => showToast('Tablo panoya kopyalandı', 'success')}
-            />
-          )}
         </>
       )}
+
+      {/* Bağımsız Günlük Oran Tablosu Bölümü */}
+      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6 mt-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-white">
+              Günlük Yeşil Alan Oranları Tablosu
+            </h3>
+            <p className="text-sm text-slate-400">
+              (Ana filtreden bağımsız çalışır)
+            </p>
+          </div>
+
+          {/* Tablo Filtreleri */}
+          <div className="flex flex-wrap items-end gap-4 p-4 bg-slate-700/30 rounded-xl">
+            {/* Yıl Seçimi */}
+            <MultiSelectDropdown
+              label="Yıl Seçimi"
+              options={availableYears.map(y => ({ value: y, label: y.toString() }))}
+              selectedValues={tableSelectedYears}
+              onChange={handleTableYearsChange}
+              placeholder="Yıl seçiniz..."
+              disabled={availableYears.length === 0}
+              emptyMessage="Kayıtlı veri yok"
+              showSearch={false}
+            />
+
+            {/* Ay Seçimi */}
+            <MultiSelectDropdown
+              label="Ay Seçimi"
+              options={tableMonthOptions}
+              selectedValues={tableSelectedMonths}
+              onChange={handleTableMonthsChange}
+              placeholder="Ay seçiniz..."
+              disabled={tableSelectedYears.length === 0}
+              emptyMessage={tableSelectedYears.length === 0 ? "Önce yıl seçiniz" : "Seçili yıllarda veri yok"}
+              showSearch={false}
+            />
+
+            {/* Aktif Ay Seçimi */}
+            {tableSelectedMonths.length > 1 && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-slate-400">Takvim Ayı</label>
+                <select
+                  value={tableActiveMonth || ''}
+                  onChange={(e) => setTableActiveMonth(Number(e.target.value))}
+                  className="px-3 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
+                >
+                  {tableSelectedMonths.map(month => (
+                    <option key={month} value={month}>{MONTH_NAMES[month]}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Tarih Aralığı */}
+            <DateRangeCalendar
+              label="Tarih Aralığı"
+              value={tableDateRange}
+              onChange={setTableDateRange}
+              availableDates={tableAvailableDatesForCalendar}
+              activeYear={tableSelectedYears.length > 0 ? tableSelectedYears[0] : null}
+              activeMonth={tableActiveMonth}
+              disabled={tableSelectedMonths.length === 0}
+              placeholder={tableSelectedMonths.length === 0 ? "Önce ay seçiniz..." : "Tarih aralığı seçiniz..."}
+            />
+
+            {/* Uygula Butonu */}
+            <button
+              onClick={handleLoadTableData}
+              disabled={isTableLoading || getTableMatchingDates().length === 0}
+              className="px-6 py-2.5 h-[42px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
+            >
+              {isTableLoading ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Yükleniyor...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Uygula
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Tablo */}
+        {tableDates.length > 0 && tableData.length > 0 ? (
+          <div className="mt-4">
+            <GreenAreaDailyRateTable
+              ref={dailyTableRef}
+              data={tableData}
+              selectedDates={tableDates}
+              onCopy={() => showToast('Tablo panoya kopyalandı', 'success')}
+            />
+          </div>
+        ) : (
+          <div className="mt-4 p-8 text-center">
+            <div className="text-slate-400">
+              Tablo için tarih aralığı seçin ve "Uygula" butonuna tıklayın
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
