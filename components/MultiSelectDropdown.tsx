@@ -185,18 +185,25 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
             className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-xs font-medium border border-emerald-500/30"
           >
             {opt.label}
-            <button
-              type="button"
+            <span
+              role="button"
+              tabIndex={0}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleOption(opt.value);
               }}
-              className="hover:text-emerald-100 focus:outline-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  toggleOption(opt.value);
+                }
+              }}
+              className="hover:text-emerald-100 cursor-pointer"
             >
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+            </span>
           </span>
         ))}
         {remainingCount > 0 && (
