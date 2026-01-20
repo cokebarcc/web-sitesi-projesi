@@ -85,7 +85,7 @@ const App: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(true);
 
   // User Permissions
-  const { userPermissions, loading: permissionsLoading, hasModuleAccess, isAdmin } = useUserPermissions(user?.email || null);
+  const { userPermissions, loading: permissionsLoading, hasModuleAccess, canUploadData, isAdmin } = useUserPermissions(user?.email || null);
 
   const [view, setView] = useState<ViewType>('welcome');
   const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency' | null>(null);
@@ -681,6 +681,7 @@ const App: React.FC = () => {
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
                   onLoadPeriodData={handleLoadPeriodData}
+                  canUpload={canUploadData('physicianData')}
                 />
               );
             case 'efficiency-analysis':
@@ -721,6 +722,7 @@ const App: React.FC = () => {
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
                   onLoadData={handleLoadDetailedScheduleData}
+                  canUpload={canUploadData('detailedSchedule')}
                 />
               );
 
@@ -815,6 +817,7 @@ const App: React.FC = () => {
                   selectedHospital={selectedHospital}
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
+                  canUpload={canUploadData('emergencyService')}
                 />
               );
             case 'schedule-planning':

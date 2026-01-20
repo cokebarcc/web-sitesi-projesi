@@ -15,6 +15,7 @@ interface GreenAreaDailyRateTableProps {
   data: DailyData[];
   selectedDates: string[]; // Seçili tarihler
   onCopy?: () => void;
+  showProvinceTotals?: boolean; // İl geneli satırını göster/gizle (default: true)
 }
 
 export interface GreenAreaDailyRateTableRef {
@@ -77,7 +78,8 @@ const sortHospitalNames = (hospitalNames: string[]): string[] => {
 const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenAreaDailyRateTableProps>(({
   data,
   selectedDates,
-  onCopy
+  onCopy,
+  showProvinceTotals = true
 }, ref) => {
   const tableRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -347,16 +349,18 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       return [row.hospitalName, ...values, avg];
     });
 
-    // İl geneli satırı
-    const provinceValues = sortedDates.map(date => {
-      const rate = provinceTotals.dailyRates[date];
-      return rate !== null ? `%${rate.toFixed(1)}` : '-';
-    });
-    const provinceValidRates = provinceTotals.trend.filter(r => r !== null) as number[];
-    const provinceAvg = provinceValidRates.length > 0
-      ? `%${(provinceValidRates.reduce((a, b) => a + b, 0) / provinceValidRates.length).toFixed(1)}`
-      : '-';
-    rows.push([provinceTotals.hospitalName, ...provinceValues, provinceAvg]);
+    // İl geneli satırı (sadece showProvinceTotals true ise)
+    if (showProvinceTotals) {
+      const provinceValues = sortedDates.map(date => {
+        const rate = provinceTotals.dailyRates[date];
+        return rate !== null ? `%${rate.toFixed(1)}` : '-';
+      });
+      const provinceValidRates = provinceTotals.trend.filter(r => r !== null) as number[];
+      const provinceAvg = provinceValidRates.length > 0
+        ? `%${(provinceValidRates.reduce((a, b) => a + b, 0) / provinceValidRates.length).toFixed(1)}`
+        : '-';
+      rows.push([provinceTotals.hospitalName, ...provinceValues, provinceAvg]);
+    }
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     const wb = XLSX.utils.book_new();
@@ -382,16 +386,18 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       return [row.hospitalName, ...values, avg].join('\t');
     });
 
-    // İl geneli
-    const provinceValues = sortedDates.map(date => {
-      const rate = provinceTotals.dailyRates[date];
-      return rate !== null ? `%${rate.toFixed(1)}` : '-';
-    });
-    const provinceValidRates = provinceTotals.trend.filter(r => r !== null) as number[];
-    const provinceAvg = provinceValidRates.length > 0
-      ? `%${(provinceValidRates.reduce((a, b) => a + b, 0) / provinceValidRates.length).toFixed(1)}`
-      : '-';
-    rows.push([provinceTotals.hospitalName, ...provinceValues, provinceAvg].join('\t'));
+    // İl geneli (sadece showProvinceTotals true ise)
+    if (showProvinceTotals) {
+      const provinceValues = sortedDates.map(date => {
+        const rate = provinceTotals.dailyRates[date];
+        return rate !== null ? `%${rate.toFixed(1)}` : '-';
+      });
+      const provinceValidRates = provinceTotals.trend.filter(r => r !== null) as number[];
+      const provinceAvg = provinceValidRates.length > 0
+        ? `%${(provinceValidRates.reduce((a, b) => a + b, 0) / provinceValidRates.length).toFixed(1)}`
+        : '-';
+      rows.push([provinceTotals.hospitalName, ...provinceValues, provinceAvg].join('\t'));
+    }
 
     const text = [headers, ...rows].join('\n');
 
@@ -584,34 +590,36 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                 </td>
               </tr>
             ))}
-            {/* İl Geneli Satırı */}
-            <tr className="bg-emerald-50 font-bold">
-              <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-600 border-t-2 border-emerald-200 bg-emerald-50">
-                {provinceTotals.hospitalName}
-              </td>
-              {sortedDates.map(date => {
-                const rate = provinceTotals.dailyRates[date];
-                return (
-                  <td
-                    key={date}
-                    className="px-2 py-3 text-center border-t-2 border-emerald-200 text-emerald-600 font-bold"
-                  >
-                    {rate !== null ? `${rate.toFixed(1)}` : '-'}
-                  </td>
-                );
-              })}
-              <td className="sticky right-0 z-10 px-4 py-3 border-t-2 border-emerald-200 bg-emerald-50">
-                <div className="flex justify-center">
-                  <Sparkline
-                    values={provinceTotals.trend}
-                    width={120}
-                    height={28}
-                    color="#059669"
-                    showDots={true}
-                  />
-                </div>
-              </td>
-            </tr>
+            {/* İl Geneli Satırı - Sadece showProvinceTotals true ise göster */}
+            {showProvinceTotals && (
+              <tr className="bg-emerald-50 font-bold">
+                <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-600 border-t-2 border-emerald-200 bg-emerald-50">
+                  {provinceTotals.hospitalName}
+                </td>
+                {sortedDates.map(date => {
+                  const rate = provinceTotals.dailyRates[date];
+                  return (
+                    <td
+                      key={date}
+                      className="px-2 py-3 text-center border-t-2 border-emerald-200 text-emerald-600 font-bold"
+                    >
+                      {rate !== null ? `${rate.toFixed(1)}` : '-'}
+                    </td>
+                  );
+                })}
+                <td className="sticky right-0 z-10 px-4 py-3 border-t-2 border-emerald-200 bg-emerald-50">
+                  <div className="flex justify-center">
+                    <Sparkline
+                      values={provinceTotals.trend}
+                      width={120}
+                      height={28}
+                      color="#059669"
+                      showDots={true}
+                    />
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

@@ -1,7 +1,31 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { AppUser, ADMIN_EMAIL, DEFAULT_PERMISSIONS } from '../types/user';
+import { AppUser, ADMIN_EMAIL, UserPermissions } from '../types/user';
+
+// Varsayılan olarak hiçbir modüle erişim YOK - güvenlik için
+const NO_PERMISSIONS: UserPermissions = {
+  allowedHospitals: [],
+  modules: {
+    detailedSchedule: false,
+    physicianData: false,
+    changeAnalysis: false,
+    efficiencyAnalysis: false,
+    serviceAnalysis: false,
+    aiChatbot: false,
+    gorenBashekimlik: false,
+    analysisModule: false,
+    schedulePlanning: false,
+    performancePlanning: false,
+    presentation: false,
+    emergencyService: false,
+  },
+  canUpload: {
+    detailedSchedule: false,
+    physicianData: false,
+    emergencyService: false,
+  },
+};
 
 export const useUserPermissions = (userEmail: string | null) => {
   const [userPermissions, setUserPermissions] = useState<AppUser | null>(null);
@@ -26,10 +50,23 @@ export const useUserPermissions = (userEmail: string | null) => {
             permissions: {
               allowedHospitals: [], // Tüm hastaneler
               modules: {
+                detailedSchedule: true,
+                physicianData: true,
+                changeAnalysis: true,
                 efficiencyAnalysis: true,
-                capacityAnalysis: true,
+                serviceAnalysis: true,
+                aiChatbot: true,
+                gorenBashekimlik: true,
+                analysisModule: true,
+                schedulePlanning: true,
+                performancePlanning: true,
                 presentation: true,
-                reports: true,
+                emergencyService: true,
+              },
+              canUpload: {
+                detailedSchedule: true,
+                physicianData: true,
+                emergencyService: true,
               },
             },
             createdAt: new Date().toISOString(),
@@ -39,25 +76,40 @@ export const useUserPermissions = (userEmail: string | null) => {
           return;
         }
 
-        // Diğer kullanıcılar için Firestore'dan izinleri çek
-        const usersSnapshot = await getDoc(doc(db, 'users', userEmail));
+        // Diğer kullanıcılar için Firestore'dan izinleri çek (email ile query)
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', userEmail));
+        const querySnapshot = await getDocs(q);
 
-        if (usersSnapshot.exists()) {
-          setUserPermissions(usersSnapshot.data() as AppUser);
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data() as AppUser;
+          console.log('✅ Kullanıcı izinleri yüklendi:', userData);
+          setUserPermissions(userData);
         } else {
-          // Kullanıcı kaydı yoksa varsayılan izinler
+          // Kullanıcı kaydı yoksa - HİÇBİR modüle erişim yok
+          console.warn('⚠️ Kullanıcı kaydı bulunamadı, erişim engellendi:', userEmail);
           setUserPermissions({
             uid: userEmail,
             email: userEmail,
             displayName: userEmail.split('@')[0],
             role: 'user',
-            permissions: DEFAULT_PERMISSIONS,
+            permissions: NO_PERMISSIONS,
             createdAt: new Date().toISOString(),
             createdBy: 'system',
           });
         }
       } catch (error) {
         console.error('Kullanıcı izinleri yüklenemedi:', error);
+        // Hata durumunda erişim engelle
+        setUserPermissions({
+          uid: userEmail,
+          email: userEmail,
+          displayName: userEmail.split('@')[0],
+          role: 'user',
+          permissions: NO_PERMISSIONS,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system',
+        });
       } finally {
         setLoading(false);
       }
@@ -66,10 +118,21 @@ export const useUserPermissions = (userEmail: string | null) => {
     loadUserPermissions();
   }, [userEmail]);
 
-  const hasModuleAccess = (module: keyof AppUser['permissions']['modules']): boolean => {
+  const hasModuleAccess = (module: string): boolean => {
     if (!userPermissions) return false;
     if (userPermissions.role === 'admin') return true;
-    return userPermissions.permissions.modules[module];
+
+    // Modülün izin listesinde olup olmadığını kontrol et
+    const modules = userPermissions.permissions?.modules;
+    if (!modules) return false;
+
+    // Modül adı geçerli mi kontrol et
+    if (!(module in modules)) {
+      console.warn(`⚠️ Bilinmeyen modül: ${module}`);
+      return false;
+    }
+
+    return modules[module as keyof typeof modules] === true;
   };
 
   const hasHospitalAccess = (hospital: string): boolean => {
@@ -79,6 +142,20 @@ export const useUserPermissions = (userEmail: string | null) => {
     return userPermissions.permissions.allowedHospitals.includes(hospital);
   };
 
+  const canUploadData = (module: string): boolean => {
+    if (!userPermissions) return false;
+    if (userPermissions.role === 'admin') return true;
+
+    const canUpload = userPermissions.permissions?.canUpload;
+    if (!canUpload) return false;
+
+    if (!(module in canUpload)) {
+      return false;
+    }
+
+    return canUpload[module as keyof typeof canUpload] === true;
+  };
+
   const isAdmin = userPermissions?.role === 'admin';
 
   return {
@@ -86,6 +163,7 @@ export const useUserPermissions = (userEmail: string | null) => {
     loading,
     hasModuleAccess,
     hasHospitalAccess,
+    canUploadData,
     isAdmin,
   };
 };

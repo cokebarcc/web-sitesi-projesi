@@ -23,6 +23,8 @@ interface EmergencyServiceProps {
   selectedHospital: string;
   allowedHospitals: string[];
   onHospitalChange: (hospital: string) => void;
+  // Upload permission
+  canUpload?: boolean;
 }
 
 // Hastane kısa adları mapping
@@ -91,6 +93,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   selectedHospital,
   allowedHospitals,
   onHospitalChange,
+  canUpload = false,
 }) => {
   // Upload için tarih
   const [uploadDate, setUploadDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -126,6 +129,30 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   const [tableSelectedYears, setTableSelectedYears] = useState<number[]>([]);
   const [tableSelectedMonths, setTableSelectedMonths] = useState<number[]>([]);
   const [tableActiveMonth, setTableActiveMonth] = useState<number | null>(null);
+  const [tableSelectedHospitals, setTableSelectedHospitals] = useState<string[]>([]);
+
+  // Hastane filtresi için state
+  const [selectedHospitals, setSelectedHospitals] = useState<string[]>([]);
+
+  // Kullanıcının yetkili olduğu hastaneler (kısa ad formatında)
+  const authorizedHospitalShortNames = useMemo(() => {
+    // allowedHospitals boşsa tüm hastaneler yetkili
+    if (allowedHospitals.length === 0) {
+      return Object.values(hospitalShortNames);
+    }
+    // allowedHospitals'daki kısa adları döndür
+    return allowedHospitals;
+  }, [allowedHospitals]);
+
+  // Hastane seçimi handler (MultiSelectDropdown için)
+  const handleHospitalsChange = (values: (string | number)[]) => {
+    setSelectedHospitals(values.map(v => String(v)));
+  };
+
+  // Tablo hastane seçimi handler
+  const handleTableHospitalsChange = (values: (string | number)[]) => {
+    setTableSelectedHospitals(values.map(v => String(v)));
+  };
 
   // Load available date parts on mount
   useEffect(() => {
@@ -247,11 +274,30 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     });
   };
 
+  // Tablo için hastane yetkisi kontrolü
+  const isTableHospitalAuthorized = (hospitalName: string): boolean => {
+    const shortName = getShortName(hospitalName);
+    // allowedHospitals boşsa tüm hastaneler yetkili
+    if (allowedHospitals.length === 0) return true;
+    // Seçili hastaneler varsa onlara göre filtrele
+    if (tableSelectedHospitals.length > 0) {
+      return tableSelectedHospitals.includes(shortName);
+    }
+    // Seçili hastane yoksa yetkili tüm hastaneleri göster
+    return allowedHospitals.includes(shortName);
+  };
+
   // Bağımsız tablo veri yükleme
   const handleLoadTableData = async () => {
     const matchingDates = getTableMatchingDates();
     if (matchingDates.length === 0) {
       showToast('Seçimlere uygun tarih bulunamadı', 'error');
+      return;
+    }
+
+    // Hastane seçimi kontrolü
+    if (tableSelectedHospitals.length === 0 && allowedHospitals.length > 0) {
+      showToast('Lütfen en az bir hastane seçiniz', 'error');
       return;
     }
 
@@ -264,13 +310,16 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
         const fileForDate = allFiles.find(f => f.date === date);
         if (fileForDate && fileForDate.data) {
           fileForDate.data.forEach(hospital => {
-            dailyDataArr.push({
-              date,
-              hospitalName: hospital.hospitalName,
-              greenAreaCount: hospital.greenAreaCount,
-              totalCount: hospital.totalCount,
-              greenAreaRate: hospital.greenAreaRate
-            });
+            // Sadece yetkili hastaneleri ekle
+            if (isTableHospitalAuthorized(hospital.hospitalName)) {
+              dailyDataArr.push({
+                date,
+                hospitalName: hospital.hospitalName,
+                greenAreaCount: hospital.greenAreaCount,
+                totalCount: hospital.totalCount,
+                greenAreaRate: hospital.greenAreaRate
+              });
+            }
           });
         }
       });
@@ -334,10 +383,29 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     }
   };
 
+  // Hastane kısa adının yetkili olup olmadığını kontrol et
+  const isHospitalAuthorized = (hospitalName: string): boolean => {
+    const shortName = getShortName(hospitalName);
+    // allowedHospitals boşsa tüm hastaneler yetkili
+    if (allowedHospitals.length === 0) return true;
+    // Seçili hastaneler varsa onlara göre filtrele
+    if (selectedHospitals.length > 0) {
+      return selectedHospitals.includes(shortName);
+    }
+    // Seçili hastane yoksa yetkili tüm hastaneleri göster
+    return allowedHospitals.includes(shortName);
+  };
+
   const handleLoadData = async () => {
     const matchingDates = getMatchingDates();
     if (matchingDates.length === 0) {
       showToast('Seçimlere uygun tarih bulunamadı', 'error');
+      return;
+    }
+
+    // Hastane seçimi kontrolü
+    if (selectedHospitals.length === 0 && allowedHospitals.length > 0) {
+      showToast('Lütfen en az bir hastane seçiniz', 'error');
       return;
     }
 
@@ -354,22 +422,27 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
         const fileForDate = allFiles.find(f => f.date === date);
         if (fileForDate && fileForDate.data) {
           fileForDate.data.forEach(hospital => {
-            dailyDataArr.push({
-              date,
-              hospitalName: hospital.hospitalName,
-              greenAreaCount: hospital.greenAreaCount,
-              totalCount: hospital.totalCount,
-              greenAreaRate: hospital.greenAreaRate
-            });
+            // Sadece yetkili hastaneleri ekle
+            if (isHospitalAuthorized(hospital.hospitalName)) {
+              dailyDataArr.push({
+                date,
+                hospitalName: hospital.hospitalName,
+                greenAreaCount: hospital.greenAreaCount,
+                totalCount: hospital.totalCount,
+                greenAreaRate: hospital.greenAreaRate
+              });
+            }
           });
         }
       });
 
       if (loadedData) {
-        setData(loadedData);
+        // Yetkili hastanelere göre filtrele
+        const filteredData = loadedData.filter(d => isHospitalAuthorized(d.hospitalName));
+        setData(filteredData);
         setDailyData(dailyDataArr);
         setSelectedDatesForDisplay(matchingDates);
-        showToast(`${matchingDates.length} tarihten ${loadedData.length} hastane verisi yüklendi`, 'success');
+        showToast(`${matchingDates.length} tarihten ${filteredData.length} hastane verisi yüklendi`, 'success');
       } else {
         showToast('Veri bulunamadı', 'error');
         setData(null);
@@ -612,6 +685,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   };
 
   // Dropdown options için memoized değerler
+  const hospitalOptions: DropdownOption[] = useMemo(() =>
+    authorizedHospitalShortNames.map(h => ({ value: h, label: h })).sort((a, b) => a.label.localeCompare(b.label, 'tr-TR')),
+    [authorizedHospitalShortNames]
+  );
+
   const yearOptions: DropdownOption[] = useMemo(() =>
     availableYears.map(year => ({ value: year, label: String(year) })),
     [availableYears]
@@ -728,63 +806,65 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
         </div>
       </div>
 
-      {/* Veri Yükleme Bölümü */}
-      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Veri Yükleme</h3>
-        <div className="flex flex-wrap gap-4 items-end">
-          {/* Yükleme için Tarih Picker */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-400">Yükleme Tarihi</label>
-            <input
-              type="date"
-              value={uploadDate}
-              onChange={(e) => setUploadDate(e.target.value)}
-              className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-            />
+      {/* Veri Yükleme Bölümü - Sadece yükleme izni varsa göster */}
+      {canUpload && (
+        <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Veri Yükleme</h3>
+          <div className="flex flex-wrap gap-4 items-end">
+            {/* Yükleme için Tarih Picker */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-slate-400">Yükleme Tarihi</label>
+              <input
+                type="date"
+                value={uploadDate}
+                onChange={(e) => setUploadDate(e.target.value)}
+                className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              />
+            </div>
+
+            {/* Upload Button */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-slate-400">Excel Dosyası</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || !uploadDate}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isUploading ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Yükleniyor...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Excel Yükle
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Upload Button */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-400">Excel Dosyası</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading || !uploadDate}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isUploading ? (
-                <>
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Yükleniyor...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  Excel Yükle
-                </>
-              )}
-            </button>
+          {/* Excel format info */}
+          <div className="mt-4 p-4 bg-slate-700/30 rounded-xl">
+            <p className="text-xs text-slate-400">
+              <span className="font-semibold">Excel Formatı:</span> Kurum Adı | Yeşil Alan Muayene Sayısı | Toplam Muayene Sayısı
+            </p>
           </div>
         </div>
-
-        {/* Excel format info */}
-        <div className="mt-4 p-4 bg-slate-700/30 rounded-xl">
-          <p className="text-xs text-slate-400">
-            <span className="font-semibold">Excel Formatı:</span> Kurum Adı | Yeşil Alan Muayene Sayısı | Toplam Muayene Sayısı
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Filtreler */}
       <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
@@ -817,6 +897,20 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
         {/* Multi-Select Dropdowns */}
         <div className="flex flex-wrap gap-4 items-end">
+          {/* Hastane Seçimi - En başta */}
+          {allowedHospitals.length > 0 && (
+            <MultiSelectDropdown
+              label="Hastane Seçimi"
+              options={hospitalOptions}
+              selectedValues={selectedHospitals}
+              onChange={handleHospitalsChange}
+              placeholder="Hastane seçiniz..."
+              disabled={hospitalOptions.length === 0}
+              emptyMessage="Yetkili hastane yok"
+              showSearch={true}
+            />
+          )}
+
           {/* Yıl Seçimi */}
           <MultiSelectDropdown
             label="Yıl Seçimi"
@@ -872,7 +966,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           {/* Uygula Butonu */}
           <button
             onClick={handleLoadData}
-            disabled={isLoading || getMatchingDates().length === 0}
+            disabled={isLoading || getMatchingDates().length === 0 || (allowedHospitals.length > 0 && selectedHospitals.length === 0)}
             className="px-6 py-2.5 h-[42px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
           >
             {isLoading ? (
@@ -893,6 +987,18 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             )}
           </button>
         </div>
+
+        {/* Hastane seçimi uyarısı */}
+        {allowedHospitals.length > 0 && selectedHospitals.length === 0 && (
+          <div className="mt-4 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
+            <p className="text-sm text-amber-400 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Veri görüntülemek için en az bir hastane seçmelisiniz
+            </p>
+          </div>
+        )}
       </div>
 
       {/* No Data Message */}
@@ -959,8 +1065,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* İl Geneli Card - First and Larger */}
-              {ilGeneli && (
+              {/* İl Geneli Card - Sadece tüm hastaneler için yetkili olanlara göster */}
+              {ilGeneli && allowedHospitals.length === 0 && (
                 <HospitalCard
                   data={ilGeneli}
                   isIlGeneli={true}
@@ -1007,7 +1113,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 <p className="text-sm text-slate-600 font-medium">
                   Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-600">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
                 </p>
-                {ilGeneli && (
+                {ilGeneli && allowedHospitals.length === 0 && (
                   <p className="text-sm text-slate-500 mt-2">
                     Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-slate-800">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
                   </p>
@@ -1033,6 +1139,20 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
           {/* Tablo Filtreleri */}
           <div className="flex flex-wrap items-end gap-4 p-4 bg-slate-700/30 rounded-xl">
+            {/* Hastane Seçimi - En başta */}
+            {allowedHospitals.length > 0 && (
+              <MultiSelectDropdown
+                label="Hastane Seçimi"
+                options={hospitalOptions}
+                selectedValues={tableSelectedHospitals}
+                onChange={handleTableHospitalsChange}
+                placeholder="Hastane seçiniz..."
+                disabled={hospitalOptions.length === 0}
+                emptyMessage="Yetkili hastane yok"
+                showSearch={true}
+              />
+            )}
+
             {/* Yıl Seçimi */}
             <MultiSelectDropdown
               label="Yıl Seçimi"
@@ -1088,7 +1208,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             {/* Uygula Butonu */}
             <button
               onClick={handleLoadTableData}
-              disabled={isTableLoading || getTableMatchingDates().length === 0}
+              disabled={isTableLoading || getTableMatchingDates().length === 0 || (allowedHospitals.length > 0 && tableSelectedHospitals.length === 0)}
               className="px-6 py-2.5 h-[42px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
             >
               {isTableLoading ? (
@@ -1109,6 +1229,18 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               )}
             </button>
           </div>
+
+          {/* Hastane seçimi uyarısı */}
+          {allowedHospitals.length > 0 && tableSelectedHospitals.length === 0 && (
+            <div className="mt-2 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
+              <p className="text-sm text-amber-400 flex items-center gap-2">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Tablo verisi görüntülemek için en az bir hastane seçmelisiniz
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Tablo */}
@@ -1119,6 +1251,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               data={tableData}
               selectedDates={tableDates}
               onCopy={() => showToast('Tablo panoya kopyalandı', 'success')}
+              showProvinceTotals={allowedHospitals.length === 0}
             />
           </div>
         ) : (

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import React, { useState, useEffect, useMemo } from 'react';
+import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth, db } from '../../firebase';
 import { AppUser, UserPermissions, DEFAULT_PERMISSIONS, ADMIN_EMAIL } from '../types/user';
+import { HOSPITALS } from '../../constants';
 import './AdminPanel.css';
 
 interface AdminPanelProps {
@@ -19,10 +20,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [allowedHospitals, setAllowedHospitals] = useState<string>('');
+  const [selectedHospitals, setSelectedHospitals] = useState<string[]>([]);
+  const [hospitalSearch, setHospitalSearch] = useState('');
+  const [showHospitalDropdown, setShowHospitalDropdown] = useState(false);
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Admin kontrolü
   const isAdmin = currentUserEmail === ADMIN_EMAIL;
@@ -57,10 +61,35 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
     }
   };
 
+  // Filtrelenmiş hastane listesi
+  const filteredHospitals = useMemo(() => {
+    if (!hospitalSearch) return HOSPITALS;
+    return HOSPITALS.filter(h =>
+      h.toLowerCase().includes(hospitalSearch.toLowerCase())
+    );
+  }, [hospitalSearch]);
+
+  const toggleHospital = (hospital: string) => {
+    setSelectedHospitals(prev =>
+      prev.includes(hospital)
+        ? prev.filter(h => h !== hospital)
+        : [...prev, hospital]
+    );
+  };
+
+  const selectAllHospitals = () => {
+    setSelectedHospitals([...HOSPITALS]);
+  };
+
+  const clearAllHospitals = () => {
+    setSelectedHospitals([]);
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setIsSubmitting(true);
 
     try {
       // Firebase Authentication'da kullanıcı oluştur
@@ -75,7 +104,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
         role: 'user',
         permissions: {
           ...permissions,
-          allowedHospitals: allowedHospitals ? allowedHospitals.split(',').map(h => h.trim()) : [],
+          allowedHospitals: selectedHospitals,
         },
         createdAt: new Date().toISOString(),
         createdBy: currentUserEmail,
@@ -88,7 +117,73 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
       setShowAddModal(false);
       loadUsers();
     } catch (err: any) {
-      setError(err.message || 'Kullanıcı oluşturulamadı');
+      console.error('Kullanıcı oluşturma hatası:', err);
+      // Daha anlaşılır hata mesajları
+      if (err.code === 'auth/email-already-in-use') {
+        // Email zaten Firebase Auth'da var - kullanıcıyı yeniden etkinleştirmeyi öner
+        const reactivate = window.confirm(
+          'Bu e-posta adresi Firebase Authentication\'da zaten mevcut.\n\n' +
+          'Bu kullanıcı daha önce silinmiş olabilir (sadece Firestore\'dan).\n\n' +
+          'Kullanıcıyı girdiğiniz şifre ile yeniden etkinleştirmek ister misiniz?'
+        );
+
+        if (reactivate) {
+          try {
+            // Mevcut admin oturumunu kaydet
+            const currentUser = auth.currentUser;
+
+            // Kullanıcı şifresi ile giriş yapmayı dene
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const existingUser = userCredential.user;
+
+            // Firestore'da kullanıcı kaydını oluştur
+            const userData: AppUser = {
+              uid: existingUser.uid,
+              email: email,
+              displayName: displayName,
+              role: 'user',
+              permissions: {
+                ...permissions,
+                allowedHospitals: selectedHospitals,
+              },
+              createdAt: new Date().toISOString(),
+              createdBy: currentUserEmail,
+            };
+
+            await setDoc(doc(db, 'users', existingUser.uid), userData);
+
+            // Admin oturumunu geri yükle (eğer farklıysa)
+            await signOut(auth);
+
+            setSuccess('Kullanıcı başarıyla yeniden etkinleştirildi! Lütfen tekrar giriş yapın.');
+            resetForm();
+            setShowAddModal(false);
+            loadUsers();
+
+            // Sayfayı yenile (admin oturumunu yeniden başlatmak için)
+            setTimeout(() => window.location.reload(), 1500);
+          } catch (reactivateErr: any) {
+            console.error('Yeniden etkinleştirme hatası:', reactivateErr);
+            if (reactivateErr.code === 'auth/wrong-password' || reactivateErr.code === 'auth/invalid-credential') {
+              setError('Şifre hatalı! Firebase Auth\'daki mevcut şifre ile eşleşmiyor. Firebase Console\'dan kullanıcıyı silin veya doğru şifreyi girin.');
+            } else {
+              setError('Yeniden etkinleştirme başarısız: ' + reactivateErr.message);
+            }
+          }
+        } else {
+          setError('Bu e-posta zaten kullanımda. Firebase Console > Authentication\'dan kullanıcıyı manuel olarak silebilirsiniz.');
+        }
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Geçersiz e-posta adresi!');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Şifre en az 6 karakter olmalıdır!');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError('E-posta/şifre girişi etkin değil. Firebase konsolunda etkinleştirin.');
+      } else {
+        setError(err.message || 'Kullanıcı oluşturulamadı');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -98,13 +193,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
 
     setError('');
     setSuccess('');
+    setIsSubmitting(true);
 
     try {
       const userData: Partial<AppUser> = {
         displayName: displayName,
         permissions: {
           ...permissions,
-          allowedHospitals: allowedHospitals ? allowedHospitals.split(',').map(h => h.trim()) : [],
+          allowedHospitals: selectedHospitals,
         },
       };
 
@@ -113,18 +209,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
       setSuccess('Kullanıcı başarıyla güncellendi!');
       setEditingUser(null);
       resetForm();
+      setShowAddModal(false);
       loadUsers();
     } catch (err: any) {
+      console.error('Güncelleme hatası:', err);
       setError(err.message || 'Kullanıcı güncellenemedi');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) return;
+    const confirmed = window.confirm(
+      '⚠️ Bu kullanıcıyı silmek istediğinizden emin misiniz?\n\n' +
+      'NOT: Bu işlem sadece Firestore kaydını siler. Firebase Authentication\'daki kullanıcı kalır.\n' +
+      'Aynı email ile tekrar kayıt için Firebase Console\'dan manuel silme gerekebilir.'
+    );
+    if (!confirmed) return;
 
     try {
       await deleteDoc(doc(db, 'users', userId));
-      setSuccess('Kullanıcı silindi!');
+      setSuccess('Kullanıcı Firestore\'dan silindi! (Auth kaydı hala mevcut olabilir)');
       loadUsers();
     } catch (err: any) {
       setError(err.message || 'Kullanıcı silinemedi');
@@ -174,7 +279,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
     setEditingUser(user);
     setEmail(user.email);
     setDisplayName(user.displayName);
-    setAllowedHospitals(user.permissions.allowedHospitals.join(', '));
+    setSelectedHospitals(user.permissions.allowedHospitals || []);
     setPermissions(user.permissions);
     setShowAddModal(true);
   };
@@ -183,7 +288,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
     setEmail('');
     setPassword('');
     setDisplayName('');
-    setAllowedHospitals('');
+    setSelectedHospitals([]);
+    setHospitalSearch('');
+    setShowHospitalDropdown(false);
     setPermissions(DEFAULT_PERMISSIONS);
     setError('');
     setSuccess('');
@@ -271,6 +378,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                     {user.permissions.modules.performancePlanning && <span className="perm-badge">Planlama</span>}
                     {user.permissions.modules.presentation && <span className="perm-badge">Sunum</span>}
                     {user.permissions.modules.emergencyService && <span className="perm-badge">Acil</span>}
+                    {user.permissions.canUpload?.detailedSchedule && <span className="upload-badge">📤 Cetvel Yükle</span>}
+                    {user.permissions.canUpload?.physicianData && <span className="upload-badge">📤 Hekim Yükle</span>}
+                    {user.permissions.canUpload?.emergencyService && <span className="upload-badge">📤 Acil Yükle</span>}
                   </div>
                 </td>
                 <td>
@@ -329,14 +439,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
               </div>
 
               <div className="form-group">
-                <label>İzinli Hastaneler (virgülle ayırın, boş bırakırsanız tümü):</label>
-                <input
-                  type="text"
-                  value={allowedHospitals}
-                  onChange={(e) => setAllowedHospitals(e.target.value)}
-                  placeholder="Örn: Hastane A, Hastane B"
-                />
-                <small>Boş bırakırsanız tüm hastaneleri görebilir</small>
+                <label>İzinli Hastaneler:</label>
+                <div className="hospital-selector">
+                  <div className="hospital-selector-header">
+                    <input
+                      type="text"
+                      value={hospitalSearch}
+                      onChange={(e) => setHospitalSearch(e.target.value)}
+                      onFocus={() => setShowHospitalDropdown(true)}
+                      placeholder="Hastane ara..."
+                      className="hospital-search"
+                    />
+                    <div className="hospital-actions">
+                      <button type="button" onClick={selectAllHospitals} className="btn-small">Tümünü Seç</button>
+                      <button type="button" onClick={clearAllHospitals} className="btn-small btn-clear">Temizle</button>
+                    </div>
+                  </div>
+
+                  {selectedHospitals.length > 0 && (
+                    <div className="selected-hospitals">
+                      {selectedHospitals.map(h => (
+                        <span key={h} className="hospital-tag">
+                          {h}
+                          <button type="button" onClick={() => toggleHospital(h)}>&times;</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="hospital-dropdown">
+                    {filteredHospitals.map(hospital => (
+                      <label key={hospital} className="hospital-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedHospitals.includes(hospital)}
+                          onChange={() => toggleHospital(hospital)}
+                        />
+                        {hospital}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <small>Hiç seçim yapmazsanız tüm hastaneleri görebilir</small>
               </div>
 
               <div className="form-group">
@@ -466,12 +610,71 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                 </div>
               </div>
 
+              <div className="form-group">
+                <label>Veri Yükleme İzinleri:</label>
+                <small style={{ display: 'block', marginBottom: '8px', color: '#666' }}>
+                  Seçili modüllere veri yükleyebilir (Excel/dosya yükleme)
+                </small>
+                <div className="checkbox-group upload-permissions">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.canUpload?.detailedSchedule || false}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        canUpload: {
+                          ...permissions.canUpload,
+                          detailedSchedule: e.target.checked,
+                          physicianData: permissions.canUpload?.physicianData || false,
+                          emergencyService: permissions.canUpload?.emergencyService || false,
+                        }
+                      })}
+                    />
+                    Detaylı Cetveller Yükle
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.canUpload?.physicianData || false}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        canUpload: {
+                          ...permissions.canUpload,
+                          detailedSchedule: permissions.canUpload?.detailedSchedule || false,
+                          physicianData: e.target.checked,
+                          emergencyService: permissions.canUpload?.emergencyService || false,
+                        }
+                      })}
+                    />
+                    Hekim Verileri Yükle
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.canUpload?.emergencyService || false}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        canUpload: {
+                          ...permissions.canUpload,
+                          detailedSchedule: permissions.canUpload?.detailedSchedule || false,
+                          physicianData: permissions.canUpload?.physicianData || false,
+                          emergencyService: e.target.checked,
+                        }
+                      })}
+                    />
+                    Acil Servis Verileri Yükle
+                  </label>
+                </div>
+              </div>
+
+              {error && <div className="alert alert-error" style={{ marginTop: '16px' }}>{error}</div>}
+
               <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={handleCloseModal}>
+                <button type="button" className="btn-cancel" onClick={handleCloseModal} disabled={isSubmitting}>
                   İptal
                 </button>
-                <button type="submit" className="btn-submit">
-                  {editingUser ? 'Güncelle' : 'Ekle'}
+                <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'İşleniyor...' : (editingUser ? 'Güncelle' : 'Ekle')}
                 </button>
               </div>
             </form>

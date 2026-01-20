@@ -17,6 +17,13 @@ export interface UserPermissions {
     presentation: boolean;
     emergencyService: boolean;
   };
+
+  // Hangi modüllere veri yükleyebilir
+  canUpload?: {
+    detailedSchedule: boolean;
+    physicianData: boolean;
+    emergencyService: boolean;
+  };
 }
 
 export interface AppUser {
@@ -46,5 +53,10 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
     performancePlanning: true,
     presentation: true,
     emergencyService: true,
+  },
+  canUpload: {
+    detailedSchedule: false,
+    physicianData: false,
+    emergencyService: false,
   },
 };
