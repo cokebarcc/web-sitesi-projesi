@@ -202,4 +202,36 @@ export type ViewType =
   | 'presentation'
   | 'emergency-service'      // Acil Servis modülü
   | 'schedule-planning'      // Cetvel Planlama modülü
+  | 'active-demand'          // Aktif Talep modülü
   | 'admin';
+
+// Aktif Talep (Active Demand) Types
+export interface BranchDemand {
+  branchName: string;
+  demandCount: number;
+}
+
+export interface DemandEntry {
+  id: string;
+  hospitalId: string;
+  hospitalName: string;
+  date: string;           // YYYY-MM-DD formatı
+  branches: BranchDemand[];
+  totalDemand: number;
+  uploadedAt: string;
+  uploadedBy: string;
+}
+
+export interface HospitalDemandSummary {
+  hospitalId: string;
+  hospitalName: string;
+  totalDemand: number;
+  branches: BranchDemand[];
+}
+
+export interface DemandSummary {
+  totalProvinceDemand: number;
+  totalHospitals: number;
+  branchTotals: BranchDemand[];
+  hospitalSummaries: HospitalDemandSummary[];
+}

@@ -378,9 +378,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                     {user.permissions.modules.performancePlanning && <span className="perm-badge">Planlama</span>}
                     {user.permissions.modules.presentation && <span className="perm-badge">Sunum</span>}
                     {user.permissions.modules.emergencyService && <span className="perm-badge">Acil</span>}
+                    {user.permissions.modules.activeDemand && <span className="perm-badge">Aktif Talep</span>}
                     {user.permissions.canUpload?.detailedSchedule && <span className="upload-badge">📤 Cetvel Yükle</span>}
                     {user.permissions.canUpload?.physicianData && <span className="upload-badge">📤 Hekim Yükle</span>}
                     {user.permissions.canUpload?.emergencyService && <span className="upload-badge">📤 Acil Yükle</span>}
+                    {user.permissions.canUpload?.activeDemand && <span className="upload-badge">📤 Talep Yükle</span>}
                   </div>
                 </td>
                 <td>
@@ -607,6 +609,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                     />
                     Acil Servis
                   </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.modules.activeDemand}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        modules: { ...permissions.modules, activeDemand: e.target.checked }
+                      })}
+                    />
+                    Aktif Talep
+                  </label>
                 </div>
               </div>
 
@@ -627,6 +640,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                           detailedSchedule: e.target.checked,
                           physicianData: permissions.canUpload?.physicianData || false,
                           emergencyService: permissions.canUpload?.emergencyService || false,
+                          activeDemand: permissions.canUpload?.activeDemand || false,
                         }
                       })}
                     />
@@ -643,6 +657,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                           detailedSchedule: permissions.canUpload?.detailedSchedule || false,
                           physicianData: e.target.checked,
                           emergencyService: permissions.canUpload?.emergencyService || false,
+                          activeDemand: permissions.canUpload?.activeDemand || false,
                         }
                       })}
                     />
@@ -659,10 +674,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
                           detailedSchedule: permissions.canUpload?.detailedSchedule || false,
                           physicianData: permissions.canUpload?.physicianData || false,
                           emergencyService: e.target.checked,
+                          activeDemand: permissions.canUpload?.activeDemand || false,
                         }
                       })}
                     />
                     Acil Servis Verileri Yükle
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.canUpload?.activeDemand || false}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        canUpload: {
+                          ...permissions.canUpload,
+                          detailedSchedule: permissions.canUpload?.detailedSchedule || false,
+                          physicianData: permissions.canUpload?.physicianData || false,
+                          emergencyService: permissions.canUpload?.emergencyService || false,
+                          activeDemand: e.target.checked,
+                        }
+                      })}
+                    />
+                    Aktif Talep Verileri Yükle
                   </label>
                 </div>
               </div>

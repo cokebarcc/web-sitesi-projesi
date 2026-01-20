@@ -38,6 +38,7 @@ import EmergencyService from './components/EmergencyService';
 import WelcomeDashboard from './components/WelcomeDashboard';
 import FloatingSidebar from './components/FloatingSidebar';
 import SchedulePlanning from './components/SchedulePlanning';
+import ActiveDemand from './components/ActiveDemand';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -828,6 +829,15 @@ const App: React.FC = () => {
                   onHospitalChange={setSelectedHospital}
                   selectedBranch={selectedBranch}
                   detailedScheduleData={detailedScheduleData}
+                />
+              );
+            case 'active-demand':
+              return (
+                <ActiveDemand
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                  canUpload={canUploadData('activeDemand')}
                 />
               );
             default: return null;

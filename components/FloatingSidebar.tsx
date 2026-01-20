@@ -96,7 +96,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       ),
       iconColor: 'text-red-400',
       items: [
-        { id: 'emergency-service', label: 'Yeşil Alan Oranları', view: 'emergency-service', hasAccess: hasModuleAccess('emergencyService') }
+        { id: 'emergency-service', label: 'Yeşil Alan Oranları', view: 'emergency-service', hasAccess: hasModuleAccess('emergencyService') },
+        { id: 'active-demand', label: 'Aktif Talep', view: 'active-demand', hasAccess: hasModuleAccess('activeDemand') }
       ]
     },
     {

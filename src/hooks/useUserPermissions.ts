@@ -19,11 +19,13 @@ const NO_PERMISSIONS: UserPermissions = {
     performancePlanning: false,
     presentation: false,
     emergencyService: false,
+    activeDemand: false,
   },
   canUpload: {
     detailedSchedule: false,
     physicianData: false,
     emergencyService: false,
+    activeDemand: false,
   },
 };
 
@@ -62,11 +64,13 @@ export const useUserPermissions = (userEmail: string | null) => {
                 performancePlanning: true,
                 presentation: true,
                 emergencyService: true,
+                activeDemand: true,
               },
               canUpload: {
                 detailedSchedule: true,
                 physicianData: true,
                 emergencyService: true,
+                activeDemand: true,
               },
             },
             createdAt: new Date().toISOString(),
