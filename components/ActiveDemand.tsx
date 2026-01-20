@@ -108,11 +108,14 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Kullanıcının yetkili olduğu hastaneler (kısa ad formatında)
+  // Aktif Talep modülünde ek hastaneleri de dahil et
   const authorizedHospitalShortNames = useMemo(() => {
     if (allowedHospitals.length === 0) {
-      return Object.values(hospitalShortNames);
+      // Tüm hastaneler + ek hastaneler (ADSH/ADSM)
+      return ACTIVE_DEMAND_ALL_HOSPITALS;
     }
-    return allowedHospitals;
+    // Kullanıcının yetkili olduğu hastaneler + ek hastaneler
+    return [...allowedHospitals, ...ACTIVE_DEMAND_EXTRA_HOSPITALS];
   }, [allowedHospitals]);
 
   // Kullanıcının TÜM hastanelere yetkisi var mı?
