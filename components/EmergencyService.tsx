@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf';
 import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
 import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
 import GreenAreaDailyRateTable, { GreenAreaDailyRateTableRef } from './GreenAreaDailyRateTable';
+import { HOSPITALS } from '../constants';
 
 // Günlük tablo için veri yapısı
 interface DailyData {
@@ -142,6 +143,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     }
     // allowedHospitals'daki kısa adları döndür
     return allowedHospitals;
+  }, [allowedHospitals]);
+
+  // Kullanıcının TÜM hastanelere yetkisi var mı? (boş liste = tüm hastaneler, veya tüm hastaneler seçilmiş)
+  const hasAllHospitalsAccess = useMemo(() => {
+    return allowedHospitals.length === 0 || allowedHospitals.length >= HOSPITALS.length;
   }, [allowedHospitals]);
 
   // Hastane seçimi handler (MultiSelectDropdown için)
@@ -1065,8 +1071,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* İl Geneli Card - Sadece tüm hastaneler için yetkili olanlara göster */}
-              {ilGeneli && allowedHospitals.length === 0 && (
+              {/* İl Geneli Card - Tüm hastanelere yetkisi olan kullanıcılara göster */}
+              {ilGeneli && hasAllHospitalsAccess && (
                 <HospitalCard
                   data={ilGeneli}
                   isIlGeneli={true}
@@ -1113,7 +1119,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 <p className="text-sm text-slate-600 font-medium">
                   Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-600">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
                 </p>
-                {ilGeneli && allowedHospitals.length === 0 && (
+                {ilGeneli && hasAllHospitalsAccess && (
                   <p className="text-sm text-slate-500 mt-2">
                     Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-slate-800">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
                   </p>
@@ -1251,7 +1257,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               data={tableData}
               selectedDates={tableDates}
               onCopy={() => showToast('Tablo panoya kopyalandı', 'success')}
-              showProvinceTotals={allowedHospitals.length === 0}
+              showProvinceTotals={hasAllHospitalsAccess}
             />
           </div>
         ) : (
