@@ -41,8 +41,8 @@ const hospitalShortNames: Record<string, string> = {
   'Şanlıurfa Akçakale Devlet Hastanesi': 'Akçakale DH',
   'Şanlıurfa Balıklıgöl Devlet Hastanesi': 'Balıklıgöl DH',
   'Şanlıurfa Viranşehir Devlet Hastanesi': 'Viranşehir DH',
-  'Şanlıurfa Sağlık Bilimleri Üniversitesi Mehmet Akif İnan EAH': 'Şanlıurfa EAH',
-  'Şanlıurfa Eğitim ve Araştırma Hastanesi': 'Mehmet Akif İnan EAH',
+  'Şanlıurfa Sağlık Bilimleri Üniversitesi Mehmet Akif İnan EAH': 'Mehmet Akif İnan EAH',
+  'Şanlıurfa Eğitim ve Araştırma Hastanesi': 'Şanlıurfa EAH',
 };
 
 const MONTH_NAMES = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];

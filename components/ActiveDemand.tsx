@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
+import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
 import { HOSPITALS } from '../constants';
 
 interface ActiveDemandProps {
@@ -20,27 +21,47 @@ interface ActiveDemandProps {
   canUpload?: boolean;
 }
 
-const MONTH_NAMES = ['', 'Ocak', 'Subat', 'Mart', 'Nisan', 'Mayis', 'Haziran', 'Temmuz', 'Agustos', 'Eylul', 'Ekim', 'Kasim', 'Aralik'];
+const MONTH_NAMES = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 
-// Hastane kisa adlari mapping
+// Aktif Talep modülüne özel ek hastaneler (ADSH ve ADSM'ler)
+const ACTIVE_DEMAND_EXTRA_HOSPITALS = [
+  'Şanlıurfa ADSH',
+  'Haliliye ADSH',
+  'Eyyübiye ADSM',
+  'Siverek ADSM'
+];
+
+// Aktif Talep modülü için TÜM hastaneler (normal + ek)
+const ACTIVE_DEMAND_ALL_HOSPITALS = [...HOSPITALS, ...ACTIVE_DEMAND_EXTRA_HOSPITALS];
+
+// Hastane kisa adlari mapping (uzun isimlerden kısa isimlere)
 const hospitalShortNames: Record<string, string> = {
-  'Sanliurfa Birecik Devlet Hastanesi': 'Birecik DH',
-  'Sanliurfa Bozova Devlet Hastanesi': 'Bozova DH',
-  'Sanliurfa Halfeti Ilce Hastanesi': 'Halfeti DH',
-  'Sanliurfa Hilvan Devlet Hastanesi': 'Hilvan DH',
-  'Sanliurfa Suruc Devlet Hastanesi': 'Suruc DH',
-  'Sanliurfa Harran Devlet Hastanesi': 'Harran DH',
-  'Sanliurfa Ceylanpinar Devlet Hastanesi': 'Ceylanpinar DH',
-  'Sanliurfa Siverek Devlet Hastanesi': 'Siverek DH',
-  'Sanliurfa Akcakale Devlet Hastanesi': 'Akcakale DH',
-  'Sanliurfa Balikligol Devlet Hastanesi': 'Balikligol DH',
-  'Sanliurfa Viransehir Devlet Hastanesi': 'Viransehir DH',
-  'Sanliurfa Saglik Bilimleri Universitesi Mehmet Akif Inan EAH': 'Sanliurfa EAH',
-  'Sanliurfa Egitim ve Arastirma Hastanesi': 'Mehmet Akif Inan EAH',
+  'Şanlıurfa Birecik Devlet Hastanesi': 'Birecik DH',
+  'Şanlıurfa Bozova Devlet Hastanesi': 'Bozova DH',
+  'Şanlıurfa Halfeti İlçe Hastanesi': 'Halfeti DH',
+  'Şanlıurfa Hilvan Devlet Hastanesi': 'Hilvan DH',
+  'Şanlıurfa Suruç Devlet Hastanesi': 'Suruç DH',
+  'Şanlıurfa Harran Devlet Hastanesi': 'Harran DH',
+  'Şanlıurfa Ceylanpınar Devlet Hastanesi': 'Ceylanpınar DH',
+  'Şanlıurfa Siverek Devlet Hastanesi': 'Siverek DH',
+  'Şanlıurfa Akçakale Devlet Hastanesi': 'Akçakale DH',
+  'Şanlıurfa Balıklıgöl Devlet Hastanesi': 'Balıklıgöl DH',
+  'Şanlıurfa Viranşehir Devlet Hastanesi': 'Viranşehir DH',
+  'Şanlıurfa Sağlık Bilimleri Üniversitesi Mehmet Akif İnan EAH': 'Mehmet Akif İnan EAH',
+  'Şanlıurfa Eğitim ve Araştırma Hastanesi': 'Şanlıurfa EAH',
 };
 
 const getShortName = (fullName: string): string => {
-  return hospitalShortNames[fullName] || fullName.replace('Sanliurfa ', '').replace(' Devlet Hastanesi', ' DH');
+  // Önce mapping'de ara
+  if (hospitalShortNames[fullName]) {
+    return hospitalShortNames[fullName];
+  }
+  // Zaten kısa ad ise (HOSPITALS veya ACTIVE_DEMAND_ALL_HOSPITALS listesinde varsa) doğrudan döndür
+  if (ACTIVE_DEMAND_ALL_HOSPITALS.includes(fullName)) {
+    return fullName;
+  }
+  // Son çare: dönüştürme yap
+  return fullName.replace('Şanlıurfa ', '').replace(' Devlet Hastanesi', ' DH');
 };
 
 // Grafik renkleri
@@ -55,33 +76,64 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
   onHospitalChange,
   canUpload = false,
 }) => {
-  // Upload icin state'ler
+  // Upload için state'ler
   const [uploadDate, setUploadDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [uploadHospitalId, setUploadHospitalId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadHospitalDropdownOpen, setUploadHospitalDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filtre state'leri
+  // Filtre state'leri - EmergencyService ile aynı mantık
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [availableMonths, setAvailableMonths] = useState<Record<number, number[]>>({});
   const [availableDays, setAvailableDays] = useState<Record<string, number[]>>({});
   const [allDates, setAllDates] = useState<string[]>([]);
 
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedYears, setSelectedYears] = useState<number[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null });
+  const [activeMonth, setActiveMonth] = useState<number | null>(null);
+
+  // Hastane filtresi
+  const [selectedHospitals, setSelectedHospitals] = useState<string[]>([]);
 
   // Veri state'leri
   const [summary, setSummary] = useState<DemandSummary | null>(null);
+  const [selectedDatesForDisplay, setSelectedDatesForDisplay] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // PDF export ref
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Mevcut tarihleri yukle
+  // Kullanıcının yetkili olduğu hastaneler (kısa ad formatında)
+  const authorizedHospitalShortNames = useMemo(() => {
+    if (allowedHospitals.length === 0) {
+      return Object.values(hospitalShortNames);
+    }
+    return allowedHospitals;
+  }, [allowedHospitals]);
+
+  // Kullanıcının TÜM hastanelere yetkisi var mı?
+  const hasAllHospitalsAccess = useMemo(() => {
+    return allowedHospitals.length === 0 || allowedHospitals.length >= HOSPITALS.length;
+  }, [allowedHospitals]);
+
+  // Mevcut tarihleri yükle
   useEffect(() => {
     loadDateParts();
+  }, []);
+
+  // Upload dropdown dışına tıklandığında kapat
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (uploadDropdownRef.current && !uploadDropdownRef.current.contains(event.target as Node)) {
+        setUploadHospitalDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const loadDateParts = async () => {
@@ -94,52 +146,145 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     setAllDates(dates);
   };
 
-  // Toast gosterimi
+  // Seçili yıllara göre gösterilecek aylar
+  const displayableMonths = (): number[] => {
+    if (selectedYears.length === 0) return [];
+    const months = new Set<number>();
+    selectedYears.forEach(year => {
+      (availableMonths[year] || []).forEach(m => months.add(m));
+    });
+    return Array.from(months).sort((a, b) => a - b);
+  };
+
+  // Takvim için müsait tarihler
+  const availableDatesForCalendar = useMemo((): string[] => {
+    if (selectedYears.length === 0 || activeMonth === null) return [];
+
+    return allDates.filter(dateStr => {
+      const [year, month] = dateStr.split('-').map(Number);
+      return selectedYears.includes(year) && month === activeMonth;
+    });
+  }, [selectedYears, activeMonth, allDates]);
+
+  // Seçimlere göre eşleşen tarihleri bul
+  const getMatchingDates = (): string[] => {
+    if (selectedYears.length === 0) return [];
+
+    // Tarih aralığı seçiliyse
+    if (dateRange.start && dateRange.end) {
+      const dates: string[] = [];
+      const start = new Date(dateRange.start);
+      const end = new Date(dateRange.end);
+      const current = new Date(Math.min(start.getTime(), end.getTime()));
+      const endDate = new Date(Math.max(start.getTime(), end.getTime()));
+
+      while (current <= endDate) {
+        const dateStr = current.toISOString().split('T')[0];
+        if (allDates.includes(dateStr)) {
+          dates.push(dateStr);
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      return dates;
+    }
+
+    // Sadece yıl ve ay seçiliyse
+    return allDates.filter(dateStr => {
+      const [year, month] = dateStr.split('-').map(Number);
+
+      if (!selectedYears.includes(year)) return false;
+      if (selectedMonths.length > 0 && !selectedMonths.includes(month)) return false;
+
+      return true;
+    });
+  };
+
+  // Toast gösterimi
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Secili tarihi olustur
-  const getSelectedDate = (): string | null => {
-    if (!selectedYear || !selectedMonth || !selectedDay) return null;
-    const month = String(selectedMonth).padStart(2, '0');
-    const day = String(selectedDay).padStart(2, '0');
-    return `${selectedYear}-${month}-${day}`;
+  // Hastane yetkisi kontrolü
+  const isHospitalAuthorized = (hospitalName: string): boolean => {
+    const shortName = getShortName(hospitalName);
+    if (allowedHospitals.length === 0) return true;
+    if (selectedHospitals.length > 0) {
+      return selectedHospitals.includes(shortName);
+    }
+    return allowedHospitals.includes(shortName);
   };
 
-  // Veri yukle
+  // Veri yükle
   const handleLoadData = async () => {
-    const date = getSelectedDate();
-    if (!date) {
-      showToast('Lutfen tam bir tarih secin', 'error');
+    const matchingDates = getMatchingDates();
+    if (matchingDates.length === 0) {
+      showToast('Seçimlere uygun tarih bulunamadı', 'error');
+      return;
+    }
+
+    // Hastane seçimi kontrolü
+    if (selectedHospitals.length === 0 && allowedHospitals.length > 0) {
+      showToast('Lütfen en az bir hastane seçiniz', 'error');
       return;
     }
 
     setIsLoading(true);
     try {
-      const data = await getDemandSummary(date);
+      // İlk tarih için özet yükle (şimdilik tek tarih destekli)
+      const targetDate = matchingDates[0];
+      const data = await getDemandSummary(targetDate);
+
       if (data) {
-        setSummary(data);
-        showToast(`${data.totalHospitals} hastane verisi yuklendi`, 'success');
+        // Yetkili hastanelere göre filtrele
+        const filteredHospitals = data.hospitalSummaries.filter(h => isHospitalAuthorized(h.hospitalName));
+
+        // Filtrelenmiş veriye göre branş toplamlarını yeniden hesapla
+        const branchTotalsMap: Record<string, number> = {};
+        let filteredTotalDemand = 0;
+
+        filteredHospitals.forEach(hospital => {
+          filteredTotalDemand += hospital.totalDemand;
+          hospital.branches.forEach(branch => {
+            if (!branchTotalsMap[branch.branchName]) {
+              branchTotalsMap[branch.branchName] = 0;
+            }
+            branchTotalsMap[branch.branchName] += branch.demandCount;
+          });
+        });
+
+        const filteredBranchTotals: BranchDemand[] = Object.entries(branchTotalsMap)
+          .map(([branchName, demandCount]) => ({ branchName, demandCount }))
+          .sort((a, b) => b.demandCount - a.demandCount);
+
+        const filteredSummary: DemandSummary = {
+          totalProvinceDemand: filteredTotalDemand,
+          totalHospitals: filteredHospitals.length,
+          branchTotals: filteredBranchTotals,
+          hospitalSummaries: filteredHospitals
+        };
+
+        setSummary(filteredSummary);
+        setSelectedDatesForDisplay(matchingDates);
+        showToast(`${matchingDates.length} tarihten ${filteredHospitals.length} hastane verisi yüklendi`, 'success');
       } else {
         setSummary(null);
-        showToast('Secilen tarih icin veri bulunamadi', 'error');
+        showToast('Seçilen tarih için veri bulunamadı', 'error');
       }
     } catch (error: any) {
-      showToast(error.message || 'Veri yukleme hatasi', 'error');
+      showToast(error.message || 'Veri yükleme hatası', 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Dosya yukleme
+  // Dosya yükleme
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!uploadHospitalId) {
-      showToast('Lutfen hastane secin', 'error');
+      showToast('Lütfen hastane seçin', 'error');
       return;
     }
 
@@ -149,13 +294,13 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       const result = await uploadActiveDemandFile(file, uploadHospitalId, hospitalName, uploadDate, 'user');
 
       if (result.success) {
-        showToast(`${result.totalDemand} talep verisi yuklendi`, 'success');
+        showToast(`${result.totalDemand} talep verisi yüklendi`, 'success');
         await loadDateParts();
       } else {
-        showToast(result.error || 'Yukleme hatasi', 'error');
+        showToast(result.error || 'Yükleme hatası', 'error');
       }
     } catch (error: any) {
-      showToast(error.message || 'Yukleme hatasi', 'error');
+      showToast(error.message || 'Yükleme hatası', 'error');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -164,106 +309,98 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     }
   };
 
+  // Yıl değişimi handler
+  const handleYearsChange = (values: (string | number)[]) => {
+    const newYears = values.map(v => Number(v));
+    setSelectedYears(newYears);
+
+    if (newYears.length === 0) {
+      setSelectedMonths([]);
+      setActiveMonth(null);
+      setDateRange({ start: null, end: null });
+    } else {
+      const validMonths = new Set<number>();
+      newYears.forEach(year => {
+        (availableMonths[year] || []).forEach(m => validMonths.add(m));
+      });
+      const newMonths = selectedMonths.filter(m => validMonths.has(m));
+      if (newMonths.length !== selectedMonths.length) {
+        setSelectedMonths(newMonths);
+        if (activeMonth !== null && !newMonths.includes(activeMonth)) {
+          setActiveMonth(newMonths.length > 0 ? newMonths[newMonths.length - 1] : null);
+        }
+        setDateRange({ start: null, end: null });
+      }
+    }
+  };
+
+  // Ay değişimi handler
+  const handleMonthsChange = (values: (string | number)[]) => {
+    const newMonths = values.map(v => Number(v));
+    setSelectedMonths(newMonths);
+
+    if (newMonths.length === 0) {
+      setActiveMonth(null);
+      setDateRange({ start: null, end: null });
+    } else {
+      const lastMonth = newMonths[newMonths.length - 1];
+      setActiveMonth(lastMonth);
+      setDateRange({ start: null, end: null });
+    }
+  };
+
+  // Hastane seçimi handler
+  const handleHospitalsChange = (values: (string | number)[]) => {
+    setSelectedHospitals(values.map(v => String(v)));
+  };
+
   // PDF export
   const handleExportPdf = async () => {
     if (!contentRef.current || !summary) return;
 
     try {
-      const date = getSelectedDate();
+      const canvas = await html2canvas(contentRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+      });
+
       const pdf = new jsPDF({
-        orientation: 'portrait',
+        orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
 
-      // Baslik
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('T.C.', 105, 20, { align: 'center' });
-      pdf.text('SANLIURFA IL SAGLIK MUDURLUGU', 105, 28, { align: 'center' });
-      pdf.text('MEDIS Koordinasyon Birimi', 105, 36, { align: 'center' });
+      const pageWidth = 297;
+      const pageHeight = 210;
+      const margin = 10;
+      const contentWidth = pageWidth - (margin * 2);
+      const contentHeight = pageHeight - (margin * 2);
 
-      pdf.setFontSize(14);
-      pdf.text('BILGI NOTU', 105, 50, { align: 'center' });
+      const imgData = canvas.toDataURL('image/png');
+      const aspectRatio = canvas.width / canvas.height;
 
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Tarih: ${date}`, 20, 65);
+      let imgWidth = contentWidth;
+      let imgHeight = imgWidth / aspectRatio;
 
-      // Ozet bilgiler
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('ILIMIZ GENELI AKTIF TALEP DURUMU', 20, 80);
+      if (imgHeight > contentHeight) {
+        imgHeight = contentHeight;
+        imgWidth = imgHeight * aspectRatio;
+      }
 
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Toplam Aktif Talep: ${summary.totalProvinceDemand}`, 20, 90);
-      pdf.text(`Veri Giren Hastane Sayisi: ${summary.totalHospitals}`, 20, 98);
+      const x = margin + (contentWidth - imgWidth) / 2;
+      const y = margin + (contentHeight - imgHeight) / 2;
 
-      // Brans bazli tablo
-      let yPos = 115;
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('BRANS BAZLI DAGILIM:', 20, yPos);
-      yPos += 10;
+      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
 
-      // Tablo basligi
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(20, yPos, 80, 8, 'F');
-      pdf.rect(100, yPos, 40, 8, 'F');
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Brans Adi', 25, yPos + 6);
-      pdf.text('Talep Sayisi', 105, yPos + 6);
-      yPos += 8;
-
-      // Brans satirlari
-      pdf.setFont('helvetica', 'normal');
-      summary.branchTotals.slice(0, 15).forEach((branch, index) => {
-        if (index % 2 === 0) {
-          pdf.setFillColor(250, 250, 250);
-          pdf.rect(20, yPos, 120, 7, 'F');
-        }
-        pdf.text(branch.branchName.substring(0, 35), 25, yPos + 5);
-        pdf.text(String(branch.demandCount), 115, yPos + 5);
-        yPos += 7;
-      });
-
-      // Hastane bazli tablo (yeni sayfa)
-      pdf.addPage();
-      yPos = 20;
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('HASTANE BAZLI DAGILIM:', 20, yPos);
-      yPos += 10;
-
-      // Tablo basligi
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(20, yPos, 100, 8, 'F');
-      pdf.rect(120, yPos, 40, 8, 'F');
-      pdf.text('Hastane Adi', 25, yPos + 6);
-      pdf.text('Toplam Talep', 125, yPos + 6);
-      yPos += 8;
-
-      // Hastane satirlari
-      pdf.setFont('helvetica', 'normal');
-      summary.hospitalSummaries.forEach((hospital, index) => {
-        if (index % 2 === 0) {
-          pdf.setFillColor(250, 250, 250);
-          pdf.rect(20, yPos, 140, 7, 'F');
-        }
-        const shortName = getShortName(hospital.hospitalName);
-        pdf.text(shortName.substring(0, 45), 25, yPos + 5);
-        pdf.text(String(hospital.totalDemand), 135, yPos + 5);
-        yPos += 7;
-
-        if (yPos > 270) {
-          pdf.addPage();
-          yPos = 20;
-        }
-      });
-
-      pdf.save(`aktif-talep-raporu-${date}.pdf`);
+      const dateStr = selectedDatesForDisplay.length === 1
+        ? selectedDatesForDisplay[0]
+        : `${selectedDatesForDisplay.length}-tarih`;
+      pdf.save(`aktif-talep-raporu-${dateStr}.pdf`);
       showToast('PDF indirildi', 'success');
     } catch (error) {
-      console.error('PDF hatasi:', error);
-      showToast('PDF indirme hatasi', 'error');
+      console.error('PDF hatası:', error);
+      showToast('PDF indirme hatası', 'error');
     }
   };
 
@@ -273,28 +410,32 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     [availableYears]
   );
 
-  const monthOptions: DropdownOption[] = useMemo(() => {
-    if (!selectedYear || !availableMonths[selectedYear]) return [];
-    return availableMonths[selectedYear].map(month => ({ value: month, label: MONTH_NAMES[month] }));
-  }, [selectedYear, availableMonths]);
-
-  const dayOptions: DropdownOption[] = useMemo(() => {
-    if (!selectedYear || !selectedMonth) return [];
-    const key = `${selectedYear}-${selectedMonth}`;
-    const days = availableDays[key] || [];
-    return days.map(day => ({ value: day, label: String(day) }));
-  }, [selectedYear, selectedMonth, availableDays]);
+  const monthOptions: DropdownOption[] = useMemo(() =>
+    displayableMonths().map(month => ({ value: month, label: MONTH_NAMES[month] })),
+    [selectedYears, availableMonths]
+  );
 
   const hospitalOptions: DropdownOption[] = useMemo(() =>
-    HOSPITALS.map(h => ({ value: h, label: getShortName(h) })).sort((a, b) => a.label.localeCompare(b.label, 'tr-TR')),
+    authorizedHospitalShortNames.map(h => ({ value: h, label: h })).sort((a, b) => a.label.localeCompare(b.label, 'tr-TR')),
+    [authorizedHospitalShortNames]
+  );
+
+  const uploadHospitalOptions: DropdownOption[] = useMemo(() =>
+    ACTIVE_DEMAND_ALL_HOSPITALS.map(h => ({ value: h, label: h })).sort((a, b) => a.label.localeCompare(b.label, 'tr-TR')),
     []
   );
 
-  // Tarih formatla
-  const formatDate = (dateStr: string | null): string => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
+  // Tarih gösterimi
+  const getDateRangeDisplay = (): string => {
+    if (selectedDatesForDisplay.length === 0) return '';
+    if (selectedDatesForDisplay.length === 1) {
+      const d = new Date(selectedDatesForDisplay[0]);
+      return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+    const sorted = [...selectedDatesForDisplay].sort();
+    const first = new Date(sorted[0]);
+    const last = new Date(sorted[sorted.length - 1]);
+    return `${first.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })} - ${last.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' })} (${selectedDatesForDisplay.length} gün)`;
   };
 
   return (
@@ -310,7 +451,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-orange-400">Aktif Talep Analizi</h1>
-          <p className="text-slate-400 mt-1">Hastanelerin brans bazli aktif talep verileri</p>
+          <p className="text-slate-400 mt-1">Hastanelerin branş bazlı aktif talep verileri</p>
         </div>
         {summary && (
           <button
@@ -320,34 +461,61 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
-            PDF Indir
+            PDF İndir
           </button>
         )}
       </div>
 
-      {/* Veri Yukleme Bolumu - Sadece yukleme izni varsa goster */}
+      {/* Veri Yükleme Bölümü */}
       {canUpload && (
         <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Veri Yukleme</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">Veri Yükleme</h3>
           <div className="flex flex-wrap gap-4 items-end">
-            {/* Hastane Secimi */}
-            <div className="flex flex-col gap-2">
+            {/* Hastane Seçimi - Custom Dropdown */}
+            <div className="flex flex-col gap-1.5" ref={uploadDropdownRef}>
               <label className="text-sm font-medium text-slate-400">Hastane</label>
-              <select
-                value={uploadHospitalId}
-                onChange={(e) => setUploadHospitalId(e.target.value)}
-                className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[200px]"
-              >
-                <option value="">Hastane secin...</option>
-                {hospitalOptions.map(opt => (
-                  <option key={String(opt.value)} value={String(opt.value)}>{opt.label}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setUploadHospitalDropdownOpen(!uploadHospitalDropdownOpen)}
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[200px] text-left"
+                >
+                  <span className={uploadHospitalId ? 'text-white' : 'text-slate-400'}>
+                    {uploadHospitalId || 'Hastane seçiniz...'}
+                  </span>
+                  <svg className={`w-4 h-4 text-slate-400 transition-transform ${uploadHospitalDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {uploadHospitalDropdownOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-slate-800 border border-slate-600 rounded-xl shadow-xl max-h-[280px] overflow-y-auto">
+                    {uploadHospitalOptions.map(opt => (
+                      <button
+                        key={String(opt.value)}
+                        type="button"
+                        onClick={() => {
+                          setUploadHospitalId(String(opt.value));
+                          setUploadHospitalDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2.5 text-left text-sm hover:bg-slate-700/50 transition-colors flex items-center gap-2 ${uploadHospitalId === opt.value ? 'bg-orange-500/20 text-orange-400' : 'text-slate-200'}`}
+                      >
+                        {uploadHospitalId === opt.value && (
+                          <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        <span className={uploadHospitalId === opt.value ? '' : 'ml-6'}>{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Yukleme icin Tarih Picker */}
+            {/* Yükleme için Tarih Picker */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-400">Yukleme Tarihi</label>
+              <label className="text-sm font-medium text-slate-400">Yükleme Tarihi</label>
               <input
                 type="date"
                 value={uploadDate}
@@ -358,7 +526,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
             {/* Upload Button */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-400">Excel Dosyasi</label>
+              <label className="text-sm font-medium text-slate-400">Excel Dosyası</label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -377,14 +545,14 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Yukleniyor...
+                    Yükleniyor...
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    Excel Yukle
+                    Excel Yükle
                   </>
                 )}
               </button>
@@ -394,7 +562,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           {/* Excel format info */}
           <div className="mt-4 p-4 bg-slate-700/30 rounded-xl">
             <p className="text-xs text-slate-400">
-              <span className="font-semibold">Excel Formati:</span> Brans/Klinik Adi | Talep Sayisi
+              <span className="font-semibold">Excel Formatı:</span> Tek sütun - "Klinik Adı" (her satır 1 talep, aynı branş tekrarlanıyorsa talep sayısı artar)
             </p>
           </div>
         </div>
@@ -402,67 +570,110 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
       {/* Filtreler */}
       <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Veri Filtreleme</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-white">Veri Filtreleme</h3>
+          <div className="flex items-center gap-3">
+            {getMatchingDates().length > 0 && (
+              <span className="text-sm text-orange-400 font-medium bg-orange-500/20 px-3 py-1 rounded-full">
+                {getMatchingDates().length} tarih seçili
+              </span>
+            )}
+            {(selectedYears.length > 0 || selectedMonths.length > 0 || dateRange.start) && (
+              <button
+                onClick={() => {
+                  setSelectedYears([]);
+                  setSelectedMonths([]);
+                  setActiveMonth(null);
+                  setDateRange({ start: null, end: null });
+                  setSelectedHospitals([]);
+                }}
+                className="text-sm text-slate-400 hover:text-slate-200 font-medium flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Tümünü Temizle
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Multi-Select Dropdowns */}
         <div className="flex flex-wrap gap-4 items-end">
-          {/* Yil Secimi */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-400">Yil</label>
-            <select
-              value={selectedYear || ''}
-              onChange={(e) => {
-                setSelectedYear(e.target.value ? Number(e.target.value) : null);
-                setSelectedMonth(null);
-                setSelectedDay(null);
-              }}
-              className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[120px]"
-            >
-              <option value="">Yil secin...</option>
-              {yearOptions.map(opt => (
-                <option key={String(opt.value)} value={String(opt.value)}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          {/* Hastane Seçimi - Sadece belirli hastanelere yetkisi varsa göster */}
+          {allowedHospitals.length > 0 && (
+            <MultiSelectDropdown
+              label="Hastane Seçimi"
+              options={hospitalOptions}
+              selectedValues={selectedHospitals}
+              onChange={handleHospitalsChange}
+              placeholder="Hastane seçiniz..."
+              disabled={hospitalOptions.length === 0}
+              emptyMessage="Yetkili hastane yok"
+              showSearch={true}
+            />
+          )}
 
-          {/* Ay Secimi */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-400">Ay</label>
-            <select
-              value={selectedMonth || ''}
-              onChange={(e) => {
-                setSelectedMonth(e.target.value ? Number(e.target.value) : null);
-                setSelectedDay(null);
-              }}
-              disabled={!selectedYear}
-              className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[140px] disabled:opacity-50"
-            >
-              <option value="">Ay secin...</option>
-              {monthOptions.map(opt => (
-                <option key={String(opt.value)} value={String(opt.value)}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          {/* Yıl Seçimi */}
+          <MultiSelectDropdown
+            label="Yıl Seçimi"
+            options={yearOptions}
+            selectedValues={selectedYears}
+            onChange={handleYearsChange}
+            placeholder="Yıl seçiniz..."
+            disabled={availableYears.length === 0}
+            emptyMessage="Kayıtlı veri yok"
+            showSearch={false}
+          />
 
-          {/* Gun Secimi */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-400">Gun</label>
-            <select
-              value={selectedDay || ''}
-              onChange={(e) => setSelectedDay(e.target.value ? Number(e.target.value) : null)}
-              disabled={!selectedMonth}
-              className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[100px] disabled:opacity-50"
-            >
-              <option value="">Gun secin...</option>
-              {dayOptions.map(opt => (
-                <option key={String(opt.value)} value={String(opt.value)}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          {/* Ay Seçimi */}
+          <MultiSelectDropdown
+            label="Ay Seçimi"
+            options={monthOptions}
+            selectedValues={selectedMonths}
+            onChange={handleMonthsChange}
+            placeholder="Ay seçiniz..."
+            disabled={selectedYears.length === 0}
+            emptyMessage={selectedYears.length === 0 ? "Önce yıl seçiniz" : "Seçili yıllarda veri yok"}
+            showSearch={false}
+          />
+
+          {/* Aktif Ay Seçimi (birden fazla ay seçiliyse göster) */}
+          {selectedMonths.length > 1 && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-slate-400">Takvim Ayı</label>
+              <select
+                value={activeMonth || ''}
+                onChange={(e) => {
+                  setActiveMonth(Number(e.target.value));
+                  setDateRange({ start: null, end: null });
+                }}
+                className="px-3 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[140px]"
+              >
+                {selectedMonths.map(month => (
+                  <option key={month} value={month}>{MONTH_NAMES[month]}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Tarih Aralığı Takvimi */}
+          <DateRangeCalendar
+            label="Tarih Aralığı"
+            value={dateRange}
+            onChange={setDateRange}
+            availableDates={availableDatesForCalendar}
+            activeYear={selectedYears.length > 0 ? selectedYears[0] : null}
+            activeMonth={activeMonth}
+            disabled={selectedMonths.length === 0}
+            placeholder={selectedMonths.length === 0 ? "Önce ay seçiniz..." : "Tarih aralığı seçiniz..."}
+          />
 
           {/* Uygula Butonu */}
           <button
             onClick={handleLoadData}
-            disabled={isLoading || !getSelectedDate()}
-            className="px-6 py-2.5 h-[42px] bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            disabled={isLoading || getMatchingDates().length === 0 || (allowedHospitals.length > 0 && selectedHospitals.length === 0)}
+            className="px-6 py-2.5 h-[42px] bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
           >
             {isLoading ? (
               <>
@@ -470,7 +681,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Yukleniyor...
+                Yükleniyor...
               </>
             ) : (
               <>
@@ -482,9 +693,21 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
             )}
           </button>
         </div>
+
+        {/* Hastane seçimi uyarısı */}
+        {allowedHospitals.length > 0 && selectedHospitals.length === 0 && (
+          <div className="mt-4 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
+            <p className="text-sm text-amber-400 flex items-center gap-2">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Veri görüntülemek için en az bir hastane seçmelisiniz
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Veri Yok Mesaji */}
+      {/* Veri Yok Mesajı */}
       {!summary && (
         <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-12">
           <div className="flex flex-col items-center justify-center text-center">
@@ -493,19 +716,19 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Veri Yuklenmedi</h2>
+            <h2 className="text-xl font-semibold text-white mb-2">Veri Yüklenmedi</h2>
             <p className="text-slate-400 max-w-md">
-              Yukaridan tarih secip "Uygula" butonuna tiklayarak mevcut veriyi yukleyebilir
-              veya yeni bir Excel dosyasi yukleyebilirsiniz.
+              Yukarıdan tarih seçip "Uygula" butonuna tıklayarak mevcut veriyi yükleyebilir
+              veya yeni bir Excel dosyası yükleyebilirsiniz.
             </p>
           </div>
         </div>
       )}
 
-      {/* Veri Gosterimi */}
+      {/* Veri Gösterimi */}
       {summary && (
         <div ref={contentRef} className="space-y-6">
-          {/* KPI Kartlari */}
+          {/* KPI Kartları */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Toplam Talep */}
             <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 rounded-2xl border border-orange-500/30 p-6">
@@ -516,13 +739,13 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Il Toplam Talep</p>
+                  <p className="text-sm text-slate-400">{hasAllHospitalsAccess ? 'İl Toplam Talep' : 'Seçili Toplam Talep'}</p>
                   <p className="text-3xl font-bold text-orange-400">{summary.totalProvinceDemand.toLocaleString('tr-TR')}</p>
                 </div>
               </div>
             </div>
 
-            {/* Hastane Sayisi */}
+            {/* Hastane Sayısı */}
             <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-2xl border border-blue-500/30 p-6">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-blue-500/30 rounded-xl flex items-center justify-center">
@@ -537,7 +760,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
               </div>
             </div>
 
-            {/* En Yuksek Brans */}
+            {/* En Yüksek Branş */}
             <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl border border-purple-500/30 p-6">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-purple-500/30 rounded-xl flex items-center justify-center">
@@ -546,7 +769,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">En Yuksek Talep</p>
+                  <p className="text-sm text-slate-400">En Yüksek Talep</p>
                   <p className="text-lg font-bold text-purple-400 truncate max-w-[180px]">
                     {summary.branchTotals[0]?.branchName || '-'}
                   </p>
@@ -558,9 +781,9 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
             </div>
           </div>
 
-          {/* Brans Bazli Grafik */}
+          {/* Branş Bazlı Grafik */}
           <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
-            <h3 className="text-lg font-semibold text-white mb-6">Brans Bazli Talep Dagilimi</h3>
+            <h3 className="text-lg font-semibold text-white mb-6">Branş Bazlı Talep Dağılımı</h3>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -596,11 +819,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
             </div>
           </div>
 
-          {/* Hastane Bazli Tablo */}
+          {/* Hastane Bazlı Tablo */}
           <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 overflow-hidden">
             <div className="p-6 border-b border-slate-700/60">
-              <h3 className="text-lg font-semibold text-white">Hastane Bazli Talep Tablosu</h3>
-              <p className="text-sm text-slate-400 mt-1">Tarih: {formatDate(getSelectedDate())}</p>
+              <h3 className="text-lg font-semibold text-white">Hastane Bazlı Talep Tablosu</h3>
+              <p className="text-sm text-slate-400 mt-1">Tarih: {getDateRangeDisplay()}</p>
             </div>
 
             <div className="overflow-x-auto">
@@ -610,7 +833,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     <th className="sticky left-0 bg-slate-700/50 px-4 py-3 text-left text-sm font-semibold text-slate-300 z-10">
                       Hastane
                     </th>
-                    {/* Dinamik brans sutunlari */}
+                    {/* Dinamik branş sütunları */}
                     {summary.branchTotals.slice(0, 10).map((branch, idx) => (
                       <th key={idx} className="px-3 py-3 text-center text-xs font-semibold text-slate-300 whitespace-nowrap min-w-[80px]">
                         {branch.branchName.length > 15 ? branch.branchName.substring(0, 15) + '...' : branch.branchName}
@@ -623,7 +846,6 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                 </thead>
                 <tbody>
                   {summary.hospitalSummaries.map((hospital, idx) => {
-                    // Hastane icin brans bazli talepleri map'le
                     const branchMap: Record<string, number> = {};
                     hospital.branches.forEach(b => {
                       branchMap[b.branchName] = b.demandCount;
@@ -646,22 +868,24 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     );
                   })}
                 </tbody>
-                {/* Il Toplami */}
-                <tfoot>
-                  <tr className="bg-orange-500/20 border-t-2 border-orange-500/50">
-                    <td className="sticky left-0 bg-orange-500/30 px-4 py-3 text-sm font-bold text-orange-300 z-10">
-                      IL TOPLAMI
-                    </td>
-                    {summary.branchTotals.slice(0, 10).map((branch, idx) => (
-                      <td key={idx} className="px-3 py-3 text-center text-sm font-bold text-orange-300">
-                        {branch.demandCount.toLocaleString('tr-TR')}
+                {/* İl Toplamı - Sadece tüm hastanelere yetkisi varsa göster */}
+                {hasAllHospitalsAccess && (
+                  <tfoot>
+                    <tr className="bg-orange-500/20 border-t-2 border-orange-500/50">
+                      <td className="sticky left-0 bg-orange-500/30 px-4 py-3 text-sm font-bold text-orange-300 z-10">
+                        İL TOPLAMI
                       </td>
-                    ))}
-                    <td className="px-4 py-3 text-center text-lg font-bold text-orange-400">
-                      {summary.totalProvinceDemand.toLocaleString('tr-TR')}
-                    </td>
-                  </tr>
-                </tfoot>
+                      {summary.branchTotals.slice(0, 10).map((branch, idx) => (
+                        <td key={idx} className="px-3 py-3 text-center text-sm font-bold text-orange-300">
+                          {branch.demandCount.toLocaleString('tr-TR')}
+                        </td>
+                      ))}
+                      <td className="px-4 py-3 text-center text-lg font-bold text-orange-400">
+                        {summary.totalProvinceDemand.toLocaleString('tr-TR')}
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
           </div>

@@ -67,44 +67,34 @@ export async function uploadActiveDemandFile(
       });
     };
 
-    const parseNum = (val: any): number => {
-      if (val === undefined || val === null || val === "" || val === "-") return 0;
-      if (typeof val === 'number') return val;
-      let str = String(val).trim();
-      if (str.includes('.') && !str.includes(',')) {
-        str = str.replace(/\./g, '');
-      } else {
-        str = str.replace(/\./g, '').replace(',', '.');
-      }
-      const num = parseFloat(str);
-      return isNaN(num) ? 0 : num;
-    };
+    // Find the branch/clinic name column
+    // Excel yapisi: Tek sutun - her satir bir brans adi, tekrar sayisi = talep sayisi
+    const colBranch = findColumn(jsonData[0], ['Klinik', 'Brans', 'Poliklinik', 'Uzmanlik', 'Ad']);
 
-    // Find columns - Excel yapisi: Brans Adi, Talep Sayisi
-    const colBranch = findColumn(jsonData[0], ['Brans', 'Klinik', 'Poliklinik', 'Uzmanlik']);
-    const colDemand = findColumn(jsonData[0], ['Talep', 'Sayi', 'Adet']);
-
-    if (!colBranch || !colDemand) {
-      console.error('Bulunan sutunlar:', { colBranch, colDemand });
+    if (!colBranch) {
       console.error('Mevcut sutunlar:', Object.keys(jsonData[0] || {}));
-      return { success: false, error: 'Gerekli sutunlar bulunamadi. Excel\'de "Brans/Klinik" ve "Talep Sayisi" sutunlari olmali.' };
+      return { success: false, error: 'Brans/Klinik sutunu bulunamadi. Excel\'de "Klinik Adi", "Brans" veya benzeri bir sutun olmali.' };
     }
 
-    const branches: BranchDemand[] = [];
-    let totalDemand = 0;
+    // Count occurrences of each branch name
+    const branchCountMap: Record<string, number> = {};
 
     jsonData.forEach(row => {
       const branchName = normalizeText(row[colBranch]);
       if (!branchName) return;
 
-      const demandCount = parseNum(row[colDemand]);
-      totalDemand += demandCount;
-
-      branches.push({
-        branchName,
-        demandCount
-      });
+      if (!branchCountMap[branchName]) {
+        branchCountMap[branchName] = 0;
+      }
+      branchCountMap[branchName]++;
     });
+
+    // Convert to BranchDemand array
+    const branches: BranchDemand[] = Object.entries(branchCountMap)
+      .map(([branchName, demandCount]) => ({ branchName, demandCount }))
+      .sort((a, b) => b.demandCount - a.demandCount);
+
+    const totalDemand = branches.reduce((sum, b) => sum + b.demandCount, 0);
 
     console.log('[AKTIF TALEP] Parse tamamlandi:', branches.length, 'brans,', totalDemand, 'toplam talep');
 
