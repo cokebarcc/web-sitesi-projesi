@@ -60,6 +60,19 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
 
   const menuGroups = [
     {
+      id: 'emergency',
+      label: 'Acil Servis',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      ),
+      iconColor: 'text-red-400',
+      items: [
+        { id: 'emergency-service', label: 'Yeşil Alan Oranları', view: 'emergency-service', hasAccess: hasModuleAccess('emergencyService') }
+      ]
+    },
+    {
       id: 'mhrs',
       label: 'MHRS',
       icon: (
@@ -68,6 +81,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         </svg>
       ),
       items: [
+        { id: 'active-demand', label: 'Aktif Talep', view: 'active-demand', hasAccess: hasModuleAccess('activeDemand') },
         { id: 'detailed-schedule', label: 'Detaylı Cetveller', view: 'detailed-schedule', hasAccess: hasModuleAccess('detailedSchedule') },
         { id: 'physician-data', label: 'Hekim Verileri', view: 'physician-data', hasAccess: hasModuleAccess('physicianData') },
         { id: 'change-analysis', label: 'Değişim Analizleri', view: 'change-analysis', hasAccess: hasModuleAccess('changeAnalysis') },
@@ -84,20 +98,6 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       ),
       items: [
         { id: 'service-analysis', label: 'Hizmet Girişim', view: 'service-analysis', hasAccess: hasModuleAccess('serviceAnalysis') }
-      ]
-    },
-    {
-      id: 'emergency',
-      label: 'Acil Servis',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      ),
-      iconColor: 'text-red-400',
-      items: [
-        { id: 'emergency-service', label: 'Yeşil Alan Oranları', view: 'emergency-service', hasAccess: hasModuleAccess('emergencyService') },
-        { id: 'active-demand', label: 'Aktif Talep', view: 'active-demand', hasAccess: hasModuleAccess('activeDemand') }
       ]
     },
     {
