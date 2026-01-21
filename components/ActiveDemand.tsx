@@ -7,7 +7,10 @@ import {
   getActiveDemandFiles
 } from '../src/services/activeDemandStorage';
 import { DemandSummary, BranchDemand } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  PieChart, Pie, Legend
+} from 'recharts';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
@@ -64,10 +67,22 @@ const getShortName = (fullName: string): string => {
   return fullName.replace('Şanlıurfa ', '').replace(' Devlet Hastanesi', ' DH');
 };
 
-// Grafik renkleri
+// Grafik renkleri - yan yana gelen renkler birbirine zıt olacak şekilde sıralandı
 const CHART_COLORS = [
-  '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444',
-  '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'
+  '#22c55e', // Yeşil
+  '#ef4444', // Kırmızı (yeşilin zıttı)
+  '#3b82f6', // Mavi
+  '#f97316', // Turuncu (mavinin zıttı)
+  '#a855f7', // Mor
+  '#eab308', // Sarı (morun zıttı)
+  '#ec4899', // Pembe
+  '#14b8a6', // Teal (pembenin zıttı)
+  '#06b6d4', // Cyan
+  '#f43f5e', // Rose (cyanın zıttı)
+  '#84cc16', // Lime
+  '#8b5cf6', // Lavanta (limeın zıttı)
+  '#10b981', // Zümrüt
+  '#d946ef', // Fuşya (zümrütün zıttı)
 ];
 
 const ActiveDemand: React.FC<ActiveDemandProps> = ({
@@ -104,8 +119,19 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // PDF export ref
+  // PDF export refs - sayfa 1: KPI + grafikler, sayfa 2: hastane detayları
   const contentRef = useRef<HTMLDivElement>(null);
+  const page1Ref = useRef<HTMLDivElement>(null);
+  const page2Ref = useRef<HTMLDivElement>(null);
+
+  // Bireysel bileşen ref'leri (PNG export için)
+  const kpi1Ref = useRef<HTMLDivElement>(null);
+  const kpi2Ref = useRef<HTMLDivElement>(null);
+  const donutChartRef = useRef<HTMLDivElement>(null);
+  const barChartRef = useRef<HTMLDivElement>(null);
+
+  // Hastane kartları için dinamik ref'ler
+  const hospitalCardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Kullanıcının yetkili olduğu hastaneler (kısa ad formatında)
   // Aktif Talep modülünde ek hastaneleri de dahil et
@@ -357,17 +383,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     setSelectedHospitals(values.map(v => String(v)));
   };
 
-  // PDF export
+  // PDF export - 2 sayfa: Sayfa 1 = KPI + Grafikler, Sayfa 2 = Hastane Detayları
   const handleExportPdf = async () => {
-    if (!contentRef.current || !summary) return;
+    if (!page1Ref.current || !page2Ref.current || !summary) return;
 
     try {
-      const canvas = await html2canvas(contentRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        useCORS: true,
-      });
-
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -380,21 +400,53 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       const contentWidth = pageWidth - (margin * 2);
       const contentHeight = pageHeight - (margin * 2);
 
-      const imgData = canvas.toDataURL('image/png');
-      const aspectRatio = canvas.width / canvas.height;
+      // Sayfa 1: KPI kartları ve grafikler
+      const canvas1 = await html2canvas(page1Ref.current, {
+        backgroundColor: '#1e293b', // slate-800
+        scale: 2,
+        useCORS: true,
+      });
 
-      let imgWidth = contentWidth;
-      let imgHeight = imgWidth / aspectRatio;
+      const imgData1 = canvas1.toDataURL('image/png');
+      const aspectRatio1 = canvas1.width / canvas1.height;
 
-      if (imgHeight > contentHeight) {
-        imgHeight = contentHeight;
-        imgWidth = imgHeight * aspectRatio;
+      let imgWidth1 = contentWidth;
+      let imgHeight1 = imgWidth1 / aspectRatio1;
+
+      if (imgHeight1 > contentHeight) {
+        imgHeight1 = contentHeight;
+        imgWidth1 = imgHeight1 * aspectRatio1;
       }
 
-      const x = margin + (contentWidth - imgWidth) / 2;
-      const y = margin + (contentHeight - imgHeight) / 2;
+      const x1 = margin + (contentWidth - imgWidth1) / 2;
+      const y1 = margin + (contentHeight - imgHeight1) / 2;
 
-      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+      pdf.addImage(imgData1, 'PNG', x1, y1, imgWidth1, imgHeight1);
+
+      // Sayfa 2: Hastane detayları
+      pdf.addPage();
+
+      const canvas2 = await html2canvas(page2Ref.current, {
+        backgroundColor: '#1e293b', // slate-800
+        scale: 2,
+        useCORS: true,
+      });
+
+      const imgData2 = canvas2.toDataURL('image/png');
+      const aspectRatio2 = canvas2.width / canvas2.height;
+
+      let imgWidth2 = contentWidth;
+      let imgHeight2 = imgWidth2 / aspectRatio2;
+
+      if (imgHeight2 > contentHeight) {
+        imgHeight2 = contentHeight;
+        imgWidth2 = imgHeight2 * aspectRatio2;
+      }
+
+      const x2 = margin + (contentWidth - imgWidth2) / 2;
+      const y2 = margin + (contentHeight - imgHeight2) / 2;
+
+      pdf.addImage(imgData2, 'PNG', x2, y2, imgWidth2, imgHeight2);
 
       const dateStr = selectedDatesForDisplay.length === 1
         ? selectedDatesForDisplay[0]
@@ -404,6 +456,74 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     } catch (error) {
       console.error('PDF hatası:', error);
       showToast('PDF indirme hatası', 'error');
+    }
+  };
+
+  // PNG export - Sayfa 1 (KPI + Grafikler)
+  const handleExportPng = async () => {
+    if (!page1Ref.current || !summary) return;
+
+    try {
+      const canvas = await html2canvas(page1Ref.current, {
+        backgroundColor: '#0f172a', // slate-900
+        scale: 2,
+        useCORS: true,
+      });
+
+      const link = document.createElement('a');
+      link.download = `aktif-talep-ozet-${selectedDatesForDisplay.length === 1 ? selectedDatesForDisplay[0] : `${selectedDatesForDisplay.length}-tarih`}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('PNG indirildi', 'success');
+    } catch (error) {
+      console.error('PNG hatası:', error);
+      showToast('PNG indirme hatası', 'error');
+    }
+  };
+
+  // Bireysel bileşen PNG export
+  const handleExportComponent = async (ref: React.RefObject<HTMLDivElement>, filename: string) => {
+    if (!ref.current) return;
+
+    try {
+      const canvas = await html2canvas(ref.current, {
+        backgroundColor: '#1e293b', // slate-800
+        scale: 2,
+        useCORS: true,
+      });
+
+      const link = document.createElement('a');
+      link.download = `${filename}-${selectedDatesForDisplay.length === 1 ? selectedDatesForDisplay[0] : `${selectedDatesForDisplay.length}-tarih`}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('PNG indirildi', 'success');
+    } catch (error) {
+      console.error('PNG hatası:', error);
+      showToast('PNG indirme hatası', 'error');
+    }
+  };
+
+  // Hastane kartı PNG export (dinamik ref için)
+  const handleExportHospitalCard = async (idx: number, hospitalName: string) => {
+    const element = hospitalCardRefs.current.get(idx);
+    if (!element) return;
+
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#1e293b', // slate-800
+        scale: 2,
+        useCORS: true,
+      });
+
+      const safeName = hospitalName.replace(/[^a-zA-Z0-9ğüşöçıİĞÜŞÖÇ]/g, '-').toLowerCase();
+      const link = document.createElement('a');
+      link.download = `${safeName}-talep-${selectedDatesForDisplay.length === 1 ? selectedDatesForDisplay[0] : `${selectedDatesForDisplay.length}-tarih`}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('PNG indirildi', 'success');
+    } catch (error) {
+      console.error('PNG hatası:', error);
+      showToast('PNG indirme hatası', 'error');
     }
   };
 
@@ -457,15 +577,26 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           <p className="text-slate-400 mt-1">Hastanelerin branş bazlı aktif talep verileri</p>
         </div>
         {summary && (
-          <button
-            onClick={handleExportPdf}
-            className="px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            PDF İndir
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportPng}
+              className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              PNG İndir
+            </button>
+            <button
+              onClick={handleExportPdf}
+              className="px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              PDF İndir
+            </button>
+          </div>
         )}
       </div>
 
@@ -731,52 +862,65 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       {/* Veri Gösterimi */}
       {summary && (
         <div ref={contentRef} className="space-y-6">
+          {/* SAYFA 1: KPI Kartları ve Grafikler */}
+          <div ref={page1Ref} className="space-y-6 bg-slate-900 p-4 rounded-2xl">
           {/* KPI Kartları */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Toplam Talep */}
-            <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 rounded-2xl border border-orange-500/30 p-6">
+            <div ref={kpi1Ref} className="bg-slate-800/80 rounded-2xl border-2 border-orange-500/50 p-6 shadow-lg shadow-orange-500/10 relative group">
+              {/* İndirme ikonu */}
+              <button
+                onClick={() => handleExportComponent(kpi1Ref, 'toplam-talep')}
+                className="absolute top-3 right-3 w-7 h-7 bg-slate-700/80 hover:bg-orange-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
+                title="PNG İndir"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-orange-500/30 rounded-xl flex items-center justify-center">
-                  <svg className="w-7 h-7 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/30">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">{hasAllHospitalsAccess ? 'İl Toplam Talep' : 'Seçili Toplam Talep'}</p>
+                  <p className="text-sm font-medium text-orange-300">
+                    {summary.totalHospitals === 1
+                      ? getShortName(summary.hospitalSummaries[0]?.hospitalName || '')
+                      : hasAllHospitalsAccess
+                        ? 'İl Toplam Talep'
+                        : 'Seçili Toplam Talep'}
+                  </p>
                   <p className="text-3xl font-bold text-orange-400">{summary.totalProvinceDemand.toLocaleString('tr-TR')}</p>
                 </div>
               </div>
             </div>
 
-            {/* Hastane Sayısı */}
-            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-2xl border border-blue-500/30 p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-blue-500/30 rounded-xl flex items-center justify-center">
-                  <svg className="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">Veri Giren Hastane</p>
-                  <p className="text-3xl font-bold text-blue-400">{summary.totalHospitals}</p>
-                </div>
-              </div>
-            </div>
-
             {/* En Yüksek Branş */}
-            <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl border border-purple-500/30 p-6">
+            <div ref={kpi2Ref} className="bg-slate-800/80 rounded-2xl border-2 border-purple-500/50 p-6 shadow-lg shadow-purple-500/10 relative group">
+              {/* İndirme ikonu */}
+              <button
+                onClick={() => handleExportComponent(kpi2Ref, 'en-yuksek-brans')}
+                className="absolute top-3 right-3 w-7 h-7 bg-slate-700/80 hover:bg-purple-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
+                title="PNG İndir"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-purple-500/30 rounded-xl flex items-center justify-center">
-                  <svg className="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center shadow-md shadow-purple-500/30">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">En Yüksek Talep</p>
-                  <p className="text-lg font-bold text-purple-400 truncate max-w-[180px]">
+                  <p className="text-sm font-medium text-purple-300">En Yüksek Talep</p>
+                  <p className="text-lg font-bold text-purple-400">
                     {summary.branchTotals[0]?.branchName || '-'}
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-400">
                     {summary.branchTotals[0]?.demandCount.toLocaleString('tr-TR') || 0} talep
                   </p>
                 </div>
@@ -784,112 +928,289 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
             </div>
           </div>
 
-          {/* Branş Bazlı Grafik */}
-          <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
-            <h3 className="text-lg font-semibold text-white mb-6">Branş Bazlı Talep Dağılımı</h3>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={summary.branchTotals.slice(0, 15)}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis type="number" stroke="#9ca3af" />
-                  <YAxis
-                    type="category"
-                    dataKey="branchName"
-                    stroke="#9ca3af"
-                    width={150}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#fff'
-                    }}
-                    formatter={(value: number) => [value.toLocaleString('tr-TR'), 'Talep']}
-                  />
-                  <Bar dataKey="demandCount" radius={[0, 4, 4, 0]}>
-                    {summary.branchTotals.slice(0, 15).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+          {/* Grafikler - Yan yana */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Hastane Bazlı Donut Chart */}
+            <div ref={donutChartRef} className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6 relative group">
+              {/* İndirme ikonu */}
+              <button
+                onClick={() => handleExportComponent(donutChartRef, 'hastane-dagilimi')}
+                className="absolute top-3 right-3 w-7 h-7 bg-slate-700/80 hover:bg-emerald-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
+                title="PNG İndir"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+              <h3 className="text-lg font-semibold text-white mb-4">Hastane Bazlı Talep Dağılımı</h3>
+              <div className="flex items-center gap-4">
+                {/* Grafik - daha büyük */}
+                <div className="h-[320px] flex-1 min-w-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={summary.totalHospitals === 1
+                          ? [{
+                              name: getShortName(summary.hospitalSummaries[0]?.hospitalName || ''),
+                              value: summary.hospitalSummaries[0]?.totalDemand || 0,
+                              fill: CHART_COLORS[0]
+                            }]
+                          : summary.hospitalSummaries
+                              .filter(item => item.totalDemand >= 100)
+                              .sort((a, b) => b.totalDemand - a.totalDemand)
+                              .map((item, idx) => ({
+                                name: getShortName(item.hospitalName),
+                                value: item.totalDemand,
+                                fill: CHART_COLORS[idx % CHART_COLORS.length]
+                              }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={130}
+                        paddingAngle={summary.totalHospitals === 1 ? 0 : 2}
+                        dataKey="value"
+                      >
+                        {summary.totalHospitals === 1
+                          ? <Cell key="cell-0" fill={CHART_COLORS[0]} />
+                          : summary.hospitalSummaries
+                              .filter(item => item.totalDemand >= 100)
+                              .sort((a, b) => b.totalDemand - a.totalDemand)
+                              .map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                              ))}
+                      </Pie>
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload || !payload[0]) return null;
+                          const data = payload[0].payload;
+                          const hospitalName = data.name;
+                          const totalDemand = data.value as number;
+                          const color = data.fill;
+
+                          // Bu hastanenin branş detaylarını bul
+                          const hospitalData = summary.hospitalSummaries.find(
+                            h => getShortName(h.hospitalName) === hospitalName
+                          );
+                          const topBranches = hospitalData?.branches
+                            .sort((a, b) => b.demandCount - a.demandCount)
+                            .slice(0, 5) || [];
+
+                          return (
+                            <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl min-w-[200px]">
+                              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-600">
+                                <div className="w-3 h-3 rounded" style={{ backgroundColor: color }} />
+                                <p className="font-semibold text-white">{hospitalName}</p>
+                              </div>
+                              <p className="text-orange-400 font-bold mb-2">
+                                {totalDemand.toLocaleString('tr-TR')} talep
+                              </p>
+                              {topBranches.length > 0 && (
+                                <>
+                                  <p className="text-xs text-slate-400 mb-1">En Yüksek Talepler:</p>
+                                  <div className="space-y-0.5">
+                                    {topBranches.map((b, i) => (
+                                      <div key={i} className="flex justify-between text-xs">
+                                        <span className="text-slate-300">{b.branchName}</span>
+                                        <span className="text-white font-medium ml-2">{b.demandCount.toLocaleString('tr-TR')}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Sağ taraftaki sıralı liste */}
+                <div className="w-[220px] flex-shrink-0 space-y-1.5 max-h-[320px] overflow-y-auto">
+                  {(summary.totalHospitals === 1 ? summary.hospitalSummaries : summary.hospitalSummaries.filter(item => item.totalDemand >= 100))
+                    .sort((a, b) => b.totalDemand - a.totalDemand)
+                    .map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-2 py-1 px-1.5 rounded hover:bg-slate-700/30 transition-colors">
+                        <div
+                          className="w-3 h-3 rounded flex-shrink-0"
+                          style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
+                        />
+                        <span className="text-xs text-slate-300 flex-1 whitespace-nowrap">{getShortName(item.hospitalName)}</span>
+                        <span className="text-xs font-bold text-white">{item.totalDemand.toLocaleString('tr-TR')}</span>
+                      </div>
                     ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* Branş Bazlı Yatay Bar Chart */}
+            <div ref={barChartRef} className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6 relative group">
+              {/* İndirme ikonu */}
+              <button
+                onClick={() => handleExportComponent(barChartRef, 'brans-dagilimi')}
+                className="absolute top-3 right-3 w-7 h-7 bg-slate-700/80 hover:bg-blue-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
+                title="PNG İndir"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+              <h3 className="text-lg font-semibold text-white mb-4">Branş Bazlı Talep Dağılımı</h3>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={summary.branchTotals.slice(0, 10)}
+                    layout="vertical"
+                    margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
+                    <XAxis type="number" stroke="#9ca3af" tick={{ fontSize: 10 }} />
+                    <YAxis
+                      type="category"
+                      dataKey="branchName"
+                      stroke="#9ca3af"
+                      tick={{ fontSize: 10, fill: '#e2e8f0' }}
+                      width={150}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload[0]) return null;
+                        const branchName = payload[0].payload.branchName;
+                        const totalDemand = payload[0].value as number;
+
+                        // Bu branşa sahip hastaneleri bul
+                        const hospitalDetails = summary.hospitalSummaries
+                          .map(h => {
+                            const branch = h.branches.find(b => b.branchName === branchName);
+                            return branch ? { name: getShortName(h.hospitalName), count: branch.demandCount } : null;
+                          })
+                          .filter(Boolean)
+                          .sort((a, b) => (b?.count || 0) - (a?.count || 0)) as { name: string; count: number }[];
+
+                        return (
+                          <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl max-w-[280px]">
+                            <p className="font-semibold text-white mb-2 border-b border-slate-600 pb-2">
+                              {branchName}
+                            </p>
+                            <p className="text-orange-400 font-bold mb-3">
+                              Toplam: {totalDemand.toLocaleString('tr-TR')} talep
+                            </p>
+                            <p className="text-xs text-slate-400 mb-1">Hastane Dağılımı:</p>
+                            <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                              {hospitalDetails.map((h, i) => (
+                                <div key={i} className="flex justify-between text-sm">
+                                  <span className="text-slate-300">{h.name}</span>
+                                  <span className="text-white font-medium ml-3">{h.count.toLocaleString('tr-TR')}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="demandCount" radius={[0, 4, 4, 0]}>
+                      {summary.branchTotals.slice(0, 10).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
+          </div>
+          {/* SAYFA 1 SONU */}
 
-          {/* Hastane Bazlı Tablo */}
-          <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 overflow-hidden">
-            <div className="p-6 border-b border-slate-700/60">
-              <h3 className="text-lg font-semibold text-white">Hastane Bazlı Talep Tablosu</h3>
-              <p className="text-sm text-slate-400 mt-1">Tarih: {getDateRangeDisplay()}</p>
+          {/* SAYFA 2: Hastane Bazlı Detaylar */}
+          <div ref={page2Ref} className="space-y-4 bg-slate-900 p-4 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Hastane Bazlı Talep Detayları</h3>
+              <p className="text-sm text-slate-400">Tarih: {getDateRangeDisplay()}</p>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-slate-700/30">
-                    <th className="sticky left-0 bg-slate-700/50 px-4 py-3 text-left text-sm font-semibold text-slate-300 z-10">
-                      Hastane
-                    </th>
-                    {/* Dinamik branş sütunları */}
-                    {summary.branchTotals.slice(0, 10).map((branch, idx) => (
-                      <th key={idx} className="px-3 py-3 text-center text-xs font-semibold text-slate-300 whitespace-nowrap min-w-[80px]">
-                        {branch.branchName.length > 15 ? branch.branchName.substring(0, 15) + '...' : branch.branchName}
-                      </th>
-                    ))}
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-orange-400">
-                      Toplam
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.hospitalSummaries.map((hospital, idx) => {
-                    const branchMap: Record<string, number> = {};
-                    hospital.branches.forEach(b => {
-                      branchMap[b.branchName] = b.demandCount;
-                    });
+            {/* İl Toplamı Özet Kartı */}
+            {hasAllHospitalsAccess && (
+              <div className="bg-slate-800/80 rounded-2xl border-2 border-orange-500/50 p-5 shadow-lg shadow-orange-500/10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/30">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-orange-300">
+                        {summary.totalHospitals === 1
+                          ? getShortName(summary.hospitalSummaries[0]?.hospitalName || '') + ' TOPLAM'
+                          : 'İL GENELİ TOPLAM'}
+                      </p>
+                      <p className="text-2xl font-bold text-orange-400">{summary.totalProvinceDemand.toLocaleString('tr-TR')} Talep</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {summary.totalHospitals > 1 && (
+                      <p className="text-sm font-medium text-slate-300">{summary.totalHospitals} Hastane</p>
+                    )}
+                    <p className="text-sm font-medium text-slate-300">{summary.branchTotals.length} Branş</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                    return (
-                      <tr key={idx} className={`border-t border-slate-700/30 ${idx % 2 === 0 ? 'bg-slate-800/20' : 'bg-slate-800/40'} hover:bg-slate-700/30 transition-colors`}>
-                        <td className="sticky left-0 bg-slate-800/80 px-4 py-3 text-sm font-medium text-white z-10 whitespace-nowrap">
-                          {getShortName(hospital.hospitalName)}
-                        </td>
-                        {summary.branchTotals.slice(0, 10).map((branch, bIdx) => (
-                          <td key={bIdx} className="px-3 py-3 text-center text-sm text-slate-300">
-                            {branchMap[branch.branchName] || '-'}
-                          </td>
+            {/* Her hastane için ayrı tablo */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {summary.hospitalSummaries
+                .sort((a, b) => b.totalDemand - a.totalDemand)
+                .map((hospital, idx) => (
+                <div
+                  key={idx}
+                  ref={(el) => {
+                    if (el) hospitalCardRefs.current.set(idx, el);
+                    else hospitalCardRefs.current.delete(idx);
+                  }}
+                  className="bg-slate-800/50 rounded-xl border border-slate-700/60 overflow-hidden relative group"
+                >
+                  {/* İndirme ikonu */}
+                  <button
+                    onClick={() => handleExportHospitalCard(idx, getShortName(hospital.hospitalName))}
+                    className="absolute top-2 right-2 w-6 h-6 bg-slate-600/80 hover:bg-orange-500 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
+                    title="PNG İndir"
+                  >
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                  {/* Hastane Başlığı */}
+                  <div className="bg-slate-700/40 px-4 py-3 border-b border-slate-700/60">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-white">{getShortName(hospital.hospitalName)}</h4>
+                      <span className="text-lg font-bold text-orange-400">{hospital.totalDemand.toLocaleString('tr-TR')}</span>
+                    </div>
+                  </div>
+
+                  {/* Branş Listesi */}
+                  <div className="p-3">
+                    <table className="w-full">
+                      <thead>
+                        <tr>
+                          <th className="text-left text-xs font-medium text-slate-400 pb-2">Branş</th>
+                          <th className="text-right text-xs font-medium text-slate-400 pb-2">Talep</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hospital.branches
+                          .sort((a, b) => b.demandCount - a.demandCount)
+                          .map((branch, bIdx) => (
+                          <tr key={bIdx} className={bIdx % 2 === 0 ? 'bg-slate-800/30' : ''}>
+                            <td className="py-1.5 px-2 text-sm text-slate-300 rounded-l">{branch.branchName}</td>
+                            <td className="py-1.5 px-2 text-sm text-white text-right font-medium rounded-r">{branch.demandCount.toLocaleString('tr-TR')}</td>
+                          </tr>
                         ))}
-                        <td className="px-4 py-3 text-center text-sm font-bold text-orange-400">
-                          {hospital.totalDemand.toLocaleString('tr-TR')}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                {/* İl Toplamı - Sadece tüm hastanelere yetkisi varsa göster */}
-                {hasAllHospitalsAccess && (
-                  <tfoot>
-                    <tr className="bg-orange-500/20 border-t-2 border-orange-500/50">
-                      <td className="sticky left-0 bg-orange-500/30 px-4 py-3 text-sm font-bold text-orange-300 z-10">
-                        İL TOPLAMI
-                      </td>
-                      {summary.branchTotals.slice(0, 10).map((branch, idx) => (
-                        <td key={idx} className="px-3 py-3 text-center text-sm font-bold text-orange-300">
-                          {branch.demandCount.toLocaleString('tr-TR')}
-                        </td>
-                      ))}
-                      <td className="px-4 py-3 text-center text-lg font-bold text-orange-400">
-                        {summary.totalProvinceDemand.toLocaleString('tr-TR')}
-                      </td>
-                    </tr>
-                  </tfoot>
-                )}
-              </table>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
