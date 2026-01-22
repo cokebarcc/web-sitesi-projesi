@@ -203,6 +203,11 @@ export type ViewType =
   | 'emergency-service'      // Acil Servis modülü
   | 'schedule-planning'      // Cetvel Planlama modülü
   | 'active-demand'          // Aktif Talep modülü
+  | 'goren-ilsm'             // GÖREN - İl Sağlık Müdürlüğü
+  | 'goren-ilcesm'           // GÖREN - İlçe Sağlık Müdürlüğü
+  | 'goren-bh'               // GÖREN - Başhekimlik
+  | 'goren-adsh'             // GÖREN - Ağız ve Diş Sağlığı Hastanesi
+  | 'goren-ash'              // GÖREN - Acil Sağlık Hizmetleri
   | 'admin';
 
 // Aktif Talep (Active Demand) Types

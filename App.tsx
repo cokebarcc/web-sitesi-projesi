@@ -39,6 +39,7 @@ import WelcomeDashboard from './components/WelcomeDashboard';
 import FloatingSidebar from './components/FloatingSidebar';
 import SchedulePlanning from './components/SchedulePlanning';
 import ActiveDemand from './components/ActiveDemand';
+import GorenModule from './components/goren/GorenModule';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -838,6 +839,46 @@ const App: React.FC = () => {
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
                   canUpload={canUploadData('activeDemand')}
+                />
+              );
+            case 'goren-ilsm':
+              return (
+                <GorenModule
+                  moduleType="ILSM"
+                  userEmail={user?.email || ''}
+                  canUpload={true}
+                />
+              );
+            case 'goren-ilcesm':
+              return (
+                <GorenModule
+                  moduleType="ILCESM"
+                  userEmail={user?.email || ''}
+                  canUpload={true}
+                />
+              );
+            case 'goren-bh':
+              return (
+                <GorenModule
+                  moduleType="BH"
+                  userEmail={user?.email || ''}
+                  canUpload={true}
+                />
+              );
+            case 'goren-adsh':
+              return (
+                <GorenModule
+                  moduleType="ADSH"
+                  userEmail={user?.email || ''}
+                  canUpload={true}
+                />
+              );
+            case 'goren-ash':
+              return (
+                <GorenModule
+                  moduleType="ASH"
+                  userEmail={user?.email || ''}
+                  canUpload={true}
                 />
               );
             default: return null;
