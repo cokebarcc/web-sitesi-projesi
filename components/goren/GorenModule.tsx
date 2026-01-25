@@ -29,7 +29,9 @@ import {
   downloadGorenTemplate,
   exportGorenResultsToExcel,
   parseGorenExcel,
-  BHTableRow
+  BHTableRow,
+  saveGorenBHData,
+  loadGorenBHData
 } from '../../src/services/gorenStorage';
 
 // Alt bileşenler
@@ -37,7 +39,7 @@ import GorenFilterPanel from './common/GorenFilterPanel';
 import GorenSummaryCards from './common/GorenSummaryCards';
 import GorenIndicatorTable from './common/GorenIndicatorTable';
 import GorenDetailPanel from './common/GorenDetailPanel';
-import GorenDataEntry from './common/GorenDataEntry';
+// GorenDataEntry artık Manuel Hesaplama modülünde kullanılıyor
 import GorenBHTable from './common/GorenBHTable';
 
 // BHTableRow artık gorenStorage'dan import ediliyor
@@ -93,8 +95,6 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   const [summary, setSummary] = useState<CalculationSummary | null>(null);
   const [selectedIndicatorCode, setSelectedIndicatorCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'entry'>('entry');
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
@@ -107,6 +107,9 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
   // BH için Excel'den birebir tablo satırları
   const [bhTableData, setBhTableData] = useState<BHTableRow[]>([]);
+
+  // Muaf gösterge sayısı
+  const [muafCount, setMuafCount] = useState<number>(0);
 
   // moduleType değiştiğinde filtre state'ini güncelle
   useEffect(() => {
@@ -122,6 +125,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     setTotalDirectGP(null);
     setIndicatorNamesFromExcel({});
     setBhTableData([]);
+    setMuafCount(0);
   }, [moduleType]);
 
   // Bildirim göster
@@ -144,34 +148,70 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
     setIsLoading(true);
     try {
-      // Kayıtlı hesaplamayı yüklemeye çalış
-      const savedResult = await loadGorenCalculation(
-        filterState.institutionId,
-        filterState.year,
-        filterState.month
-      );
+      // BH modülü için özel yükleme
+      if (moduleType === 'BH') {
+        const bhData = await loadGorenBHData(
+          filterState.institutionId,
+          filterState.year,
+          filterState.month
+        );
 
-      if (savedResult) {
-        // Kayıtlı sonuç var
-        setResults(savedResult.indicators);
-        setSummary(savedResult.summary);
+        if (bhData && bhData.bhTableRows && bhData.bhTableRows.length > 0) {
+          // BH verileri bulundu
+          setBhTableData(bhData.bhTableRows);
+          setTotalDirectGP(bhData.totalGP);
+          setMuafCount(bhData.muafCount);
 
-        // Parametre değerlerini de yükle
-        const loadedParams: Record<string, ParameterValues> = {};
-        savedResult.indicators.forEach(ind => {
-          loadedParams[ind.code] = ind.parameterValues;
-        });
-        setParameterValues(loadedParams);
+          // Summary oluştur
+          const maxPossibleGP = definitions.reduce((sum, d) => sum + d.maxPoints, 0);
+          const completedCount = bhData.bhTableRows.filter(r => typeof r.donemIciPuan === 'number').length;
 
-        setViewMode('table');
-        showNotification('success', `${MONTHS[filterState.month - 1]} ${filterState.year} verileri yüklendi`);
+          setSummary({
+            totalGP: bhData.totalGP,
+            maxPossibleGP,
+            achievementRate: maxPossibleGP > 0 ? (bhData.totalGP / maxPossibleGP) * 100 : 0,
+            completedIndicators: completedCount,
+            totalIndicators: definitions.length,
+            incompleteIndicators: definitions.length - completedCount,
+            topIndicators: [],
+            bottomIndicators: []
+          });
+
+          showNotification('success', `${MONTHS[filterState.month - 1]} ${filterState.year} verileri yüklendi. Toplam Puan: ${bhData.totalGP}`);
+        } else {
+          // BH verisi yok
+          setBhTableData([]);
+          setTotalDirectGP(null);
+          setMuafCount(0);
+          setSummary(null);
+          setResults([]);
+          showNotification('info', 'Bu dönem için kayıtlı veri bulunamadı. Excel dosyası yükleyebilirsiniz.');
+        }
       } else {
-        // Kayıtlı sonuç yok, boş başla
-        setResults([]);
-        setSummary(null);
-        setParameterValues({});
-        setViewMode('entry');
-        showNotification('info', 'Bu dönem için kayıtlı veri bulunamadı. Veri girişi yapabilirsiniz.');
+        // Diğer modüller için mevcut mantık
+        const savedResult = await loadGorenCalculation(
+          filterState.institutionId,
+          filterState.year,
+          filterState.month
+        );
+
+        if (savedResult) {
+          setResults(savedResult.indicators);
+          setSummary(savedResult.summary);
+
+          const loadedParams: Record<string, ParameterValues> = {};
+          savedResult.indicators.forEach(ind => {
+            loadedParams[ind.code] = ind.parameterValues;
+          });
+          setParameterValues(loadedParams);
+
+          showNotification('success', `${MONTHS[filterState.month - 1]} ${filterState.year} verileri yüklendi`);
+        } else {
+          setResults([]);
+          setSummary(null);
+          setParameterValues({});
+          showNotification('info', 'Bu dönem için kayıtlı veri bulunamadı. Excel dosyası yükleyebilirsiniz.');
+        }
       }
     } catch (error) {
       console.error('[GÖREN Module] Yükleme hatası:', error);
@@ -179,7 +219,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [filterState, showNotification]);
+  }, [filterState, moduleType, definitions, showNotification]);
 
   // Şablon indir
   const handleDownloadTemplate = useCallback(() => {
@@ -302,13 +342,51 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
           // Özet hesapla - hasData olanları say (0 dahil)
           const completedResults = bhResults.filter(r => r.status === 'success');
-          const totalGP = result.totalGP || 0;
+
+          // Muaf ağırlıklandırma hesaplaması
+          // Muaf olan göstergelerin puanları diğerlerine dağıtılacak
+          let muafTotalMaxPuan = 0; // Muaf göstergelerin toplam max puanı
+          let nonMuafTotalMaxPuan = 0; // Muaf olmayan göstergelerin toplam max puanı
+          let nonMuafTotalPuan = 0; // Muaf olmayan göstergelerin aldığı toplam puan
+
+          if (result.bhTableRows) {
+            for (const row of result.bhTableRows) {
+              const isMuaf = row.muaf === 1;
+              const maxPuan = row.maxPuan || 4;
+              const puan = typeof row.donemIciPuan === 'number' ? row.donemIciPuan : 0;
+
+              if (isMuaf) {
+                muafTotalMaxPuan += maxPuan;
+              } else {
+                nonMuafTotalMaxPuan += maxPuan;
+                nonMuafTotalPuan += puan;
+              }
+            }
+          }
+
+          // Ağırlıklandırılmış toplam puan hesapla
+          // Formül: (Muaf olmayan puan / Muaf olmayan maxPuan) × Toplam maxPuan
+          const totalMaxPuan = muafTotalMaxPuan + nonMuafTotalMaxPuan;
+          let weightedTotalGP: number;
+
+          if (nonMuafTotalMaxPuan > 0 && muafTotalMaxPuan > 0) {
+            // Muaf gösterge varsa ağırlıklandır
+            weightedTotalGP = (nonMuafTotalPuan / nonMuafTotalMaxPuan) * totalMaxPuan;
+          } else {
+            // Muaf gösterge yoksa orijinal toplam
+            weightedTotalGP = result.totalGP || 0;
+          }
+
+          // State'e ağırlıklandırılmış toplamı kaydet (yuvarlanmış)
+          const roundedWeightedTotalGP = Math.round(weightedTotalGP);
+          setTotalDirectGP(roundedWeightedTotalGP);
+
           const maxPossibleGP = definitions.reduce((sum, d) => sum + d.maxPoints, 0);
 
           setSummary({
-            totalGP,
+            totalGP: roundedWeightedTotalGP,
             maxPossibleGP,
-            achievementRate: maxPossibleGP > 0 ? (totalGP / maxPossibleGP) * 100 : 0,
+            achievementRate: maxPossibleGP > 0 ? (roundedWeightedTotalGP / maxPossibleGP) * 100 : 0,
             completedIndicators: completedResults.length,
             totalIndicators: definitions.length,
             incompleteIndicators: definitions.length - completedResults.length,
@@ -316,18 +394,36 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
             bottomIndicators: [...bhResults].sort((a, b) => a.achievementPercent - b.achievementPercent).slice(0, 5)
           });
 
-          showNotification('success', `${Object.keys(result.directGP).length} gösterge yüklendi. Toplam Puan: ${totalGP.toFixed(2)}`);
-          setViewMode('table');
+          const currentMuafCount = result.bhTableRows?.filter(r => r.muaf === 1).length || 0;
+          setMuafCount(currentMuafCount);
+          const muafInfo = currentMuafCount > 0 ? ` (${currentMuafCount} muaf gösterge ağırlıklandırıldı)` : '';
+          showNotification('success', `${Object.keys(result.directGP).length} gösterge yüklendi. Toplam Puan: ${roundedWeightedTotalGP}${muafInfo}`);
+
+          // BH verilerini Firebase'e kaydet
+          try {
+            await saveGorenBHData(
+              filterState.institutionId,
+              filterState.institutionName,
+              filterState.year,
+              filterState.month,
+              result.bhTableRows || [],
+              roundedWeightedTotalGP,
+              currentMuafCount,
+              userEmail
+            );
+            console.log('[GÖREN Module] BH verileri Firebase\'e kaydedildi');
+          } catch (firebaseError) {
+            console.warn('[GÖREN Module] BH Firebase kaydetme hatası:', firebaseError);
+          }
         } else {
           // Diğer modüller için normal hesaplama
           showNotification('success', `${Object.keys(result.data).length} gösterge verisi yüklendi`);
           const calcResults = calculateAllIndicators(definitions, result.data);
           setResults(calcResults);
           setSummary(calculateSummary(calcResults));
-          setViewMode('table');
         }
 
-        // Firebase'e kaydetmeyi arka planda dene (hata verse de devam et)
+        // Dosyayı Firebase Storage'a yükle (arka planda)
         try {
           await uploadGorenDataFile(
             file,
@@ -339,7 +435,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
             userEmail
           );
         } catch (firebaseError) {
-          console.warn('[GÖREN Module] Firebase yükleme atlandı:', firebaseError);
+          console.warn('[GÖREN Module] Firebase Storage yükleme atlandı:', firebaseError);
         }
       } else {
         showNotification('error', result.error || 'Dosya parse edilemedi');
@@ -351,59 +447,6 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       setIsLoading(false);
     }
   }, [filterState, moduleType, userEmail, definitions, calculateAllIndicators, calculateSummary, showNotification]);
-
-  // Parametre değerleri değişikliği
-  const handleValuesChange = useCallback((values: Record<string, ParameterValues>) => {
-    setParameterValues(values);
-  }, []);
-
-  // Tümünü hesapla
-  const handleCalculateAll = useCallback(async () => {
-    setIsCalculating(true);
-    try {
-      const calcResults = calculateAllIndicators(definitions, parameterValues);
-      setResults(calcResults);
-      setSummary(calculateSummary(calcResults));
-      setViewMode('table');
-
-      // Sonuçları kaydet
-      if (filterState.institutionId) {
-        const institutionResult = createInstitutionResult(
-          filterState.institutionId,
-          filterState.institutionName,
-          moduleType,
-          filterState.year,
-          filterState.month,
-          calcResults,
-          userEmail
-        );
-
-        const saveResult = await saveGorenCalculation(institutionResult, userEmail);
-        if (saveResult.success) {
-          showNotification('success', 'Hesaplama tamamlandı ve kaydedildi');
-        } else {
-          showNotification('info', 'Hesaplama tamamlandı (kayıt yapılamadı)');
-        }
-      } else {
-        showNotification('success', 'Hesaplama tamamlandı');
-      }
-    } catch (error) {
-      console.error('[GÖREN Module] Hesaplama hatası:', error);
-      showNotification('error', 'Hesaplama sırasında hata oluştu');
-    } finally {
-      setIsCalculating(false);
-    }
-  }, [
-    definitions,
-    parameterValues,
-    filterState,
-    moduleType,
-    userEmail,
-    calculateAllIndicators,
-    calculateSummary,
-    createInstitutionResult,
-    showNotification
-  ]);
 
   // Satır tıklama (detay paneli aç)
   const handleRowClick = useCallback((code: string) => {
@@ -555,6 +598,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         isLoading={isLoading}
         canUpload={canUpload}
         hasData={results.length > 0 && summary !== null}
+        showInstitutionTypeFilter={moduleType !== 'BH'}
       />
 
       {/* BH için Toplam Puan Büyük Kart */}
@@ -566,7 +610,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
                 {filterState.institutionName || 'Seçili Hastane'} - {MONTHS[filterState.month - 1]} {filterState.year}
               </p>
               <h2 className="text-5xl font-black text-white mb-2">
-                {totalDirectGP.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {totalDirectGP}
                 <span className="text-2xl font-normal text-indigo-300 ml-2">/ {definitions.reduce((sum, d) => sum + d.maxPoints, 0)} puan</span>
               </h2>
               <p className="text-indigo-200">
@@ -589,55 +633,13 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       <GorenSummaryCards
         summary={summary}
         isLoading={isLoading}
+        muafCount={muafCount}
+        totalIndicators={definitions.length}
       />
-
-      {/* Görünüm Değiştirici */}
-      {filterState.institutionId && (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('entry')}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
-              viewMode === 'entry'
-                ? 'bg-indigo-500/20 text-indigo-400'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-3)]'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Veri Girişi
-            </span>
-          </button>
-          <button
-            onClick={() => setViewMode('table')}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
-              viewMode === 'table'
-                ? 'bg-indigo-500/20 text-indigo-400'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-3)]'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Sonuç Tablosu
-            </span>
-          </button>
-        </div>
-      )}
 
       {/* İçerik */}
       {filterState.institutionId ? (
-        viewMode === 'entry' ? (
-          <GorenDataEntry
-            definitions={definitions}
-            currentValues={parameterValues}
-            onValuesChange={handleValuesChange}
-            onCalculateAll={handleCalculateAll}
-            isLoading={isCalculating}
-          />
-        ) : moduleType === 'BH' && bhTableData.length > 0 ? (
+        moduleType === 'BH' && bhTableData.length > 0 ? (
           // BH için özel tablo - Excel'den birebir yansıtma
           <GorenBHTable
             data={bhTableData}

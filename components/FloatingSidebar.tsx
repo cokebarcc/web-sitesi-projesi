@@ -153,6 +153,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     ),
     iconColor: 'text-purple-400',
     items: [
+      { id: 'goren-manuel', label: 'Manuel Hesaplama', view: 'goren-manuel', hasAccess: true },
       { id: 'goren-ilsm', label: 'İl Sağlık Müdürlüğü', view: 'goren-ilsm', hasAccess: true },
       { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: true, disabled: true },
       { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: true },

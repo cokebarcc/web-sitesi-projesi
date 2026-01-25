@@ -2,6 +2,7 @@
  * GÖREN Filtre Paneli
  *
  * Kurum türü, kurum seçimi, yıl ve ay filtreleri
+ * Hekim Verileri modülüyle aynı modern tasarım
  */
 
 import React, { useMemo } from 'react';
@@ -13,9 +14,9 @@ import {
 import {
   INSTITUTION_TYPE_LABELS,
   getActiveInstitutionTypes,
-  getIndicatorsByCategory,
   INDICATOR_COUNTS
 } from '../../../src/config/goren';
+import MultiSelectDropdown, { DropdownOption } from '../../MultiSelectDropdown';
 
 interface GorenFilterPanelProps {
   /** Mevcut filtre durumu */
@@ -38,6 +39,8 @@ interface GorenFilterPanelProps {
   canUpload?: boolean;
   /** Dışa aktarılacak veri var mı */
   hasData?: boolean;
+  /** Kurum türü filtresini göster */
+  showInstitutionTypeFilter?: boolean;
 }
 
 // Ay isimleri
@@ -62,7 +65,8 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
   availableInstitutions,
   isLoading = false,
   canUpload = true,
-  hasData = false
+  hasData = false,
+  showInstitutionTypeFilter = true
 }) => {
   // Aktif kurum türleri
   const activeTypes = useMemo(() => getActiveInstitutionTypes(), []);
@@ -72,177 +76,173 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
     const filtered = availableInstitutions.filter(
       inst => inst.type === filterState.institutionType
     );
-    // Eğer kurum türüne göre filtreli sonuç boşsa tüm kurumları göster
     return filtered.length > 0 ? filtered : availableInstitutions;
   }, [availableInstitutions, filterState.institutionType]);
 
   // Seçili kurum türü için gösterge sayısı
   const indicatorCount = INDICATOR_COUNTS[filterState.institutionType] || 0;
 
+  // Dropdown seçenekleri
+  const institutionTypeOptions: DropdownOption[] = activeTypes.map(type => ({
+    value: type,
+    label: INSTITUTION_TYPE_LABELS[type]
+  }));
+
+  const institutionOptions: DropdownOption[] = filteredInstitutions.map(inst => ({
+    value: inst.id,
+    label: inst.name
+  }));
+
+  const yearOptions: DropdownOption[] = YEARS.map(y => ({
+    value: y,
+    label: String(y)
+  }));
+
+  const monthOptions: DropdownOption[] = MONTHS.map((m, idx) => ({
+    value: idx + 1,
+    label: m
+  }));
+
   // Dosya yükleme handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       onUploadFile(file);
-      // Input'u sıfırla (aynı dosyayı tekrar seçebilmek için)
       e.target.value = '';
     }
   };
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6 mb-6">
-      {/* Başlık ve Bilgi */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-[var(--text-1)]">
-            GÖREN Performans Hesaplama
-          </h2>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
-            {INSTITUTION_TYPE_LABELS[filterState.institutionType]} • {indicatorCount} Gösterge
-          </p>
-        </div>
-
-        {/* Şablon ve Export Butonları */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onDownloadTemplate}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[var(--text-2)] bg-[var(--bg-2)] hover:bg-[var(--bg-3)] rounded-xl transition-colors"
-            title="Veri giriş şablonu indir"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Şablon İndir
-          </button>
-
-          {hasData && (
-            <button
-              onClick={onExport}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors"
-              title="Sonuçları Excel olarak indir"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Dışa Aktar
-            </button>
-          )}
-        </div>
-      </div>
-
+    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-5 relative z-[100]">
       {/* Filtre Satırı */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div className="flex flex-wrap gap-3 items-end">
         {/* Kurum Türü */}
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-            Kurum Türü
-          </label>
-          <select
-            value={filterState.institutionType}
-            onChange={(e) => onFilterChange({
-              institutionType: e.target.value as InstitutionType,
-              institutionId: '',
-              institutionName: ''
-            })}
-            className="w-full px-4 py-3 bg-[var(--bg-2)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-1)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {activeTypes.map(type => (
-              <option key={type} value={type}>
-                {INSTITUTION_TYPE_LABELS[type]}
-              </option>
-            ))}
-            {/* Henüz aktif olmayan türler (disabled) */}
-            {(['ILCESM', 'ADSH', 'ASH'] as InstitutionType[])
-              .filter(type => !activeTypes.includes(type))
-              .map(type => (
-                <option key={type} value={type} disabled>
-                  {INSTITUTION_TYPE_LABELS[type]} (Yakında)
-                </option>
-              ))
-            }
-          </select>
-        </div>
-
-        {/* Kurum Seçimi */}
-        <div className="md:col-span-2">
-          <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-            Kurum
-          </label>
-          <select
-            value={filterState.institutionId}
-            onChange={(e) => {
-              const selected = filteredInstitutions.find(i => i.id === e.target.value);
+        {showInstitutionTypeFilter && (
+          <MultiSelectDropdown
+            label="Kurum Türü"
+            options={institutionTypeOptions}
+            selectedValues={filterState.institutionType ? [filterState.institutionType] : []}
+            onChange={(values) => {
+              const newType = values.length > 0 ? values[0] as InstitutionType : 'ILSM';
               onFilterChange({
-                institutionId: e.target.value,
-                institutionName: selected?.name || ''
+                institutionType: newType,
+                institutionId: '',
+                institutionName: ''
               });
             }}
-            className="w-full px-4 py-3 bg-[var(--bg-2)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-1)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">Kurum Seçin</option>
-            {filteredInstitutions.map(inst => (
-              <option key={inst.id} value={inst.id}>
-                {inst.name}
-              </option>
-            ))}
-          </select>
-        </div>
+            placeholder="Kurum Türü Seçin"
+            showSearch={false}
+            compact={true}
+            singleSelect={true}
+          />
+        )}
+
+        {/* Kurum Seçimi */}
+        <MultiSelectDropdown
+          label="Kurum"
+          options={institutionOptions}
+          selectedValues={filterState.institutionId ? [filterState.institutionId] : []}
+          onChange={(values) => {
+            const selectedId = values.length > 0 ? String(values[0]) : '';
+            const selected = filteredInstitutions.find(i => i.id === selectedId);
+            onFilterChange({
+              institutionId: selectedId,
+              institutionName: selected?.name || ''
+            });
+          }}
+          placeholder="Kurum Seçiniz..."
+          disabled={filteredInstitutions.length === 0}
+          emptyMessage="Kurum bulunamadı"
+          showSearch={filteredInstitutions.length > 5}
+          compact={true}
+          singleSelect={true}
+        />
 
         {/* Yıl */}
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-            Yıl
-          </label>
-          <select
-            value={filterState.year}
-            onChange={(e) => onFilterChange({ year: parseInt(e.target.value) })}
-            className="w-full px-4 py-3 bg-[var(--bg-2)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-1)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {YEARS.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
-        </div>
+        <MultiSelectDropdown
+          label="Yıl"
+          options={yearOptions}
+          selectedValues={filterState.year ? [filterState.year] : []}
+          onChange={(values) => {
+            const newYear = values.length > 0 ? Number(values[0]) : new Date().getFullYear();
+            onFilterChange({ year: newYear });
+          }}
+          placeholder="Yıl Seçin"
+          showSearch={false}
+          compact={true}
+          singleSelect={true}
+        />
 
         {/* Ay */}
-        <div className="md:col-span-1">
-          <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-            Ay
-          </label>
-          <select
-            value={filterState.month}
-            onChange={(e) => onFilterChange({ month: parseInt(e.target.value) })}
-            className="w-full px-4 py-3 bg-[var(--bg-2)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-1)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {MONTHS.map((month, idx) => (
-              <option key={idx} value={idx + 1}>{month}</option>
-            ))}
-          </select>
-        </div>
+        <MultiSelectDropdown
+          label="Ay"
+          options={monthOptions}
+          selectedValues={filterState.month ? [filterState.month] : []}
+          onChange={(values) => {
+            const newMonth = values.length > 0 ? Number(values[0]) : new Date().getMonth() + 1;
+            onFilterChange({ month: newMonth });
+          }}
+          placeholder="Ay Seçin"
+          showSearch={false}
+          compact={true}
+          singleSelect={true}
+        />
 
         {/* Uygula Butonu */}
-        <div className="md:col-span-1 flex items-end">
+        <button
+          onClick={onApply}
+          disabled={isLoading || !filterState.institutionId}
+          className="px-5 py-2 h-[38px] bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+        >
+          {isLoading ? (
+            <>
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Yükleniyor...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Uygula
+            </>
+          )}
+        </button>
+
+        {/* Şablon İndir */}
+        <button
+          onClick={onDownloadTemplate}
+          className="px-4 py-2 h-[38px] bg-[var(--surface-2)] text-[var(--text-2)] rounded-lg font-medium text-sm hover:bg-[var(--surface-3)] transition-all flex items-center gap-2 border border-[var(--border-1)]"
+          title="Veri giriş şablonu indir"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Şablon
+        </button>
+
+        {/* Dışa Aktar */}
+        {hasData && (
           <button
-            onClick={onApply}
-            disabled={isLoading || !filterState.institutionId}
-            className={`w-full px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-              isLoading || !filterState.institutionId
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/25'
-            }`}
+            onClick={onExport}
+            className="px-4 py-2 h-[38px] bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-500 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
+            title="Sonuçları Excel olarak indir"
           >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Yükleniyor
-              </span>
-            ) : (
-              'Uygula'
-            )}
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Excel
           </button>
+        )}
+
+        {/* Sağ taraf - Gösterge bilgisi */}
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-xs text-emerald-400 font-medium bg-emerald-500/20 px-2 py-1 rounded-full border border-emerald-500/30">
+            {INSTITUTION_TYPE_LABELS[filterState.institutionType]} • {indicatorCount} Gösterge
+          </span>
         </div>
       </div>
 
@@ -250,7 +250,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
       {canUpload && filterState.institutionId && (
         <div className="mt-4 pt-4 border-t border-[var(--glass-border)]">
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-xl cursor-pointer transition-colors">
+            <label className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg cursor-pointer transition-all border border-indigo-500/30">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>

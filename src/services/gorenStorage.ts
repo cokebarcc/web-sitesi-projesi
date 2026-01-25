@@ -32,6 +32,7 @@ import {
   InstitutionType,
   IndicatorDefinition
 } from '../../components/goren/types/goren.types';
+import { BH_INDICATORS } from '../config/goren/bh.registry';
 
 // Firestore koleksiyon adları
 const GOREN_DATA_COLLECTION = 'gorenData';
@@ -52,6 +53,7 @@ export interface BHTableRow {
   donemIci: number | string | null;
   trRolOrtalama: number | string | null;
   donemIciPuan: number | string | null;
+  maxPuan: number; // Maksimum alınabilecek puan
   muaf: number | string | null;
 }
 
@@ -233,6 +235,10 @@ export const parseGorenExcelBH = (
         }
       }
 
+      // BH registry'den maxPoints değerini al
+      const bhIndicator = BH_INDICATORS.find(ind => ind.code === code);
+      const maxPuan = bhIndicator?.maxPoints ?? 4; // Varsayılan 4
+
       // BH tablo satırı oluştur
       bhTableRows.push({
         sira: siraNum,
@@ -243,6 +249,7 @@ export const parseGorenExcelBH = (
         donemIci: parameterData[code]['GD'] ?? null,
         trRolOrtalama: trRolOrtalamaValue,
         donemIciPuan: gpNumValue,
+        maxPuan: maxPuan,
         muaf: muafValue
       });
     }
@@ -519,6 +526,91 @@ export const loadGorenCalculation = async (
     return docSnap.data() as InstitutionResult;
   } catch (error) {
     console.error('[GÖREN Storage] Yükleme hatası:', error);
+    return null;
+  }
+};
+
+// ========== BH VERİ KAYIT/YÜKLEME ==========
+
+/**
+ * BH verileri için kayıt yapısı
+ */
+export interface BHSavedData {
+  institutionId: string;
+  institutionName: string;
+  year: number;
+  month: number;
+  bhTableRows: BHTableRow[];
+  totalGP: number;
+  muafCount: number;
+  savedAt: number;
+  savedBy: string;
+}
+
+/**
+ * BH verilerini Firestore'a kaydet
+ */
+export const saveGorenBHData = async (
+  institutionId: string,
+  institutionName: string,
+  year: number,
+  month: number,
+  bhTableRows: BHTableRow[],
+  totalGP: number,
+  muafCount: number,
+  savedBy: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const docId = `BH_${institutionId}_${year}_${String(month).padStart(2, '0')}`;
+    const docRef = doc(db, GOREN_DATA_COLLECTION, docId);
+
+    const data: BHSavedData = {
+      institutionId,
+      institutionName,
+      year,
+      month,
+      bhTableRows,
+      totalGP,
+      muafCount,
+      savedAt: Date.now(),
+      savedBy
+    };
+
+    await setDoc(docRef, data);
+
+    console.log('[GÖREN Storage] BH verileri kaydedildi:', docId);
+    return { success: true };
+  } catch (error) {
+    console.error('[GÖREN Storage] BH kaydetme hatası:', error);
+    return {
+      success: false,
+      error: `Kayıt başarısız: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+    };
+  }
+};
+
+/**
+ * Kaydedilmiş BH verilerini yükle
+ */
+export const loadGorenBHData = async (
+  institutionId: string,
+  year: number,
+  month: number
+): Promise<BHSavedData | null> => {
+  try {
+    const docId = `BH_${institutionId}_${year}_${String(month).padStart(2, '0')}`;
+    const docRef = doc(db, GOREN_DATA_COLLECTION, docId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[GÖREN Storage] BH verisi bulunamadı:', docId);
+      return null;
+    }
+
+    console.log('[GÖREN Storage] BH verileri yüklendi:', docId);
+    return docSnap.data() as BHSavedData;
+  } catch (error) {
+    console.error('[GÖREN Storage] BH yükleme hatası:', error);
     return null;
   }
 };

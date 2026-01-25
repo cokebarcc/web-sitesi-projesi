@@ -40,6 +40,7 @@ import FloatingSidebar from './components/FloatingSidebar';
 import SchedulePlanning from './components/SchedulePlanning';
 import ActiveDemand from './components/ActiveDemand';
 import GorenModule from './components/goren/GorenModule';
+import GorenManuelHesaplama from './components/goren/GorenManuelHesaplama';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -276,10 +277,10 @@ const App: React.FC = () => {
         const data = snapshot.data();
         // detailedScheduleData excluded - loaded from Storage
         // scheduleVersions excluded - loaded from Storage (change-analysis)
-        if (data.muayeneByPeriod) setMuayeneByPeriod(data.muayeneByPeriod);
-        if (data.ameliyatByPeriod) setAmeliyatByPeriod(data.ameliyatByPeriod);
-        if (data.muayeneMetaByPeriod) setMuayeneMetaByPeriod(data.muayeneMetaByPeriod);
-        if (data.ameliyatMetaByPeriod) setAmeliyatMetaByPeriod(data.ameliyatMetaByPeriod);
+        // muayeneByPeriod excluded - loaded from Storage (physician-data)
+        // ameliyatByPeriod excluded - loaded from Storage (physician-data)
+        // muayeneMetaByPeriod excluded - managed locally
+        // ameliyatMetaByPeriod excluded - managed locally
         if (data.sutServiceData) setSutServiceData(data.sutServiceData);
         if (data.presentationSlides) setSlides(data.presentationSlides);
       }
@@ -841,6 +842,8 @@ const App: React.FC = () => {
                   canUpload={canUploadData('activeDemand')}
                 />
               );
+            case 'goren-manuel':
+              return <GorenManuelHesaplama />;
             case 'goren-ilsm':
               return (
                 <GorenModule

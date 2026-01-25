@@ -12,11 +12,17 @@ interface GorenSummaryCardsProps {
   summary: CalculationSummary | null;
   /** Yükleme durumu */
   isLoading?: boolean;
+  /** Muaf gösterge sayısı */
+  muafCount?: number;
+  /** Toplam gösterge sayısı (muaf için) */
+  totalIndicators?: number;
 }
 
 export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
   summary,
-  isLoading = false
+  isLoading = false,
+  muafCount = 0,
+  totalIndicators = 0
 }) => {
   // Yükleme durumu
   if (isLoading) {
@@ -59,17 +65,17 @@ export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
           color="emerald"
         />
         <SummaryCard
-          title="TAMAMLANAN"
+          title="MUAF"
           value="-"
-          subtitle="Hesaplanan gösterge"
-          color="amber"
+          subtitle="Muaf gösterge sayısı"
+          color="violet"
         />
       </div>
     );
   }
 
   // Başarı oranına göre renk
-  const getAchievementColor = (rate: number): 'indigo' | 'purple' | 'emerald' | 'amber' | 'rose' | 'orange' => {
+  const getAchievementColor = (rate: number): 'indigo' | 'purple' | 'emerald' | 'amber' | 'rose' | 'orange' | 'violet' => {
     if (rate >= 80) return 'emerald';
     if (rate >= 60) return 'amber';
     if (rate >= 40) return 'orange';
@@ -105,15 +111,15 @@ export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
         progressValue={summary.achievementRate}
       />
 
-      {/* Tamamlanan Gösterge */}
+      {/* Muaf Gösterge */}
       <SummaryCard
-        title="TAMAMLANAN"
-        value={`${summary.completedIndicators}/${summary.totalIndicators}`}
-        subtitle={summary.incompleteIndicators > 0
-          ? `${summary.incompleteIndicators} gösterge eksik`
-          : 'Tüm göstergeler hesaplandı'
+        title="MUAF"
+        value={`${muafCount}/${totalIndicators || summary.totalIndicators}`}
+        subtitle={muafCount > 0
+          ? `${muafCount} gösterge muaf tutuldu`
+          : 'Muaf gösterge yok'
         }
-        color={summary.incompleteIndicators === 0 ? 'emerald' : 'amber'}
+        color="violet"
       />
     </div>
   );
@@ -134,7 +140,7 @@ interface SummaryCardProps {
   title: string;
   value: string;
   subtitle: string;
-  color: 'indigo' | 'purple' | 'emerald' | 'amber' | 'rose' | 'orange';
+  color: 'indigo' | 'purple' | 'emerald' | 'amber' | 'rose' | 'orange' | 'violet';
   trend?: 'up' | 'down' | 'stable';
   showProgress?: boolean;
   progressValue?: number;
@@ -185,6 +191,12 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
       bg: 'bg-orange-500/10',
       border: 'border-orange-500/20',
       progress: 'bg-orange-500'
+    },
+    violet: {
+      text: 'text-violet-400',
+      bg: 'bg-violet-500/10',
+      border: 'border-violet-500/20',
+      progress: 'bg-violet-500'
     }
   };
 

@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Kullanıcı girişi yapmış mı kontrol et
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // GÖREN Data koleksiyonu - BH verileri dahil
+    match /gorenData/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // GÖREN Files koleksiyonu
+    match /gorenFiles/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // GÖREN Audit Logs koleksiyonu
+    match /gorenAuditLogs/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Kullanıcılar koleksiyonu
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Varsayılan - diğer koleksiyonlar
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
