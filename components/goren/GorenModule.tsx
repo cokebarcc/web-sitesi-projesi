@@ -31,7 +31,11 @@ import {
   parseGorenExcel,
   BHTableRow,
   saveGorenBHData,
-  loadGorenBHData
+  loadGorenBHData,
+  saveTrRolOrtalamasi,
+  loadTrRolOrtalamasi,
+  loadBHHistoryData,
+  BHHistoryData
 } from '../../src/services/gorenStorage';
 
 // Alt bileşenler
@@ -41,6 +45,8 @@ import GorenIndicatorTable from './common/GorenIndicatorTable';
 import GorenDetailPanel from './common/GorenDetailPanel';
 // GorenDataEntry artık Manuel Hesaplama modülünde kullanılıyor
 import GorenBHTable from './common/GorenBHTable';
+import GorenHistoryChart from './common/GorenHistoryChart';
+import GorenRadarChart from './common/GorenRadarChart';
 
 // BHTableRow artık gorenStorage'dan import ediliyor
 
@@ -53,6 +59,8 @@ interface GorenModuleProps {
   canUpload?: boolean;
   /** Mevcut hastane/kurum listesi */
   availableInstitutions?: InstitutionOption[];
+  /** Admin mi? */
+  isAdmin?: boolean;
 }
 
 // Ay isimleri
@@ -65,7 +73,8 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   moduleType,
   userEmail,
   canUpload = true,
-  availableInstitutions = []
+  availableInstitutions = [],
+  isAdmin = false
 }) => {
   // Hesaplama hook'u
   const {
@@ -111,6 +120,13 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   // Muaf gösterge sayısı
   const [muafCount, setMuafCount] = useState<number>(0);
 
+  // TR Rol Ortalaması (her hastane/ay için farklı)
+  const [trRolOrtalamasi, setTrRolOrtalamasi] = useState<number | null>(null);
+
+  // Geçmiş performans verileri (grafik için)
+  const [historyData, setHistoryData] = useState<BHHistoryData[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
   // moduleType değiştiğinde filtre state'ini güncelle
   useEffect(() => {
     setFilterState(prev => ({
@@ -148,6 +164,14 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
     setIsLoading(true);
     try {
+      // TR Rol Ortalaması'nı yükle
+      const trRolValue = await loadTrRolOrtalamasi(
+        filterState.institutionId,
+        filterState.year,
+        filterState.month
+      );
+      setTrRolOrtalamasi(trRolValue);
+
       // BH modülü için özel yükleme
       if (moduleType === 'BH') {
         const bhData = await loadGorenBHData(
@@ -187,6 +211,21 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
           setResults([]);
           showNotification('info', 'Bu dönem için kayıtlı veri bulunamadı. Excel dosyası yükleyebilirsiniz.');
         }
+
+        // Geçmiş verileri yükle (grafik için) - arka planda
+        setIsLoadingHistory(true);
+        loadBHHistoryData(
+          filterState.institutionId,
+          filterState.year,
+          filterState.month,
+          12 // Son 12 ay
+        ).then(history => {
+          setHistoryData(history);
+          setIsLoadingHistory(false);
+        }).catch(err => {
+          console.error('[GÖREN Module] Geçmiş veri yükleme hatası:', err);
+          setIsLoadingHistory(false);
+        });
       } else {
         // Diğer modüller için mevcut mantık
         const savedResult = await loadGorenCalculation(
@@ -220,6 +259,34 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       setIsLoading(false);
     }
   }, [filterState, moduleType, definitions, showNotification]);
+
+  // TR Rol Ortalaması değişikliği (sadece admin)
+  const handleTrRolOrtalamasiChange = useCallback(async (value: number) => {
+    if (!filterState.institutionId) {
+      showNotification('error', 'Lütfen önce bir kurum seçin');
+      return;
+    }
+
+    try {
+      const result = await saveTrRolOrtalamasi(
+        filterState.institutionId,
+        filterState.year,
+        filterState.month,
+        value,
+        userEmail
+      );
+
+      if (result.success) {
+        setTrRolOrtalamasi(value);
+        showNotification('success', 'TR Rol Ortalaması güncellendi');
+      } else {
+        showNotification('error', result.error || 'Kaydetme hatası');
+      }
+    } catch (error) {
+      console.error('[GÖREN Module] TR Rol Ortalaması kaydetme hatası:', error);
+      showNotification('error', 'TR Rol Ortalaması kaydedilemedi');
+    }
+  }, [filterState, userEmail, showNotification]);
 
   // Şablon indir
   const handleDownloadTemplate = useCallback(() => {
@@ -495,8 +562,9 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       { id: 'ism-sanliurfa', name: 'Şanlıurfa İl Sağlık Müdürlüğü', type: 'ILSM' as InstitutionType }
     );
 
-    // BH için tüm hastaneler (Başhekimlikler)
-    HOSPITALS.forEach(hospital => {
+    // BH için tüm hastaneler (Başhekimlikler) - Harran ve Balıklıgöl sistemden muaf
+    const excludedHospitals = ['Harran DH', 'Balıklıgöl DH'];
+    HOSPITALS.filter(h => !excludedHospitals.includes(h)).forEach(hospital => {
       const id = hospital.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
         const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
         return map[c] || c;
@@ -532,7 +600,8 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       { id: 'ash-sanliurfa', name: 'Şanlıurfa 112 Acil Sağlık Hizmetleri', type: 'ASH' as InstitutionType }
     );
 
-    return options;
+    // Türkçe karakterleri dikkate alarak A-Z sırala
+    return options.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
   }, [availableInstitutions]);
 
   // Gösterge yoksa uyarı göster
@@ -635,17 +704,43 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         isLoading={isLoading}
         muafCount={muafCount}
         totalIndicators={definitions.length}
+        isAdmin={isAdmin}
+        trRolOrtalamasi={trRolOrtalamasi}
+        onTrRolOrtalamasiChange={handleTrRolOrtalamasiChange}
       />
 
       {/* İçerik */}
       {filterState.institutionId ? (
         moduleType === 'BH' && bhTableData.length > 0 ? (
           // BH için özel tablo - Excel'den birebir yansıtma
-          <GorenBHTable
-            data={bhTableData}
-            totalGP={totalDirectGP || 0}
-            isLoading={isLoading}
-          />
+          <>
+            {/* BH için Performans Trendi Grafiği - Tablonun üzerinde */}
+            <div className="mb-6">
+              <GorenHistoryChart
+                data={historyData}
+                isLoading={isLoadingHistory}
+                institutionName={filterState.institutionName}
+              />
+            </div>
+
+            {/* BH için Radar (Örümcek Ağı) Grafiği */}
+            <div className="mb-6">
+              <GorenRadarChart
+                data={bhTableData}
+                isLoading={isLoading}
+                currentInstitutionId={filterState.institutionId}
+                currentInstitutionName={filterState.institutionName}
+                year={filterState.year}
+                month={filterState.month}
+              />
+            </div>
+
+            <GorenBHTable
+              data={bhTableData}
+              totalGP={totalDirectGP || 0}
+              isLoading={isLoading}
+            />
+          </>
         ) : (
           <GorenIndicatorTable
             results={results}

@@ -22,7 +22,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
   onToggleTheme
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['mhrs']);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev =>
@@ -89,6 +89,24 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       ]
     },
     {
+      id: 'goren-perf',
+      label: 'GÖREN Performans',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      iconColor: 'text-purple-400',
+      items: [
+        { id: 'goren-manuel', label: 'Manuel Hesaplama', view: 'goren-manuel', hasAccess: true },
+        { id: 'goren-ilsm', label: 'İl Sağlık Müdürlüğü', view: 'goren-ilsm', hasAccess: true },
+        { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: true, disabled: true },
+        { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: true },
+        { id: 'goren-adsh', label: 'ADSH', view: 'goren-adsh', hasAccess: true, disabled: true },
+        { id: 'goren-ash', label: 'Acil Sağlık', view: 'goren-ash', hasAccess: true, disabled: true }
+      ]
+    },
+    {
       id: 'financial',
       label: 'Finansal',
       icon: (
@@ -141,26 +159,6 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       hasAccess: hasModuleAccess('gorenBashekimlik')
     }
   ];
-
-  // GÖREN Performans menü grubu
-  const gorenMenuGroup = {
-    id: 'goren-perf',
-    label: 'GÖREN Performans',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-    iconColor: 'text-purple-400',
-    items: [
-      { id: 'goren-manuel', label: 'Manuel Hesaplama', view: 'goren-manuel', hasAccess: true },
-      { id: 'goren-ilsm', label: 'İl Sağlık Müdürlüğü', view: 'goren-ilsm', hasAccess: true },
-      { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: true, disabled: true },
-      { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: true },
-      { id: 'goren-adsh', label: 'ADSH', view: 'goren-adsh', hasAccess: true, disabled: true },
-      { id: 'goren-ash', label: 'Acil Sağlık', view: 'goren-ash', hasAccess: true, disabled: true }
-    ]
-  };
 
   const isViewActive = (view: string) => currentView === view;
   const isGroupActive = (groupId: string) => {
@@ -287,105 +285,39 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                     ${isOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}
                   `}>
                     <div className={`ml-5 pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
-                      {visibleItems.map(item => (
-                        <button
-                          key={item.id}
-                          onClick={() => onNavigate(item.view)}
-                          className={`
-                            w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 whitespace-nowrap
-                            ${isViewActive(item.view)
-                              ? isDark ? 'text-white bg-slate-700/30 font-medium' : 'text-blue-700 bg-blue-50 font-medium'
-                              : isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                            }
-                          `}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
+                      {visibleItems.map(item => {
+                        const isDisabled = (item as any).disabled;
+                        const isGoren = group.id === 'goren-perf';
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => !isDisabled && onNavigate(item.view)}
+                            disabled={isDisabled}
+                            className={`
+                              w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 whitespace-nowrap
+                              ${isDisabled
+                                ? 'text-slate-600 cursor-not-allowed opacity-50'
+                                : isViewActive(item.view)
+                                  ? isDark
+                                    ? isGoren ? 'text-white bg-purple-500/20 font-medium' : 'text-white bg-slate-700/30 font-medium'
+                                    : isGoren ? 'text-purple-700 bg-purple-50 font-medium' : 'text-blue-700 bg-blue-50 font-medium'
+                                  : isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                              }
+                            `}
+                          >
+                            {item.label}
+                            {isDisabled && (
+                              <span className="ml-2 text-[9px] text-slate-500">(Yakında)</span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
               </div>
             );
           })}
-
-          {/* Divider */}
-          <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
-
-          {/* GÖREN Performans Group */}
-          {(() => {
-            const group = gorenMenuGroup;
-            const hasActiveChild = group.items?.some(item => isViewActive(item.view));
-            const visibleItems = group.items?.filter(item => item.hasAccess) || [];
-            const isOpen = expandedGroups.includes(group.id);
-
-            if (visibleItems.length === 0) return null;
-
-            return (
-              <div>
-                <button
-                  onClick={() => isExpanded && toggleGroup(group.id)}
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                    ${hasActiveChild
-                      ? isDark ? 'bg-slate-800/50 text-white' : 'bg-purple-50 text-purple-700'
-                      : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }
-                  `}
-                  title={!isExpanded ? group.label : undefined}
-                >
-                  <div className={`shrink-0 ${group.iconColor || (hasActiveChild ? 'text-purple-400' : '')}`}>
-                    {group.icon}
-                  </div>
-                  {isExpanded && (
-                    <>
-                      <span className="text-sm font-medium flex-1 text-left whitespace-nowrap">{group.label}</span>
-                      <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </>
-                  )}
-                </button>
-
-                {/* Sub Items */}
-                {isExpanded && (
-                  <div className={`
-                    overflow-hidden transition-all duration-300
-                    ${isOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}
-                  `}>
-                    <div className={`ml-5 pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
-                      {visibleItems.map(item => (
-                        <button
-                          key={item.id}
-                          onClick={() => !(item as any).disabled && onNavigate(item.view)}
-                          disabled={(item as any).disabled}
-                          className={`
-                            w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 whitespace-nowrap
-                            ${(item as any).disabled
-                              ? 'text-slate-600 cursor-not-allowed opacity-50'
-                              : isViewActive(item.view)
-                                ? isDark ? 'text-white bg-purple-500/20 font-medium' : 'text-purple-700 bg-purple-50 font-medium'
-                                : isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                            }
-                          `}
-                        >
-                          {item.label}
-                          {(item as any).disabled && (
-                            <span className="ml-2 text-[9px] text-slate-500">(Yakında)</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
 
           {/* Divider */}
           <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />

@@ -850,6 +850,7 @@ const App: React.FC = () => {
                   moduleType="ILSM"
                   userEmail={user?.email || ''}
                   canUpload={true}
+                  isAdmin={isAdmin}
                 />
               );
             case 'goren-ilcesm':
@@ -858,6 +859,7 @@ const App: React.FC = () => {
                   moduleType="ILCESM"
                   userEmail={user?.email || ''}
                   canUpload={true}
+                  isAdmin={isAdmin}
                 />
               );
             case 'goren-bh':
@@ -866,6 +868,7 @@ const App: React.FC = () => {
                   moduleType="BH"
                   userEmail={user?.email || ''}
                   canUpload={true}
+                  isAdmin={isAdmin}
                 />
               );
             case 'goren-adsh':
@@ -874,6 +877,7 @@ const App: React.FC = () => {
                   moduleType="ADSH"
                   userEmail={user?.email || ''}
                   canUpload={true}
+                  isAdmin={isAdmin}
                 />
               );
             case 'goren-ash':
@@ -882,6 +886,7 @@ const App: React.FC = () => {
                   moduleType="ASH"
                   userEmail={user?.email || ''}
                   canUpload={true}
+                  isAdmin={isAdmin}
                 />
               );
             default: return null;

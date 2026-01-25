@@ -21,6 +21,11 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
 
+    // GÖREN TR Rol Ortalaması koleksiyonu
+    match /gorenTrRolOrtalamasi/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
     // Kullanıcılar koleksiyonu
     match /users/{userId} {
       allow read: if isAuthenticated();

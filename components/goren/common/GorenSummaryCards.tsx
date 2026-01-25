@@ -1,10 +1,10 @@
 /**
  * GÖREN Özet Kartları
  *
- * Toplam puan, maksimum puan, başarı oranı ve tamamlanan gösterge sayısı
+ * Toplam puan, TR Rol Ortalaması, başarı oranı ve muaf gösterge sayısı
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CalculationSummary } from '../types/goren.types';
 
 interface GorenSummaryCardsProps {
@@ -16,14 +16,47 @@ interface GorenSummaryCardsProps {
   muafCount?: number;
   /** Toplam gösterge sayısı (muaf için) */
   totalIndicators?: number;
+  /** Admin mi? */
+  isAdmin?: boolean;
+  /** TR Rol Ortalaması değeri */
+  trRolOrtalamasi?: number | null;
+  /** TR Rol Ortalaması değiştiğinde */
+  onTrRolOrtalamasiChange?: (value: number) => void;
 }
 
 export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
   summary,
   isLoading = false,
   muafCount = 0,
-  totalIndicators = 0
+  totalIndicators = 0,
+  isAdmin = false,
+  trRolOrtalamasi = null,
+  onTrRolOrtalamasiChange
 }) => {
+  const [isEditingTrRol, setIsEditingTrRol] = useState(false);
+  const [tempTrRolValue, setTempTrRolValue] = useState<string>('');
+
+  // TR Rol düzenleme başlat
+  const handleStartEdit = () => {
+    setTempTrRolValue(trRolOrtalamasi?.toString() || '');
+    setIsEditingTrRol(true);
+  };
+
+  // TR Rol kaydet
+  const handleSaveTrRol = () => {
+    const value = parseFloat(tempTrRolValue);
+    if (!isNaN(value) && value >= 0 && onTrRolOrtalamasiChange) {
+      onTrRolOrtalamasiChange(value);
+    }
+    setIsEditingTrRol(false);
+  };
+
+  // TR Rol iptal
+  const handleCancelEdit = () => {
+    setIsEditingTrRol(false);
+    setTempTrRolValue('');
+  };
+
   // Yükleme durumu
   if (isLoading) {
     return (
@@ -52,11 +85,15 @@ export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
           subtitle="Hesaplama için veri girin"
           color="indigo"
         />
-        <SummaryCard
-          title="MAKSİMUM PUAN"
-          value="-"
-          subtitle="Alınabilecek maksimum"
-          color="purple"
+        <TrRolOrtalamasiCard
+          value={trRolOrtalamasi}
+          isAdmin={isAdmin}
+          isEditing={isEditingTrRol}
+          tempValue={tempTrRolValue}
+          onStartEdit={handleStartEdit}
+          onSave={handleSaveTrRol}
+          onCancel={handleCancelEdit}
+          onTempValueChange={setTempTrRolValue}
         />
         <SummaryCard
           title="BAŞARI ORANI"
@@ -93,12 +130,16 @@ export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
         trend={summary.achievementRate >= 70 ? 'up' : summary.achievementRate >= 50 ? 'stable' : 'down'}
       />
 
-      {/* Maksimum Puan */}
-      <SummaryCard
-        title="MAKSİMUM PUAN"
-        value={summary.maxPossibleGP.toString()}
-        subtitle="Alınabilecek maksimum"
-        color="purple"
+      {/* TR Rol Ortalaması */}
+      <TrRolOrtalamasiCard
+        value={trRolOrtalamasi}
+        isAdmin={isAdmin}
+        isEditing={isEditingTrRol}
+        tempValue={tempTrRolValue}
+        onStartEdit={handleStartEdit}
+        onSave={handleSaveTrRol}
+        onCancel={handleCancelEdit}
+        onTempValueChange={setTempTrRolValue}
       />
 
       {/* Başarı Oranı */}
@@ -133,6 +174,90 @@ const getAchievementLabel = (rate: number): string => {
   if (rate >= 60) return 'Orta performans';
   if (rate >= 50) return 'Geliştirilmeli';
   return 'Kritik seviye';
+};
+
+// TR Rol Ortalaması Kartı
+interface TrRolOrtalamasiCardProps {
+  value: number | null;
+  isAdmin: boolean;
+  isEditing: boolean;
+  tempValue: string;
+  onStartEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onTempValueChange: (value: string) => void;
+}
+
+const TrRolOrtalamasiCard: React.FC<TrRolOrtalamasiCardProps> = ({
+  value,
+  isAdmin,
+  isEditing,
+  tempValue,
+  onStartEdit,
+  onSave,
+  onCancel,
+  onTempValueChange
+}) => {
+  return (
+    <div className="bg-purple-500/10 backdrop-blur-xl rounded-3xl border border-purple-500/20 p-6 relative">
+      <div className="flex items-start justify-between">
+        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+          TR ROL ORTALAMASI
+        </p>
+        {isAdmin && !isEditing && (
+          <button
+            onClick={onStartEdit}
+            className="text-purple-400 hover:text-purple-300 transition-colors"
+            title="Düzenle"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {isEditing ? (
+        <div className="mt-2">
+          <input
+            type="number"
+            value={tempValue}
+            onChange={(e) => onTempValueChange(e.target.value)}
+            className="w-full bg-purple-900/30 border border-purple-500/30 rounded-lg px-3 py-2 text-2xl font-black text-purple-400 focus:outline-none focus:border-purple-400"
+            placeholder="0"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') onSave();
+              if (e.key === 'Escape') onCancel();
+            }}
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={onSave}
+              className="flex-1 px-3 py-1.5 bg-purple-500 text-white text-xs font-bold rounded-lg hover:bg-purple-600 transition-colors"
+            >
+              Kaydet
+            </button>
+            <button
+              onClick={onCancel}
+              className="flex-1 px-3 py-1.5 bg-slate-600 text-white text-xs font-bold rounded-lg hover:bg-slate-500 transition-colors"
+            >
+              İptal
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h3 className="text-3xl font-black text-purple-400 mt-2">
+            {value !== null ? value.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) : '-'}
+          </h3>
+          <p className="text-[11px] text-[var(--text-muted)] mt-2">
+            {value !== null ? 'Türkiye rol ortalaması' : 'Henüz belirlenmedi'}
+          </p>
+        </>
+      )}
+    </div>
+  );
 };
 
 // Tek kart bileşeni

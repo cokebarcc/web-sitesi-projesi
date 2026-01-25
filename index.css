@@ -69,6 +69,16 @@
   box-sizing: border-box;
 }
 
+/* Hide blinking cursor on non-editable elements */
+h1, h2, h3, h4, h5, h6, p, span, div, label, a, button, li, td, th {
+  caret-color: transparent;
+}
+
+/* Show cursor only in input fields */
+input, textarea, [contenteditable="true"] {
+  caret-color: auto;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',

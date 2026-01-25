@@ -932,3 +932,134 @@ export const getGorenAuditLogs = async (
     return [];
   }
 };
+
+// ========== TR ROL ORTALAMASI ==========
+
+const TR_ROL_ORTALAMASI_COLLECTION = 'gorenTrRolOrtalamasi';
+
+/**
+ * TR Rol Ortalaması kaydet (sadece admin)
+ */
+export const saveTrRolOrtalamasi = async (
+  institutionId: string,
+  year: number,
+  month: number,
+  value: number,
+  savedBy: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const docId = `${institutionId}_${year}_${String(month).padStart(2, '0')}`;
+    const docRef = doc(db, TR_ROL_ORTALAMASI_COLLECTION, docId);
+
+    await setDoc(docRef, {
+      institutionId,
+      year,
+      month,
+      value,
+      savedAt: Date.now(),
+      savedBy
+    });
+
+    console.log('[GÖREN Storage] TR Rol Ortalaması kaydedildi:', docId, value);
+    return { success: true };
+  } catch (error) {
+    console.error('[GÖREN Storage] TR Rol Ortalaması kaydetme hatası:', error);
+    return {
+      success: false,
+      error: `Kayıt başarısız: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+    };
+  }
+};
+
+/**
+ * TR Rol Ortalaması yükle
+ */
+export const loadTrRolOrtalamasi = async (
+  institutionId: string,
+  year: number,
+  month: number
+): Promise<number | null> => {
+  try {
+    const docId = `${institutionId}_${year}_${String(month).padStart(2, '0')}`;
+    const docRef = doc(db, TR_ROL_ORTALAMASI_COLLECTION, docId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return null;
+    }
+
+    const data = docSnap.data();
+    return data.value as number;
+  } catch (error) {
+    console.error('[GÖREN Storage] TR Rol Ortalaması yükleme hatası:', error);
+    return null;
+  }
+};
+
+/**
+ * BH geçmiş verilerini yükle (grafik için)
+ * Seçili aya kadar olan tüm ayları getirir
+ */
+export interface BHHistoryData {
+  year: number;
+  month: number;
+  monthLabel: string;
+  totalGP: number;
+  trRolOrtalamasi: number | null;
+}
+
+export const loadBHHistoryData = async (
+  institutionId: string,
+  endYear: number,
+  endMonth: number,
+  monthCount: number = 12
+): Promise<BHHistoryData[]> => {
+  const results: BHHistoryData[] = [];
+  const monthNames = [
+    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+  ];
+
+  // Minimum tarih: 2025 Haziran (bu tarihten önce veri gösterilmeyecek)
+  const minYear = 2025;
+  const minMonth = 6; // Haziran
+
+  // Geriye doğru ayları hesapla
+  let currentYear = endYear;
+  let currentMonth = endMonth;
+
+  for (let i = 0; i < monthCount; i++) {
+    // 2025 Haziran'dan önceki ayları atla
+    if (currentYear < minYear || (currentYear === minYear && currentMonth < minMonth)) {
+      break;
+    }
+
+    try {
+      // BH verisini yükle
+      const bhData = await loadGorenBHData(institutionId, currentYear, currentMonth);
+      // TR Rol ortalamasını yükle
+      const trRol = await loadTrRolOrtalamasi(institutionId, currentYear, currentMonth);
+
+      if (bhData) {
+        results.unshift({
+          year: currentYear,
+          month: currentMonth,
+          monthLabel: `${monthNames[currentMonth - 1]} ${currentYear}`,
+          totalGP: bhData.totalGP,
+          trRolOrtalamasi: trRol
+        });
+      }
+    } catch (error) {
+      console.error(`[GÖREN Storage] Geçmiş veri yükleme hatası (${currentYear}/${currentMonth}):`, error);
+    }
+
+    // Bir önceki aya geç
+    currentMonth--;
+    if (currentMonth === 0) {
+      currentMonth = 12;
+      currentYear--;
+    }
+  }
+
+  return results;
+};
