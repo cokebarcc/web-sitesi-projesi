@@ -155,7 +155,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
     items: [
       { id: 'goren-ilsm', label: 'İl Sağlık Müdürlüğü', view: 'goren-ilsm', hasAccess: true },
       { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: true, disabled: true },
-      { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: true, disabled: true },
+      { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: true },
       { id: 'goren-adsh', label: 'ADSH', view: 'goren-adsh', hasAccess: true, disabled: true },
       { id: 'goren-ash', label: 'Acil Sağlık', view: 'goren-ash', hasAccess: true, disabled: true }
     ]

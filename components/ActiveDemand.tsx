@@ -13,8 +13,10 @@ import {
 } from 'recharts';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import pptxgen from 'pptxgenjs';
 import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
 import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
+import SingleDatePicker from './SingleDatePicker';
 import { HOSPITALS } from '../constants';
 
 interface ActiveDemandProps {
@@ -459,6 +461,529 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     }
   };
 
+  // PowerPoint export
+  const handleExportPowerPoint = async () => {
+    if (!summary) return;
+
+    try {
+      const pptx = new pptxgen();
+
+      // Sunum ayarları
+      pptx.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5"
+      pptx.title = 'Aktif Talep Raporu';
+      pptx.author = 'MEDİS';
+      pptx.company = 'Şanlıurfa İl Sağlık Müdürlüğü';
+
+      // Renk paleti - Beyaz arka plan
+      const colors = {
+        background: 'ffffff',    // beyaz
+        cardBg: 'f1f5f9',        // slate-100
+        primary: 'ea580c',       // orange-600 (daha koyu)
+        secondary: '7c3aed',     // violet-600 (daha koyu)
+        text: '1e293b',          // slate-800 (koyu metin)
+        textMuted: '64748b',     // slate-500
+        success: '16a34a',       // green-600
+        border: 'e2e8f0',        // slate-200 (border için)
+        headerBlue: '1e3a5f',    // Koyu mavi (header için)
+        chartColors: ['22c55e', 'ef4444', 'f97316', 'eab308', '8b5cf6', '3b82f6', 'ec4899', '14b8a6']
+      };
+
+      // Tarih bilgisi
+      const dateStr = selectedDatesForDisplay.length === 1
+        ? selectedDatesForDisplay[0]
+        : `${selectedDatesForDisplay.length} tarih`;
+
+      // Tarih formatla (gün ay yıl)
+      const formatDisplayDate = (dateString: string) => {
+        const d = new Date(dateString);
+        const day = d.getDate();
+        const month = MONTH_NAMES[d.getMonth() + 1];
+        const year = d.getFullYear();
+        return `${day} ${month} ${year}`;
+      };
+
+      const displayDate = selectedDatesForDisplay.length === 1
+        ? formatDisplayDate(selectedDatesForDisplay[0])
+        : `${selectedDatesForDisplay.length} Tarih`;
+
+      // ========== SLIDE 1: Modern Kapak Slaytı ==========
+      const slide1 = pptx.addSlide();
+      slide1.background = { color: 'ffffff' }; // Beyaz arka plan
+
+      // Sol tarafta dikey turuncu şerit
+      slide1.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: 0, w: 0.35, h: 7.5,
+        fill: { color: 'ea580c' }
+      });
+
+      // Üst kısımda ince gri çizgi
+      slide1.addShape(pptx.shapes.RECTANGLE, {
+        x: 0.35, y: 0, w: 13, h: 0.08,
+        fill: { color: 'e2e8f0' }
+      });
+
+      // Alt kısımda ince gri çizgi
+      slide1.addShape(pptx.shapes.RECTANGLE, {
+        x: 0.35, y: 7.42, w: 13, h: 0.08,
+        fill: { color: 'e2e8f0' }
+      });
+
+      // Sağ tarafta istatistik kutusu arka planı
+      slide1.addShape(pptx.shapes.RECTANGLE, {
+        x: 8.5, y: 1.5, w: 4.5, h: 3.5,
+        fill: { color: 'fff7ed' }, // Çok açık turuncu
+        line: { color: 'fed7aa', pt: 1 }
+      });
+
+      // Logo - Sol orta
+      try {
+        const logoResponse = await fetch('/logo/sb logo.png');
+        const logoBlob = await logoResponse.blob();
+        const logoBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(logoBlob);
+        });
+
+        slide1.addImage({
+          data: logoBase64,
+          x: 1.2, y: 1.5, w: 2, h: 2
+        });
+      } catch (logoError) {
+        console.warn('Logo yüklenemedi:', logoError);
+      }
+
+      // Kurum bilgileri - Sol üst (logo altında)
+      slide1.addText('T.C. SAĞLIK BAKANLIĞI', {
+        x: 1.2, y: 3.6, w: 5, h: 0.3,
+        fontSize: 11, bold: true, color: '64748b',
+        align: 'left', fontFace: 'Arial'
+      });
+
+      slide1.addText('ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ', {
+        x: 1.2, y: 3.95, w: 5, h: 0.35,
+        fontSize: 13, bold: true, color: '1e293b',
+        align: 'left', fontFace: 'Arial'
+      });
+
+      // Ana başlık - Büyük ve dikkat çekici
+      slide1.addText('MHRS', {
+        x: 1.2, y: 4.6, w: 11, h: 0.8,
+        fontSize: 48, bold: true, color: 'ea580c',
+        align: 'left', fontFace: 'Arial'
+      });
+
+      slide1.addText('AKTİF TALEP RAPORU', {
+        x: 1.2, y: 5.3, w: 11, h: 0.6,
+        fontSize: 32, bold: true, color: '1e293b',
+        align: 'left', fontFace: 'Arial'
+      });
+
+      // Tarih bilgisi - Alt kısımda
+      slide1.addShape(pptx.shapes.RECTANGLE, {
+        x: 1.2, y: 6.1, w: 2.5, h: 0.04,
+        fill: { color: 'ea580c' }
+      });
+
+      slide1.addText(displayDate, {
+        x: 1.2, y: 6.3, w: 5, h: 0.4,
+        fontSize: 16, color: '64748b',
+        align: 'left', fontFace: 'Arial'
+      });
+
+      // Sağ tarafta büyük istatistik
+      slide1.addText(summary.totalProvinceDemand.toLocaleString('tr-TR'), {
+        x: 7, y: 2, w: 5.5, h: 1.2,
+        fontSize: 72, bold: true, color: 'ea580c',
+        align: 'right', fontFace: 'Arial'
+      });
+
+      slide1.addText('TOPLAM TALEP', {
+        x: 7, y: 3.1, w: 5.5, h: 0.4,
+        fontSize: 14, bold: true, color: '64748b',
+        align: 'right', fontFace: 'Arial'
+      });
+
+      // İkinci istatistik
+      slide1.addText(summary.totalHospitals.toString(), {
+        x: 7, y: 3.8, w: 5.5, h: 0.8,
+        fontSize: 48, bold: true, color: '1e293b',
+        align: 'right', fontFace: 'Arial'
+      });
+
+      slide1.addText('HASTANE', {
+        x: 7, y: 4.5, w: 5.5, h: 0.3,
+        fontSize: 12, bold: true, color: '64748b',
+        align: 'right', fontFace: 'Arial'
+      });
+
+      // ========== SLIDE 2: KPI + Grafikler (Web sitesi gibi) ==========
+      const slide2 = pptx.addSlide();
+      slide2.background = { color: colors.background };
+
+      // Üst banner
+      slide2.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: 0, w: 13.33, h: 0.7,
+        fill: { color: '1e3a5f' }
+      });
+      slide2.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: 0.7, w: 13.33, h: 0.06,
+        fill: { color: 'ea580c' }
+      });
+      slide2.addText('GENEL ÖZET', {
+        x: 0.5, y: 0.15, w: 8, h: 0.4,
+        fontSize: 18, bold: true, color: 'ffffff', fontFace: 'Arial'
+      });
+      slide2.addText(displayDate, {
+        x: 8, y: 0.2, w: 4.8, h: 0.3,
+        fontSize: 12, color: 'ffffff', align: 'right', fontFace: 'Arial'
+      });
+
+      // Web sitesindeki renkler
+      const webColors = {
+        green: '22c55e',    // Viranşehir DH
+        red: 'ef4444',      // Şanlıurfa EAH
+        orange: 'f97316',   // Mehmet Akif İnan EAH
+        yellow: 'eab308',   // Siverek DH
+        violet: '8b5cf6',   // Şanlıurfa ADSH
+        blue: '3b82f6',     // Balıklıgöl DH
+        pink: 'ec4899',     // Akçakale DH
+        teal: '14b8a6'      // Diğerleri
+      };
+
+      // ===== ÜST KISIM: KPI Kartları (küçük) =====
+      // İl Toplam Talep - Sol üst
+      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+        x: 0.3, y: 1.0, w: 6.3, h: 1.1,
+        fill: { color: colors.cardBg },
+        line: { color: colors.primary, pt: 2 }
+      });
+      slide2.addText('İl Toplam Talep', {
+        x: 0.5, y: 1.1, w: 3, h: 0.25,
+        fontSize: 10, color: colors.textMuted
+      });
+      slide2.addText(summary.totalProvinceDemand.toLocaleString('tr-TR'), {
+        x: 0.5, y: 1.4, w: 3, h: 0.5,
+        fontSize: 32, bold: true, color: colors.primary
+      });
+
+      // En Yüksek Talep - Sağ üst
+      const topBranch = summary.branchTotals.length > 0 ? summary.branchTotals[0] : null;
+      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+        x: 6.8, y: 1.0, w: 6.3, h: 1.1,
+        fill: { color: colors.cardBg },
+        line: { color: colors.secondary, pt: 2 }
+      });
+      slide2.addText('En Yüksek Talep', {
+        x: 7, y: 1.1, w: 5, h: 0.25,
+        fontSize: 10, color: colors.textMuted
+      });
+      slide2.addText(topBranch?.branchName || '-', {
+        x: 7, y: 1.35, w: 5.8, h: 0.35,
+        fontSize: 14, bold: true, color: colors.secondary
+      });
+      slide2.addText(`${topBranch?.demandCount.toLocaleString('tr-TR') || 0} talep`, {
+        x: 7, y: 1.7, w: 3, h: 0.25,
+        fontSize: 11, color: colors.text
+      });
+
+      // ===== ALT SOL: Hastane Bazlı Talep Dağılımı (Donut) =====
+      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+        x: 0.3, y: 2.3, w: 6.3, h: 5.0,
+        fill: { color: colors.cardBg }
+      });
+      slide2.addText('Hastane Bazlı Talep Dağılımı', {
+        x: 0.5, y: 2.45, w: 5, h: 0.35,
+        fontSize: 12, bold: true, color: colors.text
+      });
+
+      // Pasta grafiği için veri (ilk 7 hastane)
+      const topHospitals = summary.hospitalSummaries
+        .sort((a, b) => b.totalDemand - a.totalDemand)
+        .slice(0, 7);
+
+      const pieChartData = [{
+        name: 'Hastaneler',
+        labels: topHospitals.map(h => getShortName(h.hospitalName)),
+        values: topHospitals.map(h => h.totalDemand)
+      }];
+
+      // Donut grafik - boyut küçültüldü
+      slide2.addChart(pptx.charts.DOUGHNUT, pieChartData, {
+        x: 0.4, y: 2.9, w: 3.2, h: 3.2,
+        showLegend: false,
+        holeSize: 55,
+        showValue: false,
+        showPercent: false,
+        chartColors: [webColors.green, webColors.red, webColors.orange, webColors.yellow, webColors.violet, webColors.blue, webColors.pink]
+      });
+
+      // Sağ tarafta legend (hastane listesi + talep sayıları) - Daha büyük font
+      topHospitals.forEach((hospital, idx) => {
+        const yPos = 2.9 + (idx * 0.6);
+        const colorList = [webColors.green, webColors.red, webColors.orange, webColors.yellow, webColors.violet, webColors.blue, webColors.pink];
+
+        // Renk kutusu
+        slide2.addShape(pptx.shapes.RECTANGLE, {
+          x: 3.7, y: yPos + 0.05, w: 0.2, h: 0.2,
+          fill: { color: colorList[idx] || webColors.teal }
+        });
+
+        // Hastane adı - büyütüldü
+        slide2.addText(getShortName(hospital.hospitalName), {
+          x: 4.0, y: yPos, w: 1.8, h: 0.3,
+          fontSize: 10, color: colors.text
+        });
+
+        // Talep sayısı - büyütüldü
+        slide2.addText(hospital.totalDemand.toLocaleString('tr-TR'), {
+          x: 5.7, y: yPos, w: 0.8, h: 0.3,
+          fontSize: 10, bold: true, color: colors.text, align: 'right'
+        });
+      });
+
+      // ===== ALT SAĞ: Branş Bazlı Talep Dağılımı (Bar Chart) =====
+      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+        x: 6.8, y: 2.3, w: 6.3, h: 5.0,
+        fill: { color: colors.cardBg }
+      });
+      slide2.addText('Branş Bazlı Talep Dağılımı', {
+        x: 7, y: 2.45, w: 5, h: 0.35,
+        fontSize: 12, bold: true, color: colors.text
+      });
+
+      // Bar grafik (ilk 10 branş) - Büyükten küçüğe sıralı (reverse)
+      const topBranches = summary.branchTotals.slice(0, 10);
+      // Ters sırala: en küçük üstte, en büyük altta (bar chart'ta altta olan büyük görünür)
+      const reversedBranches = [...topBranches].reverse();
+      const branchColors = [webColors.green, webColors.red, webColors.orange, webColors.yellow, webColors.violet, webColors.blue, webColors.pink, webColors.teal, '06b6d4', 'a855f7'];
+      // Renkleri de ters çevir
+      const reversedColors = [...branchColors].slice(0, topBranches.length).reverse();
+
+      const barChartData = [{
+        name: 'Talep',
+        labels: reversedBranches.map(b => b.branchName.length > 22 ? b.branchName.substring(0, 20) + '...' : b.branchName),
+        values: reversedBranches.map(b => b.demandCount)
+      }];
+
+      slide2.addChart(pptx.charts.BAR, barChartData, {
+        x: 6.9, y: 2.8, w: 6, h: 4.3,
+        showLegend: false,
+        barDir: 'bar',
+        barGapWidthPct: 30,
+        chartColors: reversedColors,
+        catAxisLabelColor: colors.text,
+        catAxisLabelFontSize: 7,
+        valAxisLabelColor: colors.textMuted,
+        valAxisLabelFontSize: 7,
+        valAxisHidden: false,
+        catGridLine: { style: 'none' },
+        valGridLine: { color: 'cbd5e1', style: 'dash' },
+        dataLabelColor: colors.text,
+        showValue: false
+      });
+
+      // ========== SLIDE 3: Hastane Bazlı Dağılım ==========
+      const slide3 = pptx.addSlide();
+      slide3.background = { color: colors.background };
+
+      // Üst banner
+      slide3.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: 0, w: 13.33, h: 0.7,
+        fill: { color: '1e3a5f' }
+      });
+      slide3.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: 0.7, w: 13.33, h: 0.06,
+        fill: { color: 'ea580c' }
+      });
+      slide3.addText('HASTANE BAZLI TALEP DAĞILIMI', {
+        x: 0.5, y: 0.15, w: 8, h: 0.4,
+        fontSize: 18, bold: true, color: 'ffffff', fontFace: 'Arial'
+      });
+      slide3.addText(displayDate, {
+        x: 8, y: 0.2, w: 4.8, h: 0.3,
+        fontSize: 12, color: 'ffffff', align: 'right', fontFace: 'Arial'
+      });
+
+      // Pasta grafiği için veri hazırla (ilk 8 hastane)
+      const hospitalChartData = summary.hospitalSummaries
+        .sort((a, b) => b.totalDemand - a.totalDemand)
+        .slice(0, 8)
+        .map((h, idx) => ({
+          name: getShortName(h.hospitalName),
+          labels: [getShortName(h.hospitalName)],
+          values: [h.totalDemand]
+        }));
+
+      // Tablo olarak göster
+      const hospitalTableData: pptxgen.TableRow[] = [
+        [
+          { text: 'Sıra', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, align: 'center', fontSize: 12 } },
+          { text: 'Hastane', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, fontSize: 12 } },
+          { text: 'Talep Sayısı', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, align: 'center', fontSize: 12 } },
+          { text: 'Oran', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, align: 'center', fontSize: 12 } }
+        ]
+      ];
+
+      // TÜM hastaneleri göster
+      const allHospitalsSorted = summary.hospitalSummaries.sort((a, b) => b.totalDemand - a.totalDemand);
+
+      allHospitalsSorted.forEach((h, idx) => {
+          const percent = ((h.totalDemand / summary.totalProvinceDemand) * 100).toFixed(1);
+          hospitalTableData.push([
+            { text: (idx + 1).toString(), options: { align: 'center', color: colors.text, fontSize: 12 } },
+            { text: getShortName(h.hospitalName), options: { color: colors.text, fontSize: 12 } },
+            { text: h.totalDemand.toLocaleString('tr-TR'), options: { align: 'center', color: colors.primary, bold: true, fontSize: 12 } },
+            { text: `%${percent}`, options: { align: 'center', color: colors.textMuted, fontSize: 12 } }
+          ]);
+        });
+
+      slide3.addTable(hospitalTableData, {
+        x: 1.0, y: 1.1, w: 11.33,
+        colW: [0.8, 6, 2.5, 2],
+        fontSize: 12,
+        border: { type: 'solid', pt: 1, color: '000000' },
+        fill: { color: 'ffffff' }
+      });
+
+      // ========== SLIDE 4: Branş Bazlı Dağılım ==========
+      const slide4 = pptx.addSlide();
+      slide4.background = { color: colors.background };
+
+      // Üst banner
+      slide4.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: 0, w: 13.33, h: 0.7,
+        fill: { color: '1e3a5f' }
+      });
+      slide4.addShape(pptx.shapes.RECTANGLE, {
+        x: 0, y: 0.7, w: 13.33, h: 0.06,
+        fill: { color: 'ea580c' }
+      });
+      slide4.addText('BRANŞ BAZLI TALEP DAĞILIMI', {
+        x: 0.5, y: 0.15, w: 8, h: 0.4,
+        fontSize: 18, bold: true, color: 'ffffff', fontFace: 'Arial'
+      });
+      slide4.addText(displayDate, {
+        x: 8, y: 0.2, w: 4.8, h: 0.3,
+        fontSize: 12, color: 'ffffff', align: 'right', fontFace: 'Arial'
+      });
+
+      // Branş tablosu (ilk 15)
+      const branchTableData: pptxgen.TableRow[] = [
+        [
+          { text: 'Sıra', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, align: 'center', fontSize: 12 } },
+          { text: 'Branş', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, fontSize: 12 } },
+          { text: 'Talep Sayısı', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, align: 'center', fontSize: 12 } },
+          { text: 'Oran', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, align: 'center', fontSize: 12 } }
+        ]
+      ];
+
+      summary.branchTotals
+        .slice(0, 15)
+        .forEach((b, idx) => {
+          const percent = ((b.demandCount / summary.totalProvinceDemand) * 100).toFixed(1);
+          branchTableData.push([
+            { text: (idx + 1).toString(), options: { align: 'center', color: colors.text, fontSize: 12 } },
+            { text: b.branchName, options: { color: colors.text, fontSize: 12 } },
+            { text: b.demandCount.toLocaleString('tr-TR'), options: { align: 'center', color: colors.secondary, bold: true, fontSize: 12 } },
+            { text: `%${percent}`, options: { align: 'center', color: colors.textMuted, fontSize: 12 } }
+          ]);
+        });
+
+      slide4.addTable(branchTableData, {
+        x: 1.0, y: 1.1, w: 11.33,
+        colW: [0.8, 6.5, 2.5, 2],
+        fontSize: 12,
+        border: { type: 'solid', pt: 1, color: '000000' },
+        fill: { color: 'ffffff' }
+      });
+
+      // ========== SLIDE 5+: Hastane Detay Slaytları (her 3 hastane için 1 slayt) ==========
+      const sortedHospitals = summary.hospitalSummaries.sort((a, b) => b.totalDemand - a.totalDemand);
+      const hospitalsPerSlide = 3;
+
+      for (let i = 0; i < sortedHospitals.length; i += hospitalsPerSlide) {
+        const slideHospitals = sortedHospitals.slice(i, i + hospitalsPerSlide);
+        const detailSlide = pptx.addSlide();
+        detailSlide.background = { color: colors.background };
+
+        // Üst banner
+        detailSlide.addShape(pptx.shapes.RECTANGLE, {
+          x: 0, y: 0, w: 13.33, h: 0.7,
+          fill: { color: '1e3a5f' }
+        });
+        detailSlide.addShape(pptx.shapes.RECTANGLE, {
+          x: 0, y: 0.7, w: 13.33, h: 0.06,
+          fill: { color: 'ea580c' }
+        });
+        detailSlide.addText('HASTANE DETAYLARI', {
+          x: 0.5, y: 0.15, w: 8, h: 0.4,
+          fontSize: 18, bold: true, color: 'ffffff', fontFace: 'Arial'
+        });
+        detailSlide.addText(displayDate, {
+          x: 8, y: 0.2, w: 4.8, h: 0.3,
+          fontSize: 12, color: 'ffffff', align: 'right', fontFace: 'Arial'
+        });
+
+        slideHospitals.forEach((hospital, idx) => {
+          const xPos = 0.5 + (idx * 4.2);
+          const cardWidth = 4;
+
+          // Hastane kartı başlığı - turuncu yerine koyu mavi border
+          detailSlide.addShape(pptx.shapes.RECTANGLE, {
+            x: xPos, y: 0.95, w: cardWidth, h: 0.7,
+            fill: { color: colors.cardBg },
+            line: { color: '1e3a5f', pt: 1, dashType: 'solid' }
+          });
+
+          detailSlide.addText(getShortName(hospital.hospitalName), {
+            x: xPos + 0.1, y: 1.0, w: cardWidth - 0.5, h: 0.3,
+            fontSize: 12, bold: true, color: colors.text
+          });
+
+          // Talep sayısı - turuncu yerine siyah
+          detailSlide.addText(hospital.totalDemand.toLocaleString('tr-TR'), {
+            x: xPos + 0.1, y: 1.3, w: cardWidth - 0.5, h: 0.3,
+            fontSize: 16, bold: true, color: '000000', align: 'right'
+          });
+
+          // Branş tablosu - font 12 punto ve siyah renk
+          const branchRows: pptxgen.TableRow[] = [
+            [
+              { text: 'Branş', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, fontSize: 12 } },
+              { text: 'Talep', options: { bold: true, fill: { color: 'e2e8f0' }, color: colors.text, align: 'center', fontSize: 12 } }
+            ]
+          ];
+
+          hospital.branches
+            .sort((a, b) => b.demandCount - a.demandCount)
+            .slice(0, 12)
+            .forEach(branch => {
+              branchRows.push([
+                { text: branch.branchName, options: { color: colors.text, fontSize: 12 } },
+                { text: branch.demandCount.toLocaleString('tr-TR'), options: { align: 'center', color: '000000', bold: true, fontSize: 12 } }
+              ]);
+            });
+
+          detailSlide.addTable(branchRows, {
+            x: xPos, y: 1.7, w: cardWidth,
+            colW: [3, 1],
+            border: { type: 'solid', pt: 1, color: '000000' },
+            fill: { color: 'ffffff' }
+          });
+        });
+      }
+
+      // Dosyayı indir
+      const fileName = `aktif-talep-raporu-${dateStr.replace(/\//g, '-')}.pptx`;
+      await pptx.writeFile({ fileName });
+      showToast('PowerPoint indirildi', 'success');
+    } catch (error) {
+      console.error('PowerPoint hatası:', error);
+      showToast('PowerPoint indirme hatası', 'error');
+    }
+  };
+
   // PNG export - Sayfa 1 (KPI + Grafikler)
   const handleExportPng = async () => {
     if (!page1Ref.current || !summary) return;
@@ -596,6 +1121,15 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
               </svg>
               PDF İndir
             </button>
+            <button
+              onClick={handleExportPowerPoint}
+              className="px-4 py-2.5 bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 transition-all flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+              </svg>
+              PowerPoint İndir
+            </button>
           </div>
         )}
       </div>
@@ -648,15 +1182,12 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
             </div>
 
             {/* Yükleme için Tarih Picker */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-400">Yükleme Tarihi</label>
-              <input
-                type="date"
-                value={uploadDate}
-                onChange={(e) => setUploadDate(e.target.value)}
-                className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
-              />
-            </div>
+            <SingleDatePicker
+              label="Yükleme Tarihi"
+              value={uploadDate}
+              onChange={(date) => setUploadDate(date)}
+              placeholder="Tarih seçiniz..."
+            />
 
             {/* Upload Button */}
             <div className="flex flex-col gap-2">

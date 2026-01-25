@@ -41,6 +41,240 @@ const GOREN_AUDIT_COLLECTION = 'gorenAuditLogs';
 // ========== DOSYA YÜKLEME ==========
 
 /**
+ * BH tablo satırı - Excel'den birebir yansıtılacak
+ */
+export interface BHTableRow {
+  sira: number;
+  gostergeAdi: string;
+  birim: string;
+  a: number | string | null;
+  b: number | string | null;
+  donemIci: number | string | null;
+  trRolOrtalama: number | string | null;
+  donemIciPuan: number | string | null;
+  muaf: number | string | null;
+}
+
+/**
+ * BH Excel parse sonucu - GP değerlerini de içerir
+ */
+export interface BHParseResult {
+  success: boolean;
+  data?: Record<string, ParameterValues>;
+  directGP?: Record<string, number>; // Sıra numarasına göre "Dönem İçi Puan" değerleri
+  totalGP?: number; // Toplam puan
+  indicatorNames?: Record<string, string>; // Gösterge adları
+  bhTableRows?: BHTableRow[]; // Excel'den birebir satırlar
+  error?: string;
+}
+
+/**
+ * BH Excel formatını parse et
+ *
+ * Beklenen Excel formatı (Başhekimlik):
+ * | Sıra | Gösterge Adı | Birim | A | B | Dönem İçi | TR Rol Ortalama | Dönem İçi Puan | Muaf |
+ * |  1   | Hasta Memnuniyet Oranı | % | 800 | 10 | 80 | 75 | 5 | |
+ *
+ * @param file Excel dosyası ArrayBuffer
+ * @param institutionType Kurum türü - BH için özel format kullanılır
+ */
+export const parseGorenExcelBH = (
+  file: ArrayBuffer
+): BHParseResult => {
+  try {
+    const workbook = XLSX.read(new Uint8Array(file), { type: 'array' });
+
+    if (workbook.SheetNames.length === 0) {
+      return { success: false, error: 'Excel dosyası boş.' };
+    }
+
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[];
+
+    if (jsonData.length === 0) {
+      return { success: false, error: 'Excel dosyasında veri bulunamadı.' };
+    }
+
+    // BH formatı için kolon isimlerini kontrol et
+    const firstRow = jsonData[0];
+    const hasSiraColumn = 'Sıra' in firstRow || 'SIRA' in firstRow || 'Sira' in firstRow;
+    const hasPuanColumn = 'Dönem İçi Puan' in firstRow || 'DÖNEM İÇİ PUAN' in firstRow || 'Dönem İçi̇ Puan' in firstRow;
+
+    if (!hasSiraColumn) {
+      return {
+        success: false,
+        error: 'Excel dosyasında "Sıra" kolonu bulunamadı. Lütfen BH şablonunu kullanın.'
+      };
+    }
+
+    // Kolon isimlerini bul
+    const siraColumn = Object.keys(firstRow).find(k =>
+      k.toLowerCase().includes('sıra') || k.toLowerCase() === 'sira'
+    ) || 'Sıra';
+
+    const puanColumn = Object.keys(firstRow).find(k =>
+      k.toLowerCase().includes('dönem içi puan') || k.toLowerCase().includes('dönem i̇çi̇ puan')
+    ) || 'Dönem İçi Puan';
+
+    const gostergeAdiColumn = Object.keys(firstRow).find(k =>
+      k.toLowerCase().includes('gösterge adı') || k.toLowerCase().includes('gösterge adi')
+    ) || 'Gösterge Adı';
+
+    const donemIciColumn = Object.keys(firstRow).find(k =>
+      (k.toLowerCase().includes('dönem içi') || k.toLowerCase().includes('dönem i̇çi̇')) &&
+      !k.toLowerCase().includes('puan')
+    ) || 'Dönem İçi';
+
+    const trRolOrtalamaColumn = Object.keys(firstRow).find(k =>
+      k.toLowerCase().includes('tr rol') || k.toLowerCase().includes('türkiye rol') ||
+      k.toLowerCase().includes('rol ortalama')
+    ) || 'TR Rol Ortalama';
+
+    const birimColumn = Object.keys(firstRow).find(k =>
+      k.toLowerCase().includes('birim')
+    ) || 'Birim';
+
+    const muafColumn = Object.keys(firstRow).find(k =>
+      k.toLowerCase().includes('muaf')
+    ) || 'Muaf';
+
+    // Parametre değerlerini ve puanları çıkar
+    const parameterData: Record<string, ParameterValues> = {};
+    const directGP: Record<string, number> = {};
+    const indicatorNames: Record<string, string> = {};
+    const bhTableRows: BHTableRow[] = [];
+    let totalGP = 0;
+
+    for (const row of jsonData) {
+      // Sıra numarasını al
+      const sira = row[siraColumn];
+      if (sira === undefined || sira === null || sira === '') continue;
+
+      const siraNum = parseInt(String(sira), 10);
+      if (isNaN(siraNum) || siraNum < 1 || siraNum > 38) continue;
+
+      // Gösterge kodunu oluştur
+      const code = `SYPG-BH-${siraNum}`;
+
+      // Gösterge adını kaydet
+      const gostergeAdi = row[gostergeAdiColumn];
+      if (gostergeAdi) {
+        indicatorNames[code] = String(gostergeAdi).trim();
+      }
+
+      // A ve B değerlerini al
+      parameterData[code] = {};
+
+      const aValue = row['A'];
+      if (aValue !== undefined && aValue !== null && aValue !== '') {
+        const numValue = parseFloat(String(aValue).replace(',', '.').replace(/[^\d.-]/g, ''));
+        if (!isNaN(numValue)) {
+          parameterData[code]['A'] = numValue;
+        }
+      }
+
+      const bValue = row['B'];
+      if (bValue !== undefined && bValue !== null && bValue !== '') {
+        const numValue = parseFloat(String(bValue).replace(',', '.').replace(/[^\d.-]/g, ''));
+        if (!isNaN(numValue)) {
+          parameterData[code]['B'] = numValue;
+        }
+      }
+
+      // Dönem İçi (GD) değerini al
+      const gdValue = row[donemIciColumn];
+      if (gdValue !== undefined && gdValue !== null && gdValue !== '') {
+        const numValue = parseFloat(String(gdValue).replace(',', '.').replace(/[^\d.-]/g, ''));
+        if (!isNaN(numValue)) {
+          parameterData[code]['GD'] = numValue;
+        }
+      }
+
+      // Dönem İçi Puan (GP) değerini al
+      let gpNumValue: number | null = null;
+      const gpValue = row[puanColumn];
+      if (gpValue !== undefined && gpValue !== null && gpValue !== '') {
+        const numValue = parseFloat(String(gpValue).replace(',', '.').replace(/[^\d.-]/g, ''));
+        if (!isNaN(numValue)) {
+          directGP[code] = numValue;
+          parameterData[code]['GP'] = numValue;
+          totalGP += numValue;
+          gpNumValue = numValue;
+        }
+      }
+
+      // TR Rol Ortalama değerini al
+      let trRolOrtalamaValue: number | string | null = null;
+      const trRolVal = row[trRolOrtalamaColumn];
+      if (trRolVal !== undefined && trRolVal !== null && trRolVal !== '') {
+        const numValue = parseFloat(String(trRolVal).replace(',', '.').replace(/[^\d.-]/g, ''));
+        if (!isNaN(numValue)) {
+          trRolOrtalamaValue = numValue;
+        } else {
+          trRolOrtalamaValue = String(trRolVal).trim();
+        }
+      }
+
+      // Birim değerini al
+      const birimValue = row[birimColumn];
+      const birimStr = birimValue !== undefined && birimValue !== null && birimValue !== ''
+        ? String(birimValue).trim()
+        : '-';
+
+      // Muaf değerini al
+      let muafValue: number | string | null = null;
+      const muafVal = row[muafColumn];
+      if (muafVal !== undefined && muafVal !== null && muafVal !== '') {
+        const numValue = parseFloat(String(muafVal).replace(',', '.').replace(/[^\d.-]/g, ''));
+        if (!isNaN(numValue)) {
+          muafValue = numValue;
+        } else {
+          muafValue = String(muafVal).trim();
+        }
+      }
+
+      // BH tablo satırı oluştur
+      bhTableRows.push({
+        sira: siraNum,
+        gostergeAdi: indicatorNames[code] || `Gösterge ${siraNum}`,
+        birim: birimStr,
+        a: parameterData[code]['A'] ?? null,
+        b: parameterData[code]['B'] ?? null,
+        donemIci: parameterData[code]['GD'] ?? null,
+        trRolOrtalama: trRolOrtalamaValue,
+        donemIciPuan: gpNumValue,
+        muaf: muafValue
+      });
+    }
+
+    if (Object.keys(parameterData).length === 0) {
+      return {
+        success: false,
+        error: 'Excel dosyasında geçerli gösterge verisi bulunamadı.'
+      };
+    }
+
+    // Satırları sıra numarasına göre sırala
+    bhTableRows.sort((a, b) => a.sira - b.sira);
+
+    return {
+      success: true,
+      data: parameterData,
+      directGP,
+      totalGP,
+      indicatorNames,
+      bhTableRows
+    };
+  } catch (error) {
+    console.error('[GÖREN Storage] BH Excel parse hatası:', error);
+    return {
+      success: false,
+      error: `Excel dosyası okunamadı: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+    };
+  }
+};
+
+/**
  * Excel dosyasını parse et ve parametre değerlerini çıkar
  *
  * Beklenen Excel formatı:
@@ -48,8 +282,14 @@ const GOREN_AUDIT_COLLECTION = 'gorenAuditLogs';
  * | SYPG-İLSM-1   | 750 | 10 | | | | |
  */
 export const parseGorenExcel = (
-  file: ArrayBuffer
-): { success: boolean; data?: Record<string, ParameterValues>; error?: string } => {
+  file: ArrayBuffer,
+  institutionType?: InstitutionType
+): { success: boolean; data?: Record<string, ParameterValues>; directGP?: Record<string, number>; totalGP?: number; indicatorNames?: Record<string, string>; bhTableRows?: BHTableRow[]; error?: string } => {
+  // BH için özel parser kullan
+  if (institutionType === 'BH') {
+    return parseGorenExcelBH(file);
+  }
+
   try {
     const workbook = XLSX.read(new Uint8Array(file), { type: 'array' });
 
@@ -76,7 +316,14 @@ export const parseGorenExcel = (
       }
     }
 
+    // Eğer kod kolonu yoksa, BH formatını dene
     if (!codeColumn) {
+      // Sıra kolonu varsa BH formatı olabilir
+      const hasSiraColumn = 'Sıra' in firstRow || 'SIRA' in firstRow || 'Sira' in firstRow;
+      if (hasSiraColumn) {
+        return parseGorenExcelBH(file);
+      }
+
       return {
         success: false,
         error: 'Excel dosyasında "Gösterge Kodu" kolonu bulunamadı. Lütfen şablonu kullanın.'
@@ -141,13 +388,16 @@ export const uploadGorenDataFile = async (
 ): Promise<{
   success: boolean;
   data?: Record<string, ParameterValues>;
+  directGP?: Record<string, number>;
+  totalGP?: number;
+  indicatorNames?: Record<string, string>;
   fileId?: string;
   error?: string;
 }> => {
   try {
     // 1. Dosyayı oku ve parse et
     const arrayBuffer = await file.arrayBuffer();
-    const parseResult = parseGorenExcel(arrayBuffer);
+    const parseResult = parseGorenExcel(arrayBuffer, institutionType);
 
     if (!parseResult.success || !parseResult.data) {
       return { success: false, error: parseResult.error };
@@ -194,6 +444,9 @@ export const uploadGorenDataFile = async (
     return {
       success: true,
       data: parseResult.data,
+      directGP: parseResult.directGP,
+      totalGP: parseResult.totalGP,
+      indicatorNames: parseResult.indicatorNames,
       fileId: docRef.id
     };
   } catch (error) {

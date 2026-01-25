@@ -61,7 +61,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
   onUploadFile,
   availableInstitutions,
   isLoading = false,
-  canUpload = false,
+  canUpload = true,
   hasData = false
 }) => {
   // Aktif kurum türleri
@@ -69,9 +69,11 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
 
   // Seçili kurum türüne göre filtrelenmiş kurumlar
   const filteredInstitutions = useMemo(() => {
-    return availableInstitutions.filter(
+    const filtered = availableInstitutions.filter(
       inst => inst.type === filterState.institutionType
     );
+    // Eğer kurum türüne göre filtreli sonuç boşsa tüm kurumları göster
+    return filtered.length > 0 ? filtered : availableInstitutions;
   }, [availableInstitutions, filterState.institutionType]);
 
   // Seçili kurum türü için gösterge sayısı
@@ -150,7 +152,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
               </option>
             ))}
             {/* Henüz aktif olmayan türler (disabled) */}
-            {(['ILCESM', 'BH', 'ADSH', 'ASH'] as InstitutionType[])
+            {(['ILCESM', 'ADSH', 'ASH'] as InstitutionType[])
               .filter(type => !activeTypes.includes(type))
               .map(type => (
                 <option key={type} value={type} disabled>

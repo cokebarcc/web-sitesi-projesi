@@ -20,13 +20,16 @@ import {
   INSTITUTION_TYPE_LABELS,
   getIndicatorByCode
 } from '../../src/config/goren';
+import { HOSPITALS } from '../../constants';
 import { useGorenCalculator } from '../../src/hooks/useGorenCalculator';
 import {
   uploadGorenDataFile,
   saveGorenCalculation,
   loadGorenCalculation,
   downloadGorenTemplate,
-  exportGorenResultsToExcel
+  exportGorenResultsToExcel,
+  parseGorenExcel,
+  BHTableRow
 } from '../../src/services/gorenStorage';
 
 // Alt bileşenler
@@ -35,6 +38,9 @@ import GorenSummaryCards from './common/GorenSummaryCards';
 import GorenIndicatorTable from './common/GorenIndicatorTable';
 import GorenDetailPanel from './common/GorenDetailPanel';
 import GorenDataEntry from './common/GorenDataEntry';
+import GorenBHTable from './common/GorenBHTable';
+
+// BHTableRow artık gorenStorage'dan import ediliyor
 
 interface GorenModuleProps {
   /** Modül türü (ILSM, ILCESM, BH, ADSH, ASH) */
@@ -94,6 +100,14 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     message: string;
   } | null>(null);
 
+  // BH için doğrudan GP değerleri (Excel'den okunan)
+  const [directGPValues, setDirectGPValues] = useState<Record<string, number>>({});
+  const [totalDirectGP, setTotalDirectGP] = useState<number | null>(null);
+  const [indicatorNamesFromExcel, setIndicatorNamesFromExcel] = useState<Record<string, string>>({});
+
+  // BH için Excel'den birebir tablo satırları
+  const [bhTableData, setBhTableData] = useState<BHTableRow[]>([]);
+
   // moduleType değiştiğinde filtre state'ini güncelle
   useEffect(() => {
     setFilterState(prev => ({
@@ -104,6 +118,10 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     setResults([]);
     setSummary(null);
     setParameterValues({});
+    setDirectGPValues({});
+    setTotalDirectGP(null);
+    setIndicatorNamesFromExcel({});
+    setBhTableData([]);
   }, [moduleType]);
 
   // Bildirim göster
@@ -190,7 +208,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     showNotification('success', 'Sonuçlar Excel olarak indirildi');
   }, [summary, results, filterState, moduleType, userEmail, createInstitutionResult, showNotification]);
 
-  // Dosya yükle
+  // Dosya yükle - Firebase olmadan local parse
   const handleUploadFile = useCallback(async (file: File) => {
     if (!filterState.institutionId) {
       showNotification('error', 'Lütfen önce bir kurum seçin');
@@ -199,27 +217,132 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
     setIsLoading(true);
     try {
-      const result = await uploadGorenDataFile(
-        file,
-        filterState.institutionId,
-        filterState.institutionName,
-        moduleType,
-        filterState.year,
-        filterState.month,
-        userEmail
-      );
+      // Dosyayı local olarak parse et (Firebase'e yüklemeden)
+      const arrayBuffer = await file.arrayBuffer();
+      const result = parseGorenExcel(arrayBuffer, moduleType);
 
       if (result.success && result.data) {
         setParameterValues(result.data);
-        showNotification('success', `${Object.keys(result.data).length} gösterge verisi yüklendi`);
 
-        // Otomatik hesapla
-        const calcResults = calculateAllIndicators(definitions, result.data);
-        setResults(calcResults);
-        setSummary(calculateSummary(calcResults));
-        setViewMode('table');
+        // BH için doğrudan GP değerlerini kaydet
+        if (moduleType === 'BH' && result.directGP) {
+          setDirectGPValues(result.directGP);
+          setTotalDirectGP(result.totalGP || 0);
+          if (result.indicatorNames) {
+            setIndicatorNamesFromExcel(result.indicatorNames);
+          }
+
+          // BH için Excel'den birebir tablo satırlarını kaydet
+          if (result.bhTableRows && result.bhTableRows.length > 0) {
+            setBhTableData(result.bhTableRows);
+          }
+
+          // BH için özel sonuç oluştur - Excel'den okunan GP değerlerini kullan
+          // bhTableRows'dan donemIciPuan değerini kontrol et
+          const bhTableRowsMap = new Map<string, BHTableRow>();
+          if (result.bhTableRows) {
+            for (const row of result.bhTableRows) {
+              const code = `SYPG-BH-${row.sira}`;
+              bhTableRowsMap.set(code, row);
+            }
+          }
+
+          const bhResults: IndicatorResult[] = definitions.map(def => {
+            const code = def.code;
+            const tableRow = bhTableRowsMap.get(code);
+            const params = result.data?.[code] || {};
+            const indicatorName = result.indicatorNames?.[code] || def.name;
+
+            // donemIciPuan değerini kontrol et
+            // null veya "-" ise: veri yok (insufficient_data)
+            // number ise (0 dahil): veri var (success veya zero)
+            const donemIciPuan = tableRow?.donemIciPuan;
+            const hasData = typeof donemIciPuan === 'number';
+            const gpValue = hasData ? donemIciPuan : 0;
+
+            // GD değerini hesapla (varsa)
+            let gd: number | null = null;
+            let gdFormatted = '-';
+            if (params['GD'] !== undefined) {
+              gd = params['GD'] as number;
+              gdFormatted = def.unit === 'percentage' ? `%${gd.toFixed(1)}` : gd.toFixed(2);
+            } else if (params['A'] !== undefined && params['B'] !== undefined && params['B'] !== 0) {
+              gd = (params['A'] as number) / (params['B'] as number);
+              if (def.gdFormula.includes('* 100')) {
+                gd = gd * 100;
+              }
+              gdFormatted = def.unit === 'percentage' ? `%${gd.toFixed(1)}` : gd.toFixed(2);
+            }
+
+            // Status belirleme:
+            // - hasData && gpValue > 0: success (yeşil)
+            // - hasData && gpValue === 0: zero (kırmızı - 0 puan almış)
+            // - !hasData: insufficient_data (gri - veri yok)
+            const status = hasData ? 'success' : 'insufficient_data';
+
+            return {
+              code,
+              name: indicatorName,
+              parameterValues: params,
+              gd,
+              gdFormatted,
+              gp: gpValue,
+              maxPoints: def.maxPoints,
+              status,
+              statusIndicator: !hasData ? 'unknown' :
+                              gpValue >= def.maxPoints * 0.8 ? 'excellent' :
+                              gpValue >= def.maxPoints * 0.6 ? 'good' :
+                              gpValue >= def.maxPoints * 0.4 ? 'average' :
+                              gpValue > 0 ? 'poor' : 'zero',
+              achievementPercent: def.maxPoints > 0 ? (gpValue / def.maxPoints) * 100 : 0
+            } as IndicatorResult;
+          });
+
+          setResults(bhResults);
+
+          // Özet hesapla - hasData olanları say (0 dahil)
+          const completedResults = bhResults.filter(r => r.status === 'success');
+          const totalGP = result.totalGP || 0;
+          const maxPossibleGP = definitions.reduce((sum, d) => sum + d.maxPoints, 0);
+
+          setSummary({
+            totalGP,
+            maxPossibleGP,
+            achievementRate: maxPossibleGP > 0 ? (totalGP / maxPossibleGP) * 100 : 0,
+            completedIndicators: completedResults.length,
+            totalIndicators: definitions.length,
+            incompleteIndicators: definitions.length - completedResults.length,
+            topIndicators: [...bhResults].sort((a, b) => b.achievementPercent - a.achievementPercent).slice(0, 5),
+            bottomIndicators: [...bhResults].sort((a, b) => a.achievementPercent - b.achievementPercent).slice(0, 5)
+          });
+
+          showNotification('success', `${Object.keys(result.directGP).length} gösterge yüklendi. Toplam Puan: ${totalGP.toFixed(2)}`);
+          setViewMode('table');
+        } else {
+          // Diğer modüller için normal hesaplama
+          showNotification('success', `${Object.keys(result.data).length} gösterge verisi yüklendi`);
+          const calcResults = calculateAllIndicators(definitions, result.data);
+          setResults(calcResults);
+          setSummary(calculateSummary(calcResults));
+          setViewMode('table');
+        }
+
+        // Firebase'e kaydetmeyi arka planda dene (hata verse de devam et)
+        try {
+          await uploadGorenDataFile(
+            file,
+            filterState.institutionId,
+            filterState.institutionName,
+            moduleType,
+            filterState.year,
+            filterState.month,
+            userEmail
+          );
+        } catch (firebaseError) {
+          console.warn('[GÖREN Module] Firebase yükleme atlandı:', firebaseError);
+        }
       } else {
-        showNotification('error', result.error || 'Dosya yüklenemedi');
+        showNotification('error', result.error || 'Dosya parse edilemedi');
       }
     } catch (error) {
       console.error('[GÖREN Module] Yükleme hatası:', error);
@@ -316,17 +439,57 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     ? results.find(r => r.code === selectedIndicatorCode) || null
     : null;
 
-  // Kurum listesi (şimdilik mock, gerçek entegrasyonda prop olarak gelecek)
+  // Kurum listesi - HOSPITALS sabitinden ve İLSM için özel kurumlar
   const institutionOptions: InstitutionOption[] = useMemo(() => {
     if (availableInstitutions.length > 0) {
       return availableInstitutions;
     }
-    // Mock data - gerçek entegrasyonda kaldırılacak
-    return [
-      { id: 'ism-ankara', name: 'Ankara İl Sağlık Müdürlüğü', type: 'ILSM' as InstitutionType },
-      { id: 'ism-istanbul', name: 'İstanbul İl Sağlık Müdürlüğü', type: 'ILSM' as InstitutionType },
-      { id: 'ism-izmir', name: 'İzmir İl Sağlık Müdürlüğü', type: 'ILSM' as InstitutionType },
-    ];
+
+    const options: InstitutionOption[] = [];
+
+    // İLSM için il sağlık müdürlükleri
+    options.push(
+      { id: 'ism-sanliurfa', name: 'Şanlıurfa İl Sağlık Müdürlüğü', type: 'ILSM' as InstitutionType }
+    );
+
+    // BH için tüm hastaneler (Başhekimlikler)
+    HOSPITALS.forEach(hospital => {
+      const id = hospital.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
+        const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
+        return map[c] || c;
+      });
+      options.push({
+        id: `bh-${id}`,
+        name: hospital,
+        type: 'BH' as InstitutionType
+      });
+    });
+
+    // ADSH için ağız diş sağlığı hastaneleri
+    options.push(
+      { id: 'adsh-sanliurfa', name: 'Şanlıurfa ADSH', type: 'ADSH' as InstitutionType },
+      { id: 'adsh-haliliye', name: 'Haliliye ADSH', type: 'ADSH' as InstitutionType }
+    );
+
+    // İLÇESM için ilçe sağlık müdürlükleri
+    ['Birecik', 'Bozova', 'Ceylanpınar', 'Halfeti', 'Harran', 'Hilvan', 'Siverek', 'Suruç', 'Viranşehir', 'Akçakale', 'Eyyübiye', 'Haliliye', 'Karaköprü'].forEach(ilce => {
+      const id = ilce.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
+        const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
+        return map[c] || c;
+      });
+      options.push({
+        id: `ilcesm-${id}`,
+        name: `${ilce} İlçe Sağlık Müdürlüğü`,
+        type: 'ILCESM' as InstitutionType
+      });
+    });
+
+    // ASH için acil sağlık hizmetleri
+    options.push(
+      { id: 'ash-sanliurfa', name: 'Şanlıurfa 112 Acil Sağlık Hizmetleri', type: 'ASH' as InstitutionType }
+    );
+
+    return options;
   }, [availableInstitutions]);
 
   // Gösterge yoksa uyarı göster
@@ -394,6 +557,34 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         hasData={results.length > 0 && summary !== null}
       />
 
+      {/* BH için Toplam Puan Büyük Kart */}
+      {moduleType === 'BH' && totalDirectGP !== null && (
+        <div className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-indigo-600/20 backdrop-blur-xl rounded-3xl border border-indigo-500/30 p-8 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-indigo-300 uppercase tracking-wider mb-2">
+                {filterState.institutionName || 'Seçili Hastane'} - {MONTHS[filterState.month - 1]} {filterState.year}
+              </p>
+              <h2 className="text-5xl font-black text-white mb-2">
+                {totalDirectGP.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span className="text-2xl font-normal text-indigo-300 ml-2">/ {definitions.reduce((sum, d) => sum + d.maxPoints, 0)} puan</span>
+              </h2>
+              <p className="text-indigo-200">
+                Dönem İçi Toplam Performans Puanı
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-indigo-500/20 border-4 border-indigo-400/30">
+                <span className="text-3xl font-bold text-indigo-300">
+                  %{summary ? summary.achievementRate.toFixed(0) : '0'}
+                </span>
+              </div>
+              <p className="text-sm text-indigo-300 mt-2">Başarı Oranı</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Özet Kartları */}
       <GorenSummaryCards
         summary={summary}
@@ -445,6 +636,13 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
             onValuesChange={handleValuesChange}
             onCalculateAll={handleCalculateAll}
             isLoading={isCalculating}
+          />
+        ) : moduleType === 'BH' && bhTableData.length > 0 ? (
+          // BH için özel tablo - Excel'den birebir yansıtma
+          <GorenBHTable
+            data={bhTableData}
+            totalGP={totalDirectGP || 0}
+            isLoading={isLoading}
           />
         ) : (
           <GorenIndicatorTable
