@@ -109,14 +109,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'count',
     unitLabel: 'Sayı',
     maxPoints: 4,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'e-RAPOR, EKOBS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Normal doğum sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Kadın doğum uzmanı sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Toplam normal doğum sayısı (e-RAPOR)', type: 'number', required: true },
+      { key: 'B', label: 'Kadın doğum uzman sayısı (EKOBS, EK-12)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 4 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 7. Başvuru Başına Tetkik Oranı - Maks: 2
@@ -127,14 +131,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-NABIZ',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Toplam tetkik sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam başvuru sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Toplam ayaktan hastaya yapılan lab. tetkik sayısı (Acil hariç, EK-3)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam ayaktan başvuru sayısı (Acil hariç)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 8. Primer Sezaryen Oranı - Maks: 4
@@ -145,14 +153,20 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 4,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'e-RAPOR',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Primer sezaryen sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam doğum sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Primer sezaryen sayısı (e-RAPOR)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam canlı doğum sayısı (e-RAPOR)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 4 },
+      { operator: 'formula', formula: 'GD > GO && GD <= GO * 1.15', points: 2 },
+      { operator: 'formula', formula: 'GD > GO * 1.15 && GD <= GO * 1.30', points: 1 },
+      { operator: 'formula', formula: 'GD > GO * 1.30', points: 0 }
+    ]
   },
 
   // 9. Sezaryen Sayısının Referans Değerlerden Sapma Oranı - Maks: 3
@@ -163,50 +177,66 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 3,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'e-RAPOR',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Gerçekleşen sezaryen sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Referans sezaryen sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Gerçekleşen sezaryen sayısı (e-RAPOR)', type: 'number', required: true },
+      { key: 'B', label: 'Robson sınıflamasına göre hesaplanmış referans sezaryen sayısı', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
-    gdFormula: '(A / B) * 100',
-    gpRules: []
+    gdFormula: '((A - B) / B) * 100',
+    gpRules: [
+      // B > 0 durumları
+      { operator: 'formula', formula: 'GD <= GO', points: 3 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+      // Özel durumlar (B=0): Calculator hook'ta ayrıca ele alınmalı
+      // B = 0 ve A = 0 → 3 puan
+      // B = 0 ve A > 0 → 0 puan
+    ]
   },
 
-  // 10. Başvuru Başına Reçete Sayısı - Maks: 4
+  // 10. Başvuru Başına Reçete Sayısı (100 Başvuruda) - Maks: 4
   {
     code: 'SYPG-BH-10',
-    name: 'Başvuru Başına Reçete Sayısı',
+    name: 'Başvuru Başına Reçete Sayısı (100 Başvuruda)',
     category: 'BH',
     unit: 'ratio',
     unitLabel: '100 Başvuruda',
     maxPoints: 4,
-    source: 'HBYS',
+    source: 'e-NABIZ',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Toplam reçete sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam başvuru sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Toplam ayaktan reçete sayısı', type: 'number', required: true },
+      { key: 'B', label: 'Toplam ayaktan başvuru sayısı', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 4 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
-  // 11. Başvuru Başına Antibiyotik İçeren Reçete Sayısı - Maks: 4
+  // 11. Başvuru Başına Antibiyotik İçeren Reçete Sayısı (100 Başvuruda) - Maks: 4
   {
     code: 'SYPG-BH-11',
-    name: 'Başvuru Başına Antibiyotik İçeren Reçete Sayısı',
+    name: 'Başvuru Başına Antibiyotik İçeren Reçete Sayısı (100 Başvuruda)',
     category: 'BH',
     unit: 'ratio',
     unitLabel: '100 Başvuruda',
     maxPoints: 4,
-    source: 'HBYS',
+    source: 'e-NABIZ',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Antibiyotik içeren reçete sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam başvuru sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Antibiyotik (J01) içeren ayaktan reçete sayısı', type: 'number', required: true },
+      { key: 'B', label: 'Toplam ayaktan hasta başvuru sayısı', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 4 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 12. E-Reçete Oranı - Maks: 2
@@ -217,14 +247,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'SGK',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'E-Reçete sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam reçete sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Yazılan e-reçete sayısı (SGK)', type: 'number', required: true },
+      { key: 'B', label: 'Yazılan toplam reçete sayısı (SGK)', type: 'number', required: true }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'gte', minValue: 95, points: 2 },
+      { operator: 'between', minValue: 85, maxValue: 95, points: 1 },
+      { operator: 'lt', maxValue: 85, points: 0 }
+    ]
   },
 
   // 13. Veri Gönderme Başarı Oranı - Maks: 2
@@ -235,50 +269,61 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-NABIZ',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Başarılı gönderim sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam gönderim sayısı', type: 'number', required: true }
+      { key: 'A', label: 'E-Nabıza zamanında gönderilen gösterge bileşeni sayısı', type: 'number', required: true },
+      { key: 'B', label: 'E-Nabıza gönderilmesi gereken gösterge bileşeni sayısı', type: 'number', required: true }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'gte', minValue: 98, points: 2 },
+      { operator: 'lt', maxValue: 98, points: 0 }
+    ]
   },
 
-  // 14. Yoğun Bakım 10 Günden Fazla Yatan Hasta Oranı - Maks: 2
+  // 14. Yoğun Bakımda 10 Günden Fazla Yatan Hasta Oranı - Maks: 2
   {
     code: 'SYPG-BH-14',
-    name: 'Yoğun Bakım 10 Günden Fazla Yatan Hasta Oranı',
+    name: 'Yoğun Bakımda 10 Günden Fazla Yatan Hasta Oranı',
     category: 'BH',
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-NABIZ',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: '10 günden fazla yatan hasta sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam yoğun bakım hasta sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Yoğun bakımda 10 günden fazla yatan hasta sayısı (EK-4 SUT kodları)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam yoğun bakımda yatan hastaların yatış sayısı (EK-4 SUT kodları)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
-  // 15. Yoğun Bakım 15 Günden Fazla Yatan Hasta Oranı - Maks: 3
+  // 15. Yoğun Bakımda 15 Günden Fazla Yatan Hasta Oranı - Maks: 3
   {
     code: 'SYPG-BH-15',
-    name: 'Yoğun Bakım 15 Günden Fazla Yatan Hasta Oranı',
+    name: 'Yoğun Bakımda 15 Günden Fazla Yatan Hasta Oranı',
     category: 'BH',
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 3,
-    source: 'HBYS',
+    source: 'e-NABIZ',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: '15 günden fazla yatan hasta sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam yoğun bakım hasta sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Yoğun bakımda 15 günden fazla yatan hasta sayısı (EK-4 SUT kodları)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam yoğun bakımda yatan hastaların yatış sayısı (EK-4 SUT kodları)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 3 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 16. Servis Yatak Devir Hızı - Maks: 2
