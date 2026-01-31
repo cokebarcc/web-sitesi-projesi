@@ -433,8 +433,66 @@ export const BH_INDICATOR_DETAILS: Record<number, IndicatorDetail> = {
       { condition: 'GD < 98', points: 0 }
     ],
     notes: 'Kaynak Paket: 101 Hasta Kayıt / kabul_zamani. 6 bileşen: 101 sys takip no, 102 işlem referans no, 105 sys takip no, 105 işlem referans no, 103 systakip no, 103 reçete no.'
+  },
+  14: {
+    code: 'SYPG-BH-14',
+    name: 'Yoğun Bakımda 10 Günden Fazla Yatan Hasta Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '18.12.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Yoğun Bakımda 10 Günden Fazla Yatan Hasta Sayısı',
+        description: 'Yoğun bakımda 10 günden fazla yatan hasta sayısı',
+        calculation: 'Aşağıda yer alan yoğun bakım SUT kodları üzerinden çalışma yapılmıştır. Bu çalışmada her bir SUT kodu 1 gün olarak değerlendirilmiş olup peş peşe gönderilen SUT kodları toplam kalınan gün sayısını ifade etmektedir. Bir gün için iki farklı SUT kodu gönderilmiş ise yalnızca bir gün sayılmıştır.\nGünübirlik yatışlar hariç tutulmuştur.\n10 günü geçen yatışları ifade etmektedir.\n\nYoğun Bakım SUT Kodları:\n510090, 510122, 552001, 552002, 552003, 552004, 552005, 552006, 552007, 552008, 552009, 552010, P552001, P552002, P552003, P552006, P552007, P552008'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Yoğun Bakımda Yatan Hastaların Yatış Sayısı',
+        description: 'Toplam yoğun bakımda yatan hastaların yatış sayısı',
+        calculation: 'Aşağıda yer alan yoğun bakım SUT kodları üzerinden çalışma yapılmıştır. Bu çalışmada her bir SUT kodu 1 gün olarak değerlendirilmiş olup peş peşe gönderilen SUT kodları toplam kalınan gün sayısını ifade etmektedir. Bir gün için iki farklı SUT kodu gönderilmiş ise yalnızca bir gün sayılmıştır.\nGünübirlik yatışlar hariç tutulmuştur.\n\nYoğun Bakım SUT Kodları:\n510090, 510122, 552001, 552002, 552003, 552004, 552005, 552006, 552007, 552008, 552009, 552010, P552001, P552002, P552003, P552006, P552007, P552008\n\nKişilerin her bir yatışı ayrı ayrı sayılmıştır. Tekilleştirme yapılmamıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 101 Hasta Kayıt, 106 Çıkış Bilgisi Kayıt, 102 Hizmet / İlaç / Malzeme Bilgisi Kayıt.'
+  },
+  15: {
+    code: 'SYPG-BH-15',
+    name: 'Yoğun Bakımda 15 Günden Fazla Yatan Hasta Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 3,
+    acceptedDate: '18.12.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Yoğun Bakımda 15 Günden Fazla Yatan Hasta Sayısı',
+        description: 'Yoğun bakımda 15 günden fazla yatan hasta sayısı',
+        calculation: 'Aşağıda yer alan yoğun bakım SUT kodları üzerinden çalışma yapılmıştır. Bu çalışmada her bir SUT kodu 1 gün olarak değerlendirilmiş olup peş peşe gönderilen SUT kodları toplam kalınan gün sayısını ifade etmektedir. Bir gün için iki farklı SUT kodu gönderilmiş ise yalnızca bir gün sayılmıştır.\nGünübirlik yatışlar hariç tutulmuştur.\n15 günü geçen yatışları ifade etmektedir.\n\nYoğun Bakım SUT Kodları:\n510090, 510122, 552001, 552002, 552003, 552004, 552005, 552006, 552007, 552008, 552009, 552010, P552001, P552002, P552003, P552006, P552007, P552008'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Yoğun Bakımda Yatan Hastaların Yatış Sayısı',
+        description: 'Toplam yoğun bakımda yatan hastaların yatış sayısı',
+        calculation: 'Aşağıda yer alan yoğun bakım SUT kodları üzerinden çalışma yapılmıştır. Bu çalışmada her bir SUT kodu 1 gün olarak değerlendirilmiş olup peş peşe gönderilen SUT kodları toplam kalınan gün sayısını ifade etmektedir. Bir gün için iki farklı SUT kodu gönderilmiş ise yalnızca bir gün sayılmıştır.\nGünübirlik yatışlar hariç tutulmuştur.\n\nYoğun Bakım SUT Kodları:\n510090, 510122, 552001, 552002, 552003, 552004, 552005, 552006, 552007, 552008, 552009, 552010, P552001, P552002, P552003, P552006, P552007, P552008\n\nKişilerin her bir yatışı ayrı ayrı sayılmıştır. Tekilleştirme yapılmamıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 3 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 101 Hasta Kayıt, 106 Çıkış Bilgisi Kayıt, 102 Hizmet / İlaç / Malzeme Bilgisi Kayıt.'
   }
-  // Gösterge 14-38 için henüz hesaplama mantığı girilmedi.
+  // Gösterge 16-38 için henüz hesaplama mantığı girilmedi.
   // Gerçek veriler sağlandığında eklenecek.
 };
 

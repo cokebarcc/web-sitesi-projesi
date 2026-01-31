@@ -194,6 +194,11 @@ export type ViewType =
   | 'physician-data'
   | 'ai-chatbot'
   | 'service-analysis'
+  | 'etik-kurul'              // Etik Kurul modülü (Finansal)
+  | 'hekim-islem-listesi'     // Hekim İşlem Listesi modülü (Finansal)
+  | 'ek-liste-tanimlama'      // Ek Liste Tanımlama modülü (Finansal)
+  | 'sut-mevzuati'             // SUT Mevzuatı modülü (Finansal)
+  | 'gil'                       // GİL modülü (Finansal)
   | 'detailed-schedule'
   | 'change-analysis'
   | 'goren'

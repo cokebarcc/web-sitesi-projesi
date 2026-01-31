@@ -115,7 +115,12 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         </svg>
       ),
       items: [
-        { id: 'service-analysis', label: 'Hizmet Girişim', view: 'service-analysis', hasAccess: hasModuleAccess('serviceAnalysis') }
+        { id: 'service-analysis', label: 'Hizmet Girişim', view: 'service-analysis', hasAccess: hasModuleAccess('serviceAnalysis') },
+        { id: 'etik-kurul', label: 'Etik Kurul', view: 'etik-kurul', hasAccess: true },
+        { id: 'hekim-islem-listesi', label: 'Hekim İşlem Listesi', view: 'hekim-islem-listesi', hasAccess: true },
+        { id: 'ek-liste-tanimlama', label: 'Ek Liste Tanımlama', view: 'ek-liste-tanimlama', hasAccess: true },
+        { id: 'sut-mevzuati', label: 'SUT Mevzuatı', view: 'sut-mevzuati', hasAccess: true },
+        { id: 'gil', label: 'GİL', view: 'gil', hasAccess: true }
       ]
     },
     {
