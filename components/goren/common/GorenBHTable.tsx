@@ -59,7 +59,7 @@ const AppendixModal: React.FC<{
 
         {/* İçerik */}
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
-          <pre className="text-slate-300 text-sm whitespace-pre-wrap font-mono leading-relaxed">
+          <pre className="text-slate-300 text-sm whitespace-pre-wrap break-all font-mono leading-relaxed">
             {appendix.content}
           </pre>
         </div>

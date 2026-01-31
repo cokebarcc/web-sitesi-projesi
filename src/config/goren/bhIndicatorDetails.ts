@@ -195,8 +195,246 @@ export const BH_INDICATOR_DETAILS: Record<number, IndicatorDetail> = {
     ],
     notes: 'GO: İlgili dönem için tanımlı referans (hedef) değeri.',
     appendix: ['EK-1', 'EK-2']
+  },
+  6: {
+    code: 'SYPG-BH-6',
+    name: 'Kadın Doğum Uzmanı Başına Düşen Normal Doğum Sayısı',
+    unit: 'Sayı',
+    source: 'e-RAPOR, EKOBS',
+    hbysCalculable: false,
+    maxPoints: 4,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Toplam Normal Doğum Sayısı',
+        description: 'Toplam normal doğum sayısı',
+        calculation: 'e-RAPOR sistemindeki referans numarası saydırılarak normal doğum hesaplanmıştır. Çoğul doğumlarda yalnızca tek doğum sayısı hesaplanmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Kadın Doğum Uzman Sayısı',
+        description: 'Kadın doğum uzman hekim sayısı (adam-gün)',
+        calculation: 'EKOBS veritabanından EK-12\'de yer alan ÇKYS Unvan Kodu ve Branş Kodu olan hekim kimlik numaraları kullanılarak aktif çalışma gün katsayısı (adam gün) olarak hekim sayısı hesaplanmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 4 },
+      { condition: 'GD < GO', points: 0 }
+    ],
+    appendix: ['EK-12']
+  },
+  7: {
+    code: 'SYPG-BH-7',
+    name: 'Başvuru Başına Tetkik Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Toplam Ayaktan Hastaya Yapılan Laboratuvar Tetkik Sayısı (Acil hariç)',
+        description: 'Acil klinikler hariç ayaktan hastalara yapılan laboratuvar tetkik sayısı',
+        calculation: 'Acil Klinikleri haricinde 105 Laboratuvar sonuç kayıt paketinde aşağıda yer alan SUT kodları üzerinden Başvuru Başına tetkik sayısı hesaplanmıştır. (EK-3) ve Ayaktan hastalara (Yatış kabul zamanı boş veya günübirlik yatışı olmayan) ait tekil sys takip numarası saydırılmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Ayaktan Başvuru Sayısı (Acil hariç)',
+        description: 'Acil klinikler hariç toplam ayaktan başvuru sayısı',
+        calculation: 'Acil klinik kodları hariç \'101\', \'115\', \'1\', Ayaktan hastalara (Yatış kabul zamanı boş veya günübirlik yatışı olmayan) ait tekil sys takip numaraları sayılarak başvuruları hesaplanmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 105 Laboratuvar Sonuç Kayıt TETKIK_SONUC_BILGILERI / PAKETE_AIT_ISLEM_ZAMANI, 101 Hasta Kayıt HASTA_BASVURU_BILGILERI / YATIS_BILGISI / YATIS_KABUL_ZAMANI boş olan verilerin toplamıdır.',
+    appendix: ['EK-3']
+  },
+  8: {
+    code: 'SYPG-BH-8',
+    name: 'Primer Sezaryen Oranı',
+    unit: '%',
+    source: 'e-RAPOR',
+    hbysCalculable: false,
+    maxPoints: 4,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Primer Sezaryen Sayısı',
+        description: 'Primer sezaryen sayısı',
+        calculation: 'e-RAPOR sisteminden doğum sonucu primer sezeryan olan e rapor referans numaralarının sayısıdır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Canlı Doğum Sayısı',
+        description: 'Toplam canlı doğum sayısı',
+        calculation: 'e-RAPOR sisteminden canlı doğum verisi olan e rapor referans numarasının sayısıdır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 4 },
+      { condition: 'GO < GD ≤ GO × 1,15', points: 2 },
+      { condition: '1,15 × GO < GD ≤ GO × 1,30', points: 1 },
+      { condition: 'GO × 1,30 < GD', points: 0 }
+    ]
+  },
+  9: {
+    code: 'SYPG-BH-9',
+    name: 'Sezaryen Sayısının Referans Değerlerden Sapma Oranı',
+    unit: '%',
+    source: 'e-RAPOR',
+    hbysCalculable: false,
+    maxPoints: 3,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Gerçekleşen Sezaryen Sayısı',
+        description: 'Gerçekleşen sezaryen sayısı',
+        calculation: 'e-RAPOR sisteminden toplam sezaryan sayısıdır.'
+      },
+      {
+        key: 'B',
+        name: 'Robson Sınıflamasına Göre Referans Değerlerle Hesaplanmış Sezaryen Sayısı',
+        description: 'Robson sınıflamasına göre referans değerlerle hesaplanmış beklenen sezaryen sayısı',
+        calculation: 'Robson gruplarının (1-10) her biri için gruptaki doğum sayısı ilgili katsayıyla çarpılarak hesaplanır. Katsayılar: Grup 1: 0,1 | Grup 2: 0,35 | Grup 3: 0,03 | Grup 4: 0,15 | Grup 5: 0,6 | Grup 6: 0,98 | Grup 7: 0,95 | Grup 8: 0,6 | Grup 9: 0,95 | Grup 10: 0,3. B = Σ (Gruptaki doğum sayısı × Katsayı)'
+      }
+    ],
+    gdFormula: 'GD = ((A − B) / B) × 100',
+    gdDescription: 'Gerçekleşen sezaryen sayısının referans değerlerden sapma oranı',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 3 },
+      { condition: 'GD > GO', points: 0 },
+      { condition: 'B = 0 ve A = 0 ise', points: 3 },
+      { condition: 'B = 0 ve A > 0 ise', points: 0 },
+      { condition: 'B > 0 ve A = 0 ise', points: 3 }
+    ],
+    notes: 'GO: İlgili dönem için tanımlı referans (hedef) değeri. Robson sınıflaması 10 gruptan oluşur ve her grubun sezaryen olasılık katsayısı farklıdır.'
+  },
+  10: {
+    code: 'SYPG-BH-10',
+    name: 'Başvuru Başına Reçete Sayısı',
+    unit: '100 Başvuruda',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 4,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Toplam Ayaktan Reçete Sayısı',
+        description: 'Toplam ayaktan reçete sayısı',
+        calculation: 'Ayaktan hastalara (Yatış kabul zamanı boş veya günübirlik yatışı olmayan) yazılan reçete sayısıdır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Ayaktan Başvuru Sayısı',
+        description: 'Toplam ayaktan başvuru sayısı',
+        calculation: 'Ayaktan hastaların (Yatış kabul zamanı boş veya günübirlik yatışı olmayan) yapmış olduğu başvuru sayısıdır. Tekil SYStakipNo saydırılmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 4 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 103 Muayene Bilgisi Kayıt / recete_tarihi, 101 Hasta Kayıt / kabul_zamani. GO: İlgili dönem için tanımlı referans (hedef) değeri.'
+  },
+  11: {
+    code: 'SYPG-BH-11',
+    name: 'Başvuru Başına Antibiyotik İçeren Reçete Sayısı',
+    unit: '100 Başvuruda',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 4,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Antibiyotik İçeren Ayaktan Reçete Sayısı',
+        description: 'Antibiyotik içeren ayaktan reçete sayısı',
+        calculation: 'Ayaktan hastalara (Yatış kabul zamanı boş veya günübirlik yatışı olmayan) antibiyotik (J01) içeren reçete sayısıdır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Ayaktan Hasta Başvuru Sayısı',
+        description: 'Toplam ayaktan hasta başvuru sayısı',
+        calculation: 'Ayaktan hastaların (Yatış kabul zamanı boş veya günübirlik yatışı olmayan) yapmış olduğu başvuru sayısıdır. Tekil SYStakipNo saydırılmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 4 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 103 Muayene Bilgisi Kayıt / recete_tarihi, 101 Hasta Kayıt / kabul_zamani. GO: İlgili dönem için tanımlı referans (hedef) değeri.'
+  },
+  12: {
+    code: 'SYPG-BH-12',
+    name: 'E-Reçete Oranı',
+    unit: '%',
+    source: 'SGK',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Yazılan E-Reçete Sayısı',
+        description: 'Yazılan e-reçete sayısı',
+        calculation: 'SGK\'dan alınan veriler ile ilgili dönemdeki yazılan e-reçete sayısı kullanılmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Yazılan Toplam Reçete Sayısı',
+        description: 'Yazılan toplam reçete sayısı',
+        calculation: 'SGK\'dan alınan veriler ile ilgili dönemdeki yazılan toplam reçete sayısı kullanılmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≥ %95', points: 2 },
+      { condition: '%85 ≤ GD < %95', points: 1 },
+      { condition: 'GD < GO', points: 0 }
+    ]
+  },
+  13: {
+    code: 'SYPG-BH-13',
+    name: 'Veri Gönderme Başarı Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'E-Nabıza Zamanında Gönderilen Gösterge Bileşeni Sayısı',
+        description: 'E-Nabıza zamanında gönderilen gösterge bileşeni sayısı',
+        calculation: 'E-Nabız sisteminden alınan paket verilerine göre ilk gönderim zamanından itibaren altı bileşenin hesaplanması şu şekildedir;\n\n101 paketindeki Kabul zamanı ile e-nabıza aktarım zamanı arasındaki süre 24 saatten az olan hastaların sys takip numaraları 1 bileşen olarak sayılmaktadır.\nİşlem bilgisi için 102 paketindeki işlem zamanı ile e-nabıza aktarım zamanı arasındaki süre 24 saatten az olan hastalar için işlem referans numaraları alınarak 1 bileşen sayılır.\nLabaratuvar sonucu için 105 paketindeki tetkik örneğinin kabul zamanı ile e-nabıza aktarım zamanı arasındaki süre 24 saatten küçük olanların sys takip numarası 1 bileşen sayılır.\nTetkik sonuc tarihi ile e-nabıza aktarım zamanı arasındaki süre 24 saatten az olan hastaların işlem referans numarası da 1 bileşen olarak sayılmaktadır.\nHasta tanı bilgileri için 103 paketindeki muayene başlangıç tarihi ile e-nabıza aktarım zamanı arasındaki süre 24 saatten az olan hastaların systakip numarası da 1 bileşen olarak sayılmaktadır.\nHasta reçete bilgisi için 103 paketindeki reçete tarihi ile e-nabıza aktarım zamanı arasındaki süre 24 saatten az olan hastaların reçete numaraları 1 bileşen olarak sayılır.\n\nBu altı bileşenden 24 saat içerisinde gönderilen bileşen sayıları toplanarak hesaplanmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'E-Nabıza Zamanında Gönderilmesi Gereken Gösterge Bileşeni Sayısı',
+        description: 'E-Nabıza zamanında gönderilmesi gereken gösterge bileşeni sayısı',
+        calculation: 'E-Nabız sisteminden alınan paket verilerine göre ilk gönderim zamanından itibaren altı bileşenin hesaplanması şu şekildedir;\n\n101 paketinden sys takip numaraları 1 bileşen olarak sayılmaktadır.\nİşlem bilgisi için 102 paketindeki işlem referans numaraları alınarak 1 bileşen sayılır.\nLabaratuvar sonucu için 105 paketindeki sys takip numarası 1 bileşen sayılır.\nTetkik sonucu için 105 paketindeki işlem referans numarası da 1 bileşen olarak sayılmaktadır.\nHasta tanı bilgileri için 103 paketindeki systakip numarası da 1 bileşen olarak sayılmaktadır.\nHasta reçete bilgisi için 103 paketindeki reçete numaraları 1 bileşen olarak sayılır.\n\nBu altı bileşenin toplamı ile hesaplanmaktadır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≥ 98', points: 2 },
+      { condition: 'GD < 98', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 101 Hasta Kayıt / kabul_zamani. 6 bileşen: 101 sys takip no, 102 işlem referans no, 105 sys takip no, 105 işlem referans no, 103 systakip no, 103 reçete no.'
   }
-  // Gösterge 6-38 için henüz hesaplama mantığı girilmedi.
+  // Gösterge 14-38 için henüz hesaplama mantığı girilmedi.
   // Gerçek veriler sağlandığında eklenecek.
 };
 
