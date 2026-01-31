@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -25,6 +25,11 @@ import FilterPanel from './components/common/FilterPanel';
 import ChatBot from './components/ChatBot';
 import { AIChatPanel } from './src/components/ai';
 import ServiceInterventionAnalysis from './components/ServiceInterventionAnalysis';
+import EtikKurulModule from './components/EtikKurulModule';
+import HekimIslemListesiModule from './components/HekimIslemListesiModule';
+import EkListeTanimlama from './components/EkListeTanimlama';
+import SutMevzuati from './components/SutMevzuati';
+import GilModule from './components/GilModule';
 import DetailedSchedule from './components/DetailedSchedule';
 import ChangeAnalysis from './components/ChangeAnalysis';
 import GorenBashekimlik from './components/GorenBashekimlik';
@@ -90,8 +95,29 @@ const App: React.FC = () => {
   // User Permissions
   const { userPermissions, loading: permissionsLoading, hasModuleAccess, canUploadData, isAdmin } = useUserPermissions(user?.email || null);
 
-  const [view, setView] = useState<ViewType>('welcome');
-  const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency' | null>(null);
+  const [view, setViewState] = useState<ViewType>(() => {
+    const saved = localStorage.getItem('medis_active_view');
+    return (saved as ViewType) || 'welcome';
+  });
+  const [dashboardCategory, setDashboardCategory] = useState<'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency' | null>(() => {
+    const saved = localStorage.getItem('medis_dashboard_category');
+    return saved ? (saved as 'mhrs' | 'financial' | 'preparation' | 'support' | 'emergency') : null;
+  });
+
+  // View değiştiğinde localStorage'a kaydet
+  const setView = useCallback((newView: ViewType) => {
+    setViewState(newView);
+    localStorage.setItem('medis_active_view', newView);
+  }, []);
+
+  // Dashboard category değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    if (dashboardCategory) {
+      localStorage.setItem('medis_dashboard_category', dashboardCategory);
+    } else {
+      localStorage.removeItem('medis_dashboard_category');
+    }
+  }, [dashboardCategory]);
 
   // ========== GLOBAL FİLTRE STATE (TÜM MODÜLLER İÇİN TEK MERKEZ) ==========
   // Modül değişiminde bu state'ler KORUNUR - sıfırlanmaz
@@ -765,6 +791,21 @@ const App: React.FC = () => {
                   <ServiceInterventionAnalysis sutData={sutServiceData} onImportSUT={(f) => {}} aiAnalysis={sutRiskAnalysis} setAiAnalysis={setSutRiskAnalysis} />
                 </>
               );
+
+            case 'etik-kurul':
+              return <EtikKurulModule />;
+
+            case 'hekim-islem-listesi':
+              return <HekimIslemListesiModule />;
+
+            case 'ek-liste-tanimlama':
+              return <EkListeTanimlama />;
+
+            case 'sut-mevzuati':
+              return <SutMevzuati />;
+
+            case 'gil':
+              return <GilModule />;
 
             case 'ai-chatbot':
               return (

@@ -247,7 +247,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         {/* Dropdown Menu */}
         {isOpen && (
           <div
-            className="absolute z-[9999] mt-1 w-full min-w-[220px] bg-[#0f172a] border border-[var(--glass-border-light)] rounded-xl shadow-2xl overflow-hidden"
+            className="absolute z-[9999] mt-1 min-w-full w-max max-w-[480px] bg-[#0f172a] border border-[var(--glass-border-light)] rounded-xl shadow-2xl overflow-hidden"
             role="listbox"
             aria-multiselectable="true"
           >
@@ -341,7 +341,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                           )
                         )}
                       </div>
-                      <span className="truncate font-medium">{option.label}</span>
+                      <span className="whitespace-nowrap font-medium">{option.label}</span>
                     </button>
                   );
                 })

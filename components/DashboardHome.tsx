@@ -150,7 +150,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
             </svg>
           }
           color="rose"
-          moduleCount={1}
+          moduleCount={6}
           onClick={() => onNavigateToCategory('financial')}
           disabled={!canAccessCategory('financial')}
         />
