@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth } from '../firebase';
 
 interface LoginPageProps {
@@ -54,6 +54,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
+      // Önce Firebase Auth'da bu e-posta ile kayıtlı kullanıcı var mı kontrol et
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length === 0) {
+        setError('Bu e-posta adresi ile kayıtlı bir kullanıcı bulunmamaktadır.');
+        setIsLoading(false);
+        return;
+      }
+
       await sendPasswordResetEmail(auth, email);
       setSuccess('Şifre sıfırlama linki e-posta adresinize gönderildi!');
       setTimeout(() => {
@@ -63,7 +71,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     } catch (err: any) {
       console.error('Password reset error:', err);
       if (err.code === 'auth/user-not-found') {
-        setError('Bu e-posta adresi ile kayıtlı kullanıcı bulunamadı.');
+        setError('Bu e-posta adresi ile kayıtlı bir kullanıcı bulunmamaktadır.');
       } else if (err.code === 'auth/invalid-email') {
         setError('Geçersiz e-posta adresi.');
       } else {
