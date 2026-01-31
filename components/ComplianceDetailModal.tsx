@@ -188,6 +188,18 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
             </section>
           )}
 
+          {/* Bölüm Başlığı (Miras) */}
+          {kural?.section_header && (
+            <section>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                Bölüm Başlığı Kuralı
+              </h4>
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3">
+                <p className="text-xs text-amber-300 leading-relaxed whitespace-pre-wrap">{kural.section_header}</p>
+              </div>
+            </section>
+          )}
+
           {/* Mevzuat Açıklaması */}
           {kural?.aciklama_raw && (
             <section>
