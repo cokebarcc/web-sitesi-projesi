@@ -42,6 +42,7 @@ export interface RuleMasterEntry {
   gil_puani?: number;        // GİL'den gelen puan
   gil_fiyati?: number;       // GİL'den gelen fiyat
   parsed_rules: ParsedRule[];
+  section_header?: string;   // Bölüm başlığından miras alınan açıklama
 }
 
 // ── Analiz Sonucu ──

@@ -69,37 +69,58 @@ export function extractRulesFromAciklama(aciklama: string): ParsedRule[] {
 }
 
 // ── BASAMAK KISITI Çıkarma ──
+// NOT: "basamak" kelimesi geçen her ifade kısıt değildir.
+// Örnek (KISIT):     "Üçüncü basamak sağlık hizmeti sunucuları tarafından yapılması halinde faturalandırılır."
+//                    → 3. basamak gerekli, 2. basamak hastane bunu fatura edemez = BASAMAK_KISITI
+// Örnek (KISIT):     "Sadece üçüncü basamak sağlık hizmeti sunucularınca yapılması halinde faturalandırılır."
+//                    → Aynı şekilde BASAMAK_KISITI
+// Örnek (KISIT DEĞİL): "Üçüncü basamak ... %30 ilave edilir" → puan artışı bilgisi, kısıt değil
 function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]) {
+  // Önce kısıtlama DEĞİL olan ifadeleri tespit et (puan artışı, ilave vb.)
+  // Bu ifadeler varsa ve kısıtlama bağlamı yoksa, basamak kısıtı oluşturma
+  const nonRestrictionPatterns = [
+    /ilave\s+edilir/gi,
+    /puan[ıi]?\s*(?:na|ına|larına)?\s*%\s*\d+/gi,
+    /%\s*\d+\s*(?:ilave|artır|arttır)/gi,
+    /puan\s*(?:artır|arttır)/gi,
+  ];
+
   const patterns: { regex: RegExp; extractor: (m: RegExpMatchArray) => number[] }[] = [
-    // "yalnızca 3. basamak" / "sadece 3. basamak"
+    // "yalnızca 3. basamak" / "sadece 3. basamak" — kesin kısıt
     {
       regex: /(?:yalnızca|yalnizca|sadece)\s+(\d)\.\s*basamak/gi,
       extractor: (m) => [parseInt(m[1])]
     },
-    // "3. basamak sağlık hizmeti sunucuları"
+    // "yalnızca/sadece ikinci/üçüncü basamak" — kesin kısıt
     {
-      regex: /(\d)\.\s*basamak\s+sağlık/gi,
-      extractor: (m) => [parseInt(m[1])]
+      regex: /(?:yalnızca|yalnizca|sadece)\s+(?:ikinci|üçüncü|ucuncu|birinci)/gi,
+      extractor: (m) => {
+        const txt = m[0].toLowerCase();
+        if (txt.includes('birinci')) return [1];
+        if (txt.includes('ikinci')) return [2];
+        return [3];
+      }
     },
-    // "2. ve 3. basamak"
+    // "2. ve 3. basamak" — çoklu basamak
     {
       regex: /(\d)\.\s*ve\s+(\d)\.\s*basamak/gi,
       extractor: (m) => [parseInt(m[1]), parseInt(m[2])]
     },
-    // "üçüncü basamak"
+    // "X. basamak sağlık hizmeti sunucularında/tarafından yapılır/faturalandırılır"
+    // nonRestrictionPatterns ile "%30 ilave edilir" gibi puan artışı cümleleri filtrelenir
     {
-      regex: /üçüncü\s+basamak/gi,
-      extractor: () => [3]
+      regex: /(\d)\.\s*basamak\s+(?:sağlık|saglik).{0,60}(?:yapılır|yapilir|faturalandırılır|faturalandirilir|sunucularında|sunucularinca)/gi,
+      extractor: (m) => [parseInt(m[1])]
     },
-    // "ikinci basamak"
+    // "üçüncü/ikinci basamak sağlık hizmeti sunucularında faturalandırılır"
     {
-      regex: /ikinci\s+basamak/gi,
-      extractor: () => [2]
-    },
-    // "ikinci ve üçüncü basamak"
-    {
-      regex: /ikinci\s+ve\s+üçüncü\s+basamak/gi,
-      extractor: () => [2, 3]
+      regex: /(?:birinci|ikinci|üçüncü|ucuncu)\s+basamak\s+(?:sağlık|saglik).{0,60}(?:yapılır|yapilir|faturalandırılır|faturalandirilir|sunucularında|sunucularinca)/gi,
+      extractor: (m) => {
+        const txt = m[0].toLowerCase();
+        if (txt.includes('birinci')) return [1];
+        if (txt.includes('ikinci')) return [2];
+        return [3];
+      }
     },
   ];
 
@@ -109,6 +130,18 @@ function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]
     while ((match = r.exec(lower)) !== null) {
       const basamaklar = extractor(match);
       if (basamaklar.length > 0) {
+        // Match çevresinde puan artışı/ilave ifadesi var mı kontrol et
+        const contextStart = Math.max(0, match.index - 30);
+        const contextEnd = Math.min(lower.length, match.index + match[0].length + 80);
+        const context = lower.substring(contextStart, contextEnd);
+
+        const isNonRestriction = nonRestrictionPatterns.some(p =>
+          new RegExp(p.source, p.flags).test(context)
+        );
+
+        // Eğer bağlam puan artışı/ilave ise, bu bir kısıt değil — atla
+        if (isNonRestriction) continue;
+
         rules.push({
           type: 'BASAMAK_KISITI',
           rawText: rawText.trim(),
@@ -305,6 +338,46 @@ function extractDisRules(lower: string, rawText: string, rules: ParsedRule[]) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Başlık Satırı Yardımcıları (Bölüm Kuralı Mirası)
+// ═══════════════════════════════════════════════════════════════
+
+interface EkSourceConfig {
+  codeIdx: number;
+  puanIdx: number;
+  adiIdx: number;
+  aciklamaIdx: number;
+}
+
+/** Başlık satırı mı? (kod boş + puan boş + metin var) */
+function isHeaderRow(row: any[], config: EkSourceConfig): boolean {
+  const code = String(row[config.codeIdx] || '').trim();
+  const puan = String(row[config.puanIdx] || '').trim();
+  if (code !== '' || puan !== '') return false;
+  const adi = String(row[config.adiIdx] || '').trim();
+  const aciklama = String(row[config.aciklamaIdx] || '').trim();
+  return adi !== '' || aciklama !== '';
+}
+
+/** Başlık satırındaki açıklama metnini birleştir */
+function getHeaderText(row: any[], config: EkSourceConfig): string {
+  const adi = String(row[config.adiIdx] || '').trim();
+  const aciklama = String(row[config.aciklamaIdx] || '').trim();
+  return [adi, aciklama].filter(Boolean).join(' - ');
+}
+
+/**
+ * Bölüm kuralları ile satır kurallarını birleştir.
+ * Satır kuralları öncelikli: aynı tip kural zaten varsa bölüm kuralı eklenmez.
+ */
+function mergeRules(rowRules: ParsedRule[], sectionRules: ParsedRule[]): ParsedRule[] {
+  if (sectionRules.length === 0) return rowRules;
+  if (rowRules.length === 0) return [...sectionRules];
+  const rowRuleTypes = new Set(rowRules.map(r => r.type));
+  const additional = sectionRules.filter(sr => !rowRuleTypes.has(sr.type));
+  return [...rowRules, ...additional];
+}
+
+// ═══════════════════════════════════════════════════════════════
 // RULES_MASTER Oluştur
 // ═══════════════════════════════════════════════════════════════
 export interface BuildRulesMasterResult {
@@ -407,7 +480,17 @@ export function buildRulesMaster(
 
   // ── EK-2B: [İŞLEM KODU, İŞLEM ADI, AÇIKLAMA, İŞLEM PUANI, İŞLEM FİYATI] ──
   if (ek2bData) {
+    const ek2bCfg: EkSourceConfig = { codeIdx: 0, puanIdx: 3, adiIdx: 1, aciklamaIdx: 2 };
+    let sectionHeader = '';
+    let sectionRules: ParsedRule[] = [];
+
     for (const row of ek2bData.rows) {
+      if (isHeaderRow(row, ek2bCfg)) {
+        sectionHeader = getHeaderText(row, ek2bCfg);
+        sectionRules = extractRulesFromAciklama(sectionHeader);
+        continue;
+      }
+
       const kodu = String(row[0] || '').trim();
       if (!kodu) continue;
 
@@ -424,7 +507,8 @@ export function buildRulesMaster(
         islem_puani: puan,
         islem_fiyati: fiyat,
         aciklama_raw: aciklama,
-        parsed_rules: extractRulesFromAciklama(aciklama),
+        parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+        section_header: sectionHeader || undefined,
       };
 
       if (!master.has(kodu)) {
@@ -436,7 +520,17 @@ export function buildRulesMaster(
 
   // ── EK-2C: [İŞLEM KODU, İŞLEM ADI, AÇIKLAMA, İŞLEM GRUBU, İŞLEM PUANI, İŞLEM FİYATI] ──
   if (ek2cData) {
+    const ek2cCfg: EkSourceConfig = { codeIdx: 0, puanIdx: 4, adiIdx: 1, aciklamaIdx: 2 };
+    let sectionHeader = '';
+    let sectionRules: ParsedRule[] = [];
+
     for (const row of ek2cData.rows) {
+      if (isHeaderRow(row, ek2cCfg)) {
+        sectionHeader = getHeaderText(row, ek2cCfg);
+        sectionRules = extractRulesFromAciklama(sectionHeader);
+        continue;
+      }
+
       const kodu = String(row[0] || '').trim();
       if (!kodu) continue;
 
@@ -454,7 +548,8 @@ export function buildRulesMaster(
         islem_fiyati: fiyat,
         aciklama_raw: aciklama,
         islem_grubu: String(row[3] || '').trim(),
-        parsed_rules: extractRulesFromAciklama(aciklama),
+        parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+        section_header: sectionHeader || undefined,
       };
 
       // EK-2C öncelikli (ameliyat kodları)
@@ -465,7 +560,17 @@ export function buildRulesMaster(
 
   // ── EK-2Ç: [İŞLEM KODU, İŞLEM ADI, AÇIKLAMALAR, İŞLEM PUANI, İŞLEM FİYATI] ──
   if (ek2cdData) {
+    const ek2cdCfg: EkSourceConfig = { codeIdx: 0, puanIdx: 3, adiIdx: 1, aciklamaIdx: 2 };
+    let sectionHeader = '';
+    let sectionRules: ParsedRule[] = [];
+
     for (const row of ek2cdData.rows) {
+      if (isHeaderRow(row, ek2cdCfg)) {
+        sectionHeader = getHeaderText(row, ek2cdCfg);
+        sectionRules = extractRulesFromAciklama(sectionHeader);
+        continue;
+      }
+
       const kodu = String(row[0] || '').trim();
       if (!kodu) continue;
 
@@ -482,7 +587,8 @@ export function buildRulesMaster(
         islem_puani: puan,
         islem_fiyati: fiyat,
         aciklama_raw: aciklama,
-        parsed_rules: extractRulesFromAciklama(aciklama),
+        parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+        section_header: sectionHeader || undefined,
       };
 
       if (!master.has(kodu)) {
@@ -494,7 +600,17 @@ export function buildRulesMaster(
 
   // ── GİL: [İŞLEM KODU, İŞLEM ADI, AÇIKLAMA, İŞLEM PUANI, AMELİYAT GRUPLARI] ──
   if (gilData) {
+    const gilCfg: EkSourceConfig = { codeIdx: 0, puanIdx: 3, adiIdx: 1, aciklamaIdx: 2 };
+    let sectionHeader = '';
+    let sectionRules: ParsedRule[] = [];
+
     for (const row of gilData.rows) {
+      if (isHeaderRow(row, gilCfg)) {
+        sectionHeader = getHeaderText(row, gilCfg);
+        sectionRules = extractRulesFromAciklama(sectionHeader);
+        continue;
+      }
+
       const kodu = String(row[0] || '').trim();
       if (!kodu) continue;
 
@@ -509,8 +625,11 @@ export function buildRulesMaster(
         existing.ameliyat_grubu = String(row[4] || '').trim();
         existing.gil_puani = puan;
         existing.gil_fiyati = fiyat;
-        // GİL açıklamasından ek kurallar çıkar
-        const gilRules = extractRulesFromAciklama(aciklama);
+        if (!existing.section_header && sectionHeader) {
+          existing.section_header = sectionHeader;
+        }
+        // GİL açıklamasından + bölüm başlığından ek kurallar çıkar
+        const gilRules = mergeRules(extractRulesFromAciklama(aciklama), sectionRules);
         for (const r of gilRules) {
           // Aynı tip kural yoksa ekle
           if (!existing.parsed_rules.some(er => er.type === r.type)) {
@@ -528,7 +647,8 @@ export function buildRulesMaster(
           ameliyat_grubu: String(row[4] || '').trim(),
           gil_puani: puan,
           gil_fiyati: fiyat,
-          parsed_rules: extractRulesFromAciklama(aciklama),
+          parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+          section_header: sectionHeader || undefined,
         };
         master.set(kodu, entry);
       }
