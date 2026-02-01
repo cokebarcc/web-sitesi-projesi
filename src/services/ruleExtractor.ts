@@ -494,6 +494,42 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
 
     // === "X gün ara ile" / "X gün arayla" ===
     { regex: new RegExp(`(${NUM_OR_WORD})\\s+gün\\s+(?:ara\\s+ile|arayla|aralar?la)`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
+
+    // === ÖMÜRDE BİR KEZ / ÖMÜR BOYUNCA ===
+    // "ömürde bir kez puanlandırılır" — ortodontik işlemler (limit=1, tüm dönem)
+    { regex: /ömürde\s+(bir)\s+kez\s+puanlandırılır/gi, periyot: 'genel', limitGroup: 1 },
+    { regex: /omurde\s+(bir)\s+kez\s+puanlandirilir/gi, periyot: 'genel', limitGroup: 1 },
+    // "ömür boyunca X defadan fazla" — (limit=X, tüm dönem)
+    { regex: new RegExp(`ömür\\s+boyunca\\s+(${NUM_OR_WORD})\\s+defadan\\s+fazla`, 'gi'), periyot: 'genel', limitGroup: 1 },
+    { regex: new RegExp(`omur\\s+boyunca\\s+(${NUM_OR_WORD})\\s+defadan\\s+fazla`, 'gi'), periyot: 'genel', limitGroup: 1 },
+
+    // === X DEFADAN FAZLA FATURALANDIRILMAZ ===
+    // "aynı başvuruda bir defadan fazla faturalandırılmaz" → günlük limit
+    { regex: new RegExp(`aynı\\s+başvuruda\\s+(${NUM_OR_WORD})\\s+defadan\\s+fazla\\s+(?:faturalandırılmaz|faturalandirilmaz)`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    { regex: new RegExp(`ayni\\s+basvuruda\\s+(${NUM_OR_WORD})\\s+defadan\\s+fazla\\s+(?:faturalandırılmaz|faturalandirilmaz)`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    // "X defadan fazla faturalandırılmaz/yapılması" (without period prefix)
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+defadan\\s+fazla\\s+(?:faturalandırılmaz|faturalandirilmaz|yapılması)`, 'gi'), periyot: 'genel', limitGroup: 1 },
+
+    // === BİR KEZ PUANLANDIRILIR (without ömürde prefix) ===
+    // "bir kez puanlandırılır" — genel sıklık limiti
+    { regex: /(bir)\s+kez\s+(?:puanlandırılır|puanlandirilir)/gi, periyot: 'genel', limitGroup: 1 },
+
+    // === X AY BOYUNCA ... FATURA EDİLEMEZ ===
+    // "1 ay boyunca ... fatura edilemez" → aylık limit
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+ay\\s+boyunca[^.]*fatura\\s+edilemez`, 'gi'), periyot: 'ay', limitGroup: 1 },
+
+    // === BİR YIL İÇERİSİNDE X GÜNDEN ===
+    // "bir yıl içerisinde X günden daha uzun" → yıllık limit (gün sayısı)
+    { regex: new RegExp(`bir\\s+yıl\\s+içerisinde\\s+(${NUM_OR_WORD})\\s+günden`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    { regex: new RegExp(`bir\\s+yil\\s+icerisinde\\s+(${NUM_OR_WORD})\\s+günden`, 'gi'), periyot: 'yil', limitGroup: 1 },
+
+    // === SADECE BİR KEZ ===
+    // "sadece bir kez" → genel limit 1
+    { regex: /sadece\s+(bir)\s+kez/gi, periyot: 'genel', limitGroup: 1 },
+
+    // === X SAATTE BİR ===
+    // "dört saatte bir" → günlük limit (24/X)
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+saatte\\s+bir`, 'gi'), periyot: 'gun_saat', limitGroup: 1 },
   ];
 
   for (const { regex, periyot, limitGroup } of patterns) {
@@ -502,11 +538,21 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
     while ((match = r.exec(lower)) !== null) {
       const limit = parseNumberOrWord(match[limitGroup]);
       if (limit !== null && limit > 0) {
-        rules.push({
-          type: 'SIKLIK_LIMIT',
-          rawText: rawText.trim(),
-          params: { periyot, limit }
-        });
+        // "X saatte bir" → günlük limite çevir: 24/X
+        if (periyot === 'gun_saat') {
+          const dailyLimit = Math.floor(24 / limit);
+          rules.push({
+            type: 'SIKLIK_LIMIT',
+            rawText: rawText.trim(),
+            params: { periyot: 'gun', limit: dailyLimit > 0 ? dailyLimit : 1 }
+          });
+        } else {
+          rules.push({
+            type: 'SIKLIK_LIMIT',
+            rawText: rawText.trim(),
+            params: { periyot, limit }
+          });
+        }
         return;
       }
     }
