@@ -176,6 +176,21 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                       </span>
                     </div>
                     <p className="text-sm text-slate-300">{ihlal.ihlal_aciklamasi}</p>
+                    {/* AI ile çıkarılan kural bilgisi */}
+                    {(() => {
+                      const matchingRule = kural?.parsed_rules.find(r => r.type === ihlal.kural_tipi);
+                      return matchingRule?.extractionMethod === 'ai' ? (
+                        <div className="mt-2 flex items-start gap-2">
+                          <span className="text-[9px] font-black text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded shrink-0">AI</span>
+                          {matchingRule.aiExplanation && (
+                            <p className="text-[11px] text-blue-300/70">{matchingRule.aiExplanation}</p>
+                          )}
+                          {matchingRule.confidence != null && (
+                            <span className="text-[9px] text-slate-500 shrink-0 ml-auto">%{Math.round(matchingRule.confidence * 100)}</span>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
                     {ihlal.referans_kural_metni && (
                       <div className="mt-2 pt-2 border-t border-red-500/10">
                         <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Referans Kural Metni</p>

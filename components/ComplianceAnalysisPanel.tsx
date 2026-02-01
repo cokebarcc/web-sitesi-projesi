@@ -8,7 +8,7 @@ import {
   ParsedRuleType,
   RuleMasterEntry,
 } from '../src/types/complianceTypes';
-import { buildRulesMasterFromFirebase } from '../src/services/complianceDataLoader';
+import { buildRulesMasterFromFirebase, buildRulesMasterHybridFromFirebase } from '../src/services/complianceDataLoader';
 import { runComplianceAnalysis, generateSummary, exportResultsToExcel, IslemSatiriLike, KurumBilgisiLike } from '../src/services/complianceEngine';
 import ComplianceDetailModal from './ComplianceDetailModal';
 
@@ -37,6 +37,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
   const [progress, setProgress] = useState<AnalysisProgress | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [useAI, setUseAI] = useState(true);
 
   const [filterDurum, setFilterDurum] = useState<UygunlukDurumu | 'TUMU'>('TUMU');
   const [filterEsleme, setFilterEsleme] = useState<'TUMU' | 'ESLESTI' | 'ESLESEMEDI'>('TUMU');
@@ -55,17 +56,22 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     setIsLoading(true);
     setProgress({ phase: 'loading', current: 0, total: 4, message: 'Başlatılıyor...' });
     try {
-      const { rulesMaster: rm, loadStatus } = await buildRulesMasterFromFirebase((p) => setProgress(p));
-      setRulesMaster(rm);
-      setRuleLoadStatus(loadStatus);
-      setProgress({ phase: 'complete', current: 1, total: 1, message: `${rm.size.toLocaleString('tr-TR')} kural yüklendi.` });
+      let result;
+      if (useAI) {
+        result = await buildRulesMasterHybridFromFirebase(true, (p) => setProgress(p));
+      } else {
+        result = await buildRulesMasterFromFirebase((p) => setProgress(p));
+      }
+      setRulesMaster(result.rulesMaster);
+      setRuleLoadStatus(result.loadStatus);
+      setProgress({ phase: 'complete', current: 1, total: 1, message: `${result.rulesMaster.size.toLocaleString('tr-TR')} kural yüklendi.${useAI ? ' (AI destekli)' : ''}` });
     } catch (err) {
       console.error('[COMPLIANCE] Kural yükleme hatası:', err);
       setProgress({ phase: 'error', current: 0, total: 0, message: `Hata: ${err}` });
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [useAI]);
 
   const handleStartAnalysis = useCallback(async () => {
     if (!rulesMaster || tableData.length === 0) return;
@@ -151,6 +157,21 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </svg>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kural Veritabanı</span>
           </div>
+          {/* AI Toggle */}
+          <button
+            onClick={() => setUseAI(!useAI)}
+            disabled={isLoading}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5 disabled:opacity-50 ${
+              useAI
+                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
+                : 'bg-slate-800/50 border-slate-700/30 text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            AI {useAI ? 'Açık' : 'Kapalı'}
+          </button>
           <button onClick={handleLoadRules} disabled={isLoading} className="px-4 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             {isLoading ? (
               <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>Yükleniyor...</>
@@ -216,7 +237,11 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <span className="text-xs font-bold text-amber-400">{progressPercent}%</span>
             </div>
             <div className="w-full bg-slate-800 rounded-full h-2">
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+              <div className={`h-2 rounded-full transition-all duration-300 ${
+                progress.phase === 'ai-extraction'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                  : 'bg-gradient-to-r from-amber-500 to-orange-500'
+              }`} style={{ width: `${progressPercent}%` }} />
             </div>
           </div>
         )}

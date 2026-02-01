@@ -5,7 +5,7 @@
 import { getFinansalModuleFiles, getFinansalFileMetadata, downloadFinansalFile } from './finansalStorage';
 import { parseEk2b, parseEk2c, parseEk2cd, ExcelData } from '../../components/EkListeTanimlama';
 import { parseGilExcel, GilExcelData } from '../../components/GilModule';
-import { buildRulesMaster, BuildRulesMasterResult } from './ruleExtractor';
+import { buildRulesMaster, buildRulesMasterHybrid, BuildRulesMasterResult } from './ruleExtractor';
 import { RuleLoadStatus, AnalysisProgress, SutMaddesi } from '../types/complianceTypes';
 import mammoth from 'mammoth';
 
@@ -246,6 +246,24 @@ export async function buildRulesMasterFromFirebase(
     total: 1,
     message: `${result.rulesMaster.size.toLocaleString('tr-TR')} benzersiz kural oluşturuldu.`
   });
+
+  return { ...result, loadStatus: data.loadStatus };
+}
+
+/**
+ * Hibrit pipeline: Yükle → Parse → RulesMaster (Regex + AI) oluştur
+ */
+export async function buildRulesMasterHybridFromFirebase(
+  useAI: boolean = true,
+  onProgress?: (progress: AnalysisProgress) => void
+): Promise<BuildRulesMasterResult & { loadStatus: RuleLoadStatus }> {
+  const data = await loadAllRegulationData(onProgress);
+
+  const result = await buildRulesMasterHybrid(
+    data.ek2b, data.ek2c, data.ek2cd, data.gil, data.sutMaddeleri,
+    useAI,
+    onProgress
+  );
 
   return { ...result, loadStatus: data.loadStatus };
 }

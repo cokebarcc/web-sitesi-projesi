@@ -8,9 +8,11 @@ import {
   RuleMasterEntry,
   RuleKaynak,
   SutMaddesi,
+  AnalysisProgress,
 } from '../types/complianceTypes';
 import { ExcelData } from '../../components/EkListeTanimlama';
 import { GilExcelData } from '../../components/GilModule';
+import { extractRulesWithAI, needsAIExtraction } from './ai/ruleExtractionAI';
 
 // ── Türkçe güvenli lowercase ──
 function turkishLower(str: string): string {
@@ -678,4 +680,150 @@ export function buildRulesMaster(
   console.log(`[RULES_MASTER] Toplam: ${stats.total} kural, Açıklamalı: ${stats.withRules}`, stats);
 
   return { rulesMaster: master, stats };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REGEX-ONLY DECORATİSTİK ÇIKARMA (AI hibrit mod için)
+// Sadece deterministik kuralları çıkarır: SIKLIK, TANI, DIS, BIRLIKTE
+// Semantik kurallar (BRANS, BASAMAK) AI'ya bırakılır
+// ═══════════════════════════════════════════════════════════════
+export function extractRulesFromAciklamaDeterministic(aciklama: string): ParsedRule[] {
+  if (!aciklama || aciklama.trim().length === 0) return [];
+
+  const rules: ParsedRule[] = [];
+  const text = aciklama;
+  const lower = turkishLower(aciklama);
+
+  // Deterministik: regex ile güvenilir çıkarma
+  extractBirlikteYapilamazRules(lower, text, rules);
+  extractSiklikRules(lower, text, rules);
+  extractTaniRules(aciklama, text, rules);
+  extractDisRules(lower, text, rules);
+
+  return rules;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HİBRİT RULES_MASTER: Regex + AI
+// ═══════════════════════════════════════════════════════════════
+export async function buildRulesMasterHybrid(
+  ek2bData: ExcelData | null,
+  ek2cData: ExcelData | null,
+  ek2cdData: ExcelData | null,
+  gilData: GilExcelData | null,
+  sutMaddeleri: SutMaddesi[] = [],
+  useAI: boolean = true,
+  onProgress?: (progress: AnalysisProgress) => void
+): Promise<BuildRulesMasterResult> {
+  // Adım 1: Regex-only buildRulesMaster ile başla
+  onProgress?.({ phase: 'building-rules', current: 0, total: 1, message: 'Regex kuralları çıkarılıyor...' });
+  const regexResult = buildRulesMaster(ek2bData, ek2cData, ek2cdData, gilData, sutMaddeleri);
+  const master = regexResult.rulesMaster;
+
+  if (!useAI) {
+    return regexResult;
+  }
+
+  // Adım 2: AI gerektiren açıklamaları topla
+  const textsNeedingAI: string[] = [];
+  const entryAciklamaMap = new Map<string, RuleMasterEntry[]>(); // açıklama → entry'ler
+
+  for (const entry of master.values()) {
+    const combinedText = [entry.aciklama_raw, entry.section_header].filter(Boolean).join(' ');
+    if (!combinedText.trim()) continue;
+
+    const lower = turkishLower(combinedText);
+    if (needsAIExtraction(lower)) {
+      // Açıklamayı AI listesine ekle
+      const aciklama = entry.aciklama_raw || entry.section_header || '';
+      if (aciklama.trim()) {
+        textsNeedingAI.push(aciklama);
+        if (!entryAciklamaMap.has(aciklama)) entryAciklamaMap.set(aciklama, []);
+        entryAciklamaMap.get(aciklama)!.push(entry);
+      }
+
+      // Section header ayrıca AI'a gönder
+      if (entry.section_header && entry.section_header !== entry.aciklama_raw) {
+        textsNeedingAI.push(entry.section_header);
+        if (!entryAciklamaMap.has(entry.section_header)) entryAciklamaMap.set(entry.section_header, []);
+        entryAciklamaMap.get(entry.section_header)!.push(entry);
+      }
+    }
+  }
+
+  const uniqueTexts = [...new Set(textsNeedingAI.filter(t => t.trim().length > 0))];
+  console.log(`[HYBRID] ${master.size} toplam entry, ${uniqueTexts.length} benzersiz açıklama AI gerektiriyor`);
+
+  if (uniqueTexts.length === 0) {
+    return regexResult;
+  }
+
+  // Adım 3: AI ile kural çıkarma
+  onProgress?.({
+    phase: 'ai-extraction',
+    current: 0,
+    total: uniqueTexts.length,
+    message: `AI ile ${uniqueTexts.length} açıklama analiz ediliyor...`
+  });
+
+  const aiResults = await extractRulesWithAI(uniqueTexts, (current, total) => {
+    onProgress?.({
+      phase: 'ai-extraction',
+      current,
+      total,
+      message: `AI kural çıkarma: ${current}/${total}...`
+    });
+  });
+
+  // Adım 4: AI sonuçlarını master'a merge et
+  let aiMergeCount = 0;
+  for (const entry of master.values()) {
+    const aciklama = entry.aciklama_raw || '';
+    const sectionHeader = entry.section_header || '';
+    const aiRulesAciklama = aiResults.get(aciklama) || [];
+    const aiRulesHeader = sectionHeader !== aciklama ? (aiResults.get(sectionHeader) || []) : [];
+    const allAIRules = [...aiRulesAciklama, ...aiRulesHeader];
+
+    if (allAIRules.length === 0) continue;
+
+    // AI semantik kuralları (BRANS_KISITI, BASAMAK_KISITI) regex sonuçlarının yerine geçer
+    // Deterministik kuralları (SIKLIK, BIRLIKTE, TANI, DIS) regex'ten koru
+    const semanticTypes: Set<string> = new Set(['BRANS_KISITI', 'BASAMAK_KISITI', 'GENEL_ACIKLAMA']);
+    const deterministicRules = entry.parsed_rules.filter(r => !semanticTypes.has(r.type));
+    const aiSemanticRules = allAIRules.filter(r => semanticTypes.has(r.type));
+
+    // AI'dan gelen deterministik kuralları da ekle (regex kaçırmışsa)
+    const aiDeterministicRules = allAIRules.filter(r => !semanticTypes.has(r.type));
+    const existingTypes = new Set(deterministicRules.map(r => r.type));
+    const additionalAIDeterministic = aiDeterministicRules.filter(r => !existingTypes.has(r.type));
+
+    // Birleştir: regex deterministik + AI semantik + AI ek deterministik
+    const mergedRules = [...deterministicRules, ...aiSemanticRules, ...additionalAIDeterministic];
+
+    // Deduplicate: aynı tipte birden fazla varsa, en yüksek confidence'lı olanı tut
+    const typeMap = new Map<string, ParsedRule>();
+    for (const rule of mergedRules) {
+      const existing = typeMap.get(rule.type);
+      if (!existing || (rule.confidence || 0) > (existing.confidence || 0)) {
+        typeMap.set(rule.type, rule);
+      }
+    }
+
+    entry.parsed_rules = Array.from(typeMap.values());
+    aiMergeCount++;
+  }
+
+  console.log(`[HYBRID] AI merge: ${aiMergeCount} entry güncellendi`);
+
+  // Stats güncelle
+  regexResult.stats.withRules = Array.from(master.values()).filter(e => e.parsed_rules.length > 0).length;
+
+  onProgress?.({
+    phase: 'complete',
+    current: uniqueTexts.length,
+    total: uniqueTexts.length,
+    message: `Hibrit kural çıkarma tamamlandı. AI: ${aiMergeCount} entry güncellendi.`
+  });
+
+  return regexResult;
 }
