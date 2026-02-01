@@ -102,11 +102,22 @@ Eğer bir metin için kural yoksa boş dizi kullan: "2": []`;
 }
 
 // ── Firestore cache kontrol ──
+let cacheDisabled = false; // Permission hatası alınırsa cache devre dışı kalır
+
 async function getCachedRules(aciklamaTexts: string[]): Promise<Map<string, ParsedRule[]>> {
   const cache = new Map<string, ParsedRule[]>();
 
+  if (cacheDisabled) {
+    console.log('[AI RULE CACHE] Cache devre dışı (önceki permission hatası nedeniyle)');
+    return cache;
+  }
+
+  let errorCount = 0;
+  const MAX_ERRORS = 3; // 3 hatadan sonra cache'i devre dışı bırak
+
   // Batch halinde cache kontrol (paralel)
   const checks = aciklamaTexts.map(async (text) => {
+    if (errorCount >= MAX_ERRORS) return; // Çok fazla hata — dur
     const hash = hashAciklama(text);
     try {
       const docRef = doc(db, CACHE_COLLECTION, hash);
@@ -117,9 +128,15 @@ async function getCachedRules(aciklamaTexts: string[]): Promise<Map<string, Pars
           cache.set(text, data.parsedRules);
         }
       }
-    } catch (err) {
-      // Cache miss — devam et
-      console.warn(`[AI RULE CACHE] Cache okuma hatası: ${hash}`, err);
+    } catch (err: any) {
+      errorCount++;
+      if (errorCount === 1) {
+        console.warn(`[AI RULE CACHE] Firestore erişim hatası. Cache devre dışı bırakılıyor.`, err?.message || err);
+      }
+      if (errorCount >= MAX_ERRORS) {
+        cacheDisabled = true;
+        console.warn(`[AI RULE CACHE] ${MAX_ERRORS} hata — cache bu oturum için devre dışı.`);
+      }
     }
   });
 
@@ -133,6 +150,8 @@ async function cacheRules(
   parsedRules: ParsedRule[],
   tokenUsage?: { input: number; output: number }
 ): Promise<void> {
+  if (cacheDisabled) return; // Cache devre dışıysa yazma da atla
+
   const hash = hashAciklama(aciklamaText);
   const cacheEntry: AIParsedRuleCache = {
     aciklamaHash: hash,
@@ -146,7 +165,11 @@ async function cacheRules(
   try {
     await setDoc(doc(db, CACHE_COLLECTION, hash), cacheEntry);
   } catch (err) {
-    console.warn(`[AI RULE CACHE] Cache yazma hatası: ${hash}`, err);
+    // Yazma hatası — cache'i devre dışı bırak
+    if (!cacheDisabled) {
+      cacheDisabled = true;
+      console.warn(`[AI RULE CACHE] Yazma hatası — cache devre dışı bırakıldı.`, (err as any)?.message || err);
+    }
   }
 }
 

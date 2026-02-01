@@ -50,9 +50,35 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
   const [detailRow, setDetailRow] = useState<IslemSatiriLike | null>(null);
   const [detailResult, setDetailResult] = useState<ComplianceResult | null>(null);
 
+  // AI API Key state
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [hasApiKey, setHasApiKey] = useState(() => !!localStorage.getItem('claude_api_key'));
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+
+  const handleSaveApiKey = useCallback(() => {
+    if (apiKeyInput.trim()) {
+      localStorage.setItem('claude_api_key', apiKeyInput.trim());
+      setHasApiKey(true);
+      setShowApiKeyInput(false);
+      setApiKeyInput('');
+    }
+  }, [apiKeyInput]);
+
+  const handleRemoveApiKey = useCallback(() => {
+    localStorage.removeItem('claude_api_key');
+    setHasApiKey(false);
+  }, []);
+
   const tableRef = useRef<HTMLDivElement>(null);
 
   const handleLoadRules = useCallback(async () => {
+    // AI açıkken API key kontrolü
+    if (useAI && !localStorage.getItem('claude_api_key')) {
+      setShowApiKeyInput(true);
+      setProgress({ phase: 'error', current: 0, total: 0, message: 'AI kullanmak için Claude API Key gerekli. Lütfen yukarıdan girin veya AI\'ı kapatın.' });
+      return;
+    }
+
     setIsLoading(true);
     setProgress({ phase: 'loading', current: 0, total: 4, message: 'Başlatılıyor...' });
     try {
@@ -172,6 +198,26 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </svg>
             AI {useAI ? 'Açık' : 'Kapalı'}
           </button>
+          {/* AI API Key Yönetimi */}
+          {useAI && !hasApiKey && !showApiKeyInput && (
+            <button
+              onClick={() => setShowApiKeyInput(true)}
+              className="px-3 py-1.5 text-xs font-bold rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              API Key Gerekli
+            </button>
+          )}
+          {useAI && hasApiKey && (
+            <div className="flex items-center gap-1.5">
+              <span className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">🔑 Key Aktif</span>
+              <button onClick={handleRemoveApiKey} className="p-1 text-slate-500 hover:text-red-400 transition-colors" title="API Key Sil">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          )}
           <button onClick={handleLoadRules} disabled={isLoading} className="px-4 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             {isLoading ? (
               <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>Yükleniyor...</>
@@ -182,6 +228,25 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             )}
           </button>
         </div>
+
+        {/* API Key Input */}
+        {showApiKeyInput && (
+          <div className="mt-3 flex items-center gap-2 p-3 bg-slate-800/50 rounded-lg border border-blue-500/20">
+            <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <input
+              type="password"
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
+              placeholder="Claude API Key (sk-ant-...)"
+              className="flex-1 px-3 py-1.5 text-xs bg-slate-900/50 border border-slate-700/50 rounded-md text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50"
+            />
+            <button onClick={handleSaveApiKey} className="px-3 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-all">Kaydet</button>
+            <button onClick={() => { setShowApiKeyInput(false); setApiKeyInput(''); }} className="px-3 py-1.5 text-xs font-bold bg-slate-700 text-slate-300 rounded-md hover:bg-slate-600 transition-all">İptal</button>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2">
           {[
