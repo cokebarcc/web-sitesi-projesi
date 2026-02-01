@@ -516,6 +516,11 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
     { regex: new RegExp(`(${NUM_OR_WORD})\\s+gün\\s+içinde\\s+bir\\s+kez`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
     { regex: new RegExp(`(${NUM_OR_WORD})\\s+gun\\s+icinde\\s+bir\\s+kez`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
 
+    // === TAMAMI BİR KEZ PUANLANDIRILIR (aynı başvuruda) ===
+    // "tamamı bir kez puanlandırılır" → aynı gün 1 kez (NOT: genel "bir kez"'den ÖNCE gelmeli)
+    { regex: /tamamı\s+(bir)\s+kez\s+(?:puanlandırılır|puanlandirilir)/gi, periyot: 'gun', limitGroup: 1 },
+    { regex: /tamami\s+(bir)\s+kez\s+(?:puanlandırılır|puanlandirilir)/gi, periyot: 'gun', limitGroup: 1 },
+
     // === BİR KEZ PUANLANDIRILIR (without ömürde prefix) ===
     // "bir kez puanlandırılır" — genel sıklık limiti
     { regex: /(bir)\s+kez\s+(?:puanlandırılır|puanlandirilir)/gi, periyot: 'genel', limitGroup: 1 },
