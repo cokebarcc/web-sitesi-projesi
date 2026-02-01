@@ -559,6 +559,41 @@ function applySiklikLimitChecks(
 
     const periyotLabel = periyot === 'gun' ? 'günde' : periyot === 'ay' ? 'ayda' : periyot === 'yil' ? 'yılda' : periyot === 'hafta' ? 'haftada' : '';
 
+    // gun_aralik ve ay_aralik: minimum aralık kontrolü (sliding window)
+    if (periyot === 'gun_aralik' || periyot === 'ay_aralik') {
+      // limit = aralık değeri (ör: 10 gün, 3 ay), 1 kez yapılabilir her aralıkta
+      const aralikGun = periyot === 'ay_aralik' ? limit * 30 : limit;
+      // Tarihe göre sırala
+      const sorted = [...indices].sort((a, b) => {
+        const da = normalizeDate(rows[a].tarih);
+        const db = normalizeDate(rows[b].tarih);
+        return da.localeCompare(db);
+      });
+      // Her ardışık çift arasında aralık kontrolü
+      for (let j = 1; j < sorted.length; j++) {
+        const prevDate = new Date(normalizeDate(rows[sorted[j - 1]].tarih));
+        const currDate = new Date(normalizeDate(rows[sorted[j]].tarih));
+        const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays < aralikGun) {
+          const result = results[sorted[j]];
+          if (result) {
+            result.ihlaller.push({
+              ihlal_kodu: 'SIKLIK_006',
+              ihlal_aciklamasi: `Bu işlem en az ${limit} ${periyot === 'ay_aralik' ? 'ay' : 'gün'} arayla yapılabilir. Önceki işlemden ${diffDays} gün sonra yapılmış.`,
+              kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
+              referans_kural_metni: siklikRule.rawText,
+              fromSectionHeader: siklikRule.fromSectionHeader,
+              kural_tipi: 'SIKLIK_LIMIT',
+            });
+            if (result.uygunluk_durumu === 'UYGUN') {
+              result.uygunluk_durumu = 'UYGUNSUZ';
+            }
+          }
+        }
+      }
+      continue;
+    }
+
     for (const [, groupIndices] of periyotGroups) {
       if (groupIndices.length > limit) {
         // limit aşan satırları işaretle

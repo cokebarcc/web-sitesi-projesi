@@ -510,6 +510,12 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
     // "X defadan fazla faturalandırılmaz/yapılması" (without period prefix)
     { regex: new RegExp(`(${NUM_OR_WORD})\\s+defadan\\s+fazla\\s+(?:faturalandırılmaz|faturalandirilmaz|yapılması)`, 'gi'), periyot: 'genel', limitGroup: 1 },
 
+    // === X GÜN İÇİNDE BİR KEZ ===
+    // "10 gün içinde bir kez puanlandırılır" → X günlük aralıkta limit 1
+    // NOT: "bir kez puanlandırılır"'dan ÖNCE gelmeli (daha spesifik kalıp)
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+gün\\s+içinde\\s+bir\\s+kez`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+gun\\s+icinde\\s+bir\\s+kez`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
+
     // === BİR KEZ PUANLANDIRILIR (without ömürde prefix) ===
     // "bir kez puanlandırılır" — genel sıklık limiti
     { regex: /(bir)\s+kez\s+(?:puanlandırılır|puanlandirilir)/gi, periyot: 'genel', limitGroup: 1 },
