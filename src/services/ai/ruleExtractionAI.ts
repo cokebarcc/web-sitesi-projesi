@@ -1,11 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
 // AI Destekli Kural Çıkarma Servisi
 // Claude ile SUT mevzuat metinlerinden yapılandırılmış kural çıkarma
-// Sonuçlar Firestore'da cache'lenir — tekrar eden çalıştırmalarda API maliyeti $0
+// Sonuçlar Firestore + localStorage'da cache'lenir
+// Firestore: tüm kullanıcılar arası paylaşım | localStorage: fallback
 // ═══════════════════════════════════════════════════════════════
 
 import Anthropic from '@anthropic-ai/sdk';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { ParsedRule, AIParsedRuleCache } from '../../types/complianceTypes';
 
@@ -13,6 +14,7 @@ import { ParsedRule, AIParsedRuleCache } from '../../types/complianceTypes';
 const PROMPT_VERSION = 'v1.0';
 const BATCH_SIZE = 10;
 const CACHE_COLLECTION = 'ruleParseCache';
+const LOCAL_CACHE_KEY = 'aiRuleCache_store';
 const RATE_LIMIT_MS = 250;
 
 // ── Hash fonksiyonu (cache key) ──
@@ -101,75 +103,164 @@ YANIT: Strict JSON objesi döndür, key olarak index numaraları kullan:
 Eğer bir metin için kural yoksa boş dizi kullan: "2": []`;
 }
 
-// ── Firestore cache kontrol ──
-let cacheDisabled = false; // Permission hatası alınırsa cache devre dışı kalır
+// ═══════════════════════════════════════════════════════════════
+// İKİ KATMANLI CACHE: Firestore (paylaşımlı) + localStorage (fallback)
+// ═══════════════════════════════════════════════════════════════
 
+let firestoreAvailable = true; // Firestore erişimi var mı?
+
+// ── localStorage cache yardımcıları ──
+interface LocalCacheStore {
+  promptVersion: string;
+  entries: Record<string, ParsedRule[]>;
+}
+
+function loadLocalCache(): LocalCacheStore {
+  try {
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if (raw) {
+      const store = JSON.parse(raw) as LocalCacheStore;
+      if (store.promptVersion === PROMPT_VERSION) return store;
+      console.log(`[CACHE] Prompt version değişti → localStorage temizleniyor.`);
+    }
+  } catch { /* parse hatası */ }
+  return { promptVersion: PROMPT_VERSION, entries: {} };
+}
+
+function saveLocalCache(store: LocalCacheStore): void {
+  try {
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(store));
+  } catch {
+    console.warn('[CACHE] localStorage dolu, cache temizleniyor.');
+    try { localStorage.removeItem(LOCAL_CACHE_KEY); } catch { /* ignore */ }
+  }
+}
+
+// ── Birleşik cache okuma: Firestore → localStorage fallback ──
 async function getCachedRules(aciklamaTexts: string[]): Promise<Map<string, ParsedRule[]>> {
   const cache = new Map<string, ParsedRule[]>();
+  const localStore = loadLocalCache();
+  let localHits = 0;
 
-  if (cacheDisabled) {
-    console.log('[AI RULE CACHE] Cache devre dışı (önceki permission hatası nedeniyle)');
+  // 1. Önce localStorage'dan oku (hızlı, her zaman çalışır)
+  for (const text of aciklamaTexts) {
+    const hash = hashAciklama(text);
+    if (localStore.entries[hash]) {
+      cache.set(text, localStore.entries[hash]);
+      localHits++;
+    }
+  }
+
+  // Tümü localStorage'da bulunduysa Firestore'a gitmeye gerek yok
+  if (localHits === aciklamaTexts.length) {
+    console.log(`[CACHE] localStorage: ${localHits}/${aciklamaTexts.length} — tümü cache'te.`);
     return cache;
   }
 
-  let errorCount = 0;
-  const MAX_ERRORS = 3; // 3 hatadan sonra cache'i devre dışı bırak
+  // 2. Firestore'da olup localStorage'da olmayan entry'leri ara
+  if (firestoreAvailable) {
+    const missing = aciklamaTexts.filter(t => !cache.has(t));
+    let firestoreHits = 0;
+    let firestoreErrors = 0;
 
-  // Batch halinde cache kontrol (paralel)
-  const checks = aciklamaTexts.map(async (text) => {
-    if (errorCount >= MAX_ERRORS) return; // Çok fazla hata — dur
-    const hash = hashAciklama(text);
-    try {
-      const docRef = doc(db, CACHE_COLLECTION, hash);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data() as AIParsedRuleCache;
-        if (data.promptVersion === PROMPT_VERSION) {
-          cache.set(text, data.parsedRules);
+    // İlk birkaç entry'yi test et — permission varsa devam et
+    const testBatch = missing.slice(0, Math.min(3, missing.length));
+    for (const text of testBatch) {
+      const hash = hashAciklama(text);
+      try {
+        const docRef = doc(db, CACHE_COLLECTION, hash);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as AIParsedRuleCache;
+          if (data.promptVersion === PROMPT_VERSION) {
+            cache.set(text, data.parsedRules);
+            localStore.entries[hash] = data.parsedRules; // localStorage'a da yaz
+            firestoreHits++;
+          }
+        }
+      } catch (err: any) {
+        firestoreErrors++;
+        if (firestoreErrors >= 2) {
+          firestoreAvailable = false;
+          console.warn(`[CACHE] Firestore erişim hatası — bu oturum için devre dışı. localStorage kullanılacak.`, err?.message || '');
+          break;
         }
       }
-    } catch (err: any) {
-      errorCount++;
-      if (errorCount === 1) {
-        console.warn(`[AI RULE CACHE] Firestore erişim hatası. Cache devre dışı bırakılıyor.`, err?.message || err);
-      }
-      if (errorCount >= MAX_ERRORS) {
-        cacheDisabled = true;
-        console.warn(`[AI RULE CACHE] ${MAX_ERRORS} hata — cache bu oturum için devre dışı.`);
-      }
     }
-  });
 
-  await Promise.all(checks);
+    // Firestore çalışıyorsa geri kalanları da kontrol et
+    if (firestoreAvailable && testBatch.length < missing.length) {
+      const remaining = missing.slice(testBatch.length);
+      const batchChecks = remaining.map(async (text) => {
+        const hash = hashAciklama(text);
+        try {
+          const docRef = doc(db, CACHE_COLLECTION, hash);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data() as AIParsedRuleCache;
+            if (data.promptVersion === PROMPT_VERSION) {
+              cache.set(text, data.parsedRules);
+              localStore.entries[hash] = data.parsedRules;
+              firestoreHits++;
+            }
+          }
+        } catch { /* sessiz */ }
+      });
+      await Promise.all(batchChecks);
+    }
+
+    // Firestore'dan alınan entry'leri localStorage'a kaydet
+    if (firestoreHits > 0) {
+      saveLocalCache(localStore);
+      console.log(`[CACHE] Firestore: ${firestoreHits} yeni entry localStorage'a aktarıldı.`);
+    }
+  }
+
+  console.log(`[CACHE] Toplam: ${cache.size}/${aciklamaTexts.length} cache hit (localStorage: ${localHits}, Firestore: ${cache.size - localHits})`);
   return cache;
 }
 
-// ── Firestore'a cache kaydet ──
-async function cacheRules(
-  aciklamaText: string,
-  parsedRules: ParsedRule[],
-  tokenUsage?: { input: number; output: number }
-): Promise<void> {
-  if (cacheDisabled) return; // Cache devre dışıysa yazma da atla
+// ── Birleşik cache yazma: Firestore + localStorage ──
+async function cacheBatchRules(results: Map<string, ParsedRule[]>): Promise<void> {
+  if (results.size === 0) return;
 
-  const hash = hashAciklama(aciklamaText);
-  const cacheEntry: AIParsedRuleCache = {
-    aciklamaHash: hash,
-    aciklamaText,
-    parsedRules,
-    modelVersion: 'claude-sonnet-4-20250514',
-    promptVersion: PROMPT_VERSION,
-    createdAt: Date.now(),
-    tokenUsage,
-  };
-  try {
-    await setDoc(doc(db, CACHE_COLLECTION, hash), cacheEntry);
-  } catch (err) {
-    // Yazma hatası — cache'i devre dışı bırak
-    if (!cacheDisabled) {
-      cacheDisabled = true;
-      console.warn(`[AI RULE CACHE] Yazma hatası — cache devre dışı bırakıldı.`, (err as any)?.message || err);
+  const localStore = loadLocalCache();
+
+  // 1. Tüm sonuçları localStorage'a yaz (her zaman)
+  for (const [text, rules] of results) {
+    const hash = hashAciklama(text);
+    localStore.entries[hash] = rules;
+  }
+  saveLocalCache(localStore);
+
+  // 2. Firestore'a da yaz (erişim varsa)
+  if (firestoreAvailable) {
+    const writes = Array.from(results.entries()).map(async ([text, rules]) => {
+      const hash = hashAciklama(text);
+      const cacheEntry: AIParsedRuleCache = {
+        aciklamaHash: hash,
+        aciklamaText: text,
+        parsedRules: rules,
+        modelVersion: 'claude-sonnet-4-20250514',
+        promptVersion: PROMPT_VERSION,
+        createdAt: Date.now(),
+      };
+      try {
+        await setDoc(doc(db, CACHE_COLLECTION, hash), cacheEntry);
+      } catch (err: any) {
+        // Yazma hatası — Firestore'u devre dışı bırak ama localStorage çalışmaya devam eder
+        if (firestoreAvailable) {
+          firestoreAvailable = false;
+          console.warn(`[CACHE] Firestore yazma hatası — devre dışı bırakıldı. localStorage aktif.`, err?.message || '');
+        }
+      }
+    });
+    await Promise.all(writes);
+    if (firestoreAvailable) {
+      console.log(`[CACHE] ${results.size} entry Firestore + localStorage'a kaydedildi.`);
     }
+  } else {
+    console.log(`[CACHE] ${results.size} entry localStorage'a kaydedildi (Firestore devre dışı).`);
   }
 }
 
@@ -240,7 +331,7 @@ export async function extractRulesWithAI(
   const uniqueTexts = [...new Set(aciklamaTexts.filter(t => t.trim().length > 0))];
   if (uniqueTexts.length === 0) return new Map();
 
-  // 2. Cache kontrol
+  // 2. İki katmanlı cache kontrol (localStorage → Firestore)
   console.log(`[AI RULE EXTRACT] ${uniqueTexts.length} benzersiz açıklama, cache kontrol ediliyor...`);
   const cached = await getCachedRules(uniqueTexts);
   const uncached = uniqueTexts.filter(t => !cached.has(t));
@@ -266,13 +357,13 @@ export async function extractRulesWithAI(
       const batch = uncached.slice(i, i + BATCH_SIZE);
       const batchResults = await callClaudeForBatch(client, batch);
 
-      // Sonuçları cache'e yaz + ana map'e ekle
-      const cachePromises: Promise<void>[] = [];
+      // Sonuçları ana map'e ekle
       for (const [text, rules] of batchResults) {
         cached.set(text, rules);
-        cachePromises.push(cacheRules(text, rules));
       }
-      await Promise.all(cachePromises);
+
+      // İki katmanlı cache'e yaz (Firestore + localStorage)
+      await cacheBatchRules(batchResults);
 
       onProgress?.(cached.size, uniqueTexts.length);
 
