@@ -827,3 +827,256 @@ export async function buildRulesMasterHybrid(
 
   return regexResult;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// FULL AUDIT: Tüm açıklamaları AI'a gönderip regex ile karşılaştır
+// Tek seferlik çalıştırılır, sonuçlar JSON olarak export edilir
+// ═══════════════════════════════════════════════════════════════
+
+export interface AuditDiffEntry {
+  islem_kodu: string;
+  islem_adi: string;
+  kaynak: RuleKaynak;
+  aciklama_raw: string;
+  section_header?: string;
+  regex_rules: ParsedRule[];
+  ai_rules: ParsedRule[];
+  diffs: AuditDiff[];
+  status: 'match' | 'regex_only' | 'ai_only' | 'conflict' | 'both_empty';
+}
+
+export interface AuditDiff {
+  type: ParsedRuleType;
+  source: 'regex_only' | 'ai_only' | 'conflict' | 'match';
+  regex_rule?: ParsedRule;
+  ai_rule?: ParsedRule;
+  description: string;
+}
+
+export interface FullAuditResult {
+  totalEntries: number;
+  totalWithAciklama: number;
+  uniqueTextsAnalyzed: number;
+  matchCount: number;
+  regexOnlyCount: number;
+  aiOnlyCount: number;
+  conflictCount: number;
+  bothEmptyCount: number;
+  entries: AuditDiffEntry[];
+  regexMissedPatterns: { pattern: string; count: number; examples: string[] }[];
+  timestamp: string;
+}
+
+function compareRuleSets(regexRules: ParsedRule[], aiRules: ParsedRule[]): AuditDiff[] {
+  const diffs: AuditDiff[] = [];
+  const regexByType = new Map<string, ParsedRule>();
+  const aiByType = new Map<string, ParsedRule>();
+
+  for (const r of regexRules) regexByType.set(r.type, r);
+  for (const r of aiRules) aiByType.set(r.type, r);
+
+  const allTypes = new Set([...regexByType.keys(), ...aiByType.keys()]);
+
+  for (const type of allTypes) {
+    const regexRule = regexByType.get(type);
+    const aiRule = aiByType.get(type);
+
+    if (regexRule && aiRule) {
+      // İkisi de var — aynı mı kontrol et
+      const regexParams = JSON.stringify(regexRule.params);
+      const aiParams = JSON.stringify(aiRule.params);
+      if (regexParams === aiParams) {
+        diffs.push({
+          type: type as ParsedRuleType,
+          source: 'match',
+          regex_rule: regexRule,
+          ai_rule: aiRule,
+          description: `${type}: eşleşiyor`,
+        });
+      } else {
+        diffs.push({
+          type: type as ParsedRuleType,
+          source: 'conflict',
+          regex_rule: regexRule,
+          ai_rule: aiRule,
+          description: `${type}: FARKLI — Regex: ${regexParams} vs AI: ${aiParams}`,
+        });
+      }
+    } else if (regexRule && !aiRule) {
+      diffs.push({
+        type: type as ParsedRuleType,
+        source: 'regex_only',
+        regex_rule: regexRule,
+        description: `${type}: SADECE REGEX — ${JSON.stringify(regexRule.params)}`,
+      });
+    } else if (!regexRule && aiRule) {
+      diffs.push({
+        type: type as ParsedRuleType,
+        source: 'ai_only',
+        ai_rule: aiRule,
+        description: `${type}: SADECE AI — ${JSON.stringify(aiRule.params)}`,
+      });
+    }
+  }
+
+  return diffs;
+}
+
+export async function buildRulesMasterFullAudit(
+  ek2bData: ExcelData | null,
+  ek2cData: ExcelData | null,
+  ek2cdData: ExcelData | null,
+  gilData: GilExcelData | null,
+  sutMaddeleri: SutMaddesi[] = [],
+  onProgress?: (progress: AnalysisProgress) => void
+): Promise<FullAuditResult> {
+  // Adım 1: Regex-only buildRulesMaster
+  onProgress?.({ phase: 'building-rules', current: 0, total: 1, message: 'Regex kuralları çıkarılıyor...' });
+  const regexResult = buildRulesMaster(ek2bData, ek2cData, ek2cdData, gilData, sutMaddeleri);
+  const master = regexResult.rulesMaster;
+
+  // Adım 2: TÜM açıklamaları topla (needsAIExtraction filtresi YOK)
+  const allTexts: string[] = [];
+  const entryAciklamaMap = new Map<string, RuleMasterEntry[]>();
+
+  for (const entry of master.values()) {
+    const aciklama = entry.aciklama_raw || '';
+    if (aciklama.trim()) {
+      allTexts.push(aciklama);
+      if (!entryAciklamaMap.has(aciklama)) entryAciklamaMap.set(aciklama, []);
+      entryAciklamaMap.get(aciklama)!.push(entry);
+    }
+
+    if (entry.section_header && entry.section_header.trim() && entry.section_header !== aciklama) {
+      allTexts.push(entry.section_header);
+      if (!entryAciklamaMap.has(entry.section_header)) entryAciklamaMap.set(entry.section_header, []);
+      entryAciklamaMap.get(entry.section_header)!.push(entry);
+    }
+  }
+
+  const uniqueTexts = [...new Set(allTexts.filter(t => t.trim().length > 0))];
+
+  onProgress?.({
+    phase: 'ai-extraction',
+    current: 0,
+    total: uniqueTexts.length,
+    message: `FULL AUDIT: ${master.size} entry, ${uniqueTexts.length} benzersiz açıklama AI'a gönderiliyor...`
+  });
+
+  // Adım 3: TÜM açıklamaları AI'a gönder
+  const aiResults = await extractRulesWithAI(uniqueTexts, (current, total) => {
+    onProgress?.({
+      phase: 'ai-extraction',
+      current,
+      total,
+      message: `AI analiz: ${current}/${total} açıklama...`
+    });
+  });
+
+  // Adım 4: Karşılaştırma — her entry için regex vs AI
+  onProgress?.({ phase: 'analyzing', current: 0, total: master.size, message: 'Regex vs AI karşılaştırması yapılıyor...' });
+
+  const auditEntries: AuditDiffEntry[] = [];
+  let matchCount = 0, regexOnlyCount = 0, aiOnlyCount = 0, conflictCount = 0, bothEmptyCount = 0;
+  let totalWithAciklama = 0;
+
+  // AI'ın bulduğu ama regex'in kaçırdığı pattern'ler
+  const missedPatternMap = new Map<string, { count: number; examples: string[] }>();
+
+  let idx = 0;
+  for (const entry of master.values()) {
+    idx++;
+    if (idx % 500 === 0) {
+      onProgress?.({ phase: 'analyzing', current: idx, total: master.size, message: `Karşılaştırma: ${idx}/${master.size}...` });
+    }
+
+    const aciklama = entry.aciklama_raw || '';
+    if (!aciklama.trim()) continue;
+    totalWithAciklama++;
+
+    // Regex sonuçları: entry.parsed_rules'dan GENEL_ACIKLAMA hariç
+    const regexRules = entry.parsed_rules.filter(r => r.type !== 'GENEL_ACIKLAMA');
+
+    // AI sonuçları: açıklama + section_header'dan
+    const aiRulesAciklama = aiResults.get(aciklama) || [];
+    const aiRulesHeader = entry.section_header && entry.section_header !== aciklama
+      ? (aiResults.get(entry.section_header) || [])
+      : [];
+    const aiRules = [...aiRulesAciklama, ...aiRulesHeader].filter(r => r.type !== 'GENEL_ACIKLAMA');
+
+    // Karşılaştır
+    const diffs = compareRuleSets(regexRules, aiRules);
+
+    let status: AuditDiffEntry['status'] = 'match';
+    if (regexRules.length === 0 && aiRules.length === 0) {
+      status = 'both_empty';
+      bothEmptyCount++;
+    } else if (diffs.some(d => d.source === 'conflict')) {
+      status = 'conflict';
+      conflictCount++;
+    } else if (diffs.some(d => d.source === 'ai_only')) {
+      status = 'ai_only';
+      aiOnlyCount++;
+    } else if (diffs.some(d => d.source === 'regex_only')) {
+      status = 'regex_only';
+      regexOnlyCount++;
+    } else {
+      matchCount++;
+    }
+
+    // AI'ın bulup regex'in kaçırdığı pattern'leri topla
+    for (const diff of diffs) {
+      if (diff.source === 'ai_only' && diff.ai_rule) {
+        const key = `${diff.type}:${diff.ai_rule.params?.mode || 'default'}`;
+        const existing = missedPatternMap.get(key) || { count: 0, examples: [] };
+        existing.count++;
+        if (existing.examples.length < 5) {
+          existing.examples.push(`[${entry.islem_kodu}] ${aciklama.substring(0, 120)}`);
+        }
+        missedPatternMap.set(key, existing);
+      }
+    }
+
+    // Sadece fark olan entry'leri (+ bir miktar eşleşen) kaydet
+    if (status !== 'both_empty') {
+      auditEntries.push({
+        islem_kodu: entry.islem_kodu,
+        islem_adi: entry.islem_adi,
+        kaynak: entry.kaynak,
+        aciklama_raw: aciklama,
+        section_header: entry.section_header,
+        regex_rules: regexRules,
+        ai_rules: aiRules,
+        diffs,
+        status,
+      });
+    }
+  }
+
+  const regexMissedPatterns = Array.from(missedPatternMap.entries())
+    .map(([pattern, data]) => ({ pattern, count: data.count, examples: data.examples }))
+    .sort((a, b) => b.count - a.count);
+
+  const result: FullAuditResult = {
+    totalEntries: master.size,
+    totalWithAciklama,
+    uniqueTextsAnalyzed: uniqueTexts.length,
+    matchCount,
+    regexOnlyCount,
+    aiOnlyCount,
+    conflictCount,
+    bothEmptyCount,
+    entries: auditEntries,
+    regexMissedPatterns,
+    timestamp: new Date().toISOString(),
+  };
+
+  onProgress?.({
+    phase: 'complete',
+    current: master.size,
+    total: master.size,
+    message: `FULL AUDIT tamamlandı. Eşleşen: ${matchCount}, AI fazladan buldu: ${aiOnlyCount}, Çelişki: ${conflictCount}, Regex fazladan: ${regexOnlyCount}`
+  });
+
+  return result;
+}

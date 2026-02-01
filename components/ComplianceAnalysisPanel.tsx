@@ -8,7 +8,8 @@ import {
   ParsedRuleType,
   RuleMasterEntry,
 } from '../src/types/complianceTypes';
-import { buildRulesMasterFromFirebase, buildRulesMasterHybridFromFirebase } from '../src/services/complianceDataLoader';
+import { buildRulesMasterFromFirebase, buildRulesMasterHybridFromFirebase, runFullAuditFromFirebase } from '../src/services/complianceDataLoader';
+import { FullAuditResult } from '../src/services/ruleExtractor';
 import { runComplianceAnalysis, generateSummary, exportResultsToExcel, IslemSatiriLike, KurumBilgisiLike } from '../src/services/complianceEngine';
 import ComplianceDetailModal from './ComplianceDetailModal';
 
@@ -49,6 +50,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
   const [detailRow, setDetailRow] = useState<IslemSatiriLike | null>(null);
   const [detailResult, setDetailResult] = useState<ComplianceResult | null>(null);
+
+  // Full Audit state
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [auditResult, setAuditResult] = useState<FullAuditResult | null>(null);
 
   // AI API Key state
   const [apiKeyInput, setApiKeyInput] = useState('');
@@ -117,6 +122,42 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
       setIsAnalyzing(false);
     }
   }, [rulesMaster, tableData, kurumBilgisi]);
+
+  const handleFullAudit = useCallback(async () => {
+    if (!localStorage.getItem('claude_api_key')) {
+      setShowApiKeyInput(true);
+      setProgress({ phase: 'error', current: 0, total: 0, message: 'Full Audit icin Claude API Key gerekli.' });
+      return;
+    }
+    setIsAuditing(true);
+    setAuditResult(null);
+    setProgress({ phase: 'loading', current: 0, total: 4, message: 'Full Audit baslatiliyor...' });
+    try {
+      const result = await runFullAuditFromFirebase((p) => setProgress(p));
+      setAuditResult(result);
+      setProgress({
+        phase: 'complete', current: 1, total: 1,
+        message: `FULL AUDIT tamamlandi. Eslesen: ${result.matchCount}, AI fazladan: ${result.aiOnlyCount}, Celiski: ${result.conflictCount}`
+      });
+    } catch (err) {
+      console.error('[FULL AUDIT] Hata:', err);
+      setProgress({ phase: 'error', current: 0, total: 0, message: `Full Audit hatasi: ${err}` });
+    } finally {
+      setIsAuditing(false);
+    }
+  }, []);
+
+  const handleExportAudit = useCallback(() => {
+    if (!auditResult) return;
+    const jsonStr = JSON.stringify(auditResult, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Full_Audit_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [auditResult]);
 
   const handleClearAnalysis = useCallback(() => {
     setResults([]);
@@ -280,7 +321,14 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
         <div className="flex items-center gap-3">
           <button onClick={handleStartAnalysis} disabled={!canAnalyze} className="px-6 py-2.5 text-sm font-black bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:from-amber-500 hover:to-orange-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-            Analiz Başlat
+            Analiz Baslat
+          </button>
+          <button onClick={handleFullAudit} disabled={isAuditing || isLoading} className="px-5 py-2.5 text-sm font-bold bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-500 hover:to-purple-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-violet-500/20 flex items-center gap-2">
+            {isAuditing ? (
+              <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>Denetim...</>
+            ) : (
+              <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>Tam Denetim (AI)</>
+            )}
           </button>
           {results.length > 0 && (
             <>
@@ -295,7 +343,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </>
           )}
         </div>
-        {(isLoading || isAnalyzing) && progress && (
+        {(isLoading || isAnalyzing || isAuditing) && progress && (
           <div className="mt-3">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-slate-400">{progress.message}</span>
@@ -324,6 +372,122 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
           <SummaryCard label="Manuel İnceleme" value={formatNumber(summary.manuelIncelemeSayisi)} color="text-amber-400" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.manuelIncelemeSayisi / summary.toplamAnaliz * 100) : 0}`} />
           <SummaryCard label="Eşleşen" value={formatNumber(summary.eslesenSayisi)} color="text-blue-400" />
           <SummaryCard label="Eşleşmeyen" value={formatNumber(summary.eslesemeyenSayisi)} color="text-slate-400" />
+        </div>
+      )}
+
+      {/* Full Audit Sonuçları */}
+      {auditResult && (
+        <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-violet-500/30 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              <span className="text-sm font-bold text-violet-400">Full Audit Sonuclari</span>
+              <span className="text-xs text-slate-500">({auditResult.timestamp.slice(0, 10)})</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={handleExportAudit} className="px-3 py-1.5 text-xs font-bold text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 rounded-lg transition-all flex items-center gap-1.5 border border-violet-500/20">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                JSON Indir
+              </button>
+              <button onClick={() => setAuditResult(null)} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 hover:bg-slate-700/30 rounded-lg transition-all">
+                Kapat
+              </button>
+            </div>
+          </div>
+
+          {/* Özet Kartları */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/30">
+              <p className="text-[10px] font-bold text-slate-500 uppercase">Toplam Entry</p>
+              <p className="text-lg font-black text-white">{auditResult.totalEntries.toLocaleString('tr-TR')}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/30">
+              <p className="text-[10px] font-bold text-slate-500 uppercase">AI Analiz</p>
+              <p className="text-lg font-black text-blue-400">{auditResult.uniqueTextsAnalyzed.toLocaleString('tr-TR')}</p>
+            </div>
+            <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/20">
+              <p className="text-[10px] font-bold text-emerald-500 uppercase">Eslesen</p>
+              <p className="text-lg font-black text-emerald-400">{auditResult.matchCount.toLocaleString('tr-TR')}</p>
+            </div>
+            <div className="bg-cyan-500/5 rounded-lg p-3 border border-cyan-500/20">
+              <p className="text-[10px] font-bold text-cyan-500 uppercase">AI Fazladan</p>
+              <p className="text-lg font-black text-cyan-400">{auditResult.aiOnlyCount.toLocaleString('tr-TR')}</p>
+            </div>
+            <div className="bg-red-500/5 rounded-lg p-3 border border-red-500/20">
+              <p className="text-[10px] font-bold text-red-500 uppercase">Celiski</p>
+              <p className="text-lg font-black text-red-400">{auditResult.conflictCount.toLocaleString('tr-TR')}</p>
+            </div>
+            <div className="bg-amber-500/5 rounded-lg p-3 border border-amber-500/20">
+              <p className="text-[10px] font-bold text-amber-500 uppercase">Regex Fazladan</p>
+              <p className="text-lg font-black text-amber-400">{auditResult.regexOnlyCount.toLocaleString('tr-TR')}</p>
+            </div>
+          </div>
+
+          {/* Regex'in Kaçırdığı Pattern'ler */}
+          {auditResult.regexMissedPatterns.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">AI'in Bulup Regex'in Kacirdigi Pattern'ler (Regex'e eklenecek)</h4>
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar-compliance">
+                {auditResult.regexMissedPatterns.slice(0, 20).map((p, i) => (
+                  <div key={i} className="bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-bold text-cyan-400">{p.pattern}</span>
+                      <span className="text-[10px] text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded">{p.count}x</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {p.examples.map((ex, j) => (
+                        <p key={j} className="text-[10px] text-slate-500 truncate">{ex}</p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Çelişkiler (en önemli) */}
+          {auditResult.entries.filter(e => e.status === 'conflict').length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-2">Celiskiler — Regex ve AI farkli sonuc uretti ({auditResult.entries.filter(e => e.status === 'conflict').length} adet)</h4>
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar-compliance">
+                {auditResult.entries.filter(e => e.status === 'conflict').slice(0, 30).map((entry, i) => (
+                  <div key={i} className="bg-red-500/5 rounded-lg p-2.5 border border-red-500/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-red-400">{entry.islem_kodu}</span>
+                      <span className="text-[10px] text-slate-500">{entry.kaynak}</span>
+                      <span className="text-xs text-slate-400 truncate flex-1">{entry.islem_adi}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mb-1 truncate">{entry.aciklama_raw.substring(0, 150)}</p>
+                    {entry.diffs.filter(d => d.source === 'conflict').map((d, j) => (
+                      <p key={j} className="text-[10px] text-red-300">{d.description}</p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI Fazladan Bulunanlar */}
+          {auditResult.entries.filter(e => e.status === 'ai_only').length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">AI Fazladan Buldugu Kurallar — Regex kaciyor ({auditResult.entries.filter(e => e.status === 'ai_only').length} adet)</h4>
+              <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar-compliance">
+                {auditResult.entries.filter(e => e.status === 'ai_only').slice(0, 30).map((entry, i) => (
+                  <div key={i} className="bg-cyan-500/5 rounded-lg p-2.5 border border-cyan-500/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono text-cyan-400">{entry.islem_kodu}</span>
+                      <span className="text-[10px] text-slate-500">{entry.kaynak}</span>
+                      <span className="text-xs text-slate-400 truncate flex-1">{entry.islem_adi}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mb-1 truncate">{entry.aciklama_raw.substring(0, 150)}</p>
+                    {entry.diffs.filter(d => d.source === 'ai_only').map((d, j) => (
+                      <p key={j} className="text-[10px] text-cyan-300">{d.description}</p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

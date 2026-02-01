@@ -5,7 +5,7 @@
 import { getFinansalModuleFiles, getFinansalFileMetadata, downloadFinansalFile } from './finansalStorage';
 import { parseEk2b, parseEk2c, parseEk2cd, ExcelData } from '../../components/EkListeTanimlama';
 import { parseGilExcel, GilExcelData } from '../../components/GilModule';
-import { buildRulesMaster, buildRulesMasterHybrid, BuildRulesMasterResult } from './ruleExtractor';
+import { buildRulesMaster, buildRulesMasterHybrid, buildRulesMasterFullAudit, BuildRulesMasterResult, FullAuditResult } from './ruleExtractor';
 import { RuleLoadStatus, AnalysisProgress, SutMaddesi } from '../types/complianceTypes';
 import mammoth from 'mammoth';
 
@@ -262,6 +262,23 @@ export async function buildRulesMasterHybridFromFirebase(
   const result = await buildRulesMasterHybrid(
     data.ek2b, data.ek2c, data.ek2cd, data.gil, data.sutMaddeleri,
     useAI,
+    onProgress
+  );
+
+  return { ...result, loadStatus: data.loadStatus };
+}
+
+/**
+ * FULL AUDIT pipeline: Yükle → Parse → TÜM açıklamaları AI'a gönder → Regex vs AI karşılaştır
+ * Tek seferlik çalıştırılır, sonuçlar JSON olarak export edilebilir
+ */
+export async function runFullAuditFromFirebase(
+  onProgress?: (progress: AnalysisProgress) => void
+): Promise<FullAuditResult & { loadStatus: RuleLoadStatus }> {
+  const data = await loadAllRegulationData(onProgress);
+
+  const result = await buildRulesMasterFullAudit(
+    data.ek2b, data.ek2c, data.ek2cd, data.gil, data.sutMaddeleri,
     onProgress
   );
 
