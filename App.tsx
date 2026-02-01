@@ -469,6 +469,52 @@ const App: React.FC = () => {
                     console.log(`🔄 Yeni sürüm otomatik seçildi: ${sonCetvel}`);
                   }
 
+                  // İLK ve SON cetvel varsa phys_compare'ı burada hesapla
+                  // (ChangeAnalysis modülü açılmadan da Verimlilik popup'ında görünsün)
+                  if (ilkCetvel && sonCetvel && fullVersions[ilkCetvel] && fullVersions[sonCetvel]) {
+                    const base = fullVersions[ilkCetvel];
+                    const upd = fullVersions[sonCetvel];
+                    const allDocKeys = Array.from(new Set([
+                      ...Object.keys(base.physicians || {}),
+                      ...Object.keys(upd.physicians || {})
+                    ]));
+
+                    const processedDocs = allDocKeys.map(key => {
+                      const bPhys = base.physicians[key];
+                      const uPhys = upd.physicians[key];
+                      const name = uPhys?.physicianName || bPhys?.physicianName || 'Bilinmiyor';
+                      const branch = uPhys?.branch || bPhys?.branch || 'Bilinmiyor';
+                      const baseline_capacity = bPhys?.totalCapacity || 0;
+                      const updated_capacity = uPhys?.totalCapacity || 0;
+                      const capacity_delta = updated_capacity - baseline_capacity;
+
+                      const baseline_action_days = bPhys?.sessionsByAction || {};
+                      const updated_action_days = uPhys?.sessionsByAction || {};
+                      const all_actions = Array.from(new Set([
+                        ...Object.keys(baseline_action_days),
+                        ...Object.keys(updated_action_days)
+                      ]));
+
+                      const action_deltas: Record<string, number> = {};
+                      let has_action_change = false;
+                      all_actions.forEach(act => {
+                        const bDays = baseline_action_days[act] || 0;
+                        const uDays = updated_action_days[act] || 0;
+                        const delta = uDays - bDays;
+                        if (Math.abs(delta) >= 0.1) {
+                          action_deltas[act] = delta;
+                          has_action_change = true;
+                        }
+                      });
+
+                      return { id: key, name, branch, baseline_capacity, updated_capacity, capacity_delta, action_deltas, has_action_change, bPhys, uPhys, baseline_action_days, updated_action_days };
+                    });
+
+                    const physCompare = processedDocs.filter(d => Math.abs(d.capacity_delta) > 0.1 || d.has_action_change);
+                    setChangeAnalysisPhysCompare(physCompare);
+                    console.log(`✅ phys_compare otomatik hesaplandı: ${physCompare.length} hekim değişimi bulundu`);
+                  }
+
                   // ChangeAnalysis modülü için ay/yıl filtrelerini de güncelle
                   setMonthFilters(prev => ({ ...prev, 'change-analysis': month }));
                   setYearFilters(prev => ({ ...prev, 'change-analysis': year }));

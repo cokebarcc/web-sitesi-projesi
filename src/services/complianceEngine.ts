@@ -33,6 +33,7 @@ export interface IslemSatiriLike {
   adiSoyadi: string;
   islemNo: string;
   disNumarasi: string;
+  [key: string]: string | number; // Dinamik ekstra sütunlar
 }
 
 export interface KurumBilgisiLike {
@@ -134,7 +135,7 @@ const BRANS_ALIAS_GROUPS: string[][] = [
   // Spor Hekimliği
   ['spor hekimliği'],
   // Ağız Diş
-  ['ağız, diş ve çene cerrahisi', 'ağız diş ve çene cerrahisi', 'diş hekimliği', 'diş'],
+  ['ağız, diş ve çene cerrahisi', 'ağız diş ve çene cerrahisi', 'diş hekimliği', 'diş', 'ağız diş', 'diş hastalıkları ve tedavisi', 'diş hastalıkları', 'diş protez', 'ağız diş ve çene hastalıkları'],
 ];
 
 // Normalize: alias map oluştur (key: normalized alias → value: tüm gruptaki isimler)
@@ -165,21 +166,41 @@ function branslarEslesiyor(hekim: string, kural: string): boolean {
   const hGroup = _bransAliasMap.get(h);
   if (hGroup && hGroup.has(k)) return true;
 
+  // Kelime sınırı kontrolü: kısa aliasların uzun stringlerin içinde yanlış eşleşmesini engelle
+  // Örn: "acil" aliası "çocuk acil yandal uzmanı" içinde bulunmamalı
+  function safeIncludes(haystack: string, needle: string): boolean {
+    if (!haystack.includes(needle)) return false;
+    // Needle çok kısaysa (tek kelime, ≤6 karakter) → kelime sınırı kontrolü yap
+    if (needle.length <= 6 || !needle.includes(' ')) {
+      const idx = haystack.indexOf(needle);
+      const before = idx > 0 ? haystack[idx - 1] : ' ';
+      const after = idx + needle.length < haystack.length ? haystack[idx + needle.length] : ' ';
+      const isBefore = before === ' ' || before === ',' || before === ';' || before === '(' || before === ')';
+      const isAfter = after === ' ' || after === ',' || after === ';' || after === '(' || after === ')';
+      // Tek kelime needle ise, tam kelime olarak eşleşmeli (her iki tarafta da sınır olmalı)
+      if (!isBefore || !isAfter) return false;
+    }
+    // Needle, haystack'in önemli bir kısmı olmalı (çok kısa needle, çok uzun haystack → yanlış pozitif)
+    // Needle en az haystack uzunluğunun %40'ı olmalı
+    if (needle.length < haystack.length * 0.4) return false;
+    return true;
+  }
+
   // Ayrıca alias grubundaki herhangi bir elemana includes ile bakalım
   if (hGroup) {
     for (const alias of hGroup) {
-      if (alias.includes(k) || k.includes(alias)) return true;
+      if (safeIncludes(alias, k) || safeIncludes(k, alias)) return true;
     }
   }
   const kGroup = _bransAliasMap.get(k);
   if (kGroup) {
     for (const alias of kGroup) {
-      if (alias.includes(h) || h.includes(alias)) return true;
+      if (safeIncludes(alias, h) || safeIncludes(h, alias)) return true;
     }
   }
 
-  // 3. includes bazlı eşleşme
-  if (h.includes(k) || k.includes(h)) return true;
+  // 3. includes bazlı eşleşme (kelime sınırı korumalı)
+  if (safeIncludes(h, k) || safeIncludes(k, h)) return true;
 
   // 4. Token bazlı kısmi eşleşme
   const stopWords = new Set(['ve', 'ile', 'veya', 'için', 'olan', 'bir']);
@@ -206,7 +227,8 @@ function analyzeRow(
   rowIndex: number,
   rulesMaster: Map<string, RuleMasterEntry>,
   kurumBasamak: number,
-  sameSessionRows: IslemSatiriLike[]
+  sameSessionRows: IslemSatiriLike[],
+  mevcutUzmanliklar: Set<string>
 ): ComplianceResult {
   const normalizedKodu = row.gilKodu.trim();
   const entry = rulesMaster.get(normalizedKodu);
@@ -245,8 +267,9 @@ function analyzeRow(
             ihlaller.push({
               ihlal_kodu: 'BASAMAK_001',
               ihlal_aciklamasi: `Bu işlem yalnızca ${allowed.join('. ve ')}. basamak hastanelerde yapılabilir. Kurum basamağı: ${kurumBasamak}`,
-              kaynak: entry.kaynak,
+              kaynak: rule.kaynak || entry.kaynak,
               referans_kural_metni: rule.rawText,
+              fromSectionHeader: rule.fromSectionHeader,
               kural_tipi: 'BASAMAK_KISITI',
             });
           }
@@ -255,8 +278,16 @@ function analyzeRow(
       }
 
       case 'BRANS_KISITI': {
-        const branslar = rule.params.branslar as string[];
+        const _rawBranslar = rule.params.branslar as string[];
         const bransMode = (rule.params.mode as string) || 'dahil';
+        // Geçersiz branş adlarını filtrele (stop-words, kısa kelimeler)
+        const bransStopWords = new Set([
+          'için', 'icin', 'olan', 'olarak', 'ile', 'bir', 'her', 'bu', 'şu', 'de', 'da',
+          'den', 'dan', 'dir', 'dır', 'ise', 'gibi', 'kadar', 'sonra', 'önce', 'once',
+          'ancak', 'sadece', 'bizzat', 'tarafından', 'tarafindan', 'halinde', 'yapılır',
+          'faturalandırılır', 'puanlandırılır', 'uygulanır', 'gerekir', 'gerekmektedir',
+        ]);
+        const branslar = _rawBranslar?.filter(b => b.length > 2 && !bransStopWords.has(turkishLower(b)));
 
         if (branslar && branslar.length > 0) {
           const formattedBranslar = branslar.map(b =>
@@ -270,8 +301,9 @@ function analyzeRow(
               ihlaller.push({
                 ihlal_kodu: 'BRANS_007',
                 ihlal_aciklamasi: `Bu işlem ${formattedBranslar.join(', ')} branşları HARİCİNDEKİ hekimler tarafından yapılabilir. Hekim branşı (${row.uzmanlik}) hariç tutulan listede.`,
-                kaynak: entry.kaynak,
+                kaynak: rule.kaynak || entry.kaynak,
                 referans_kural_metni: rule.rawText,
+                fromSectionHeader: rule.fromSectionHeader,
                 kural_tipi: 'BRANS_KISITI',
               });
             }
@@ -279,13 +311,44 @@ function analyzeRow(
             // DAHİL modu (varsayılan): SADECE bu branşlar yapabilir
             const match = branslar.some(b => branslarEslesiyor(row.uzmanlik, b));
             if (!match) {
-              ihlaller.push({
-                ihlal_kodu: 'BRANS_002',
-                ihlal_aciklamasi: `Bu işlem şu branşlara kısıtlıdır: ${formattedBranslar.join(', ')}. Hekim branşı: ${row.uzmanlik}`,
-                kaynak: entry.kaynak,
-                referans_kural_metni: rule.rawText,
-                kural_tipi: 'BRANS_KISITI',
-              });
+              // Kural metninde "bulunmadığında/yokluğunda" ifadesi varsa ve hekim İç Hastalıkları ise:
+              // Kısıtlı branşların kurumda mevcut olup olmadığını kontrol et
+              const rawLower = turkishLower(rule.rawText || '');
+              const yoklukKurali = /bulunmadığında|bulunmadiginda|yokluğunda|yoklugunda|olmadığında|olmadiginda|bulunmayan|yoksa/.test(rawLower);
+
+              if (yoklukKurali) {
+                // Kısıtlı branşlardan herhangi biri kurumda mevcut mu?
+                const kisitliBransKurumda = branslar.some(b => {
+                  const bLower = turkishLower(b);
+                  for (const uzm of mevcutUzmanliklar) {
+                    if (branslarEslesiyor(uzm, bLower)) return true;
+                  }
+                  return false;
+                });
+
+                if (kisitliBransKurumda) {
+                  // Kısıtlı branş kurumda mevcut → İhlal (o branş yapmalı)
+                  ihlaller.push({
+                    ihlal_kodu: 'BRANS_002',
+                    ihlal_aciklamasi: `Bu işlem şu branşlara kısıtlıdır: ${formattedBranslar.join(', ')}. Hekim branşı: ${row.uzmanlik}. Kurumda ilgili branş hekimi mevcut.`,
+                    kaynak: rule.kaynak || entry.kaynak,
+                    referans_kural_metni: rule.rawText,
+                    fromSectionHeader: rule.fromSectionHeader,
+                    kural_tipi: 'BRANS_KISITI',
+                  });
+                }
+                // Kısıtlı branş kurumda mevcut değil → Muaf (yokluğunda başka hekim yapabilir)
+              } else {
+                // Normal branş kısıtı (yokluk kuralı yok)
+                ihlaller.push({
+                  ihlal_kodu: 'BRANS_002',
+                  ihlal_aciklamasi: `Bu işlem şu branşlara kısıtlıdır: ${formattedBranslar.join(', ')}. Hekim branşı: ${row.uzmanlik}`,
+                  kaynak: rule.kaynak || entry.kaynak,
+                  referans_kural_metni: rule.rawText,
+                  fromSectionHeader: rule.fromSectionHeader,
+                  kural_tipi: 'BRANS_KISITI',
+                });
+              }
             }
           }
         }
@@ -302,8 +365,9 @@ function analyzeRow(
             ihlaller.push({
               ihlal_kodu: 'BIRLIKTE_003',
               ihlal_aciklamasi: `Bu işlem şu kodlarla birlikte faturalandırılamaz: ${conflicting.map(c => c.gilKodu).join(', ')}`,
-              kaynak: entry.kaynak,
+              kaynak: rule.kaynak || entry.kaynak,
               referans_kural_metni: rule.rawText,
+              fromSectionHeader: rule.fromSectionHeader,
               kural_tipi: 'BIRLIKTE_YAPILAMAZ',
             });
           }
@@ -318,14 +382,39 @@ function analyzeRow(
       }
 
       case 'TANI_KOSULU': {
-        // İşlem verilerinde tanı kodu yok → Manuel inceleme
-        ihlaller.push({
-          ihlal_kodu: 'TANI_004',
-          ihlal_aciklamasi: `Bu işlem belirli tanı kodu gerektirir: ${(rule.params.taniKodlari as string[] || []).join(', ')}. Tanı bilgisi mevcut değil.`,
-          kaynak: entry.kaynak,
-          referans_kural_metni: rule.rawText,
-          kural_tipi: 'TANI_KOSULU',
-        });
+        // Excel'den gelen tanı bilgisini kontrol et (dinamik sütunlardan)
+        const taniDegeri = String(row['TANI'] || row['Tani'] || row['Tanı'] || row['tani'] || row['tanı'] || row['TANI KODU'] || row['Tani Kodu'] || row['Tanı Kodu'] || '').trim();
+        const requiredKodlar = (rule.params.taniKodlari as string[] || []);
+
+        if (!taniDegeri) {
+          // Tanı bilgisi Excel'de mevcut değil → Manuel inceleme
+          if (requiredKodlar.length > 0) {
+            ihlaller.push({
+              ihlal_kodu: 'TANI_004',
+              ihlal_aciklamasi: `Bu işlem belirli tanı kodu gerektirir: ${requiredKodlar.join(', ')}. Tanı bilgisi mevcut değil.`,
+              kaynak: rule.kaynak || entry.kaynak,
+              referans_kural_metni: rule.rawText,
+              fromSectionHeader: rule.fromSectionHeader,
+              kural_tipi: 'TANI_KOSULU',
+            });
+          }
+          // requiredKodlar boşsa (sadece koşul metni var), ihlal üretme
+        } else if (requiredKodlar.length > 0) {
+          // Tanı bilgisi var ve gerekli kodlar belirtilmiş → Kontrol et
+          const taniUpper = taniDegeri.toUpperCase();
+          const eslesiyor = requiredKodlar.some(kod => taniUpper.includes(kod.toUpperCase()));
+          if (!eslesiyor) {
+            ihlaller.push({
+              ihlal_kodu: 'TANI_004',
+              ihlal_aciklamasi: `Bu işlem belirli tanı kodu gerektirir: ${requiredKodlar.join(', ')}. Mevcut tanı: ${taniDegeri}`,
+              kaynak: rule.kaynak || entry.kaynak,
+              referans_kural_metni: rule.rawText,
+              fromSectionHeader: rule.fromSectionHeader,
+              kural_tipi: 'TANI_KOSULU',
+            });
+          }
+        }
+        // Tanı bilgisi var ama gerekli kodlar belirtilmemiş → Kontrol edilemez, ihlal yok
         break;
       }
 
@@ -335,8 +424,9 @@ function analyzeRow(
           ihlaller.push({
             ihlal_kodu: 'DIS_005',
             ihlal_aciklamasi: `Diş tedavi kuralı mevcut ancak diş numarası boş.`,
-            kaynak: entry.kaynak,
+            kaynak: rule.kaynak || entry.kaynak,
             referans_kural_metni: rule.rawText,
+            fromSectionHeader: rule.fromSectionHeader,
             kural_tipi: 'DIS_TEDAVI',
           });
         }
@@ -389,20 +479,67 @@ function applySiklikLimitChecks(
   results: ComplianceResult[],
   rulesMaster: Map<string, RuleMasterEntry>
 ) {
-  // hasta+kod bazında gruplama
-  const freqMap = new Map<string, number[]>(); // key → satır index'leri
+  // Tarih normalizasyonu: "05.12.2025" → "2025-12-05" formatına çevir
+  function normalizeDate(tarih: string): string {
+    const t = tarih.trim();
+    // dd.MM.yyyy veya dd/MM/yyyy
+    const m = t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+    if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+    return t; // yyyy-MM-dd zaten uygun
+  }
+
+  // Tarihten yıl-ay çıkar: "2025-12-05" → "2025-12"
+  function getYearMonth(normalizedDate: string): string {
+    return normalizedDate.substring(0, 7);
+  }
+
+  // Tarihten yıl çıkar: "2025-12-05" → "2025"
+  function getYear(normalizedDate: string): string {
+    return normalizedDate.substring(0, 4);
+  }
+
+  // ISO hafta numarası: "2025-12-05" → "2025-W49"
+  function getYearWeek(normalizedDate: string): string {
+    const parts = normalizedDate.split('-');
+    const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    const dayNum = d.getDay() || 7;
+    d.setDate(d.getDate() + 4 - dayNum);
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${d.getFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+  }
+
+  // Periyoda göre gruplama anahtarı döndür
+  function getPeriyotKey(tarih: string, periyot: string): string {
+    const nd = normalizeDate(tarih);
+    switch (periyot) {
+      case 'gun': return nd;                    // gün bazında
+      case 'hafta': return getYearWeek(nd);     // hafta bazında
+      case 'ay': return getYearMonth(nd);       // ay bazında
+      case 'yil': return getYear(nd);           // yıl bazında
+      default: return 'all';                    // genel (tüm dönem)
+    }
+  }
+
+  // hasta+kod bazında gruplama (önce kural bul, sonra periyoda göre alt-grupla)
+  const codeMap = new Map<string, number[]>(); // hastaTC_gilKodu → satır index'leri
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const key = `${row.hastaTc}_${row.gilKodu.trim()}`;
-    if (!freqMap.has(key)) freqMap.set(key, []);
-    freqMap.get(key)!.push(i);
+    if (!codeMap.has(key)) codeMap.set(key, []);
+    codeMap.get(key)!.push(i);
   }
 
-  for (const [key, indices] of freqMap) {
+  // Sıklık limiti muafiyet listesi (bu kodlar günlük limit kontrolünden muaf)
+  const siklikMuafKodlar = new Set(['520020', '520021', '520022', '520023', '520024']);
+
+  for (const [key, indices] of codeMap) {
     if (indices.length <= 1) continue;
 
     const gilKodu = key.split('_').slice(1).join('_');
+    if (siklikMuafKodlar.has(gilKodu)) continue;
+
     const entry = rulesMaster.get(gilKodu);
     if (!entry) continue;
 
@@ -412,21 +549,33 @@ function applySiklikLimitChecks(
     const limit = siklikRule.params.limit as number;
     const periyot = siklikRule.params.periyot as string;
 
-    // Basit kontrol: toplam sayı limiti aşıyor mu?
-    if (indices.length > limit) {
-      // limit aşan satırları işaretle
-      for (let j = limit; j < indices.length; j++) {
-        const result = results[indices[j]];
-        if (result) {
-          result.ihlaller.push({
-            ihlal_kodu: 'SIKLIK_006',
-            ihlal_aciklamasi: `Bu işlem ${periyot === 'gun' ? 'günde' : periyot === 'ay' ? 'ayda' : periyot === 'yil' ? 'yılda' : 'haftada'} en fazla ${limit} kez yapılabilir. Toplam: ${indices.length}`,
-            kaynak: result.eslesen_kural?.kaynak || 'GİL',
-            referans_kural_metni: siklikRule.rawText,
-            kural_tipi: 'SIKLIK_LIMIT',
-          });
-          if (result.uygunluk_durumu === 'UYGUN') {
-            result.uygunluk_durumu = 'UYGUNSUZ';
+    // Periyoda göre alt-gruplama (gün, hafta, ay, yıl veya genel)
+    const periyotGroups = new Map<string, number[]>();
+    for (const idx of indices) {
+      const pk = getPeriyotKey(rows[idx].tarih, periyot);
+      if (!periyotGroups.has(pk)) periyotGroups.set(pk, []);
+      periyotGroups.get(pk)!.push(idx);
+    }
+
+    const periyotLabel = periyot === 'gun' ? 'günde' : periyot === 'ay' ? 'ayda' : periyot === 'yil' ? 'yılda' : periyot === 'hafta' ? 'haftada' : '';
+
+    for (const [, groupIndices] of periyotGroups) {
+      if (groupIndices.length > limit) {
+        // limit aşan satırları işaretle
+        for (let j = limit; j < groupIndices.length; j++) {
+          const result = results[groupIndices[j]];
+          if (result) {
+            result.ihlaller.push({
+              ihlal_kodu: 'SIKLIK_006',
+              ihlal_aciklamasi: `Bu işlem ${periyotLabel ? periyotLabel + ' ' : ''}en fazla ${limit} kez yapılabilir. Toplam: ${groupIndices.length}`,
+              kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
+              referans_kural_metni: siklikRule.rawText,
+              fromSectionHeader: siklikRule.fromSectionHeader,
+              kural_tipi: 'SIKLIK_LIMIT',
+            });
+            if (result.uygunluk_durumu === 'UYGUN') {
+              result.uygunluk_durumu = 'UYGUNSUZ';
+            }
           }
         }
       }
@@ -463,6 +612,12 @@ export async function runComplianceAnalysis(
     sessionMap.get(key)!.push(row);
   }
 
+  // Kurumdaki mevcut uzmanlıkları ön-hesapla (branş muafiyet kontrolleri için)
+  const mevcutUzmanliklar = new Set<string>();
+  for (const row of rows) {
+    if (row.uzmanlik) mevcutUzmanliklar.add(turkishLower(row.uzmanlik).trim());
+  }
+
   // Batch processing
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batchEnd = Math.min(i + BATCH_SIZE, rows.length);
@@ -471,7 +626,7 @@ export async function runComplianceAnalysis(
       const row = rows[j];
       const sessionKey = `${row.hastaTc}_${row.tarih}`;
       const sameSessionRows = sessionMap.get(sessionKey) || [];
-      results.push(analyzeRow(row, j, rulesMaster, kurumBasamak, sameSessionRows));
+      results.push(analyzeRow(row, j, rulesMaster, kurumBasamak, sameSessionRows, mevcutUzmanliklar));
     }
 
     onProgress?.({
@@ -557,15 +712,18 @@ export function generateSummary(results: ComplianceResult[], elapsedMs?: number)
 // ═══════════════════════════════════════════════════════════════
 export function exportResultsToExcel(
   rows: IslemSatiriLike[],
-  results: ComplianceResult[]
+  results: ComplianceResult[],
+  extraColumnKeys?: string[]
 ): ArrayBuffer {
   const exportData: any[][] = [];
+  const extras = extraColumnKeys || [];
 
   // Header
   exportData.push([
     'Tarih', 'Saat', 'Uzmanlık', 'Doktor', 'Dr.Tipi',
     'GİL Kodu', 'GİL Adı', 'Miktar', 'Puan', 'Toplam Puan',
     'Fiyat', 'Tutar', 'Hasta TC', 'Adı Soyadı', 'İşlem No', 'Diş No',
+    ...extras,
     '— Uygunluk Durumu', '— Eşleşme', '— Güven', '— İhlal Sayısı',
     '— İhlal Açıklaması', '— Kaynak', '— Referans Kural', '— Puan Farkı', '— Fiyat Farkı'
   ]);
@@ -578,11 +736,13 @@ export function exportResultsToExcel(
     const ihlalAciklama = result.ihlaller.map(ih => `[${ih.ihlal_kodu}] ${ih.ihlal_aciklamasi}`).join(' | ');
     const kaynak = result.eslesen_kural?.kaynak || '';
     const refKural = result.ihlaller.map(ih => ih.referans_kural_metni).join(' | ');
+    const extraValues = extras.map(key => row[key] ?? '');
 
     exportData.push([
       row.tarih, row.saat, row.uzmanlik, row.doktor, row.drTipi,
       row.gilKodu, row.gilAdi, row.miktar, row.puan, row.toplamPuan,
       row.fiyat, row.tutar, row.hastaTc, row.adiSoyadi, row.islemNo, row.disNumarasi,
+      ...extraValues,
       result.uygunluk_durumu, result.eslesmeDurumu, result.eslesme_guveni, result.ihlaller.length,
       ihlalAciklama, kaynak, refKural,
       result.puan_farki ?? '', result.fiyat_farki ?? ''

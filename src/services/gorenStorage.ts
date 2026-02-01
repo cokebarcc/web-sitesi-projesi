@@ -1024,40 +1024,46 @@ export const loadBHHistoryData = async (
   const minYear = 2025;
   const minMonth = 6; // Haziran
 
-  // Geriye doğru ayları hesapla
-  let currentYear = endYear;
-  let currentMonth = endMonth;
+  // Seçili aydan Aralık'a kadar ileriye de bak (aynı yıl içinde)
+  // Örn: Kasım seçiliyse Aralık'ı da kontrol et
+  const maxYear = endYear;
+  const maxMonth = 12; // Yılın sonuna kadar ileriye bak
 
-  for (let i = 0; i < monthCount; i++) {
-    // 2025 Haziran'dan önceki ayları atla
-    if (currentYear < minYear || (currentYear === minYear && currentMonth < minMonth)) {
-      break;
+  // Tüm taranacak ayları oluştur: minDate'ten maxDate'e kadar
+  const allMonths: { year: number; month: number }[] = [];
+  let scanYear = minYear;
+  let scanMonth = minMonth;
+
+  while (scanYear < maxYear || (scanYear === maxYear && scanMonth <= maxMonth)) {
+    allMonths.push({ year: scanYear, month: scanMonth });
+    scanMonth++;
+    if (scanMonth > 12) {
+      scanMonth = 1;
+      scanYear++;
     }
+  }
 
+  // Son monthCount kadar ayı al (en güncel aylar)
+  const monthsToCheck = allMonths.slice(-monthCount);
+
+  for (const { year, month } of monthsToCheck) {
     try {
       // BH verisini yükle
-      const bhData = await loadGorenBHData(institutionId, currentYear, currentMonth);
+      const bhData = await loadGorenBHData(institutionId, year, month);
       // TR Rol ortalamasını yükle
-      const trRol = await loadTrRolOrtalamasi(institutionId, currentYear, currentMonth);
+      const trRol = await loadTrRolOrtalamasi(institutionId, year, month);
 
       if (bhData) {
-        results.unshift({
-          year: currentYear,
-          month: currentMonth,
-          monthLabel: `${monthNames[currentMonth - 1]} ${currentYear}`,
+        results.push({
+          year,
+          month,
+          monthLabel: `${monthNames[month - 1]} ${year}`,
           totalGP: bhData.totalGP,
           trRolOrtalamasi: trRol
         });
       }
     } catch (error) {
-      console.error(`[GÖREN Storage] Geçmiş veri yükleme hatası (${currentYear}/${currentMonth}):`, error);
-    }
-
-    // Bir önceki aya geç
-    currentMonth--;
-    if (currentMonth === 0) {
-      currentMonth = 12;
-      currentYear--;
+      console.error(`[GÖREN Storage] Geçmiş veri yükleme hatası (${year}/${month}):`, error);
     }
   }
 

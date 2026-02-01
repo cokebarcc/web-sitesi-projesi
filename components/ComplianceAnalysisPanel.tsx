@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import {
   ComplianceResult,
   ComplianceAnalysisSummary,
@@ -16,6 +17,7 @@ import ComplianceDetailModal from './ComplianceDetailModal';
 interface ComplianceAnalysisPanelProps {
   tableData: IslemSatiriLike[];
   kurumBilgisi: KurumBilgisiLike | undefined;
+  extraColumnKeys?: string[];
 }
 
 const PAGE_SIZES = [50, 100, 250, 500];
@@ -30,7 +32,7 @@ function formatNumber(val: number, decimals = 0): string {
   return val.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ tableData, kurumBilgisi }) => {
+const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ tableData, kurumBilgisi, extraColumnKeys }) => {
   const [ruleLoadStatus, setRuleLoadStatus] = useState<RuleLoadStatus | null>(null);
   const [rulesMaster, setRulesMaster] = useState<Map<string, RuleMasterEntry> | null>(null);
   const [results, setResults] = useState<ComplianceResult[]>([]);
@@ -168,11 +170,136 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     setFilterEsleme('TUMU');
     setFilterKuralTipi('TUMU');
     setSearchTerm('');
+    setUygunsuzSearchTerm('');
+    setUygunsuzCurrentPage(1);
+    setSelectedDoktor('TUMU');
   }, []);
+
+  // ─── Hekim Bazlı Uygunsuz İşlemler State ───
+  const [uygunsuzSearchTerm, setUygunsuzSearchTerm] = useState('');
+  const [uygunsuzCurrentPage, setUygunsuzCurrentPage] = useState(1);
+  const [selectedDoktor, setSelectedDoktor] = useState<string>('TUMU');
+  const uygunsuzPageSize = 50;
+  const uygunsuzTableRef = useRef<HTMLDivElement>(null);
+
+  // Uygunsuz işlem satırlarını oluştur
+  const uygunsuzIslemler = useMemo(() => {
+    if (results.length === 0) return [];
+    const items: {
+      row: IslemSatiriLike;
+      result: ComplianceResult;
+      ihlalDetay: string;
+      ihlalKodlari: string;
+      referansMetin: string;
+    }[] = [];
+    for (const r of results) {
+      if (r.uygunluk_durumu !== 'UYGUNSUZ') continue;
+      const row = tableData[r.satirIndex];
+      if (!row) continue;
+      items.push({
+        row,
+        result: r,
+        ihlalDetay: r.ihlaller.map(i => `[${i.ihlal_kodu}] ${i.ihlal_aciklamasi}`).join(' | '),
+        ihlalKodlari: r.ihlaller.map(i => i.ihlal_kodu).join(', '),
+        referansMetin: r.ihlaller.map(i => i.referans_kural_metni).filter(Boolean).join(' | '),
+      });
+    }
+    return items;
+  }, [results, tableData]);
+
+  // Doktor listesi (uygunsuz olanlar)
+  const doktorListesi = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of uygunsuzIslemler) {
+      const dr = item.row.doktor || 'Bilinmeyen';
+      map.set(dr, (map.get(dr) || 0) + 1);
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  }, [uygunsuzIslemler]);
+
+  // Filtrelenmiş uygunsuz işlemler
+  const filteredUygunsuz = useMemo(() => {
+    let filtered = uygunsuzIslemler;
+    if (selectedDoktor !== 'TUMU') {
+      filtered = filtered.filter(item => item.row.doktor === selectedDoktor);
+    }
+    if (uygunsuzSearchTerm.trim()) {
+      const term = uygunsuzSearchTerm.toLowerCase();
+      filtered = filtered.filter(item => {
+        return (
+          item.row.islemNo.toLowerCase().includes(term) ||
+          item.row.adiSoyadi.toLowerCase().includes(term) ||
+          item.row.hastaTc.includes(term) ||
+          item.row.doktor.toLowerCase().includes(term) ||
+          item.row.gilKodu.toLowerCase().includes(term) ||
+          item.row.gilAdi.toLowerCase().includes(term) ||
+          item.row.uzmanlik.toLowerCase().includes(term) ||
+          item.ihlalDetay.toLowerCase().includes(term)
+        );
+      });
+    }
+    return filtered;
+  }, [uygunsuzIslemler, selectedDoktor, uygunsuzSearchTerm]);
+
+  const uygunsuzTotalPages = Math.ceil(filteredUygunsuz.length / uygunsuzPageSize);
+  const paginatedUygunsuz = useMemo(() => {
+    const start = (uygunsuzCurrentPage - 1) * uygunsuzPageSize;
+    return filteredUygunsuz.slice(start, start + uygunsuzPageSize);
+  }, [filteredUygunsuz, uygunsuzCurrentPage, uygunsuzPageSize]);
+
+  const goToUygunsuzPage = (page: number) => {
+    setUygunsuzCurrentPage(page);
+    uygunsuzTableRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Hekim Bazlı Uygunsuz İşlemler Excel Export
+  const handleExportUygunsuz = useCallback(() => {
+    if (filteredUygunsuz.length === 0) return;
+    const exportData: any[][] = [];
+    exportData.push([
+      'İşlem No', 'Hasta Adı Soyadı', 'Hasta TC', 'Tarih', 'Saat',
+      'Doktor Adı', 'Uzmanlık', 'GİL Kodu', 'GİL Adı',
+      'İhlal Kodları', 'İhlal Açıklaması', 'Referans Kural Metni'
+    ]);
+    for (const item of filteredUygunsuz) {
+      exportData.push([
+        item.row.islemNo,
+        item.row.adiSoyadi,
+        item.row.hastaTc,
+        item.row.tarih,
+        item.row.saat,
+        item.row.doktor,
+        item.row.uzmanlik,
+        item.row.gilKodu,
+        item.row.gilAdi,
+        item.ihlalKodlari,
+        item.ihlalDetay,
+        item.referansMetin,
+      ]);
+    }
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+    // Sütun genişlikleri
+    ws['!cols'] = [
+      { wch: 14 }, { wch: 24 }, { wch: 14 }, { wch: 12 }, { wch: 8 },
+      { wch: 22 }, { wch: 28 }, { wch: 12 }, { wch: 40 },
+      { wch: 16 }, { wch: 60 }, { wch: 60 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Uygunsuz İşlemler');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const doktorSuffix = selectedDoktor !== 'TUMU' ? `_${selectedDoktor.replace(/\s+/g, '_')}` : '';
+    a.download = `Uygunsuz_Islemler${doktorSuffix}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [filteredUygunsuz, selectedDoktor]);
 
   const handleExport = useCallback(() => {
     if (results.length === 0) return;
-    const ab = exportResultsToExcel(tableData, results);
+    const ab = exportResultsToExcel(tableData, results, extraColumnKeys);
     const blob = new Blob([ab], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -614,6 +741,175 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
           )}
           {totalPages <= 1 && <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-slate-700/30 h-2" />}
         </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* Hekim Bazlı Uygunsuz İşlemler Tablosu */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      {uygunsuzIslemler.length > 0 && (
+        <div className="space-y-0">
+          {/* Başlık + Kontroller */}
+          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-t-2xl border border-b-0 border-red-500/20 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-red-400 uppercase tracking-wider">Hekim Bazlı Uygunsuz İşlemler</h3>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    {uygunsuzIslemler.length.toLocaleString('tr-TR')} uygunsuz işlem · {doktorListesi.length} hekim
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleExportUygunsuz}
+                className="px-4 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all flex items-center gap-2 border border-red-500/20"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Excel İndir
+              </button>
+            </div>
+
+            {/* Filtreler */}
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Hekim:</label>
+                <select
+                  value={selectedDoktor}
+                  onChange={e => { setSelectedDoktor(e.target.value); setUygunsuzCurrentPage(1); }}
+                  className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500/50 max-w-[220px]"
+                >
+                  <option value="TUMU">Tüm Hekimler ({uygunsuzIslemler.length})</option>
+                  {doktorListesi.map(([dr, count]) => (
+                    <option key={dr} value={dr}>{dr} ({count})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={uygunsuzSearchTerm}
+                  onChange={e => { setUygunsuzSearchTerm(e.target.value); setUygunsuzCurrentPage(1); }}
+                  placeholder="İşlem no, hasta, GİL kodu, doktor, ihlal..."
+                  className="flex-1 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500/50 placeholder-slate-600"
+                />
+              </div>
+              <span className="text-xs text-slate-500 ml-auto">{filteredUygunsuz.length.toLocaleString('tr-TR')} sonuç</span>
+            </div>
+          </div>
+
+          {/* Tablo */}
+          <div ref={uygunsuzTableRef} className="bg-[#0a0a14] border border-red-500/20 border-t-0 overflow-auto max-h-[500px] custom-scrollbar-compliance">
+            <table className="w-full text-sm border-collapse">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[#1a1a2e] border-b border-red-500/20">
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider w-[40px]">#</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[100px]">İşlem No</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[160px]">Hasta Adı Soyadı</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[110px]">Hasta TC</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[85px]">Tarih</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[55px]">Saat</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[140px]">Doktor Adı</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[120px]">Uzmanlık</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[80px]">GİL Kodu</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[200px]">GİL Adı</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[250px]">İhlal Detayı</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedUygunsuz.map((item, idx) => {
+                  const globalIdx = (uygunsuzCurrentPage - 1) * uygunsuzPageSize + idx + 1;
+                  return (
+                    <tr
+                      key={idx}
+                      onClick={() => { setDetailRow(item.row); setDetailResult(item.result); }}
+                      className={`border-b border-slate-800/30 hover:bg-red-500/5 transition-colors cursor-pointer border-l-2 border-l-red-500 ${idx % 2 === 0 ? 'bg-[#0d0d1a]' : 'bg-[#0a0a14]'}`}
+                    >
+                      <td className="px-3 py-1.5 text-xs text-slate-600 font-mono">{globalIdx}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-300 font-mono">{item.row.islemNo}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-300">{item.row.adiSoyadi}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-400 font-mono">{item.row.hastaTc}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-400">{item.row.tarih}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-500">{item.row.saat}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-300 truncate max-w-[160px]">{item.row.doktor}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-500 truncate max-w-[140px]">{item.row.uzmanlik}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-300 font-mono">{item.row.gilKodu}</td>
+                      <td className="px-3 py-1.5 text-xs text-slate-400 truncate max-w-[250px]">{item.row.gilAdi}</td>
+                      <td className="px-3 py-1.5 text-xs text-red-400/80 truncate max-w-[300px]" title={item.ihlalDetay}>
+                        {item.ihlalDetay.length > 120 ? item.ihlalDetay.substring(0, 120) + '...' : item.ihlalDetay}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {paginatedUygunsuz.length === 0 && (
+                  <tr>
+                    <td colSpan={11} className="px-4 py-8 text-center text-xs text-slate-600">
+                      Filtre kriterlerine uygun uygunsuz işlem bulunamadı.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Sayfalama */}
+          {uygunsuzTotalPages > 1 && (
+            <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 px-5 py-3 flex items-center justify-between">
+              <p className="text-xs text-slate-500">
+                {((uygunsuzCurrentPage - 1) * uygunsuzPageSize + 1).toLocaleString('tr-TR')} - {Math.min(uygunsuzCurrentPage * uygunsuzPageSize, filteredUygunsuz.length).toLocaleString('tr-TR')} / {filteredUygunsuz.length.toLocaleString('tr-TR')} sonuç
+              </p>
+              <div className="flex items-center gap-1">
+                <button onClick={() => goToUygunsuzPage(1)} disabled={uygunsuzCurrentPage === 1} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'««'}</button>
+                <button onClick={() => goToUygunsuzPage(uygunsuzCurrentPage - 1)} disabled={uygunsuzCurrentPage === 1} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'«'}</button>
+                {Array.from({ length: Math.min(5, uygunsuzTotalPages) }, (_, i) => {
+                  let page: number;
+                  if (uygunsuzTotalPages <= 5) page = i + 1;
+                  else if (uygunsuzCurrentPage <= 3) page = i + 1;
+                  else if (uygunsuzCurrentPage >= uygunsuzTotalPages - 2) page = uygunsuzTotalPages - 4 + i;
+                  else page = uygunsuzCurrentPage - 2 + i;
+                  return (
+                    <button key={page} onClick={() => goToUygunsuzPage(page)} className={`px-2.5 py-1 text-xs rounded transition-all ${uygunsuzCurrentPage === page ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}>{page}</button>
+                  );
+                })}
+                <button onClick={() => goToUygunsuzPage(uygunsuzCurrentPage + 1)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'»'}</button>
+                <button onClick={() => goToUygunsuzPage(uygunsuzTotalPages)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'»»'}</button>
+              </div>
+            </div>
+          )}
+          {uygunsuzTotalPages <= 1 && <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 h-2" />}
+
+          {/* Doktor Bazlı Özet Kartları */}
+          {doktorListesi.length > 0 && (
+            <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-red-500/20 p-5 mt-3">
+              <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3">Hekimlere Göre Uygunsuz İşlem Dağılımı</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                {doktorListesi.slice(0, 20).map(([dr, count]) => (
+                  <button
+                    key={dr}
+                    onClick={() => { setSelectedDoktor(selectedDoktor === dr ? 'TUMU' : dr); setUygunsuzCurrentPage(1); }}
+                    className={`text-left p-3 rounded-lg border transition-all ${
+                      selectedDoktor === dr
+                        ? 'bg-red-500/10 border-red-500/30 ring-1 ring-red-500/20'
+                        : 'bg-slate-800/30 border-slate-700/20 hover:bg-slate-700/30'
+                    }`}
+                  >
+                    <p className={`text-xs font-bold truncate ${selectedDoktor === dr ? 'text-red-400' : 'text-slate-300'}`}>{dr}</p>
+                    <p className="text-lg font-black text-red-400 mt-0.5">{count}</p>
+                    <p className="text-[10px] text-slate-500">uygunsuz işlem</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <ComplianceDetailModal isOpen={!!detailRow} onClose={() => { setDetailRow(null); setDetailResult(null); }} row={detailRow} result={detailResult} />

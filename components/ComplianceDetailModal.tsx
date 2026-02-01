@@ -83,6 +83,10 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                 { label: 'Adı Soyadı', value: row.adiSoyadi },
                 { label: 'İşlem No', value: row.islemNo },
                 { label: 'Diş No', value: row.disNumarasi || '—' },
+                // Dinamik ekstra alanlar
+                ...Object.entries(row)
+                  .filter(([key]) => !['tarih','saat','uzmanlik','doktor','drTipi','gilKodu','gilAdi','miktar','puan','toplamPuan','fiyat','tutar','hastaTc','adiSoyadi','islemNo','disNumarasi'].includes(key))
+                  .map(([key, value]) => ({ label: key, value: String(value ?? '') })),
               ].map(item => (
                 <div key={item.label} className="bg-slate-800/40 rounded-lg px-3 py-2">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.label}</p>
@@ -193,7 +197,19 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                     })()}
                     {ihlal.referans_kural_metni && (
                       <div className="mt-2 pt-2 border-t border-red-500/10">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Referans Kural Metni</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">Referans Kural Metni</p>
+                          {ihlal.kaynak && (
+                            <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                              {ihlal.kaynak}
+                            </span>
+                          )}
+                          {ihlal.fromSectionHeader && (
+                            <span className="text-[9px] font-medium text-slate-500 bg-slate-500/10 border border-slate-500/20 px-1.5 py-0.5 rounded">
+                              Bölüm Başlığı
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-slate-400 italic">{'"'}{ihlal.referans_kural_metni}{'"'}</p>
                       </div>
                     )}

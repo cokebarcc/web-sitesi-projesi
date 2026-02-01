@@ -525,10 +525,10 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
               }}
             />
 
-            {/* Referans çizgisi - %50 */}
+            {/* Referans çizgisi - %65 */}
             <Radar
-              name="Hedef (%50)"
-              dataKey={() => 50}
+              name="Hedef (%65)"
+              dataKey={() => 65}
               stroke="#f59e0b"
               strokeDasharray="5 5"
               fill="none"
@@ -627,7 +627,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
           )}
           <div className="flex items-center gap-2">
             <div className="w-6 h-0.5 border-t-2 border-dashed border-amber-500" />
-            <span>Hedef (%50)</span>
+            <span>Hedef (%65)</span>
           </div>
         </div>
         <span className="opacity-70">

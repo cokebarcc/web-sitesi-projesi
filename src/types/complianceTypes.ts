@@ -29,6 +29,8 @@ export interface ParsedRule {
   // TANI_KOSULU     → { taniKodlari: string[] }
   // DIS_TEDAVI      → { disKurali: string }
   // GENEL_ACIKLAMA  → { metin: string }
+  kaynak?: RuleKaynak;           // Bu kuralın geldiği kaynak (EK-2B, GİL, vs.)
+  fromSectionHeader?: boolean;   // Bölüm başlığından mı geldi?
   confidence?: number;           // 0-1, AI güven skoru
   extractionMethod?: 'regex' | 'ai';  // Hangi yöntemle çıkarıldı
   aiExplanation?: string;        // AI'ın açıklaması (debug/audit)
@@ -46,6 +48,8 @@ export interface RuleMasterEntry {
   ameliyat_grubu?: string;   // Sadece GİL
   gil_puani?: number;        // GİL'den gelen puan
   gil_fiyati?: number;       // GİL'den gelen fiyat
+  gil_aciklama?: string;     // GİL'den gelen açıklama metni
+  gil_section_header?: string; // GİL'den gelen bölüm başlığı
   parsed_rules: ParsedRule[];
   section_header?: string;   // Bölüm başlığından miras alınan açıklama
 }
@@ -60,6 +64,7 @@ export interface IhlalDetay {
   kaynak: RuleKaynak;
   referans_kural_metni: string;
   kural_tipi: ParsedRuleType;
+  fromSectionHeader?: boolean;   // Bölüm başlığından mı geldi?
 }
 
 export interface ComplianceResult {

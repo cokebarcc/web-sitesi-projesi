@@ -78,6 +78,17 @@ export function extractRulesFromAciklama(aciklama: string): ParsedRule[] {
 //                    → Aynı şekilde BASAMAK_KISITI
 // Örnek (KISIT DEĞİL): "Üçüncü basamak ... %30 ilave edilir" → puan artışı bilgisi, kısıt değil
 function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]) {
+  // Birden fazla basamak personel/uygulama koşulu anlatılıyorsa → kısıt değil
+  // Örn: "ikinci basamak ... Anestezi uzmanı tarafından, üçüncü basamak ... Anestezi uzmanı tarafından"
+  // Bu tür metinler her iki basamakta da yapılabileceğini söylüyor, sadece personel şartını belirtiyor
+  const multiTierPattern = /(?:ikinci|2\.)\s*basamak.{5,120}(?:üçüncü|3\.)\s*basamak|(?:üçüncü|3\.)\s*basamak.{5,120}(?:ikinci|2\.)\s*basamak/i;
+  if (multiTierPattern.test(lower)) {
+    // "sadece" / "yalnızca" gibi kesin kısıt belirteci yoksa, bu bir personel şartıdır
+    if (!/(?:yalnızca|yalnizca|sadece|yalnız)\s/.test(lower)) {
+      return; // Basamak kısıtı oluşturma
+    }
+  }
+
   // Önce kısıtlama DEĞİL olan ifadeleri tespit et (puan artışı, ilave vb.)
   // Bu ifadeler varsa ve kısıtlama bağlamı yoksa, basamak kısıtı oluşturma
   const nonRestrictionPatterns = [
@@ -86,6 +97,12 @@ function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]
     /%\s*\d+\s*(?:ilave|artır|arttır)/gi,
     /puan\s*(?:artır|arttır)/gi,
   ];
+
+  // "sadece" / "yalnızca" gibi mod belirleyicileri kontrol et
+  function detectMode(matchText: string, ctx: string): string | undefined {
+    if (/(?:yalnızca|yalnizca|sadece|yalnız)/.test(ctx)) return 'sadece';
+    return undefined;
+  }
 
   const patterns: { regex: RegExp; extractor: (m: RegExpMatchArray) => number[] }[] = [
     // "yalnızca 3. basamak" / "sadece 3. basamak" — kesin kısıt
@@ -97,7 +114,7 @@ function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]
     {
       regex: /(?:yalnızca|yalnizca|sadece)\s+(?:ikinci|üçüncü|ucuncu|birinci)/gi,
       extractor: (m) => {
-        const txt = m[0].toLowerCase();
+        const txt = turkishLower(m[0]);
         if (txt.includes('birinci')) return [1];
         if (txt.includes('ikinci')) return [2];
         return [3];
@@ -109,20 +126,51 @@ function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]
       extractor: (m) => [parseInt(m[1]), parseInt(m[2])]
     },
     // "X. basamak sağlık hizmeti sunucularında/tarafından yapılır/faturalandırılır"
-    // nonRestrictionPatterns ile "%30 ilave edilir" gibi puan artışı cümleleri filtrelenir
+    // Relaxed: also matches "kuruluş", "kurum", "sunucu" without suffix requirement
     {
-      regex: /(\d)\.\s*basamak\s+(?:sağlık|saglik).{0,60}(?:yapılır|yapilir|faturalandırılır|faturalandirilir|sunucularında|sunucularinca)/gi,
+      regex: /(\d)\.\s*basamak\s+(?:sağlık|saglik).{0,60}(?:yapılır|yapilir|faturalandırılır|faturalandirilir|faturalandırılmaz|sunucularında|sunucularınca|sunucularinca|kuruluş|kurulus|kurum|sunucu|tarafından|tarafindan)/gi,
       extractor: (m) => [parseInt(m[1])]
     },
     // "üçüncü/ikinci basamak sağlık hizmeti sunucularında faturalandırılır"
+    // Relaxed: also matches "kuruluş", "kurum", "sunucu"
     {
-      regex: /(?:birinci|ikinci|üçüncü|ucuncu)\s+basamak\s+(?:sağlık|saglik).{0,60}(?:yapılır|yapilir|faturalandırılır|faturalandirilir|sunucularında|sunucularinca)/gi,
+      regex: /(?:birinci|ikinci|üçüncü|ucuncu)\s+basamak\s+(?:sağlık|saglik).{0,60}(?:yapılır|yapilir|faturalandırılır|faturalandirilir|faturalandırılmaz|sunucularında|sunucularınca|sunucularinca|kuruluş|kurulus|kurum|sunucu|tarafından|tarafindan)/gi,
       extractor: (m) => {
-        const txt = m[0].toLowerCase();
+        const txt = turkishLower(m[0]);
         if (txt.includes('birinci')) return [1];
         if (txt.includes('ikinci')) return [2];
         return [3];
       }
+    },
+    // "X. basamak ... kuruluşlarında" without "sağlık" in between
+    {
+      regex: /(\d)\.\s*basamak\s+.{0,40}(?:kuruluşlarında|kuruluslarinda|kurumlarında|kurumlarinda|sunucularında|sunucularinda)/gi,
+      extractor: (m) => [parseInt(m[1])]
+    },
+    // "birinci/ikinci/üçüncü basamak ... kuruluşlarında" without "sağlık"
+    {
+      regex: /(?:birinci|ikinci|üçüncü|ucuncu)\s+basamak\s+.{0,40}(?:kuruluşlarında|kuruluslarinda|kurumlarında|kurumlarinda|sunucularında|sunucularinda)/gi,
+      extractor: (m) => {
+        const txt = turkishLower(m[0]);
+        if (txt.includes('birinci')) return [1];
+        if (txt.includes('ikinci')) return [2];
+        return [3];
+      }
+    },
+    // "üçüncü basamak ... uzmanı tarafından" — combined basamak+branş
+    {
+      regex: /(?:birinci|ikinci|üçüncü|ucuncu)\s+basamak\s+.{0,60}(?:uzmanı|uzmani|uzmanları|uzmanlari|hekimi|hekimleri)\s+(?:tarafından|tarafindan)/gi,
+      extractor: (m) => {
+        const txt = turkishLower(m[0]);
+        if (txt.includes('birinci')) return [1];
+        if (txt.includes('ikinci')) return [2];
+        return [3];
+      }
+    },
+    // "X. basamak ... uzmanı tarafından"
+    {
+      regex: /(\d)\.\s*basamak\s+.{0,60}(?:uzmanı|uzmani|uzmanları|uzmanlari|hekimi|hekimleri)\s+(?:tarafından|tarafindan)/gi,
+      extractor: (m) => [parseInt(m[1])]
     },
   ];
 
@@ -144,10 +192,14 @@ function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]
         // Eğer bağlam puan artışı/ilave ise, bu bir kısıt değil — atla
         if (isNonRestriction) continue;
 
+        const mode = detectMode(match[0], context);
+        const params: Record<string, any> = { basamaklar };
+        if (mode) params.mode = mode;
+
         rules.push({
           type: 'BASAMAK_KISITI',
           rawText: rawText.trim(),
-          params: { basamaklar }
+          params
         });
         return; // Bir basamak kuralı yeterli
       }
@@ -157,6 +209,14 @@ function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]
 
 // ── BRANŞ KISITI Çıkarma ──
 function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) {
+  // Mode tespiti: dahil mi haric mi?
+  function detectBransMode(ctx: string): string | undefined {
+    if (/(?:yalnızca|yalnizca|sadece|yalnız)\s/.test(ctx)) return 'sadece';
+    if (/(?:hariç|haric|dışında|disinda)/.test(ctx)) return 'haric';
+    if (/(?:dahil|de\s+uygulan)/.test(ctx)) return 'dahil';
+    return undefined;
+  }
+
   // Daha geniş yakalama pattern'leri
   const patterns = [
     // "sadece/yalnızca ... uzmanları/hekimleri/tarafından"
@@ -166,7 +226,15 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
     // "branş kısıtlaması: ..."
     /branş\s*kısıtlaması\s*[:;]\s*(.+?)(?:\.|$)/gi,
     // "... cerrahisi ve/veya ... tarafından yapılır/faturalandırılır"
-    /(.+?(?:cerrahisi|cerrahı|uzmanı|uzmani|hekimi|hekimliği)(?:\s+(?:ve\/veya|ve|veya)\s+.+?)*)\s+(?:tarafından|tarafindan)\s+(?:yapılır|yapilir|faturalandırılır|faturalandirilir)/gi,
+    /(.+?(?:cerrahisi|cerrahı|uzmanı|uzmani|hekimi|hekimliği)(?:\s+(?:ve\/veya|ve|veya)\s+.+?)*)\s+(?:tarafından|tarafindan)\s+(?:yapılır|yapilir|faturalandırılır|faturalandirilir|faturalandırılmaz)/gi,
+    // "X uzman hekimlerince de uygulandığında faturalandırılır"
+    /(.+?)\s+(?:uzman\s+)?(?:hekimlerince|hekimleri|uzmanlarınca|uzmanlarinca)\s+(?:de\s+)?(?:uygulandığında|uygulandiginda|yapıldığında|yapildiginda)\s+(?:faturalandırılır|faturalandirilir)/gi,
+    // "X uzman hekimi tarafından yapılması halinde faturalandırılır"
+    /(.+?)\s+(?:uzman\s+)?(?:hekimi|uzmanı|uzmani)\s+(?:tarafından|tarafindan)\s+(?:yapılması|yapilmasi)\s+(?:halinde|durumunda)\s+(?:faturalandırılır|faturalandirilir)/gi,
+    // "X hekimlerince de uygulandığında" — shorter form
+    /(.+?)\s+hekimlerince\s+de\s+uygulandığında/gi,
+    // "X uzmanlarınca yapılır/faturalandırılır" — without "tarafından"
+    /(.+?)\s+(?:uzmanlarınca|uzmanlarinca|hekimlerince)\s+(?:yapılır|yapilir|faturalandırılır|faturalandirilir|faturalandırılmaz)/gi,
   ];
 
   for (const pattern of patterns) {
@@ -185,13 +253,35 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
             .replace(/^\s*(biri?|birisi)\s+/gi, '')
             .trim()
           )
-          .filter(b => b.length > 2);
+          .filter(b => b.length > 2)
+          // Türkçe stop-words ve anlamsız kelimeler branş adı olamaz
+          .filter(b => {
+            const stopWords = new Set([
+              'için', 'icin', 'olan', 'olarak', 'ile', 'bir', 'her', 'bu', 'şu', 'de', 'da',
+              'den', 'dan', 'dir', 'dır', 'ise', 'gibi', 'kadar', 'sonra', 'önce', 'once',
+              'ancak', 'ama', 'fakat', 'sadece', 'yalnızca', 'yalnizca', 'bizzat', 'ayrıca',
+              'ayrica', 'dışında', 'disinda', 'hariç', 'haric', 'dahil', 'tüm', 'tum',
+              'tarafından', 'tarafindan', 'halinde', 'durumunda', 'yapılır', 'yapilir',
+              'faturalandırılır', 'faturalandirilir', 'puanlandırılır', 'puanlandirilir',
+              'uygulanır', 'uygulanir', 'kullanılır', 'kullanilir', 'gerekir', 'gerekmektedir',
+              'yapılması', 'yapilmasi', 'bulunmadığında', 'bulunmadiginda',
+              'tanımlı', 'tanimli', 'günlük', 'gunluk', 'hasta', 'başı', 'basi',
+            ]);
+            return !stopWords.has(turkishLower(b));
+          });
 
         if (branslar.length > 0) {
+          const contextStart = Math.max(0, match.index - 40);
+          const contextEnd = Math.min(lower.length, match.index + match[0].length + 40);
+          const ctx = lower.substring(contextStart, contextEnd);
+          const mode = detectBransMode(ctx);
+          const params: Record<string, any> = { branslar };
+          if (mode) params.mode = mode;
+
           rules.push({
             type: 'BRANS_KISITI',
             rawText: rawText.trim(),
-            params: { branslar }
+            params
           });
           return;
         }
@@ -201,7 +291,8 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
 
   // Fallback: Metin içinde bilinen branş isimlerini doğrudan ara
   // (Eğer yukarıdaki pattern'ler yakalamazsa)
-  if (lower.includes('branş') || lower.includes('uzman') || lower.includes('hekim')) {
+  if (lower.includes('branş') || lower.includes('uzman') || lower.includes('hekim')
+      || lower.includes('hekimlerince') || lower.includes('cerrah')) {
     const bilinen = [
       'çocuk cerrahisi', 'çocuk üroloji', 'kadın doğum', 'kadın hastalıkları',
       'plastik cerrahi', 'çocuk endokrinoloji', 'genel cerrahi', 'ortopedi',
@@ -211,6 +302,14 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
       'enfeksiyon hastalıkları', 'endokrinoloji', 'nefroloji', 'hematoloji',
       'romatoloji', 'onkoloji', 'radyoloji', 'nükleer tıp', 'acil tıp',
       'perinatoloji', 'jinekolojik onkoloji', 'ağız diş',
+      // Yeni eklenen branşlar (AI audit bulguları)
+      'spor hekimliği', 'tıbbi ekoloji', 'hidroklimatoloji', 'geriatri',
+      'allerji', 'immünoloji', 'ruh sağlığı', 'çocuk nöroloji', 'çocuk acil',
+      'anestezi', 'algoloji', 'yoğun bakım', 'palyatif bakım',
+      'tıbbi genetik', 'çocuk hematoloji', 'çocuk onkoloji',
+      'çocuk gastroenteroloji', 'çocuk nefroloji', 'çocuk kardiyoloji',
+      'çocuk endokrin', 'çocuk enfeksiyon', 'çocuk romatoloji',
+      'çocuk göğüs', 'çocuk allerji', 'çocuk immünoloji',
     ];
 
     const bulunan: string[] = [];
@@ -221,10 +320,14 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
     }
 
     if (bulunan.length > 0) {
+      const mode = detectBransMode(lower);
+      const params: Record<string, any> = { branslar: bulunan };
+      if (mode) params.mode = mode;
+
       rules.push({
         type: 'BRANS_KISITI',
         rawText: rawText.trim(),
-        params: { branslar: bulunan }
+        params
       });
     }
   }
@@ -233,23 +336,51 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
 // ── BİRLİKTE YAPILAMAZ Çıkarma ──
 function extractBirlikteYapilamazRules(lower: string, rawText: string, rules: ParsedRule[]) {
   const patterns = [
-    /birlikte\s+(?:faturalandırılamaz|faturalandirilama|kodlanamaz|ödenmez|odenmez)/gi,
-    /aynı\s+seansta\s+(?:birlikte\s+)?(?:faturalandırılamaz|faturalandirilama|kodlanamaz|ödenmez)/gi,
-    /ile\s+birlikte\s+(?:faturalandırılamaz|faturalandirilama|kodlanamaz|ödenmez)/gi,
+    // Orijinal pattern'ler (ılamaz formu)
+    /birlikte\s+(?:faturalandırılamaz|faturalandirilama[z]?|kodlanamaz|ödenmez|odenmez)/gi,
+    /aynı\s+seansta\s+(?:birlikte\s+)?(?:faturalandırılamaz|faturalandirilama[z]?|faturalandırılmaz|faturalandirilmaz|kodlanamaz|ödenmez)/gi,
+    /ile\s+birlikte\s+(?:faturalandırılamaz|faturalandirilama[z]?|faturalandırılmaz|faturalandirilmaz|kodlanamaz|ödenmez)/gi,
     /birlikte\s+(?:fatura\s+edilemez|fatura\s+edilmez)/gi,
+
+    // === YENİ: "birlikte faturalandırılmaz" — #1 miss (1069 cases) ===
+    /birlikte\s+faturalandırılmaz/gi,
+    /birlikte\s+faturalandirilmaz/gi,
+
+    // === YENİ: "ile faturalandırılmaz" without "birlikte" ===
+    /ile\s+faturalandırılmaz/gi,
+    /ile\s+faturalandirilmaz/gi,
+    /ile\s+faturalandırılamaz/gi,
+
+    // === YENİ: "beraber faturalandırılmaz/faturalandırılamaz" ===
+    /beraber\s+(?:faturalandırılmaz|faturalandirilmaz|faturalandırılamaz|faturalandirilama[z]?|kodlanamaz|ödenmez)/gi,
+
+    // === YENİ: "birlikte puanlandırılmaz/puanlandırılamaz" ===
+    /birlikte\s+(?:puanlandırılmaz|puanlandirilmaz|puanlandırılamaz|puanlandirilama[z]?)/gi,
+
+    // === YENİ: "beraber puanlandırılmaz" ===
+    /beraber\s+(?:puanlandırılmaz|puanlandirilmaz|puanlandırılamaz|puanlandirilama[z]?)/gi,
+
+    // "aynı seansta ... faturalandırılmaz" (broader)
+    /aynı\s+seansta\s+.{0,30}(?:faturalandırılmaz|faturalandirilmaz)/gi,
+
+    // "birlikte ödenmez/kodlanmaz"
+    /birlikte\s+(?:kodlanmaz|ödenmez|odenmez)/gi,
   ];
 
   for (const pattern of patterns) {
     const r = new RegExp(pattern.source, pattern.flags);
     let match: RegExpExecArray | null;
     while ((match = r.exec(lower)) !== null) {
-      // Yakın çevreden işlem kodları çıkar
+      // Yakın çevreden işlem kodları çıkar — genişletilmiş arama alanı
       const context = lower.substring(
-        Math.max(0, match.index - 100),
-        Math.min(lower.length, match.index + match[0].length + 100)
+        Math.max(0, match.index - 200),
+        Math.min(lower.length, match.index + match[0].length + 200)
       );
-      const codeMatches = context.match(/\b(\d{5,7})\b/g) || [];
-      const yapilamazKodlari = [...new Set(codeMatches)];
+      // Genişletilmiş kod pattern'leri: standart 5-7 haneli kodlar + R/L prefix + noktalı kodlar
+      const codeMatches = context.match(/\b(?:[rl]?\d{5,7}|\d{3}\.\d{3})\b/gi) || [];
+      const yapilamazKodlari = [...new Set(
+        codeMatches.map(c => c.toUpperCase())
+      )];
 
       rules.push({
         type: 'BIRLIKTE_YAPILAMAZ',
@@ -262,26 +393,103 @@ function extractBirlikteYapilamazRules(lower: string, rawText: string, rules: Pa
 }
 
 // ── SIKLIK LİMİT Çıkarma ──
+
+/** Türkçe sayı kelimesini sayıya çevirir */
+function turkishWordToNumber(word: string): number | null {
+  const lower = turkishLower(word.trim());
+  const map: Record<string, number> = {
+    'bir': 1, 'iki': 2, 'üç': 3, 'uc': 3, 'dört': 4, 'dort': 4,
+    'beş': 5, 'bes': 5, 'altı': 6, 'alti': 6, 'yedi': 7,
+    'sekiz': 8, 'dokuz': 9, 'on': 10, 'yirmi': 20, 'otuz': 30, 'kırk': 40, 'kirk': 40, 'elli': 50,
+  };
+  return map[lower] ?? null;
+}
+
+/** Sayı veya Türkçe sayı kelimesi yakalayıp sayıya çevirir */
+function parseNumberOrWord(str: string): number | null {
+  const trimmed = str.trim();
+  const num = parseInt(trimmed);
+  if (!isNaN(num) && num > 0) return num;
+  return turkishWordToNumber(trimmed);
+}
+
+// Sayı veya Türkçe sayı kelimesi regex parçası
+const NUM_OR_WORD = '(?:\\d+|bir|iki|üç|uc|dört|dort|beş|bes|altı|alti|yedi|sekiz|dokuz|on|yirmi|otuz|kırk|kirk|elli)';
+
 function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[]) {
+  // "kez", "adet", "defa" hepsi sayılır
+  const COUNT_UNIT = '(?:kez|adet|defa|kere|sefer)';
+
   const patterns: { regex: RegExp; periyot: string; limitGroup: number }[] = [
-    { regex: /günde\s+en\s+fazla\s+(\d+)\s+kez/gi, periyot: 'gun', limitGroup: 1 },
-    { regex: /gunde\s+en\s+fazla\s+(\d+)\s+kez/gi, periyot: 'gun', limitGroup: 1 },
-    { regex: /yılda\s+en\s+fazla\s+(\d+)\s+kez/gi, periyot: 'yil', limitGroup: 1 },
-    { regex: /yilda\s+en\s+fazla\s+(\d+)\s+kez/gi, periyot: 'yil', limitGroup: 1 },
-    { regex: /ayda\s+en\s+fazla\s+(\d+)\s+kez/gi, periyot: 'ay', limitGroup: 1 },
-    { regex: /haftada\s+en\s+fazla\s+(\d+)\s+kez/gi, periyot: 'hafta', limitGroup: 1 },
-    { regex: /haftada\s+(\d+)\s+kez/gi, periyot: 'hafta', limitGroup: 1 },
-    { regex: /(\d+)\s+günde\s+bir/gi, periyot: 'gun', limitGroup: 1 },
-    { regex: /(\d+)\s+gunde\s+bir/gi, periyot: 'gun', limitGroup: 1 },
-    { regex: /(\d+)\s+ayda\s+bir/gi, periyot: 'ay', limitGroup: 1 },
+    // === GÜNDE ===
+    // "günde en fazla X kez/adet/defa"
+    { regex: new RegExp(`günde\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    { regex: new RegExp(`gunde\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    // "günde X adet/kez/defa faturalandırılır"
+    { regex: new RegExp(`günde\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir|faturalandırılmaz)`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    { regex: new RegExp(`gunde\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir)`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    // "günde X kez/adet/defa" (without suffix)
+    { regex: new RegExp(`günde\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
+
+    // === YILDA ===
+    // "yılda en fazla X kez/adet/defa"
+    { regex: new RegExp(`yılda\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    { regex: new RegExp(`yilda\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    // "yılda X adet/kez/defa faturalandırılır"
+    { regex: new RegExp(`yılda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir|faturalandırılmaz)`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    { regex: new RegExp(`yilda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir)`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    // "yılda X kez/adet/defa" (without suffix)
+    { regex: new RegExp(`yılda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
+
+    // === AYDA ===
+    // "ayda en fazla X kez/adet/defa"
+    { regex: new RegExp(`ayda\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'ay', limitGroup: 1 },
+    // "ayda X adet/kez/defa faturalandırılır"
+    { regex: new RegExp(`ayda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir|faturalandırılmaz)`, 'gi'), periyot: 'ay', limitGroup: 1 },
+    // "ayda X adet/kez/defa" (without suffix) — 186 cases!
+    { regex: new RegExp(`ayda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'ay', limitGroup: 1 },
+
+    // === HAFTADA ===
+    // "haftada en fazla X kez/adet/defa"
+    { regex: new RegExp(`haftada\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'hafta', limitGroup: 1 },
+    // "haftada X kez/adet/defa"
+    { regex: new RegExp(`haftada\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'hafta', limitGroup: 1 },
+
+    // === X GÜNDE/AYDA BİR ===
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+günde\\s+bir`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+gunde\\s+bir`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+ayda\\s+bir`, 'gi'), periyot: 'ay', limitGroup: 1 },
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+yılda\\s+bir`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+haftada\\s+bir`, 'gi'), periyot: 'hafta', limitGroup: 1 },
+
+    // === EN FAZLA X ADET/DEFA (without period prefix) — 193 cases! ===
+    { regex: new RegExp(`en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir|faturalandırılmaz)`, 'gi'), periyot: 'genel', limitGroup: 1 },
+    { regex: new RegExp(`en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'genel', limitGroup: 1 },
+
+    // === X ADET FATURALANDIRILIR (without period prefix) — 193 cases! ===
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+faturalandırılır`, 'gi'), periyot: 'genel', limitGroup: 1 },
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+faturalandirilir`, 'gi'), periyot: 'genel', limitGroup: 1 },
+
+    // === "bir defa/kez faturalandırılır" — 6 cases ===
+    { regex: new RegExp(`(bir)\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir)`, 'gi'), periyot: 'genel', limitGroup: 1 },
+
+    // === "X günden önce faturalandırılmaz" — min X days between ===
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+günden\\s+önce\\s+(?:faturalandırılmaz|faturalandirilmaz|faturalandırılamaz)`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+gunden\\s+once\\s+(?:faturalandırılmaz|faturalandirilmaz)`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
+
+    // === "X aydan önce faturalandırılmaz" ===
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+aydan\\s+önce\\s+(?:faturalandırılmaz|faturalandirilmaz|faturalandırılamaz)`, 'gi'), periyot: 'ay_aralik', limitGroup: 1 },
+
+    // === "X gün ara ile" / "X gün arayla" ===
+    { regex: new RegExp(`(${NUM_OR_WORD})\\s+gün\\s+(?:ara\\s+ile|arayla|aralar?la)`, 'gi'), periyot: 'gun_aralik', limitGroup: 1 },
   ];
 
   for (const { regex, periyot, limitGroup } of patterns) {
     const r = new RegExp(regex.source, regex.flags);
     let match: RegExpExecArray | null;
     while ((match = r.exec(lower)) !== null) {
-      const limit = parseInt(match[limitGroup]);
-      if (!isNaN(limit) && limit > 0) {
+      const limit = parseNumberOrWord(match[limitGroup]);
+      if (limit !== null && limit > 0) {
         rules.push({
           type: 'SIKLIK_LIMIT',
           rawText: rawText.trim(),
@@ -299,6 +507,7 @@ function extractTaniRules(original: string, rawText: string, rules: ParsedRule[]
   const icdPattern = /\b([A-Z]\d{2}(?:\.\d{1,2})?)\b/g;
   const taniBaglam = /(?:tanı|tani|icd|teşhis|teshis)/i;
 
+  // Path 1: ICD kodları ile tanı koşulu (orijinal yol)
   if (taniBaglam.test(original)) {
     const kodlar: string[] = [];
     let m: RegExpExecArray | null;
@@ -311,19 +520,130 @@ function extractTaniRules(original: string, rawText: string, rules: ParsedRule[]
         rawText: rawText.trim(),
         params: { taniKodlari: [...new Set(kodlar)] }
       });
+      return;
     }
+  }
+
+  // Path 2: Koşul bazlı tanı kuralları (ICD kodu olmadan)
+  // Tıbbi bağlam göstergeleri + faturalandırma/uygulama ifadesi
+  const lower = turkishLower(original);
+
+  // Tıbbi koşul pattern'leri
+  const medicalConditionPatterns = [
+    // "X amaçlı yapılan işlemler için faturalandırılır"
+    /(.{10,80})\s+amaçlı\s+(?:yapılan|yapilan)?\s*(?:işlemler?\s+)?(?:için\s+)?(?:faturalandırılır|faturalandirilir|uygulanır|uygulanir)/gi,
+    // "X amaçlı ... faturalandırılır" (broader)
+    /(.{10,80})\s+amaçlı\s+.{0,40}(?:faturalandırılır|faturalandirilir)/gi,
+    // "X tedavisinde faturalandırılır/uygulanır"
+    /(.{10,80})\s+tedavisinde\s+(?:faturalandırılır|faturalandirilir|uygulanır|uygulanir|kullanılır|kullanilir)/gi,
+    // "X hastalığında/durumunda faturalandırılır"
+    /(.{10,80})\s+(?:hastalığında|hastaliginda|durumunda)\s+(?:faturalandırılır|faturalandirilir|uygulanır|uygulanir)/gi,
+    // "X halinde faturalandırılır" (hekim/uzman koşulları loop içinde filtrelenir)
+    /(.{10,80})\s+halinde\s+(?:faturalandırılır|faturalandirilir|uygulanır|uygulanir)/gi,
+    // "X tedavisinde" standalone (treatment context)
+    /(?:transplantasyon|kemoterapi|radyoterapi|diyaliz|hemodiyaliz|immünoterapi|nöropatik|onkoloji|hematoloji|romatoloji)[\w]*\s+(?:amaçlı|tedavisinde|hastalığında|durumunda)/gi,
+  ];
+
+  for (const pattern of medicalConditionPatterns) {
+    const r = new RegExp(pattern.source, pattern.flags);
+    let match: RegExpExecArray | null;
+    while ((match = r.exec(lower)) !== null) {
+      // Yakalanan tıbbi koşul metnini al
+      const conditionText = (match[1] || match[0]).trim();
+
+      // Çok kısa veya çok genel ise atla
+      if (conditionText.length < 10) continue;
+
+      // Hekim/uzmanlık/yapılma koşullarını tanı koşulu olarak kabul etme
+      if (/(?:tarafından|tarafindan|yapılması|yapilmasi|hekimi|uzman\s+hekim)/i.test(conditionText)) continue;
+
+      // ICD kodları da olabilir metinde - yine çıkar
+      const kodlar: string[] = [];
+      const icdR = new RegExp(icdPattern.source, icdPattern.flags);
+      let icdM: RegExpExecArray | null;
+      while ((icdM = icdR.exec(original)) !== null) {
+        kodlar.push(icdM[1]);
+      }
+
+      rules.push({
+        type: 'TANI_KOSULU',
+        rawText: rawText.trim(),
+        params: {
+          taniKodlari: [...new Set(kodlar)],
+          kosul: conditionText,
+        }
+      });
+      return;
+    }
+  }
+
+  // Path 3: ICD kodları tanı bağlamı olmadan ama belirli tıbbi terimlerle
+  // "... tanısı konulmuş", "... tanılı hastalar"
+  const taniContextPatterns = [
+    /tanısı\s+(?:konulmuş|konulmus|konulan|alan)/i,
+    /tanılı\s+(?:hastalar|olgular)/i,
+    /endikasyonunda/i,
+  ];
+
+  if (taniContextPatterns.some(p => p.test(lower))) {
+    const kodlar: string[] = [];
+    let m: RegExpExecArray | null;
+    const icdR2 = new RegExp(icdPattern.source, icdPattern.flags);
+    while ((m = icdR2.exec(original)) !== null) {
+      kodlar.push(m[1]);
+    }
+    // ICD kodu yoksa bile tanı koşulu olarak ekle
+    rules.push({
+      type: 'TANI_KOSULU',
+      rawText: rawText.trim(),
+      params: {
+        taniKodlari: [...new Set(kodlar)],
+        kosul: rawText.trim().substring(0, 200),
+      }
+    });
   }
 }
 
 // ── DİŞ TEDAVİ Çıkarma ──
 function extractDisRules(lower: string, rawText: string, rules: ParsedRule[]) {
   const patterns = [
+    // Orijinal pattern'ler
     /diş\s+(?:tedavisi|numarası|numarasi|hekimliği|hekimligi)/gi,
     /dis\s+(?:tedavisi|numarasi|hekimligi)/gi,
     /her\s+bir\s+diş\s+için/gi,
     /her\s+bir\s+dis\s+icin/gi,
     /diş\s+başına/gi,
     /dis\s+basina/gi,
+
+    // === YENİ: "aynı diş" kalıpları ===
+    // "aynı diş için X günden önce faturalandırılmaz" — dental frequency rule
+    /aynı\s+diş\s+için\s+\d+\s+günden\s+önce\s+(?:faturalandırılmaz|faturalandirilmaz|faturalandırılamaz)/gi,
+    /ayni\s+dis\s+icin\s+\d+\s+gunden\s+once\s+(?:faturalandirilmaz)/gi,
+    // "aynı günde aynı diş için" — same-day same-tooth
+    /aynı\s+günde\s+aynı\s+diş\s+için/gi,
+    /ayni\s+gunde\s+ayni\s+dis\s+icin/gi,
+    // "aynı diş için" genel
+    /aynı\s+diş\s+için/gi,
+    /ayni\s+dis\s+icin/gi,
+    // "aynı diş" (broader)
+    /aynı\s+diş(?:\s|,|\.)/gi,
+    /ayni\s+dis(?:\s|,|\.)/gi,
+
+    // === YENİ: lokal anestezi diş bağlamı ===
+    /lokal\s+anestezi\s+ücreti\s+(?:dahildir|dahil)/gi,
+    /lokal\s+anestezi\s+ucreti\s+(?:dahildir|dahil)/gi,
+
+    // === YENİ: diş numarası bazlı ===
+    /diş\s+(?:no|numarası|numarasi)\s+(?:belirtilmek|belirtilmelidir|yazılmalıdır|yazilmalidir)/gi,
+    /dis\s+(?:no|numarasi)\s+(?:belirtilmek|belirtilmelidir|yazilmalidir)/gi,
+
+    // "her diş için" (without "bir")
+    /her\s+diş\s+için/gi,
+    /her\s+dis\s+icin/gi,
+
+    // "diş başına" alternatif yazımlar
+    /dişe\s+(?:özel|ozel)/gi,
+    /dise\s+(?:ozel)/gi,
   ];
 
   for (const pattern of patterns) {
@@ -372,11 +692,23 @@ function getHeaderText(row: any[], config: EkSourceConfig): string {
  * Satır kuralları öncelikli: aynı tip kural zaten varsa bölüm kuralı eklenmez.
  */
 function mergeRules(rowRules: ParsedRule[], sectionRules: ParsedRule[]): ParsedRule[] {
+  // Section kurallarını bölüm başlığından geldi olarak işaretle
+  for (const sr of sectionRules) {
+    sr.fromSectionHeader = true;
+  }
   if (sectionRules.length === 0) return rowRules;
   if (rowRules.length === 0) return [...sectionRules];
   const rowRuleTypes = new Set(rowRules.map(r => r.type));
   const additional = sectionRules.filter(sr => !rowRuleTypes.has(sr.type));
   return [...rowRules, ...additional];
+}
+
+/** Her ParsedRule'a kaynak damgası bas */
+function stampKaynak(rules: ParsedRule[], kaynak: RuleKaynak): ParsedRule[] {
+  for (const r of rules) {
+    if (!r.kaynak) r.kaynak = kaynak;
+  }
+  return rules;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -509,7 +841,7 @@ export function buildRulesMaster(
         islem_puani: puan,
         islem_fiyati: fiyat,
         aciklama_raw: aciklama,
-        parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+        parsed_rules: stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), sectionRules), 'EK-2B'),
         section_header: sectionHeader || undefined,
       };
 
@@ -550,7 +882,7 @@ export function buildRulesMaster(
         islem_fiyati: fiyat,
         aciklama_raw: aciklama,
         islem_grubu: String(row[3] || '').trim(),
-        parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+        parsed_rules: stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), sectionRules), 'EK-2C'),
         section_header: sectionHeader || undefined,
       };
 
@@ -589,7 +921,7 @@ export function buildRulesMaster(
         islem_puani: puan,
         islem_fiyati: fiyat,
         aciklama_raw: aciklama,
-        parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+        parsed_rules: stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), sectionRules), 'EK-2Ç'),
         section_header: sectionHeader || undefined,
       };
 
@@ -627,11 +959,13 @@ export function buildRulesMaster(
         existing.ameliyat_grubu = String(row[4] || '').trim();
         existing.gil_puani = puan;
         existing.gil_fiyati = fiyat;
+        existing.gil_aciklama = aciklama || undefined;
+        existing.gil_section_header = sectionHeader || undefined;
         if (!existing.section_header && sectionHeader) {
           existing.section_header = sectionHeader;
         }
         // GİL açıklamasından + bölüm başlığından ek kurallar çıkar
-        const gilRules = mergeRules(extractRulesFromAciklama(aciklama), sectionRules);
+        const gilRules = stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), sectionRules), 'GİL');
         for (const r of gilRules) {
           // Aynı tip kural yoksa ekle
           if (!existing.parsed_rules.some(er => er.type === r.type)) {
@@ -649,7 +983,7 @@ export function buildRulesMaster(
           ameliyat_grubu: String(row[4] || '').trim(),
           gil_puani: puan,
           gil_fiyati: fiyat,
-          parsed_rules: mergeRules(extractRulesFromAciklama(aciklama), sectionRules),
+          parsed_rules: stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), sectionRules), 'GİL'),
           section_header: sectionHeader || undefined,
         };
         master.set(kodu, entry);
@@ -782,6 +1116,23 @@ export async function buildRulesMasterHybrid(
     const sectionHeader = entry.section_header || '';
     const aiRulesAciklama = aiResults.get(aciklama) || [];
     const aiRulesHeader = sectionHeader !== aciklama ? (aiResults.get(sectionHeader) || []) : [];
+
+    // Aciklama kurallarına kaynak damgası: aciklama_raw entry'nin orijinal kaynağından gelir
+    stampKaynak(aiRulesAciklama, entry.kaynak);
+    // Header kurallarına kaynak + fromSectionHeader damgası
+    for (const r of aiRulesHeader) {
+      r.fromSectionHeader = true;
+    }
+    if (entry.gil_section_header && sectionHeader === entry.gil_section_header) {
+      stampKaynak(aiRulesHeader, 'GİL');
+    } else if (entry.gil_section_header && entry.aciklama_raw !== sectionHeader) {
+      // section_header entry'nin kendi açıklaması değilse ve GİL section_header mevcutsa
+      // metin muhtemelen GİL bölüm başlığından gelmiştir
+      stampKaynak(aiRulesHeader, 'GİL');
+    } else {
+      stampKaynak(aiRulesHeader, entry.kaynak);
+    }
+
     const allAIRules = [...aiRulesAciklama, ...aiRulesHeader];
 
     if (allAIRules.length === 0) continue;
@@ -796,6 +1147,18 @@ export async function buildRulesMasterHybrid(
     const aiDeterministicRules = allAIRules.filter(r => !semanticTypes.has(r.type));
     const existingTypes = new Set(deterministicRules.map(r => r.type));
     const additionalAIDeterministic = aiDeterministicRules.filter(r => !existingTypes.has(r.type));
+
+    // AI kurallarına ek kaynak kontrolü (yukarıda stampKaynak ile basılmışsa dokunma)
+    // GİL açıklamasından gelen kuralları da kontrol et
+    for (const r of [...aiSemanticRules, ...additionalAIDeterministic]) {
+      if (!r.kaynak) {
+        if (entry.gil_aciklama && r.rawText === entry.gil_aciklama) {
+          r.kaynak = 'GİL';
+        } else {
+          r.kaynak = entry.kaynak;
+        }
+      }
+    }
 
     // Birleştir: regex deterministik + AI semantik + AI ek deterministik
     const mergedRules = [...deterministicRules, ...aiSemanticRules, ...additionalAIDeterministic];

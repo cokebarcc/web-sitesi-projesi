@@ -158,10 +158,11 @@ export interface IslemSatiri {
   adiSoyadi: string;
   islemNo: string;
   disNumarasi: string;
+  [key: string]: string | number; // Dinamik ekstra sütunlar
 }
 
-// Tablo sütun tanımları
-const TABLE_COLUMNS: { key: keyof IslemSatiri; label: string; align?: 'left' | 'right' | 'center'; minW?: string }[] = [
+// Bilinen (sabit) tablo sütun tanımları
+const KNOWN_TABLE_COLUMNS: { key: string; label: string; align?: 'left' | 'right' | 'center'; minW?: string }[] = [
   { key: 'tarih', label: 'Tarih', minW: '90px' },
   { key: 'saat', label: 'Saat', minW: '60px' },
   { key: 'uzmanlik', label: 'Uzmanlık', minW: '160px' },
@@ -210,7 +211,7 @@ function excelTimeToString(value: any): string {
 }
 
 // Sütun adı eşleştirme haritası
-const COLUMN_MAP: Record<string, keyof IslemSatiri> = {
+const COLUMN_MAP: Record<string, string> = {
   'tarih': 'tarih',
   'saat': 'saat',
   'uzmanlik': 'uzmanlik',
@@ -260,7 +261,7 @@ export function turkishLower(str: string): string {
     .toLowerCase();
 }
 
-function matchColumn(header: string): keyof IslemSatiri | null {
+function matchColumn(header: string): string | null {
   const normalized = turkishLower(header).replace(/[*\s]+/g, ' ').trim();
   // Direkt eşleşme
   if (COLUMN_MAP[normalized]) return COLUMN_MAP[normalized];
@@ -274,23 +275,29 @@ function matchColumn(header: string): keyof IslemSatiri | null {
   return null;
 }
 
+// Parse sonucu: satırlar + ekstra sütun bilgileri
+interface ParseResult {
+  rows: IslemSatiri[];
+  extraColumns: { key: string; label: string }[];
+}
+
 // Excel parse fonksiyonu
-function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): IslemSatiri[] {
+function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): ParseResult {
   try {
     const data = new Uint8Array(arrayBuffer);
     const workbook = XLSX.read(data, { type: 'array', cellDates: false });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' }) as any[][];
 
-    if (jsonData.length < 2) return [];
+    if (jsonData.length < 2) return { rows: [], extraColumns: [] };
 
     // Header satırını bul
     let headerRowIdx = -1;
-    let columnMapping: Record<number, keyof IslemSatiri> = {};
+    let columnMapping: Record<number, string> = {};
 
     for (let i = 0; i < Math.min(jsonData.length, 5); i++) {
       const row = jsonData[i];
-      const tempMapping: Record<number, keyof IslemSatiri> = {};
+      const tempMapping: Record<number, string> = {};
       let matchCount = 0;
 
       for (let j = 0; j < row.length; j++) {
@@ -312,10 +319,25 @@ function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): IslemSatiri[] {
 
     if (headerRowIdx === -1) {
       console.warn('[HEKİM İŞLEM LİSTESİ] Header satırı bulunamadı');
-      return [];
+      return { rows: [], extraColumns: [] };
     }
 
-    console.log('[HEKİM İŞLEM LİSTESİ] Header bulundu satır:', headerRowIdx, 'Eşleşmeler:', columnMapping);
+    // Eşleşmeyen sütunları da yakala (dinamik sütunlar)
+    const headerRow = jsonData[headerRowIdx];
+    const unmappedColumns: Record<number, string> = {};
+    for (let j = 0; j < headerRow.length; j++) {
+      const cellVal = String(headerRow[j] || '').trim();
+      if (!cellVal) continue;
+      if (columnMapping[j]) continue; // Zaten bilinen bir sütuna eşleşmiş
+      unmappedColumns[j] = cellVal;
+    }
+
+    const extraColumns = Object.values(unmappedColumns).map(header => ({
+      key: header,
+      label: header,
+    }));
+
+    console.log('[HEKİM İŞLEM LİSTESİ] Header bulundu satır:', headerRowIdx, 'Eşleşmeler:', columnMapping, 'Ekstra sütunlar:', extraColumns.map(c => c.label));
 
     const rows: IslemSatiri[] = [];
 
@@ -344,6 +366,7 @@ function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): IslemSatiri[] {
         disNumarasi: '',
       };
 
+      // Bilinen sütunları doldur
       for (const [colIdx, field] of Object.entries(columnMapping)) {
         const val = row[Number(colIdx)];
         switch (field) {
@@ -366,18 +389,24 @@ function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): IslemSatiri[] {
             satir[field] = String(val ?? '').trim();
             break;
           default:
-            (satir as any)[field] = String(val ?? '').trim();
+            satir[field] = String(val ?? '').trim();
         }
+      }
+
+      // Dinamik (eşleşmeyen) sütunları doldur
+      for (const [colIdx, headerLabel] of Object.entries(unmappedColumns)) {
+        const val = row[Number(colIdx)];
+        satir[headerLabel] = val != null ? String(val).trim() : '';
       }
 
       rows.push(satir);
     }
 
-    console.log(`[HEKİM İŞLEM LİSTESİ] ${rows.length} satır parse edildi`);
-    return rows;
+    console.log(`[HEKİM İŞLEM LİSTESİ] ${rows.length} satır parse edildi (${extraColumns.length} ekstra sütun)`);
+    return { rows, extraColumns };
   } catch (error) {
     console.error('[HEKİM İŞLEM LİSTESİ] Excel parse hatası:', error);
-    return [];
+    return { rows: [], extraColumns: [] };
   }
 }
 
@@ -397,12 +426,24 @@ const HekimIslemListesiModule: React.FC = () => {
   const [selectedBrans, setSelectedBrans] = useState<string>('');
   const [uploadLoading, setUploadLoading] = useState(false);
   const [tableData, setTableData] = useState<IslemSatiri[]>([]);
+  const [extraColumns, setExtraColumns] = useState<{ key: string; label: string }[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
   const [activeTab, setActiveTab] = useState<'liste' | 'analiz'>('liste');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // Dinamik tablo sütunları: bilinen + ekstra
+  const tableColumns = useMemo(() => {
+    const extra = extraColumns.map(ec => ({
+      key: ec.key,
+      label: ec.label,
+      align: 'left' as const,
+      minW: '100px',
+    }));
+    return [...KNOWN_TABLE_COLUMNS, ...extra];
+  }, [extraColumns]);
 
   // Firebase kayıtlı dosya state'leri
   const [savedFileInfo, setSavedFileInfo] = useState<FinansalFileMetadata | null>(null);
@@ -504,13 +545,14 @@ const HekimIslemListesiModule: React.FC = () => {
       const arrayBuffer = await downloadFinansalFile(fileInfo.storagePath);
       if (arrayBuffer) {
         console.log('[HEKİM İŞLEM LİSTESİ] İndirme tamamlandı, boyut:', arrayBuffer.byteLength);
-        const rows = parseHekimIslemExcel(arrayBuffer);
-        if (rows.length > 0) {
-          setTableData(rows);
+        const parseResult = parseHekimIslemExcel(arrayBuffer);
+        if (parseResult.rows.length > 0) {
+          setTableData(parseResult.rows);
+          setExtraColumns(parseResult.extraColumns);
           setFileName(fileInfo.fileName);
           setCurrentPage(1);
-          setFirebaseMessage({ type: 'success', text: `${rows.length.toLocaleString('tr-TR')} satır yüklendi` });
-          console.log(`[HEKİM İŞLEM LİSTESİ] Firebase'den yüklendi: ${fileInfo.fileName} (${rows.length} satır)`);
+          setFirebaseMessage({ type: 'success', text: `${parseResult.rows.length.toLocaleString('tr-TR')} satır yüklendi` });
+          console.log(`[HEKİM İŞLEM LİSTESİ] Firebase'den yüklendi: ${fileInfo.fileName} (${parseResult.rows.length} satır)`);
         } else {
           setFirebaseMessage({ type: 'error', text: 'Dosya parse edilemedi' });
         }
@@ -534,6 +576,7 @@ const HekimIslemListesiModule: React.FC = () => {
 
   const handleClearData = () => {
     setTableData([]);
+    setExtraColumns([]);
     setFileName('');
     setCurrentPage(1);
   };
@@ -546,6 +589,7 @@ const HekimIslemListesiModule: React.FC = () => {
       await deleteFinansalFile('hekimIslem', 'islemListesi');
       setSavedFileInfo(null);
       setTableData([]);
+      setExtraColumns([]);
       setFileName('');
       setCurrentPage(1);
       setFirebaseMessage({ type: 'success', text: 'Kayıtlı dosya silindi' });
@@ -566,11 +610,12 @@ const HekimIslemListesiModule: React.FC = () => {
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const rows = parseHekimIslemExcel(arrayBuffer);
-      setTableData(rows);
+      const parseResult = parseHekimIslemExcel(arrayBuffer);
+      setTableData(parseResult.rows);
+      setExtraColumns(parseResult.extraColumns);
       setFileName(file.name);
       setCurrentPage(1);
-      console.log(`[HEKİM İŞLEM LİSTESİ] ${file.name}: ${rows.length} satır yüklendi`);
+      console.log(`[HEKİM İŞLEM LİSTESİ] ${file.name}: ${parseResult.rows.length} satır yüklendi (${parseResult.extraColumns.length} ekstra sütun)`);
 
       // Firebase'e kaydet (arka planda)
       const result = await uploadFinansalFile('hekimIslem', 'islemListesi', file);
@@ -903,6 +948,7 @@ const HekimIslemListesiModule: React.FC = () => {
         <ComplianceAnalysisPanel
           tableData={tableData}
           kurumBilgisi={seciliKurumBilgisi || undefined}
+          extraColumnKeys={extraColumns.map(ec => ec.key)}
         />
       ) : (
         <>
@@ -984,7 +1030,7 @@ const HekimIslemListesiModule: React.FC = () => {
               <thead className="sticky top-0 z-10">
                 <tr className="bg-[#1a1a2e] border-b border-slate-700/50">
                   <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap border-r border-slate-700/20 w-[40px]">#</th>
-                  {TABLE_COLUMNS.map(col => (
+                  {tableColumns.map(col => (
                     <th
                       key={col.key}
                       className={`px-3 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap border-r border-slate-700/20 ${
@@ -1008,7 +1054,7 @@ const HekimIslemListesiModule: React.FC = () => {
                       }`}
                     >
                       <td className="px-3 py-1.5 text-xs text-slate-600 font-mono border-r border-slate-800/20">{globalIdx}</td>
-                      {TABLE_COLUMNS.map(col => {
+                      {tableColumns.map(col => {
                         const val = row[col.key];
                         const isNumeric = col.align === 'right';
                         return (
@@ -1018,7 +1064,7 @@ const HekimIslemListesiModule: React.FC = () => {
                               isNumeric ? 'text-right font-mono text-slate-300' : 'text-slate-400'
                             }`}
                           >
-                            {isNumeric ? formatNumber(val as number) : String(val || '')}
+                            {isNumeric && typeof val === 'number' ? formatNumber(val) : String(val || '')}
                           </td>
                         );
                       })}

@@ -141,6 +141,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
               <th className="px-4 py-3 text-center text-base font-medium border-r border-[#3563b5] w-28">B</th>
               <th className="px-4 py-3 text-center text-base font-medium border-r border-[#3563b5] w-28 whitespace-nowrap">Dönem İçi</th>
               <th className="px-4 py-3 text-center text-base font-medium border-r border-[#3563b5] w-32 whitespace-nowrap">TR Rol Ort.</th>
+              <th className="px-4 py-3 text-center text-base font-medium border-r border-[#3563b5] w-28 whitespace-nowrap">Fark</th>
               <th className="px-4 py-3 text-center text-base font-medium border-r border-[#3563b5] w-32 whitespace-nowrap">Dönem İçi Puan</th>
               <th className="px-4 py-3 text-center text-base font-medium w-20">Muaf</th>
             </tr>
@@ -148,7 +149,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-12 text-center text-sm text-[var(--text-muted)]">
+                <td colSpan={10} className="px-4 py-12 text-center text-sm text-[var(--text-muted)]">
                   <div className="flex flex-col items-center gap-2">
                     <svg className="w-10 h-10 text-[var(--text-muted)]/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -266,6 +267,21 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                         <span className="text-base text-[var(--text-1)]">{formatValue(row.trRolOrtalama)}</span>
                       </td>
 
+                      {/* Fark (Dönem İçi - TR Rol Ort.) */}
+                      <td className="px-4 py-3 text-center border-r border-[var(--glass-border)]">
+                        {(() => {
+                          const donemIciVal = typeof row.donemIci === 'number' ? row.donemIci : parseFloat(String(row.donemIci));
+                          const trRolVal = typeof row.trRolOrtalama === 'number' ? row.trRolOrtalama : parseFloat(String(row.trRolOrtalama));
+                          if (isNaN(donemIciVal) || isNaN(trRolVal)) return <span className="text-base text-slate-500">-</span>;
+                          const fark = donemIciVal - trRolVal;
+                          return (
+                            <span className="text-base text-[var(--text-1)]">
+                              {fark > 0 ? '+' : ''}{fark.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}
+                            </span>
+                          );
+                        })()}
+                      </td>
+
                       {/* Dönem İçi Puan */}
                       <td className="px-4 py-3 text-center border-r border-[var(--glass-border)]">
                         {getPuanBadge()}
@@ -280,7 +296,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                     {/* Genişletilmiş Detay Satırı */}
                     {isExpanded && indicatorDetail && (
                       <tr className="bg-slate-800/50">
-                        <td colSpan={9} className="p-0">
+                        <td colSpan={10} className="p-0">
                           <div className="p-6 border-l-4 border-indigo-500">
                             {/* Başlık */}
                             <div className="flex items-start justify-between mb-6">
@@ -428,7 +444,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
           {data.length > 0 && (
             <tfoot>
               <tr className="bg-[#4472C4] text-white font-medium">
-                <td colSpan={7} className="px-4 py-3 text-right border-r border-[#3563b5]">
+                <td colSpan={8} className="px-4 py-3 text-right border-r border-[#3563b5]">
                   <span className="text-base">TOPLAM PUAN</span>
                 </td>
                 <td className="px-4 py-3 text-center border-r border-[#3563b5]">
