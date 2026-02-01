@@ -421,7 +421,7 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
   const COUNT_UNIT = '(?:kez|adet|defa|kere|sefer)';
 
   const patterns: { regex: RegExp; periyot: string; limitGroup: number }[] = [
-    // === GÜNDE ===
+    // === GÜNDE / GÜNLÜK ===
     // "günde en fazla X kez/adet/defa"
     { regex: new RegExp(`günde\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
     { regex: new RegExp(`gunde\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
@@ -430,8 +430,11 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
     { regex: new RegExp(`gunde\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir)`, 'gi'), periyot: 'gun', limitGroup: 1 },
     // "günde X kez/adet/defa" (without suffix)
     { regex: new RegExp(`günde\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    // "günlük X kez/adet" — "günlük bir kez işlem puanı verilir" gibi kalıplar
+    { regex: new RegExp(`günlük\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
+    { regex: new RegExp(`gunluk\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'gun', limitGroup: 1 },
 
-    // === YILDA ===
+    // === YILDA / YILLIK ===
     // "yılda en fazla X kez/adet/defa"
     { regex: new RegExp(`yılda\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
     { regex: new RegExp(`yilda\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
@@ -440,20 +443,29 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
     { regex: new RegExp(`yilda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir)`, 'gi'), periyot: 'yil', limitGroup: 1 },
     // "yılda X kez/adet/defa" (without suffix)
     { regex: new RegExp(`yılda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    // "yıllık X kez/adet"
+    { regex: new RegExp(`yıllık\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
+    { regex: new RegExp(`yillik\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'yil', limitGroup: 1 },
 
-    // === AYDA ===
+    // === AYDA / AYLIK ===
     // "ayda en fazla X kez/adet/defa"
     { regex: new RegExp(`ayda\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'ay', limitGroup: 1 },
     // "ayda X adet/kez/defa faturalandırılır"
     { regex: new RegExp(`ayda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}\\s+(?:faturalandırılır|faturalandirilir|faturalandırılmaz)`, 'gi'), periyot: 'ay', limitGroup: 1 },
     // "ayda X adet/kez/defa" (without suffix) — 186 cases!
     { regex: new RegExp(`ayda\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'ay', limitGroup: 1 },
+    // "aylık X kez/adet"
+    { regex: new RegExp(`aylık\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'ay', limitGroup: 1 },
+    { regex: new RegExp(`aylik\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'ay', limitGroup: 1 },
 
-    // === HAFTADA ===
+    // === HAFTADA / HAFTALIK ===
     // "haftada en fazla X kez/adet/defa"
     { regex: new RegExp(`haftada\\s+en\\s+fazla\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'hafta', limitGroup: 1 },
     // "haftada X kez/adet/defa"
     { regex: new RegExp(`haftada\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'hafta', limitGroup: 1 },
+    // "haftalık X kez/adet"
+    { regex: new RegExp(`haftalık\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'hafta', limitGroup: 1 },
+    { regex: new RegExp(`haftalik\\s+(${NUM_OR_WORD})\\s+${COUNT_UNIT}`, 'gi'), periyot: 'hafta', limitGroup: 1 },
 
     // === X GÜNDE/AYDA BİR ===
     { regex: new RegExp(`(${NUM_OR_WORD})\\s+günde\\s+bir`, 'gi'), periyot: 'gun', limitGroup: 1 },
