@@ -228,34 +228,65 @@ function analyzeRow(
     switch (rule.type) {
       case 'BASAMAK_KISITI': {
         const allowed = rule.params.basamaklar as number[];
-        if (allowed && !allowed.includes(kurumBasamak)) {
-          ihlaller.push({
-            ihlal_kodu: 'BASAMAK_001',
-            ihlal_aciklamasi: `Bu işlem yalnızca ${allowed.join('. ve ')}. basamak hastanelerde yapılabilir. Kurum basamağı: ${kurumBasamak}`,
-            kaynak: entry.kaynak,
-            referans_kural_metni: rule.rawText,
-            kural_tipi: 'BASAMAK_KISITI',
-          });
+        const basamakMode = (rule.params.mode as string) || 'sadece';
+
+        if (allowed) {
+          let isViolation = false;
+          if (basamakMode === 've_uzeri') {
+            // "X. basamak ve üzeri" → kurumBasamak >= min(allowed)
+            const minBasamak = Math.min(...allowed);
+            isViolation = kurumBasamak < minBasamak;
+          } else {
+            // "sadece" (varsayılan) → kurumBasamak allowed listesinde olmalı
+            isViolation = !allowed.includes(kurumBasamak);
+          }
+
+          if (isViolation) {
+            ihlaller.push({
+              ihlal_kodu: 'BASAMAK_001',
+              ihlal_aciklamasi: `Bu işlem yalnızca ${allowed.join('. ve ')}. basamak hastanelerde yapılabilir. Kurum basamağı: ${kurumBasamak}`,
+              kaynak: entry.kaynak,
+              referans_kural_metni: rule.rawText,
+              kural_tipi: 'BASAMAK_KISITI',
+            });
+          }
         }
         break;
       }
 
       case 'BRANS_KISITI': {
-        const allowed = rule.params.branslar as string[];
-        if (allowed && allowed.length > 0) {
-          const match = allowed.some(b => branslarEslesiyor(row.uzmanlik, b));
-          if (!match) {
-            // Branş isimlerini başharfleri büyük göster
-            const formattedBranslar = allowed.map(b =>
-              b.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-            );
-            ihlaller.push({
-              ihlal_kodu: 'BRANS_002',
-              ihlal_aciklamasi: `Bu işlem şu branşlara kısıtlıdır: ${formattedBranslar.join(', ')}. Hekim branşı: ${row.uzmanlik}`,
-              kaynak: entry.kaynak,
-              referans_kural_metni: rule.rawText,
-              kural_tipi: 'BRANS_KISITI',
-            });
+        const branslar = rule.params.branslar as string[];
+        const bransMode = (rule.params.mode as string) || 'dahil';
+
+        if (branslar && branslar.length > 0) {
+          const formattedBranslar = branslar.map(b =>
+            b.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+          );
+
+          if (bransMode === 'haric') {
+            // HARİÇ modu: bu branşlar YAPAMAZ, diğer herkes yapabilir
+            const isExcluded = branslar.some(b => branslarEslesiyor(row.uzmanlik, b));
+            if (isExcluded) {
+              ihlaller.push({
+                ihlal_kodu: 'BRANS_007',
+                ihlal_aciklamasi: `Bu işlem ${formattedBranslar.join(', ')} branşları HARİCİNDEKİ hekimler tarafından yapılabilir. Hekim branşı (${row.uzmanlik}) hariç tutulan listede.`,
+                kaynak: entry.kaynak,
+                referans_kural_metni: rule.rawText,
+                kural_tipi: 'BRANS_KISITI',
+              });
+            }
+          } else {
+            // DAHİL modu (varsayılan): SADECE bu branşlar yapabilir
+            const match = branslar.some(b => branslarEslesiyor(row.uzmanlik, b));
+            if (!match) {
+              ihlaller.push({
+                ihlal_kodu: 'BRANS_002',
+                ihlal_aciklamasi: `Bu işlem şu branşlara kısıtlıdır: ${formattedBranslar.join(', ')}. Hekim branşı: ${row.uzmanlik}`,
+                kaynak: entry.kaynak,
+                referans_kural_metni: rule.rawText,
+                kural_tipi: 'BRANS_KISITI',
+              });
+            }
           }
         }
         break;

@@ -20,13 +20,18 @@ export interface ParsedRule {
   type: ParsedRuleType;
   rawText: string;
   params: Record<string, any>;
-  // BASAMAK_KISITI  → { basamaklar: number[] }
-  // BRANS_KISITI    → { branslar: string[] }
+  // BASAMAK_KISITI  → { basamaklar: number[], mode?: 'sadece' | 've_uzeri' }
+  // BRANS_KISITI    → { branslar: string[], mode?: 'dahil' | 'haric' }
+  //   dahil = SADECE bu branşlar yapabilir (varsayılan)
+  //   haric = Bu branşlar HARİÇ herkes yapabilir
   // BIRLIKTE_YAPILAMAZ → { yapilamazKodlari: string[] }
   // SIKLIK_LIMIT    → { periyot: 'gun' | 'yil' | 'ay' | 'hafta', limit: number }
   // TANI_KOSULU     → { taniKodlari: string[] }
   // DIS_TEDAVI      → { disKurali: string }
   // GENEL_ACIKLAMA  → { metin: string }
+  confidence?: number;           // 0-1, AI güven skoru
+  extractionMethod?: 'regex' | 'ai';  // Hangi yöntemle çıkarıldı
+  aiExplanation?: string;        // AI'ın açıklaması (debug/audit)
 }
 
 // ── RULES_MASTER Girişi ──
@@ -83,10 +88,21 @@ export interface ComplianceAnalysisSummary {
 
 // ── İlerleme Takibi ──
 export interface AnalysisProgress {
-  phase: 'loading' | 'building-rules' | 'analyzing' | 'complete' | 'error';
+  phase: 'loading' | 'building-rules' | 'ai-extraction' | 'analyzing' | 'complete' | 'error';
   current: number;
   total: number;
   message: string;
+}
+
+// ── AI Kural Cache (Firestore) ──
+export interface AIParsedRuleCache {
+  aciklamaHash: string;
+  aciklamaText: string;
+  parsedRules: ParsedRule[];
+  modelVersion: string;
+  promptVersion: string;
+  createdAt: number;
+  tokenUsage?: { input: number; output: number };
 }
 
 // ── Filtre State ──
