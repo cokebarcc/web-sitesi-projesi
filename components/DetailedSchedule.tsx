@@ -30,6 +30,7 @@ interface DoctorSummary {
 const AM_WINDOW = { start: 8 * 60, end: 12 * 60 };
 const PM_WINDOW = { start: 13 * 60, end: 17 * 60 };
 const MIN_SESSION_THRESHOLD = 30;
+const EXCLUDED_DAY_COUNT_ACTIONS = ["SONUÇ/KONTROL MUAYENE", "SONUÇ/KONTROL MUAYENESİ"];
 
 const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth, selectedHospital, allowedHospitals, onHospitalChange, onLoadData, canUpload = false }) => {
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
@@ -148,6 +149,12 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
       const d = item.doctorName; const t = item.startDate; const a = item.action.trim().toLocaleUpperCase('tr-TR');
       const rowStart = getTimeInMinutes(item.startTime);
       const rowEnd = rowStart + (item.duration || 0);
+      // Gün hesabından muaf aksiyonları atla (sadece kapasiteleri sayılır)
+      if (EXCLUDED_DAY_COUNT_ACTIONS.some(ex => a.includes(ex))) {
+        docCap[d] = (docCap[d] || 0) + (item.capacity || 0);
+        if (item.specialty && !docBranch[d]) docBranch[d] = item.specialty;
+        return;
+      }
       if (!dailyMap[d]) dailyMap[d] = {};
       if (!dailyMap[d][t]) dailyMap[d][t] = { AM: {}, PM: {} };
       const amOverlap = getOverlapMinutes(rowStart, rowEnd, AM_WINDOW.start, AM_WINDOW.end);

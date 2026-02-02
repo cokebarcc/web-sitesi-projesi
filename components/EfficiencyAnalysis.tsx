@@ -34,6 +34,7 @@ interface EfficiencyAnalysisProps {
 }
 
 const EXCLUDED_SCHEDULE_ACTION_LABELS = ["HAFTA SONU TATİLİ", "HAFTASONU TATİLİ"];
+const EXCLUDED_DAY_COUNT_ACTIONS = ["SONUÇ/KONTROL MUAYENE", "SONUÇ/KONTROL MUAYENESİ"];
 const COLOR_PALETTE = ['#4f46e5', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#0ea5e9', '#d946ef', '#84cc16', '#f97316', '#14b8a6'];
 
 const getActionColor = (actionName: string): string => {
@@ -264,7 +265,14 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
 
 const LegendItem = ({ color, label }: any) => <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }}></div><span className="text-[9px] font-black text-[var(--text-muted)] uppercase whitespace-nowrap">{label}</span></div>;
 
-export const CapacityUsageChart = ({ data, onClick }: any) => (
+export const CapacityUsageChart = ({ data, onClick }: any) => {
+  const count = data.length;
+  // Cerrahi Verimlilik ile aynı: barSize=25, barGap=8 (≤12 hekim)
+  // Hekim arttıkça container'a sığması için dinamik küçült
+  const barSize = count <= 12 ? 25 : count <= 25 ? 18 : count <= 40 ? 12 : count <= 60 ? 8 : 5;
+  const barGap = count <= 12 ? 8 : count <= 25 ? 6 : count <= 40 ? 4 : 2;
+
+  return (
   <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-wide">Kapasite Kullanım Grafiği</h3>
@@ -275,27 +283,30 @@ export const CapacityUsageChart = ({ data, onClick }: any) => (
         <LegendItem color="#64748b" label="Kapasite Tanımsız" />
       </div>
     </div>
-    <ResponsiveContainer width="100%" height="90%">
-      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={8}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-        <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick onClick={onClick} />} axisLine={false} tickLine={false} height={100} />
-        <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-        <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} content={({ active, payload }) => {
-          if (active && payload && payload.length) {
-            const d = payload[0].payload;
-            const f = d.capacity > 0 ? (d.totalExam - d.capacity) : null;
-            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan', val: d.capacity > 0 ? d.capacity.toLocaleString('tr-TR') : 'Tanımsız', color:'text-indigo-400'}, {label:'Gerçekleşen', val: d.totalExam.toLocaleString('tr-TR'), color:d.status==='UNDER'?'text-rose-400':'text-emerald-400'}, {label:'Verim', val: d.usageRatePct !== null ? `%${formatMetric(d.usageRatePct)}` : '-', color:'text-blue-400'}]} footerLabel="FARK" footer={f === null ? 'Tanımsız' : (f >= 0 ? `+${f.toLocaleString('tr-TR')}` : f.toLocaleString('tr-TR'))} />;
-          }
-          return null;
-        }} />
-        <Bar name="Randevu Kapasitesi" dataKey="capacity" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={25} onClick={(d) => onClick?.(d)} className="cursor-pointer" />
-        <Bar name="Toplam Muayene" dataKey="totalExam" radius={[4, 4, 0, 0]} barSize={25} onClick={(d) => onClick?.(d)} className="cursor-pointer">
-          {data.map((e: any, cellIdx: number) => <Cell key={`cell-${cellIdx}`} fill={e.status==='UNDER'?'#ef4444':e.status==='NO_CAP'?'#64748b':'#10b981'} />)}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="h-[90%]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={barGap} barCategoryGap="20%">
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick onClick={onClick} />} axisLine={false} tickLine={false} height={100} />
+          <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
+          <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              const d = payload[0].payload;
+              const f = d.capacity > 0 ? (d.totalExam - d.capacity) : null;
+              return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan', val: d.capacity > 0 ? d.capacity.toLocaleString('tr-TR') : 'Tanımsız', color:'text-indigo-400'}, {label:'Gerçekleşen', val: d.totalExam.toLocaleString('tr-TR'), color:d.status==='UNDER'?'text-rose-400':'text-emerald-400'}, {label:'Verim', val: d.usageRatePct !== null ? `%${formatMetric(d.usageRatePct)}` : '-', color:'text-blue-400'}]} footerLabel="FARK" footer={f === null ? 'Tanımsız' : (f >= 0 ? `+${f.toLocaleString('tr-TR')}` : f.toLocaleString('tr-TR'))} />;
+            }
+            return null;
+          }} />
+          <Bar name="Randevu Kapasitesi" dataKey="capacity" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={barSize} onClick={(d) => onClick?.(d)} className="cursor-pointer" />
+          <Bar name="Toplam Muayene" dataKey="totalExam" radius={[4, 4, 0, 0]} barSize={barSize} onClick={(d) => onClick?.(d)} className="cursor-pointer">
+            {data.map((e: any, cellIdx: number) => <Cell key={`cell-${cellIdx}`} fill={e.status==='UNDER'?'#ef4444':e.status==='NO_CAP'?'#64748b':'#10b981'} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   </div>
-);
+  );
+};
 
 export const SurgicalEfficiencyChart = ({ data }: any) => (
   <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
@@ -439,22 +450,55 @@ const DoctorDetailModal = ({
 
   const activitySummary = useMemo(() => {
     const counts: Record<string, number> = {};
-    const dailyMap: Record<string, { AM?: string, PM?: string }> = {};
+    const dailyMap: Record<string, {
+      AM: Record<string, { mins: number, firstStart: number }>,
+      PM: Record<string, { mins: number, firstStart: number }>
+    }> = {};
     const getTimeMins = (t: string) => { const p = t.split(':'); return parseInt(p[0])*60 + parseInt(p[1]); };
+    const getOverlap = (s1:number, e1:number, s2:number, e2:number) => Math.max(0, Math.min(e1, e2) - Math.max(s1, s2));
+    const MIN_SESSION_THRESHOLD = 30;
 
     docSchedules.forEach(s => {
       const start = getTimeMins(s.startTime);
       const end = start + (s.duration || 0);
       const act = s.action.trim().toLocaleUpperCase('tr-TR');
-      if (!dailyMap[s.startDate]) dailyMap[s.startDate] = {};
-      const overlap = (s1:number, e1:number, s2:number, e2:number) => Math.max(0, Math.min(e1, e2) - Math.max(s1, s2));
-      if (Number(overlap(start, end, 8*60, 12*60)) >= 30) dailyMap[s.startDate].AM = act;
-      if (Number(overlap(start, end, 13*60, 17*60)) >= 30) dailyMap[s.startDate].PM = act;
+      // Gün hesabından muaf aksiyonları atla (sadece kapasiteleri sayılır)
+      if (EXCLUDED_DAY_COUNT_ACTIONS.some(ex => act.includes(ex))) return;
+      if (!dailyMap[s.startDate]) dailyMap[s.startDate] = { AM: {}, PM: {} };
+
+      const amOverlap = getOverlap(start, end, 8*60, 12*60);
+      if (amOverlap > 0) {
+        if (!dailyMap[s.startDate].AM[act]) dailyMap[s.startDate].AM[act] = { mins: 0, firstStart: Infinity };
+        dailyMap[s.startDate].AM[act].mins += amOverlap;
+        dailyMap[s.startDate].AM[act].firstStart = Math.min(dailyMap[s.startDate].AM[act].firstStart, start);
+      }
+      const pmOverlap = getOverlap(start, end, 13*60, 17*60);
+      if (pmOverlap > 0) {
+        if (!dailyMap[s.startDate].PM[act]) dailyMap[s.startDate].PM[act] = { mins: 0, firstStart: Infinity };
+        dailyMap[s.startDate].PM[act].mins += pmOverlap;
+        dailyMap[s.startDate].PM[act].firstStart = Math.min(dailyMap[s.startDate].PM[act].firstStart, start);
+      }
     });
 
     Object.values(dailyMap).forEach(day => {
-      if (day.AM) counts[day.AM] = (counts[day.AM] || 0) + 0.5;
-      if (day.PM) counts[day.PM] = (counts[day.PM] || 0) + 0.5;
+      // AM oturumunda en çok dakika kaplayan aksiyonu seç (eşitlikte erken başlayan kazanır)
+      let amWinner = ""; let amMaxMins = -1; let amEarliest = Infinity;
+      Object.entries(day.AM).forEach(([act, stats]) => {
+        if (stats.mins >= MIN_SESSION_THRESHOLD) {
+          if (stats.mins > amMaxMins) { amMaxMins = stats.mins; amWinner = act; amEarliest = stats.firstStart; }
+          else if (stats.mins === amMaxMins && stats.firstStart < amEarliest) { amWinner = act; amEarliest = stats.firstStart; }
+        }
+      });
+      // PM oturumunda en çok dakika kaplayan aksiyonu seç
+      let pmWinner = ""; let pmMaxMins = -1; let pmEarliest = Infinity;
+      Object.entries(day.PM).forEach(([act, stats]) => {
+        if (stats.mins >= MIN_SESSION_THRESHOLD) {
+          if (stats.mins > pmMaxMins) { pmMaxMins = stats.mins; pmWinner = act; pmEarliest = stats.firstStart; }
+          else if (stats.mins === pmMaxMins && stats.firstStart < pmEarliest) { pmWinner = act; pmEarliest = stats.firstStart; }
+        }
+      });
+      if (amWinner) counts[amWinner] = (counts[amWinner] || 0) + 0.5;
+      if (pmWinner) counts[pmWinner] = (counts[pmWinner] || 0) + 0.5;
     });
     return counts;
   }, [docSchedules]);
