@@ -28,6 +28,7 @@ const statusStyles: Record<string, { label: string; color: string; bg: string; b
   UYGUN: { label: 'UYGUN', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', borderL: 'border-l-emerald-500' },
   UYGUNSUZ: { label: 'UYGUNSUZ', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30', borderL: 'border-l-red-500' },
   MANUEL_INCELEME: { label: 'MANUEL', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', borderL: 'border-l-amber-500' },
+  ESLESEMEDI: { label: 'EŞLEŞMEDİ', color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/30', borderL: 'border-l-slate-500' },
 };
 
 function formatNumber(val: number, decimals = 0): string {
@@ -135,6 +136,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
       const analysisResults = await runComplianceAnalysis(tableData, rulesMaster, kurumBilgisi, (p) => setProgress(p));
       setResults(analysisResults);
       (window as any).__COMPLIANCE_RESULTS__ = analysisResults;
+      (window as any).__COMPLIANCE_ROWS__ = tableData;
       setSummary(generateSummary(analysisResults, Date.now() - start));
     } catch (err) {
       console.error('[COMPLIANCE] Analiz hatası:', err);
@@ -657,6 +659,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <option value="UYGUN">Uygun</option>
               <option value="UYGUNSUZ">Uygunsuz</option>
               <option value="MANUEL_INCELEME">Manuel</option>
+              <option value="ESLESEMEDI">Eşleşmedi</option>
             </select>
           </div>
           <div className="flex items-center gap-2">

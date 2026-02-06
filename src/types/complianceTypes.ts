@@ -57,7 +57,7 @@ export interface RuleMasterEntry {
 }
 
 // ── Analiz Sonucu ──
-export type UygunlukDurumu = 'UYGUN' | 'UYGUNSUZ' | 'MANUEL_INCELEME';
+export type UygunlukDurumu = 'UYGUN' | 'UYGUNSUZ' | 'MANUEL_INCELEME' | 'ESLESEMEDI';
 export type EslesmeGuveni = 'Yüksek' | 'Orta' | 'Düşük';
 
 export interface IhlalDetay {

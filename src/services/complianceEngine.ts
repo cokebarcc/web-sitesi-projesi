@@ -60,6 +60,24 @@ function turkishLower(str: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// GİL KODU NORMALİZASYON — Prefix temizleme (P/S harfi)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * GİL kodundaki prefix'leri temizler.
+ * Bazı satırlarda GİL kodu "P920010" veya "S100022" gibi harf prefix'li gelebilir.
+ * rulesMaster'da bu kodlar "920010", "100022" olarak kayıtlıdır.
+ * Bu fonksiyon prefix'i silip doğru eşleşme sağlar.
+ */
+function normalizeGilKodu(kodu: string): string {
+  const trimmed = kodu.trim();
+  // Başında harf + ardından 6 rakam varsa → harf prefix'ini sil
+  const match = trimmed.match(/^[A-Za-z](\d{6})$/);
+  if (match) return match[1];
+  return trimmed;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // BRANŞ EŞLEŞTİRME SİSTEMİ — Akıllı alias + fuzzy matching
 // ═══════════════════════════════════════════════════════════════
 
@@ -191,15 +209,28 @@ function branslarEslesiyor(hekim: string, kural: string): boolean {
   }
 
   // Ayrıca alias grubundaki herhangi bir elemana includes ile bakalım
+  // NOT: Tek kelimelik alias (ör: "çocuk") çok kelimeli kural branşı (ör: "çocuk acil") içinde
+  // yanlış eşleşme yapabilir → tek kelimelik alias'ı kural branşına includes ile karşılaştırma
   if (hGroup) {
     for (const alias of hGroup) {
-      if (safeIncludes(alias, k) || safeIncludes(k, alias)) return true;
+      // alias tek kelime, k çok kelime → alias k'ya includes yapılmamalı (yanlış pozitif riski)
+      if (!alias.includes(' ') && k.includes(' ')) {
+        // Sadece k alias'ı tam olarak içeriyorsa: skip (tehlikeli eşleşme)
+        if (safeIncludes(alias, k)) return true; // k, alias'ı içeriyor (ör: "çocuk cerrahisi" içinde "çocuk cerrahisi" aliası)
+        // safeIncludes(k, alias) → skip: "çocuk acil" içinde "çocuk" → yanlış pozitif
+      } else {
+        if (safeIncludes(alias, k) || safeIncludes(k, alias)) return true;
+      }
     }
   }
   const kGroup = _bransAliasMap.get(k);
   if (kGroup) {
     for (const alias of kGroup) {
-      if (safeIncludes(alias, h) || safeIncludes(h, alias)) return true;
+      if (!alias.includes(' ') && h.includes(' ')) {
+        if (safeIncludes(alias, h)) return true;
+      } else {
+        if (safeIncludes(alias, h) || safeIncludes(h, alias)) return true;
+      }
     }
   }
 
@@ -234,14 +265,14 @@ function analyzeRow(
   sameSessionRows: IslemSatiriLike[],
   mevcutUzmanliklar: Set<string>
 ): ComplianceResult {
-  const normalizedKodu = row.gilKodu.trim();
+  const normalizedKodu = normalizeGilKodu(row.gilKodu);
   const entry = rulesMaster.get(normalizedKodu);
 
-  // Eşleşme yoksa
+  // Eşleşme yoksa — kural bulunamadı, ayrı durum olarak işaretle
   if (!entry) {
     return {
       satirIndex: rowIndex,
-      uygunluk_durumu: 'MANUEL_INCELEME',
+      uygunluk_durumu: 'ESLESEMEDI',
       eslesme_guveni: 'Düşük',
       ihlaller: [],
       eslesmeDurumu: 'ESLESEMEDI',
@@ -303,15 +334,48 @@ function analyzeRow(
           'acil servis', 'yataklı servis', 'yatakli servis', 'poliklinik',
           'ameliyathane', 'laboratuvar', 'eczane',
         ]);
-        const branslar = _rawBranslar?.filter(b =>
-          b.length > 2 && !bransStopWords.has(turkishLower(b)) && !servisAdlari.has(turkishLower(b))
-        );
+        // ── ANESTEZİ YÖNTEM TESPİTİ (rawText'e bak) ──
+        const rawTextLower = turkishLower(rule.rawText || '');
+
+        const branslar = _rawBranslar?.filter(b => {
+          const bLower = turkishLower(b);
+          // Temel filtreler
+          if (b.length <= 2) return false;
+          if (bransStopWords.has(bLower)) return false;
+          if (servisAdlari.has(bLower)) return false;
+          // ICD kodu veya tanı kodu gibi görünen string'leri filtrele
+          // Ör: "'e25.0 konjenital adrenogenital bozukluklar", "diğer"
+          if (/^['"]?[a-z]\d+\.\d/i.test(b.trim())) return false;
+          // "diğer" veya "tanımlanmamış" gibi tanı açıklama parçaları
+          if (/^(di[gğ]er|tan[ıi]mlanmam[ıi][sş])$/i.test(b.trim())) return false;
+          // Çok kısa ve anlamsız tek kelime (4 harf veya altı)
+          if (b.trim().length <= 4 && b.trim().split(/\s+/).length === 1) return false;
+          // "anestezi" → rawText'te yöntem olarak kullanılıyorsa (genel/lokal/rejyonel anestezi, anestezi altında) branş değil
+          if (bLower === 'anestezi') {
+            let allMethod = true;
+            let searchIdx = 0;
+            while (searchIdx < rawTextLower.length) {
+              const idx = rawTextLower.indexOf('anestezi', searchIdx);
+              if (idx === -1) break;
+              const before = rawTextLower.substring(Math.max(0, idx - 20), idx).trim();
+              const after = rawTextLower.substring(idx + 8, idx + 25).trim();
+              const isMethodBefore = /(?:genel|lokal|rejyonel|spinal|epidural|sedasyon)\s*$/.test(before);
+              const isMethodAfter = /^(?:alt[ıi]nda|ile\b|uygulan)/.test(after);
+              if (!isMethodBefore && !isMethodAfter) {
+                allMethod = false;
+                break;
+              }
+              searchIdx = idx + 8;
+            }
+            if (allMethod) return false; // Tüm "anestezi" kullanımları yöntem → branş değil
+          }
+          return true;
+        });
 
         // ── GENİŞLETİCİ İFADE TESPİTİ ──
         // "X için de puanlandırılır" / "X da yapabilir" gibi ifadeler branş KISITLAMASI değil,
         // ek branş ekleme ifadesidir → BRANS_KISITI olarak değerlendirilmemeli
-        const rawTextLower = turkishLower(rule.rawText || '');
-        const genisleticiPattern = /\b(i[cç]in\s+de|taraf[ıi]ndan\s+da|uzman[ıi]\s+hekimler\s+i[cç]in\s+de|da\s+yapabilir|da\s+yapılabilir|de\s+puanland[ıi]r[ıi]l[ıi]r|da\s+faturaland[ıi]r[ıi]l[ıi]r|da\s+uygulanabilir)\b/;
+        const genisleticiPattern = /\b(i[cç]in\s+de|taraf[ıi]ndan\s+da|uzman[ıi]\s+hekimler\s+i[cç]in\s+de|da\s+yapabilir|da\s+yapılabilir|de\s+puanland[ıi]r[ıi]l[ıi]r|da\s+faturaland[ıi]r[ıi]l[ıi]r|da\s+uygulanabilir|durumunda\s+da\s+puanland[ıi]r[ıi]l[ıi]r|durumunda\s+da\s+faturaland[ıi]r[ıi]l[ıi]r)\b/;
         if (bransMode === 'dahil' && genisleticiPattern.test(rawTextLower)) {
           // Genişletici ifade → kısıtlama yok, skip
           break;
@@ -421,20 +485,47 @@ function analyzeRow(
 
       case 'BIRLIKTE_YAPILAMAZ': {
         const yasakliKodlar = rule.params.yapilamazKodlari as string[];
-        if (yasakliKodlar && yasakliKodlar.length > 0) {
+        const birlikteRawLower = turkishLower(rule.rawText || '');
+
+        // ── "Tüm işlemlerle birlikte yapılamaz" tespiti ──
+        // rawText'te "başka bir işlem", "diğer işlemlerle", "tek başına" varsa → tüm kodlar yasak
+        const tumIslemlerYasak = (!yasakliKodlar || yasakliKodlar.length === 0)
+          && /(?:ba[sş]ka\s+(?:bir\s+)?i[sş]lem|di[gğ]er\s+i[sş]lem|tek\s+ba[sş][ıi]na)/i.test(birlikteRawLower);
+
+        if (tumIslemlerYasak) {
+          // Aynı seanstaki TÜM diğer işlemler çakışır
+          const conflicting = sameSessionRows.filter(r => {
+            if (r === row) return false;
+            // Aynı kodla çakışma kontrolü (kendisi hariç)
+            return normalizeGilKodu(r.gilKodu) !== normalizedKodu;
+          });
+          if (conflicting.length > 0) {
+            // En fazla 5 kod göster
+            const conflictKodlar = [...new Set(conflicting.map(c => c.gilKodu))].slice(0, 5);
+            const fazlasi = conflicting.length > 5 ? ` ve ${conflicting.length - 5} diğer işlem` : '';
+            ihlaller.push({
+              ihlal_kodu: 'BIRLIKTE_003',
+              ihlal_aciklamasi: `Bu işlem başka işlemlerle birlikte faturalandırılamaz. Çakışan: ${conflictKodlar.join(', ')}${fazlasi}`,
+              kaynak: rule.kaynak || entry.kaynak,
+              referans_kural_metni: rule.rawText,
+              fromSectionHeader: rule.fromSectionHeader,
+              kural_tipi: 'BIRLIKTE_YAPILAMAZ',
+            });
+          }
+        } else if (yasakliKodlar && yasakliKodlar.length > 0) {
+          // ── Spesifik kodlarla birlikte yapılamaz ──
+          // yasakliKodlar noktalı olabilir ("552.001") → noktaları temizle
+          const yasakliNormalized = yasakliKodlar.map(k => k.replace(/\./g, ''));
           // ── A2: "Aynı diş" koşulu tespiti ──
-          const birlikteRawLower = turkishLower(rule.rawText || '');
           const birlikteAyniDis = /ayn[ıi]\s*di[sş]/i.test(birlikteRawLower);
 
           const conflicting = sameSessionRows.filter(r => {
             if (r === row) return false;
-            if (!yasakliKodlar.includes(r.gilKodu.trim())) return false;
+            if (!yasakliNormalized.includes(normalizeGilKodu(r.gilKodu))) return false;
             // "Aynı diş" kuralıysa diş numarası eşleşmeli
             if (birlikteAyniDis) {
               const rowDis = (row.disNumarasi || '').trim();
               const rDis = (r.disNumarasi || '').trim();
-              // İkisi de boşsa → eşleşme (diş bilgisi yok, güvenli tarafta kal)
-              // Biri boş diğeri doluysa → eşleşme yok
               if (rowDis && rDis) return rowDis === rDis;
               if (!rowDis && !rDis) return true;
               return false;
@@ -462,6 +553,22 @@ function analyzeRow(
       }
 
       case 'TANI_KOSULU': {
+        // ── GENİŞLETİCİ İSTİSNA TESPİTİ ──
+        // Bazı tanı kodları kısıtlama değil, istisna genişletmedir:
+        // Ör: "On günde bir adet faturalandırılır. (F10-F19) tanılarında on günde en fazla üç adet faturalandırılır."
+        // Bu tanılar olduğunda sıklık limiti artıyor → tanı koşulu DEĞİL, genişletici istisna.
+        // rawText'te tanı kodlarından sonra "en fazla X" / "X adet/kez" geliyorsa → istisna, skip
+        const taniRawLower = turkishLower(rule.rawText || '');
+        // Tespit: rawText'te ICD kodları "X tanılarında Y faturalandırılır" şeklinde sıklık istisnası
+        // olarak geçiyor ve aynı metin genel bir sıklık kuralı da içeriyorsa → genişletici istisna
+        // Ör: "On günde bir adet faturalandırılır. (F10-F19) tanılarında üç adet faturalandırılır."
+        const hasTaniSiklikIstisna = /tan[ıi]lar[ıi]nda.{0,80}(?:en fazla|adet|kez|kere)\s*(?:faturaland|puan)/i.test(taniRawLower);
+        const hasGenelSiklik = /\d+\s*(?:günde|g[uü]nde|haftada|ayda|y[ıi]lda)\s+(?:bir|1|en fazla)\s+(?:adet|kez|kere)/i.test(taniRawLower);
+        if (hasTaniSiklikIstisna && hasGenelSiklik) {
+          // Tanı kodları genişletici istisna — bu tanıları gerektirmiyor, aksine o tanılarda sıklık limiti değişiyor
+          break;
+        }
+
         // Formal tani alanından oku, fallback olarak dinamik sütunları kontrol et
         const taniDegeri = (
           (typeof row.tani === 'string' && row.tani.trim()) ||
@@ -726,7 +833,7 @@ function applySiklikLimitChecks(
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const key = `${row.hastaTc}_${row.gilKodu.trim()}`;
+    const key = `${row.hastaTc}_${normalizeGilKodu(row.gilKodu)}`;
     if (!codeMap.has(key)) codeMap.set(key, []);
     codeMap.get(key)!.push(i);
   }
@@ -835,9 +942,14 @@ function applySiklikLimitChecks(
         if (diffDays < aralikGun) {
           const result = results[sorted[j]];
           if (result) {
+            // Önceki işlemin detay bilgisi
+            const prevRow = rows[sorted[j - 1]];
+            const prevDetay = prevRow
+              ? ` (Önceki: ${prevRow.tarih} tarihinde ${prevRow.doktor || ''} tarafından ${prevRow.gilKodu} ${(prevRow.gilAdi || '').substring(0, 40)} olarak girilmiş)`
+              : '';
             result.ihlaller.push({
               ihlal_kodu: 'SIKLIK_006',
-              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}en az ${correctedLimit} ${periyot === 'ay_aralik' ? 'ay' : 'gün'} arayla yapılabilir. Önceki işlemden ${diffDays} gün sonra yapılmış.`,
+              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}en az ${correctedLimit} ${periyot === 'ay_aralik' ? 'ay' : 'gün'} arayla yapılabilir. Önceki işlemden ${diffDays} gün sonra yapılmış.${prevDetay}`,
               kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
@@ -854,13 +966,22 @@ function applySiklikLimitChecks(
 
     for (const [, groupIndices] of periyotGroups) {
       if (groupIndices.length > correctedLimit) {
+        // Limiti aşmayan ilk satırların bilgisini referans olarak al
+        const refRows = groupIndices.slice(0, correctedLimit).map(idx => {
+          const r = rows[idx];
+          return r ? `${r.tarih} ${r.doktor || ''} ${r.gilKodu}` : '';
+        }).filter(Boolean);
+        const refDetay = refRows.length > 0
+          ? ` (İlk giriş: ${refRows[0]}${refRows.length > 1 ? ` ve ${refRows.length - 1} diğer` : ''})`
+          : '';
+
         // limit aşan satırları işaretle
         for (let j = correctedLimit; j < groupIndices.length; j++) {
           const result = results[groupIndices[j]];
           if (result) {
             result.ihlaller.push({
               ihlal_kodu: 'SIKLIK_006',
-              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}${periyotLabel ? periyotLabel + ' ' : ''}en fazla ${correctedLimit} kez yapılabilir. Toplam: ${groupIndices.length}`,
+              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}${periyotLabel ? periyotLabel + ' ' : ''}en fazla ${correctedLimit} kez yapılabilir. Toplam: ${groupIndices.length}${refDetay}`,
               kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
@@ -978,10 +1099,10 @@ export function generateSummary(results: ComplianceResult[], elapsedMs?: number)
   for (const r of results) {
     if (r.uygunluk_durumu === 'UYGUN') uygun++;
     else if (r.uygunluk_durumu === 'UYGUNSUZ') uygunsuz++;
+    else if (r.uygunluk_durumu === 'ESLESEMEDI') eslesmeyen++;
     else manuel++;
 
     if (r.eslesmeDurumu === 'ESLESTI') eslesen++;
-    else eslesmeyen++;
 
     toplamIhlal += r.ihlaller.length;
     for (const i of r.ihlaller) {
