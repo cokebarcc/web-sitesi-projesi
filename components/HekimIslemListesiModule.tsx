@@ -18,7 +18,7 @@ export interface KurumBilgisi {
   basamak: 2 | 3; // 2: İkinci basamak, 3: Üçüncü basamak
 }
 
-const KURUM_LISTESI: KurumBilgisi[] = [
+export const KURUM_LISTESI: KurumBilgisi[] = [
   { ad: 'AKÇAKALE DH', rolGrubu: 'B', basamak: 2 },
   { ad: 'BALIKLIGÖL DH', rolGrubu: 'B', basamak: 2 },
   { ad: 'BİRECİK DH', rolGrubu: 'B', basamak: 2 },
