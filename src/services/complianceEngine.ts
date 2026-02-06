@@ -17,6 +17,7 @@ import {
 // IslemSatiri ve KurumBilgisi HekimIslemListesiModule'den import edilecek ama
 // circular dependency'den kaçınmak için arayüzleri burada tanımlayalım
 export interface IslemSatiriLike {
+  hastaKayitId: string;
   tarih: string;
   saat: string;
   uzmanlik: string;
@@ -32,6 +33,9 @@ export interface IslemSatiriLike {
   hastaTc: string;
   adiSoyadi: string;
   islemNo: string;
+  yasi: number;
+  tani: string;
+  islemAciklama: string;
   disNumarasi: string;
   [key: string]: string | number; // Dinamik ekstra sütunlar
 }
@@ -135,7 +139,7 @@ const BRANS_ALIAS_GROUPS: string[][] = [
   // Spor Hekimliği
   ['spor hekimliği'],
   // Ağız Diş
-  ['ağız, diş ve çene cerrahisi', 'ağız diş ve çene cerrahisi', 'diş hekimliği', 'diş', 'ağız diş', 'diş hastalıkları ve tedavisi', 'diş hastalıkları', 'diş protez', 'ağız diş ve çene hastalıkları'],
+  ['ağız, diş ve çene cerrahisi', 'ağız diş ve çene cerrahisi', 'diş hekimliği', 'diş hekimi', 'diş', 'ağız diş', 'diş hastalıkları ve tedavisi', 'diş hastalıkları', 'diş protez', 'ağız diş ve çene hastalıkları'],
 ];
 
 // Normalize: alias map oluştur (key: normalized alias → value: tüm gruptaki isimler)
@@ -252,6 +256,12 @@ function analyzeRow(
         const allowed = rule.params.basamaklar as number[];
         const basamakMode = (rule.params.mode as string) || 'sadece';
 
+        // ── Artırım/fiyat kuralı tespiti ──
+        // "üçüncü basamakta %30 ilave" gibi artırım ifadeleri basamak kısıtı değildir
+        const basamakRawLower = turkishLower(rule.rawText || '');
+        const basamakArtirimPattern = /(?:ilave|art[ıi]r[ıi]m|%\s*\d+|ek\s*puan|fark[ıi]|fazla\s*puan)/;
+        if (basamakArtirimPattern.test(basamakRawLower)) break;
+
         if (allowed) {
           let isViolation = false;
           if (basamakMode === 've_uzeri') {
@@ -287,7 +297,61 @@ function analyzeRow(
           'ancak', 'sadece', 'bizzat', 'tarafından', 'tarafindan', 'halinde', 'yapılır',
           'faturalandırılır', 'puanlandırılır', 'uygulanır', 'gerekir', 'gerekmektedir',
         ]);
-        const branslar = _rawBranslar?.filter(b => b.length > 2 && !bransStopWords.has(turkishLower(b)));
+        // Servis/birim adlarını filtrele (branş değildir)
+        const servisAdlari = new Set([
+          'palyatif bakım', 'palyatif bakim', 'yoğun bakım', 'yogun bakim',
+          'acil servis', 'yataklı servis', 'yatakli servis', 'poliklinik',
+          'ameliyathane', 'laboratuvar', 'eczane',
+        ]);
+        const branslar = _rawBranslar?.filter(b =>
+          b.length > 2 && !bransStopWords.has(turkishLower(b)) && !servisAdlari.has(turkishLower(b))
+        );
+
+        // ── GENİŞLETİCİ İFADE TESPİTİ ──
+        // "X için de puanlandırılır" / "X da yapabilir" gibi ifadeler branş KISITLAMASI değil,
+        // ek branş ekleme ifadesidir → BRANS_KISITI olarak değerlendirilmemeli
+        const rawTextLower = turkishLower(rule.rawText || '');
+        const genisleticiPattern = /\b(i[cç]in\s+de|taraf[ıi]ndan\s+da|uzman[ıi]\s+hekimler\s+i[cç]in\s+de|da\s+yapabilir|da\s+yapılabilir|de\s+puanland[ıi]r[ıi]l[ıi]r|da\s+faturaland[ıi]r[ıi]l[ıi]r|da\s+uygulanabilir)\b/;
+        if (bransMode === 'dahil' && genisleticiPattern.test(rawTextLower)) {
+          // Genişletici ifade → kısıtlama yok, skip
+          break;
+        }
+
+        // ── "GİBİ" GENİŞLETİCİ İFADE KONTROLÜ ──
+        // "Cerrahi, dahili, palyatif bakım gibi yataklı servislerde" → örnek listesi, kısıt değil
+        // Branş adları "gibi" kelimesiyle bağlanıyorsa → genişletici ifade
+        if (branslar && branslar.length > 0) {
+          const allBransAfterGibi = branslar.every(b => {
+            const bLower = turkishLower(b);
+            const idx = rawTextLower.indexOf(bLower);
+            if (idx === -1) return false;
+            const afterBrans = rawTextLower.substring(idx + bLower.length, idx + bLower.length + 20).trim();
+            return /^gibi\b/.test(afterBrans);
+          });
+          if (allBransAfterGibi) {
+            break; // Tüm branşlar "gibi" ile bağlanmış → örnek listesi, kısıt değil
+          }
+        }
+
+        // ── YAŞ KOŞULU KONTROLÜ ──
+        // Kural metni yaş koşulu içeriyorsa (ör. "18 yaş altı hastalarda")
+        // ve hasta bu koşulu karşılamıyorsa → bu kural bu hasta için geçerli değil
+        const yasAltMatch = rawTextLower.match(/(\d+)\s*ya[sş]\s*(alt[ıi]|altında|altındaki)/);
+        const yasUstMatch = rawTextLower.match(/(\d+)\s*ya[sş]\s*([uü]st[uü]|üzerinde|üstündeki|ve\s+[uü]zeri)/);
+        if (yasAltMatch && row.yasi) {
+          const yasLimit = parseInt(yasAltMatch[1], 10);
+          if (row.yasi >= yasLimit) {
+            // Hasta yaş limitinin üstünde → bu yaş koşullu kural geçerli değil
+            break;
+          }
+        }
+        if (yasUstMatch && row.yasi) {
+          const yasLimit = parseInt(yasUstMatch[1], 10);
+          if (row.yasi < yasLimit) {
+            // Hasta yaş limitinin altında → bu yaş koşullu kural geçerli değil
+            break;
+          }
+        }
 
         if (branslar && branslar.length > 0) {
           const formattedBranslar = branslar.map(b =>
@@ -358,13 +422,29 @@ function analyzeRow(
       case 'BIRLIKTE_YAPILAMAZ': {
         const yasakliKodlar = rule.params.yapilamazKodlari as string[];
         if (yasakliKodlar && yasakliKodlar.length > 0) {
-          const conflicting = sameSessionRows.filter(r =>
-            r !== row && yasakliKodlar.includes(r.gilKodu.trim())
-          );
+          // ── A2: "Aynı diş" koşulu tespiti ──
+          const birlikteRawLower = turkishLower(rule.rawText || '');
+          const birlikteAyniDis = /ayn[ıi]\s*di[sş]/i.test(birlikteRawLower);
+
+          const conflicting = sameSessionRows.filter(r => {
+            if (r === row) return false;
+            if (!yasakliKodlar.includes(r.gilKodu.trim())) return false;
+            // "Aynı diş" kuralıysa diş numarası eşleşmeli
+            if (birlikteAyniDis) {
+              const rowDis = (row.disNumarasi || '').trim();
+              const rDis = (r.disNumarasi || '').trim();
+              // İkisi de boşsa → eşleşme (diş bilgisi yok, güvenli tarafta kal)
+              // Biri boş diğeri doluysa → eşleşme yok
+              if (rowDis && rDis) return rowDis === rDis;
+              if (!rowDis && !rDis) return true;
+              return false;
+            }
+            return true;
+          });
           if (conflicting.length > 0) {
             ihlaller.push({
               ihlal_kodu: 'BIRLIKTE_003',
-              ihlal_aciklamasi: `Bu işlem şu kodlarla birlikte faturalandırılamaz: ${conflicting.map(c => c.gilKodu).join(', ')}`,
+              ihlal_aciklamasi: `Bu işlem ${birlikteAyniDis ? 'aynı diş için ' : ''}şu kodlarla birlikte faturalandırılamaz: ${conflicting.map(c => c.gilKodu).join(', ')}`,
               kaynak: rule.kaynak || entry.kaynak,
               referans_kural_metni: rule.rawText,
               fromSectionHeader: rule.fromSectionHeader,
@@ -382,8 +462,11 @@ function analyzeRow(
       }
 
       case 'TANI_KOSULU': {
-        // Excel'den gelen tanı bilgisini kontrol et (dinamik sütunlardan)
-        const taniDegeri = String(row['TANI'] || row['Tani'] || row['Tanı'] || row['tani'] || row['tanı'] || row['TANI KODU'] || row['Tani Kodu'] || row['Tanı Kodu'] || '').trim();
+        // Formal tani alanından oku, fallback olarak dinamik sütunları kontrol et
+        const taniDegeri = (
+          (typeof row.tani === 'string' && row.tani.trim()) ||
+          String(row['TANI'] || row['Tani'] || row['Tanı'] || row['tani'] || row['tanı'] || row['TANI KODU'] || row['Tani Kodu'] || row['Tanı Kodu'] || '')
+        ).trim();
         const requiredKodlar = (rule.params.taniKodlari as string[] || []);
 
         if (!taniDegeri) {
@@ -433,8 +516,107 @@ function analyzeRow(
         break;
       }
 
+      case 'YAS_KISITI': {
+        const minYas = rule.params.minYas as number | undefined;
+        const maxYas = rule.params.maxYas as number | undefined;
+        const yasMode = (rule.params.mode as string) || 'aralik';
+        const hastaYasi = typeof row.yasi === 'number' ? row.yasi : parseInt(String(row.yasi));
+
+        // ── ARTIRIM/FİYAT KURALI TESPİTİ ──
+        // "X yaş altı çocuklarda %100 artırımlı uygulanır" gibi ifadeler
+        // yaş KISITLAMASI değil, fiyat artırım kuralıdır → YAS_KISITI olarak değerlendirilmemeli
+        const yasRawLower = turkishLower(rule.rawText || '');
+        const artirimPattern = /art[ıi]r[ıi]ml[ıi]|ilave|fark[ıi]|ek\s*puan|ek\s*ücret|%\s*\d+\s*art[ıi]r[ıi]m|\bfazla\s+puan/;
+        if (artirimPattern.test(yasRawLower)) {
+          // Fiyat/artırım kuralı → yaş kısıtlaması değil, skip
+          break;
+        }
+
+        // ── GENİŞLETİCİ İFADE TESPİTİ ──
+        // "X yaş altında da uygulanabilir" / "X yaş üstü için de puanlandırılır"
+        // → yaş kısıtlaması değil, genişletici ifade
+        const yasGenisleticiPattern = /\b(da\s+uygulan|de\s+puanland|da\s+yap[ıi]l|i[cç]in\s+de\s+puanland)\b/;
+        if (yasGenisleticiPattern.test(yasRawLower)) {
+          break;
+        }
+
+        if (isNaN(hastaYasi) || hastaYasi <= 0) {
+          // Yaş bilgisi yok → bilgilendirme
+          if (minYas || maxYas) {
+            ihlaller.push({
+              ihlal_kodu: 'YAS_008',
+              ihlal_aciklamasi: `Bu işlem yaş kısıtı içeriyor (${
+                yasMode === 'alti' ? `${maxYas} yaş altı` :
+                yasMode === 'ustu' ? `${minYas} yaş üstü` :
+                `${minYas}-${maxYas} yaş arası`
+              }). Yaş bilgisi mevcut değil.`,
+              kaynak: rule.kaynak || entry.kaynak,
+              referans_kural_metni: rule.rawText,
+              fromSectionHeader: rule.fromSectionHeader,
+              kural_tipi: 'YAS_KISITI',
+            });
+          }
+        } else {
+          let yasIhlal = false;
+          if (yasMode === 'alti' && maxYas && hastaYasi >= maxYas) yasIhlal = true;
+          if (yasMode === 'ustu' && minYas && hastaYasi < minYas) yasIhlal = true;
+          if (yasMode === 'aralik') {
+            if (minYas && hastaYasi < minYas) yasIhlal = true;
+            if (maxYas && hastaYasi > maxYas) yasIhlal = true;
+          }
+
+          if (yasIhlal) {
+            ihlaller.push({
+              ihlal_kodu: 'YAS_008',
+              ihlal_aciklamasi: `Bu işlem ${
+                yasMode === 'alti' ? `${maxYas} yaş altı` :
+                yasMode === 'ustu' ? `${minYas} yaş üstü` :
+                `${minYas}-${maxYas} yaş arası`
+              } hastalar için uygulanabilir. Hasta yaşı: ${hastaYasi}`,
+              kaynak: rule.kaynak || entry.kaynak,
+              referans_kural_metni: rule.rawText,
+              fromSectionHeader: rule.fromSectionHeader,
+              kural_tipi: 'YAS_KISITI',
+            });
+          }
+        }
+        break;
+      }
+
       case 'GENEL_ACIKLAMA': {
-        // Bilgilendirme — ihlal oluşturmaz
+        // rawText'ten kaçırılmış kuralları kurtarma
+        const genelRawLower = turkishLower(rule.rawText || '');
+
+        // Basamak kısıtı kurtarma: "üçüncü basamak tarafından faturalandırılır"
+        const hasExistingBasamak = entry.parsed_rules.some(r => r.type === 'BASAMAK_KISITI');
+        if (!hasExistingBasamak) {
+          const basamakMatch = genelRawLower.match(/(?:yalnızca|sadece|ancak)?\s*(?:üçüncü|3\.?)\s*basamak.*?(?:tarafından|yapılır|sunulur|faturalandır)/);
+          if (basamakMatch && !/(?:ilave|artırım|%\d+|ek\s*puan|fark)/i.test(genelRawLower)) {
+            if (kurumBasamak < 3) {
+              ihlaller.push({
+                ihlal_kodu: 'BASAMAK_001',
+                ihlal_aciklamasi: `Bu işlem yalnızca 3. basamak hastanelerde yapılabilir. Kurum basamağı: ${kurumBasamak} (açıklamadan tespit)`,
+                kaynak: rule.kaynak || entry.kaynak,
+                referans_kural_metni: rule.rawText,
+                fromSectionHeader: rule.fromSectionHeader,
+                kural_tipi: 'BASAMAK_KISITI',
+              });
+            }
+          }
+          const basamak2Match = genelRawLower.match(/(?:yalnızca|sadece|ancak)?\s*(?:ikinci|2\.?)\s*basamak.*?(?:tarafından|yapılır|sunulur|faturalandır)/);
+          if (basamak2Match && !basamakMatch && !/(?:ilave|artırım|%\d+|ek\s*puan|fark)/i.test(genelRawLower)) {
+            if (kurumBasamak < 2) {
+              ihlaller.push({
+                ihlal_kodu: 'BASAMAK_001',
+                ihlal_aciklamasi: `Bu işlem yalnızca 2. basamak ve üzeri hastanelerde yapılabilir. Kurum basamağı: ${kurumBasamak} (açıklamadan tespit)`,
+                kaynak: rule.kaynak || entry.kaynak,
+                referans_kural_metni: rule.rawText,
+                fromSectionHeader: rule.fromSectionHeader,
+                kural_tipi: 'BASAMAK_KISITI',
+              });
+            }
+          }
+        }
         break;
       }
     }
@@ -444,14 +626,32 @@ function analyzeRow(
   const puanFarki = entry.islem_puani > 0 ? Math.round((row.puan - entry.islem_puani) * 100) / 100 : undefined;
   const fiyatFarki = entry.islem_fiyati > 0 ? Math.round((row.fiyat - entry.islem_fiyati) * 100) / 100 : undefined;
 
+  // ── B2: Düşük confidence kontrolü ──
+  // Düşük güvenli kurallardan (< 0.7) gelen ihlalleri "düşük güven" olarak işaretle
+  for (const ihlal of ihlaller) {
+    const matchingRule = entry.parsed_rules.find(r => r.type === ihlal.kural_tipi);
+    if (matchingRule && typeof matchingRule.confidence === 'number' && matchingRule.confidence < 0.7) {
+      ihlal.ihlal_aciklamasi += ' (düşük güven)';
+    }
+  }
+
   // Sonuç belirleme
   let uygunluk: UygunlukDurumu;
   if (ihlaller.length === 0) {
     uygunluk = 'UYGUN';
-  } else if (ihlaller.some(i => ['BASAMAK_KISITI', 'BIRLIKTE_YAPILAMAZ', 'BRANS_KISITI'].includes(i.kural_tipi))) {
-    uygunluk = 'UYGUNSUZ';
   } else {
-    uygunluk = 'MANUEL_INCELEME';
+    // Tüm ihlaller düşük güvenli kurallardan mı geliyor?
+    const tumDusukGuven = ihlaller.every(i => {
+      const r = entry.parsed_rules.find(rule => rule.type === i.kural_tipi);
+      return r && typeof r.confidence === 'number' && r.confidence < 0.7;
+    });
+    if (tumDusukGuven) {
+      uygunluk = 'MANUEL_INCELEME';
+    } else if (ihlaller.some(i => ['BASAMAK_KISITI', 'BIRLIKTE_YAPILAMAZ', 'BRANS_KISITI', 'YAS_KISITI'].includes(i.kural_tipi))) {
+      uygunluk = 'UYGUNSUZ';
+    } else {
+      uygunluk = 'MANUEL_INCELEME';
+    }
   }
 
   // Güven seviyesi
@@ -547,11 +747,69 @@ function applySiklikLimitChecks(
     if (!siklikRule) continue;
 
     const limit = siklikRule.params.limit as number;
-    const periyot = siklikRule.params.periyot as string;
+    let periyot = siklikRule.params.periyot as string;
+
+    // ── A3: rawText'ten gün/ay dönüşüm doğrulama ──
+    // AI "180 gün" → ay_aralik: 6 çıkarabiliyor — rawText'teki gün sayısını kullan
+    if (periyot === 'ay_aralik' && siklikRule.rawText) {
+      const gunMatch = siklikRule.rawText.match(/(\d+)\s*g[uü]n/i);
+      if (gunMatch) {
+        const gunSayisi = parseInt(gunMatch[1], 10);
+        if (gunSayisi > 0) {
+          // rawText gün cinsinden yazılmış, AI yanlışlıkla ay_aralik yapmış → düzelt
+          periyot = 'gun_aralik';
+          (siklikRule.params as any).periyot = 'gun_aralik';
+          (siklikRule.params as any).limit = gunSayisi;
+        }
+      }
+    }
+
+    const correctedLimit = siklikRule.params.limit as number;
+
+    // ── A1: "Aynı diş" koşulu tespiti ──
+    const rawTextLower = turkishLower(siklikRule.rawText || '');
+    const isAyniDis = /ayn[ıi]\s*di[sş]/i.test(rawTextLower);
+
+    // ── "Aynı branşta" koşulu tespiti ──
+    // "aynı branşta 10 gün içinde bir kez puanlandırılır" → farklı branşlardaki işlemler ayrı sayılmalı
+    const isAyniBrans = /ayn[ıi]\s*bran[sş]/i.test(rawTextLower);
+
+    // Önce "aynı branş" alt-gruplama (branş bazında)
+    let bransGroups: number[][];
+    if (isAyniBrans) {
+      const bransMap = new Map<string, number[]>();
+      for (const idx of indices) {
+        const brans = turkishLower((rows[idx].uzmanlik || '').trim()) || '__bos__';
+        if (!bransMap.has(brans)) bransMap.set(brans, []);
+        bransMap.get(brans)!.push(idx);
+      }
+      bransGroups = [...bransMap.values()];
+    } else {
+      bransGroups = [indices];
+    }
+
+    // Sonra her branş grubu içinde "aynı diş" alt-gruplama
+    let indexGroups: number[][] = [];
+    for (const bransIndices of bransGroups) {
+      if (isAyniDis) {
+        const disMap = new Map<string, number[]>();
+        for (const idx of bransIndices) {
+          const dis = (rows[idx].disNumarasi || '').trim() || '__bos__';
+          if (!disMap.has(dis)) disMap.set(dis, []);
+          disMap.get(dis)!.push(idx);
+        }
+        indexGroups.push(...disMap.values());
+      } else {
+        indexGroups.push(bransIndices);
+      }
+    }
+
+    for (const subIndices of indexGroups) {
+      if (subIndices.length <= 1) continue;
 
     // Periyoda göre alt-gruplama (gün, hafta, ay, yıl veya genel)
     const periyotGroups = new Map<string, number[]>();
-    for (const idx of indices) {
+    for (const idx of subIndices) {
       const pk = getPeriyotKey(rows[idx].tarih, periyot);
       if (!periyotGroups.has(pk)) periyotGroups.set(pk, []);
       periyotGroups.get(pk)!.push(idx);
@@ -562,9 +820,9 @@ function applySiklikLimitChecks(
     // gun_aralik ve ay_aralik: minimum aralık kontrolü (sliding window)
     if (periyot === 'gun_aralik' || periyot === 'ay_aralik') {
       // limit = aralık değeri (ör: 10 gün, 3 ay), 1 kez yapılabilir her aralıkta
-      const aralikGun = periyot === 'ay_aralik' ? limit * 30 : limit;
+      const aralikGun = periyot === 'ay_aralik' ? correctedLimit * 30 : correctedLimit;
       // Tarihe göre sırala
-      const sorted = [...indices].sort((a, b) => {
+      const sorted = [...subIndices].sort((a, b) => {
         const da = normalizeDate(rows[a].tarih);
         const db = normalizeDate(rows[b].tarih);
         return da.localeCompare(db);
@@ -579,7 +837,7 @@ function applySiklikLimitChecks(
           if (result) {
             result.ihlaller.push({
               ihlal_kodu: 'SIKLIK_006',
-              ihlal_aciklamasi: `Bu işlem en az ${limit} ${periyot === 'ay_aralik' ? 'ay' : 'gün'} arayla yapılabilir. Önceki işlemden ${diffDays} gün sonra yapılmış.`,
+              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}en az ${correctedLimit} ${periyot === 'ay_aralik' ? 'ay' : 'gün'} arayla yapılabilir. Önceki işlemden ${diffDays} gün sonra yapılmış.`,
               kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
@@ -595,14 +853,14 @@ function applySiklikLimitChecks(
     }
 
     for (const [, groupIndices] of periyotGroups) {
-      if (groupIndices.length > limit) {
+      if (groupIndices.length > correctedLimit) {
         // limit aşan satırları işaretle
-        for (let j = limit; j < groupIndices.length; j++) {
+        for (let j = correctedLimit; j < groupIndices.length; j++) {
           const result = results[groupIndices[j]];
           if (result) {
             result.ihlaller.push({
               ihlal_kodu: 'SIKLIK_006',
-              ihlal_aciklamasi: `Bu işlem ${periyotLabel ? periyotLabel + ' ' : ''}en fazla ${limit} kez yapılabilir. Toplam: ${groupIndices.length}`,
+              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}${periyotLabel ? periyotLabel + ' ' : ''}en fazla ${correctedLimit} kez yapılabilir. Toplam: ${groupIndices.length}`,
               kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
@@ -615,6 +873,7 @@ function applySiklikLimitChecks(
         }
       }
     }
+    } // end for subIndices
   }
 }
 
@@ -710,6 +969,7 @@ export function generateSummary(results: ComplianceResult[], elapsedMs?: number)
     BIRLIKTE_YAPILAMAZ: 0,
     SIKLIK_LIMIT: 0,
     DIS_TEDAVI: 0,
+    YAS_KISITI: 0,
     GENEL_ACIKLAMA: 0,
   };
 

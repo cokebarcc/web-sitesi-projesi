@@ -12,7 +12,20 @@ import {
 } from '../types/complianceTypes';
 import { ExcelData } from '../../components/EkListeTanimlama';
 import { GilExcelData } from '../../components/GilModule';
-import { extractRulesWithAI, needsAIExtraction } from './ai/ruleExtractionAI';
+// Eski AI fonksiyonları kaldırıldı (v2.0 ile JSON-based sisteme geçildi)
+// Backward compat stub'ları:
+function needsAIExtraction(_text: string): boolean {
+  // Artık tüm kurallar AI v2.0 JSON sistemi ile çıkarılıyor
+  return false;
+}
+
+async function extractRulesWithAI(
+  _texts: string[],
+  _onProgress?: (current: number, total: number) => void
+): Promise<Map<string, ParsedRule[]>> {
+  console.warn('[DEPRECATED] extractRulesWithAI artık kullanılmıyor. Yeni sistem: ruleExtractionAI.extractAndSaveRules()');
+  return new Map();
+}
 
 // ── Türkçe güvenli lowercase ──
 function turkishLower(str: string): string {
@@ -237,6 +250,13 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
     /(.+?)\s+(?:uzmanlarınca|uzmanlarinca|hekimlerince)\s+(?:yapılır|yapilir|faturalandırılır|faturalandirilir|faturalandırılmaz)/gi,
   ];
 
+  // Servis/birim adları — branş değildir, BRANS_KISITI oluşturmamalı
+  const servisAdlari = new Set([
+    'palyatif bakım', 'yoğun bakım', 'yogun bakim', 'palyatif bakim',
+    'acil servis', 'yataklı servis', 'yatakli servis', 'poliklinik',
+    'ameliyathane', 'laboratuvar', 'eczane',
+  ]);
+
   for (const pattern of patterns) {
     const r = new RegExp(pattern.source, pattern.flags);
     let match: RegExpExecArray | null;
@@ -268,7 +288,9 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
               'tanımlı', 'tanimli', 'günlük', 'gunluk', 'hasta', 'başı', 'basi',
             ]);
             return !stopWords.has(turkishLower(b));
-          });
+          })
+          // Servis/birim adlarını filtrele (branş değildir)
+          .filter(b => !servisAdlari.has(turkishLower(b)));
 
         if (branslar.length > 0) {
           const contextStart = Math.max(0, match.index - 40);
@@ -305,7 +327,7 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
       // Yeni eklenen branşlar (AI audit bulguları)
       'spor hekimliği', 'tıbbi ekoloji', 'hidroklimatoloji', 'geriatri',
       'allerji', 'immünoloji', 'ruh sağlığı', 'çocuk nöroloji', 'çocuk acil',
-      'anestezi', 'algoloji', 'yoğun bakım', 'palyatif bakım',
+      'anestezi', 'algoloji',
       'tıbbi genetik', 'çocuk hematoloji', 'çocuk onkoloji',
       'çocuk gastroenteroloji', 'çocuk nefroloji', 'çocuk kardiyoloji',
       'çocuk endokrin', 'çocuk enfeksiyon', 'çocuk romatoloji',
@@ -315,6 +337,18 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
     const bulunan: string[] = [];
     for (const brans of bilinen) {
       if (lower.includes(brans)) {
+        // Branş adı "gibi" kelimesiyle genişletici bağlamda mı kullanılıyor?
+        // "cerrahi, dahili, palyatif bakım gibi yataklı servislerde" → kısıt DEĞİL
+        const bransIdx = lower.indexOf(brans);
+        const afterBrans = lower.substring(bransIdx + brans.length, bransIdx + brans.length + 30).trim();
+        if (/^gibi\b/.test(afterBrans)) {
+          continue; // Genişletici ifade, branş kısıtı değil
+        }
+        // Branş adından önceki metin "gibi" ile bağlanıyorsa (branş listesinde "X, Y gibi Z" yapısı)
+        const beforeBrans = lower.substring(Math.max(0, bransIdx - 30), bransIdx).trim();
+        if (/gibi\s*$/.test(beforeBrans)) {
+          continue; // "... gibi palyatif bakım" → genişletici
+        }
         bulunan.push(brans);
       }
     }
