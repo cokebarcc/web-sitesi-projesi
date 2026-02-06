@@ -85,7 +85,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         { id: 'detailed-schedule', label: 'Detaylı Cetveller', view: 'detailed-schedule', hasAccess: hasModuleAccess('detailedSchedule') },
         { id: 'physician-data', label: 'Hekim Verileri', view: 'physician-data', hasAccess: hasModuleAccess('physicianData') },
         { id: 'change-analysis', label: 'Değişim Analizleri', view: 'change-analysis', hasAccess: hasModuleAccess('changeAnalysis') },
-        { id: 'efficiency-analysis', label: 'Verimlilik Analizleri', view: 'efficiency-analysis', hasAccess: hasModuleAccess('efficiencyAnalysis') }
+        { id: 'efficiency-analysis', label: 'Verimlilik Analizleri', view: 'efficiency-analysis', hasAccess: hasModuleAccess('efficiencyAnalysis') },
+        { id: 'ai-cetvel-planlama', label: 'AI Cetvel Planlama', view: 'ai-cetvel-planlama', hasAccess: hasModuleAccess('aiCetvelPlanlama') }
       ]
     },
     {

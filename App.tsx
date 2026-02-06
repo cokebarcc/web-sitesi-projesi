@@ -44,6 +44,7 @@ import WelcomeDashboard from './components/WelcomeDashboard';
 import FloatingSidebar from './components/FloatingSidebar';
 import SchedulePlanning from './components/SchedulePlanning';
 import ActiveDemand from './components/ActiveDemand';
+import AICetvelPlanlama from './components/AICetvelPlanlama';
 import GorenModule from './components/goren/GorenModule';
 import GorenManuelHesaplama from './components/goren/GorenManuelHesaplama';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
@@ -154,7 +155,8 @@ const App: React.FC = () => {
     'presentation': null,
     'schedule': null,
     'admin': null,
-    'emergency-service': null
+    'emergency-service': null,
+    'ai-cetvel-planlama': null
   });
 
   // Eski yapı ile uyumluluk - modüller güncellenene kadar kullanılacak
@@ -175,7 +177,8 @@ const App: React.FC = () => {
     'presentation': '',
     'schedule': '',
     'admin': '',
-    'emergency-service': ''
+    'emergency-service': '',
+    'ai-cetvel-planlama': ''
   });
 
   const [yearFilters, setYearFilters] = useState<Record<ViewType, number>>({
@@ -192,7 +195,8 @@ const App: React.FC = () => {
     'presentation': 0,
     'schedule': 0,
     'admin': 0,
-    'emergency-service': 0
+    'emergency-service': 0,
+    'ai-cetvel-planlama': 0
   });
 
   // Her modül için cetvel seçimleri (ChangeAnalysis için)
@@ -210,7 +214,8 @@ const App: React.FC = () => {
     'presentation': '',
     'schedule': '',
     'admin': '',
-    'emergency-service': ''
+    'emergency-service': '',
+    'ai-cetvel-planlama': ''
   });
 
   const [updatedLabels, setUpdatedLabels] = useState<Record<ViewType, string>>({
@@ -227,7 +232,8 @@ const App: React.FC = () => {
     'presentation': '',
     'schedule': '',
     'admin': '',
-    'emergency-service': ''
+    'emergency-service': '',
+    'ai-cetvel-planlama': ''
   });
 
   // Mevcut modül için aktif filtreyi al
@@ -319,7 +325,7 @@ const App: React.FC = () => {
   const [loadedDataCache, setLoadedDataCache] = useState<Set<string>>(new Set());
 
   // Function to load data for specific hospital/year/month
-  const handleLoadPeriodData = async (hospital: string, year: number, month: string) => {
+  const handleLoadPeriodData = async (hospital: string, year: number, month: string, silent = false) => {
     const cacheKey = `${hospital}-${year}-${month}`;
 
     // Check if already loaded
@@ -328,8 +334,10 @@ const App: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
-    setLoadingText(`${hospital} - ${month} ${year} verileri yükleniyor...`);
+    if (!silent) {
+      setIsLoading(true);
+      setLoadingText(`${hospital} - ${month} ${year} verileri yükleniyor...`);
+    }
 
     try {
       console.log(`🔄 Veriler yükleniyor: ${hospital} - ${month} ${year}`);
@@ -373,13 +381,19 @@ const App: React.FC = () => {
       setLoadedDataCache(prev => new Set([...prev, cacheKey]));
       console.log(`✅ Tüm veriler başarıyla yüklendi: ${cacheKey}`);
 
-      showToast(`${hospital} - ${month} ${year} verileri yüklendi`, 'success');
+      if (!silent) {
+        showToast(`${hospital} - ${month} ${year} verileri yüklendi`, 'success');
+      }
     } catch (error) {
       console.error('❌ Veri yükleme hatası:', error);
-      showToast('Veri yükleme hatası', 'error');
+      if (!silent) {
+        showToast('Veri yükleme hatası', 'error');
+      }
     } finally {
-      setIsLoading(false);
-      setLoadingText('Veriler Güncelleniyor...');
+      if (!silent) {
+        setIsLoading(false);
+        setLoadingText('Veriler Güncelleniyor...');
+      }
     }
   };
 
@@ -784,6 +798,27 @@ const App: React.FC = () => {
                   isLoading={isLoading}
                 />
               );
+            case 'ai-cetvel-planlama':
+              return (
+                <AICetvelPlanlama
+                  detailedScheduleData={filteredDetailedScheduleData}
+                  allDetailedScheduleData={detailedScheduleData}
+                  ameliyatByPeriod={ameliyatByPeriod}
+                  ameliyatMetaByPeriod={ameliyatMetaByPeriod}
+                  globalSelectedYears={globalSelectedYears}
+                  setGlobalSelectedYears={setGlobalSelectedYears}
+                  globalSelectedMonths={globalSelectedMonths}
+                  setGlobalSelectedMonths={setGlobalSelectedMonths}
+                  globalAppliedYears={globalAppliedYears}
+                  globalAppliedMonths={globalAppliedMonths}
+                  selectedHospital={selectedHospital}
+                  allowedHospitals={allowedHospitals}
+                  onHospitalChange={setSelectedHospital}
+                  onCentralDataLoad={handleCentralDataLoad}
+                  onLoadPeriodData={handleLoadPeriodData}
+                  isLoading={isLoading}
+                />
+              );
             case 'detailed-schedule':
               return (
                 <DetailedSchedule
@@ -1020,7 +1055,7 @@ const App: React.FC = () => {
     showToast("Görünüm sunuma eklendi. 'Sunum' sekmesinden düzenleyebilirsiniz.");
   };
 
-  const isMhrsActive = ['detailed-schedule', 'physician-data', 'efficiency-analysis', 'change-analysis'].includes(view);
+  const isMhrsActive = ['detailed-schedule', 'physician-data', 'efficiency-analysis', 'change-analysis', 'ai-cetvel-planlama'].includes(view);
   const isFinancialExpandedActive = ['service-analysis'].includes(view);
   const isDevActive = ['analysis-module', 'performance-planning', 'presentation'].includes(view);
   const isEmergencyActive = ['emergency-service'].includes(view);

@@ -213,6 +213,7 @@ export type ViewType =
   | 'goren-bh'               // GÖREN - Başhekimlik
   | 'goren-adsh'             // GÖREN - Ağız ve Diş Sağlığı Hastanesi
   | 'goren-ash'              // GÖREN - Acil Sağlık Hizmetleri
+  | 'ai-cetvel-planlama'     // AI Cetvel Planlama modülü (MHRS)
   | 'admin';
 
 // Aktif Talep (Active Demand) Types
