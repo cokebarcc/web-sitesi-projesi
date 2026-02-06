@@ -139,7 +139,7 @@ const BRANS_ALIAS_GROUPS: string[][] = [
   // Spor Hekimliği
   ['spor hekimliği'],
   // Ağız Diş
-  ['ağız, diş ve çene cerrahisi', 'ağız diş ve çene cerrahisi', 'diş hekimliği', 'diş', 'ağız diş', 'diş hastalıkları ve tedavisi', 'diş hastalıkları', 'diş protez', 'ağız diş ve çene hastalıkları'],
+  ['ağız, diş ve çene cerrahisi', 'ağız diş ve çene cerrahisi', 'diş hekimliği', 'diş hekimi', 'diş', 'ağız diş', 'diş hastalıkları ve tedavisi', 'diş hastalıkları', 'diş protez', 'ağız diş ve çene hastalıkları'],
 ];
 
 // Normalize: alias map oluştur (key: normalized alias → value: tüm gruptaki isimler)
@@ -297,7 +297,15 @@ function analyzeRow(
           'ancak', 'sadece', 'bizzat', 'tarafından', 'tarafindan', 'halinde', 'yapılır',
           'faturalandırılır', 'puanlandırılır', 'uygulanır', 'gerekir', 'gerekmektedir',
         ]);
-        const branslar = _rawBranslar?.filter(b => b.length > 2 && !bransStopWords.has(turkishLower(b)));
+        // Servis/birim adlarını filtrele (branş değildir)
+        const servisAdlari = new Set([
+          'palyatif bakım', 'palyatif bakim', 'yoğun bakım', 'yogun bakim',
+          'acil servis', 'yataklı servis', 'yatakli servis', 'poliklinik',
+          'ameliyathane', 'laboratuvar', 'eczane',
+        ]);
+        const branslar = _rawBranslar?.filter(b =>
+          b.length > 2 && !bransStopWords.has(turkishLower(b)) && !servisAdlari.has(turkishLower(b))
+        );
 
         // ── GENİŞLETİCİ İFADE TESPİTİ ──
         // "X için de puanlandırılır" / "X da yapabilir" gibi ifadeler branş KISITLAMASI değil,
@@ -307,6 +315,22 @@ function analyzeRow(
         if (bransMode === 'dahil' && genisleticiPattern.test(rawTextLower)) {
           // Genişletici ifade → kısıtlama yok, skip
           break;
+        }
+
+        // ── "GİBİ" GENİŞLETİCİ İFADE KONTROLÜ ──
+        // "Cerrahi, dahili, palyatif bakım gibi yataklı servislerde" → örnek listesi, kısıt değil
+        // Branş adları "gibi" kelimesiyle bağlanıyorsa → genişletici ifade
+        if (branslar && branslar.length > 0) {
+          const allBransAfterGibi = branslar.every(b => {
+            const bLower = turkishLower(b);
+            const idx = rawTextLower.indexOf(bLower);
+            if (idx === -1) return false;
+            const afterBrans = rawTextLower.substring(idx + bLower.length, idx + bLower.length + 20).trim();
+            return /^gibi\b/.test(afterBrans);
+          });
+          if (allBransAfterGibi) {
+            break; // Tüm branşlar "gibi" ile bağlanmış → örnek listesi, kısıt değil
+          }
         }
 
         // ── YAŞ KOŞULU KONTROLÜ ──
@@ -746,18 +770,38 @@ function applySiklikLimitChecks(
     const rawTextLower = turkishLower(siklikRule.rawText || '');
     const isAyniDis = /ayn[ıi]\s*di[sş]/i.test(rawTextLower);
 
-    // Eğer "aynı diş" kuralıysa → indices'i disNumarasi'na göre alt-gruplara böl
-    let indexGroups: number[][];
-    if (isAyniDis) {
-      const disMap = new Map<string, number[]>();
+    // ── "Aynı branşta" koşulu tespiti ──
+    // "aynı branşta 10 gün içinde bir kez puanlandırılır" → farklı branşlardaki işlemler ayrı sayılmalı
+    const isAyniBrans = /ayn[ıi]\s*bran[sş]/i.test(rawTextLower);
+
+    // Önce "aynı branş" alt-gruplama (branş bazında)
+    let bransGroups: number[][];
+    if (isAyniBrans) {
+      const bransMap = new Map<string, number[]>();
       for (const idx of indices) {
-        const dis = (rows[idx].disNumarasi || '').trim() || '__bos__';
-        if (!disMap.has(dis)) disMap.set(dis, []);
-        disMap.get(dis)!.push(idx);
+        const brans = turkishLower((rows[idx].uzmanlik || '').trim()) || '__bos__';
+        if (!bransMap.has(brans)) bransMap.set(brans, []);
+        bransMap.get(brans)!.push(idx);
       }
-      indexGroups = [...disMap.values()];
+      bransGroups = [...bransMap.values()];
     } else {
-      indexGroups = [indices];
+      bransGroups = [indices];
+    }
+
+    // Sonra her branş grubu içinde "aynı diş" alt-gruplama
+    let indexGroups: number[][] = [];
+    for (const bransIndices of bransGroups) {
+      if (isAyniDis) {
+        const disMap = new Map<string, number[]>();
+        for (const idx of bransIndices) {
+          const dis = (rows[idx].disNumarasi || '').trim() || '__bos__';
+          if (!disMap.has(dis)) disMap.set(dis, []);
+          disMap.get(dis)!.push(idx);
+        }
+        indexGroups.push(...disMap.values());
+      } else {
+        indexGroups.push(bransIndices);
+      }
     }
 
     for (const subIndices of indexGroups) {
@@ -793,7 +837,7 @@ function applySiklikLimitChecks(
           if (result) {
             result.ihlaller.push({
               ihlal_kodu: 'SIKLIK_006',
-              ihlal_aciklamasi: `Bu işlem ${isAyniDis ? 'aynı diş için ' : ''}en az ${correctedLimit} ${periyot === 'ay_aralik' ? 'ay' : 'gün'} arayla yapılabilir. Önceki işlemden ${diffDays} gün sonra yapılmış.`,
+              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}en az ${correctedLimit} ${periyot === 'ay_aralik' ? 'ay' : 'gün'} arayla yapılabilir. Önceki işlemden ${diffDays} gün sonra yapılmış.`,
               kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
@@ -816,7 +860,7 @@ function applySiklikLimitChecks(
           if (result) {
             result.ihlaller.push({
               ihlal_kodu: 'SIKLIK_006',
-              ihlal_aciklamasi: `Bu işlem ${isAyniDis ? 'aynı diş için ' : ''}${periyotLabel ? periyotLabel + ' ' : ''}en fazla ${correctedLimit} kez yapılabilir. Toplam: ${groupIndices.length}`,
+              ihlal_aciklamasi: `Bu işlem ${isAyniBrans ? 'aynı branşta ' : ''}${isAyniDis ? 'aynı diş için ' : ''}${periyotLabel ? periyotLabel + ' ' : ''}en fazla ${correctedLimit} kez yapılabilir. Toplam: ${groupIndices.length}`,
               kaynak: siklikRule.kaynak || result.eslesen_kural?.kaynak || 'GİL',
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
