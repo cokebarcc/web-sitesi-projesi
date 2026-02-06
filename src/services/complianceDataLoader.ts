@@ -593,101 +593,45 @@ function mergeRegexRulesIntoMaster(
 }
 
 /**
- * v2.1 ANA FONKSİYON: AI kuralları + Regex kuralları birleşik (hibrit)
- * 1. AI kurallarını Firebase'den yükle
- * 2. Mevzuat verilerini yükle + regex ile kendi kurallarımızı çıkar (başlık propagasyonu dahil)
- * 3. İkisini birleştir: AI temel, regex tamamlayıcı
+ * v2.2 ANA FONKSİYON: Sadece kendi regex kurallarımız (AI devre dışı)
+ * 1. Mevzuat verilerini yükle
+ * 2. Regex ile kendi kurallarımızı çıkar (başlık propagasyonu dahil)
+ * NOT: AI kuralları şimdilik devre dışı, ileride tekrar aktif edilebilir.
  */
 export async function loadOrExtractRules(
   forceExtract: boolean = false,
   onProgress?: (progress: AnalysisProgress) => void,
 ): Promise<{ rulesMaster: Map<string, RuleMasterEntry>; loadStatus: RuleLoadStatus; extractedJSON: ExtractedRulesJSON | null }> {
-  // 1. Kaydedilmiş AI kurallarını yükle
-  let aiMaster: Map<string, RuleMasterEntry> | null = null;
-  let savedRules: ExtractedRulesJSON | null = null;
 
-  if (!forceExtract) {
-    onProgress?.({
-      phase: 'loading',
-      current: 0,
-      total: 3,
-      message: 'Kayıtlı AI kuralları kontrol ediliyor...',
-    });
-
-    savedRules = await loadExtractedRulesFromFirebase();
-    if (savedRules) {
-      console.log(`[LOADER v2.1] AI kuralları bulundu: v${savedRules.version}, ${Object.keys(savedRules.rules).length} işlem, ${savedRules.stats.rulesExtracted} kural`);
-
-      // Bozuk kayıt kontrolü
-      if (savedRules.stats.rulesExtracted === 0 && Object.keys(savedRules.rules).length > 0) {
-        console.warn('[LOADER v2.1] Kayıtlı kurallar bozuk (0 kural). AI kuralları atlanıyor.');
-        savedRules = null;
-      } else {
-        aiMaster = convertExtractedRulesToMaster(savedRules);
-        console.log(`[LOADER v2.1] AI master: ${aiMaster.size} işlem kodu`);
-      }
-    }
-  }
-
-  // 2. Mevzuat verilerini yükle ve regex kuralları çıkar (her zaman yapılır)
+  // 1. Mevzuat verilerini yükle
   onProgress?.({
     phase: 'loading',
-    current: 1,
-    total: 3,
-    message: 'Mevzuat verileri yükleniyor (regex kural çıkarma)...',
+    current: 0,
+    total: 2,
+    message: 'Mevzuat verileri yükleniyor...',
   });
 
   const data = await loadAllRegulationData(onProgress);
 
+  // 2. Regex ile kendi kurallarımızı çıkar (başlık propagasyonu dahil)
   onProgress?.({
     phase: 'building-rules',
-    current: 2,
-    total: 3,
-    message: 'Regex ile kendi kurallarımız çıkarılıyor (başlık propagasyonu dahil)...',
+    current: 1,
+    total: 2,
+    message: 'Regex ile kurallar çıkarılıyor (başlık propagasyonu dahil)...',
   });
 
   const regexResult = buildRulesMaster(data.ek2b, data.ek2c, data.ek2cd, data.gil, data.sutMaddeleri);
-  console.log(`[LOADER v2.1] Regex kuralları: ${regexResult.rulesMaster.size} işlem, ${regexResult.stats.withRules} kural içeren`);
+  console.log(`[LOADER v2.2] Regex kuralları: ${regexResult.rulesMaster.size} işlem, ${regexResult.stats.withRules} kural içeren`);
 
-  // 3. AI yoksa sadece regex kullan
-  if (!aiMaster) {
-    // AI kuralları yok veya bozuk → sadece regex
-    if (!forceExtract) {
-      console.log('[LOADER v2.1] AI kuralları yok, sadece regex kuralları kullanılıyor');
-    } else {
-      // forceExtract = AI yeniden çıkar
-      onProgress?.({
-        phase: 'loading',
-        current: 2,
-        total: 3,
-        message: 'AI kural çıkarma başlatılıyor...',
-      });
+  const finalMaster = regexResult.rulesMaster;
 
-      const sources = regulationDataToSources(data);
-      if (sources.length > 0) {
-        const extractedJSON = await extractAndSaveRules(sources, onProgress);
-        aiMaster = convertExtractedRulesToMaster(extractedJSON);
-        savedRules = extractedJSON;
-      }
-    }
-  }
-
-  // 4. Birleştirme: AI master varsa regex ile tamamla, yoksa sadece regex
-  let finalMaster: Map<string, RuleMasterEntry>;
-
-  if (aiMaster) {
-    const { mergedCount, newCodeCount } = mergeRegexRulesIntoMaster(aiMaster, regexResult);
-    console.log(`[LOADER v2.1] Hibrit birleştirme: ${mergedCount} regex kural AI'a eklendi, ${newCodeCount} yeni işlem kodu regex'ten geldi`);
-    finalMaster = aiMaster;
-  } else {
-    finalMaster = regexResult.rulesMaster;
-    // Regex kurallarına extractionMethod ekle
-    for (const entry of finalMaster.values()) {
-      for (const rule of entry.parsed_rules) {
-        if (!rule.extractionMethod) {
-          rule.extractionMethod = 'regex' as const;
-          rule.confidence = 1.0;
-        }
+  // Regex kurallarına extractionMethod ekle
+  for (const entry of finalMaster.values()) {
+    for (const rule of entry.parsed_rules) {
+      if (!rule.extractionMethod) {
+        rule.extractionMethod = 'regex' as const;
+        rule.confidence = 1.0;
       }
     }
   }
@@ -695,22 +639,13 @@ export async function loadOrExtractRules(
   // İstatistikler
   let totalRulesCount = 0;
   let withRulesCount = 0;
-  let regexOnlyCount = 0;
-  let aiOnlyCount = 0;
-  let hybridCount = 0;
 
   for (const entry of finalMaster.values()) {
     if (entry.parsed_rules.length > 0) withRulesCount++;
     totalRulesCount += entry.parsed_rules.length;
-    const hasRegex = entry.parsed_rules.some(r => r.extractionMethod === 'regex');
-    const hasAI = entry.parsed_rules.some(r => r.extractionMethod === 'ai');
-    if (hasRegex && hasAI) hybridCount++;
-    else if (hasRegex) regexOnlyCount++;
-    else if (hasAI) aiOnlyCount++;
   }
 
-  console.log(`[LOADER v2.1] Final master: ${finalMaster.size} işlem, ${withRulesCount} kural içeren, ${totalRulesCount} toplam kural`);
-  console.log(`[LOADER v2.1] Kaynak dağılımı: AI=${aiOnlyCount}, Regex=${regexOnlyCount}, Hibrit=${hybridCount}`);
+  console.log(`[LOADER v2.2] Final master: ${finalMaster.size} işlem, ${withRulesCount} kural içeren, ${totalRulesCount} toplam kural`);
 
   const loadStatus: RuleLoadStatus = {
     ek2b: { loaded: data.loadStatus.ek2b.loaded, count: data.loadStatus.ek2b.count },
@@ -723,15 +658,15 @@ export async function loadOrExtractRules(
 
   onProgress?.({
     phase: 'complete',
-    current: 3,
-    total: 3,
-    message: `${finalMaster.size} kural yüklendi (AI: ${aiOnlyCount}, Regex: ${regexOnlyCount}, Hibrit: ${hybridCount})`,
+    current: 2,
+    total: 2,
+    message: `${finalMaster.size} kural yüklendi (Regex: ${withRulesCount} işlem, ${totalRulesCount} kural)`,
   });
 
   // Debug: window'a expose et
   (window as any).__RULES_MASTER__ = finalMaster;
-  (window as any).__EXTRACTED_JSON__ = savedRules;
-  console.log('[DEBUG] window.__RULES_MASTER__ ve window.__EXTRACTED_JSON__ erişime açıldı');
+  (window as any).__EXTRACTED_JSON__ = null;
+  console.log('[DEBUG] window.__RULES_MASTER__ erişime açıldı (sadece regex kuralları)');
 
-  return { rulesMaster: finalMaster, loadStatus, extractedJSON: savedRules };
+  return { rulesMaster: finalMaster, loadStatus, extractedJSON: null };
 }

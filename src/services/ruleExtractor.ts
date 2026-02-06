@@ -133,10 +133,25 @@ function extractBasamakRules(lower: string, rawText: string, rules: ParsedRule[]
         return [3];
       }
     },
-    // "2. ve 3. basamak" — çoklu basamak
+    // "2. ve 3. basamak" — çoklu basamak (rakamsal)
     {
       regex: /(\d)\.\s*ve\s+(\d)\.\s*basamak/gi,
       extractor: (m) => [parseInt(m[1]), parseInt(m[2])]
+    },
+    // "ikinci ve üçüncü basamak" — çoklu basamak (yazılı)
+    {
+      regex: /(?:birinci|ikinci|üçüncü|ucuncu)\s+ve\s+(?:birinci|ikinci|üçüncü|ucuncu)\s+basamak/gi,
+      extractor: (m) => {
+        const txt = turkishLower(m[0]);
+        const nums: number[] = [];
+        const words = txt.split(/\s+ve\s+/);
+        for (const w of words) {
+          if (w.includes('birinci')) nums.push(1);
+          else if (w.includes('ikinci')) nums.push(2);
+          else if (w.includes('üçüncü') || w.includes('ucuncu')) nums.push(3);
+        }
+        return nums;
+      }
     },
     // "X. basamak sağlık hizmeti sunucularında/tarafından yapılır/faturalandırılır"
     // Relaxed: also matches "kuruluş", "kurum", "sunucu" without suffix requirement
@@ -225,7 +240,12 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
   // Mode tespiti: dahil mi haric mi?
   function detectBransMode(ctx: string): string | undefined {
     if (/(?:yalnızca|yalnizca|sadece|yalnız)\s/.test(ctx)) return 'sadece';
-    if (/(?:hariç|haric|dışında|disinda)/.test(ctx)) return 'haric';
+    // "hariç" kesin hariç modu
+    if (/(?:hariç|haric)/.test(ctx)) return 'haric';
+    // "dışında" sadece branş/uzman/hekim bağlamında hariç modu
+    // "yoğun bakım dışındaki" gibi yer/alan ifadeleri hariç modu DEĞİL
+    if (/(?:branş|brans|uzman|hekim).{0,20}(?:dışında|disinda)/.test(ctx)) return 'haric';
+    if (/(?:dışında|disinda).{0,20}(?:branş|brans|uzman|hekim)/.test(ctx)) return 'haric';
     if (/(?:dahil|de\s+uygulan)/.test(ctx)) return 'dahil';
     return undefined;
   }
@@ -273,7 +293,9 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
             .replace(/^\s*(biri?|birisi)\s+/gi, '')
             .trim()
           )
-          .filter(b => b.length > 2)
+          .filter(b => b.length > 2 && b.length <= 50 && b.split(/\s+/).length <= 5)
+          // Tanı kodu veya cümle parçası gibi görünen string'leri filtrele
+          .filter(b => !/^\w\d+\.\d|faturalandırılır|puanlandırılır|olmak üzere|nedeniyle/.test(turkishLower(b)))
           // Türkçe stop-words ve anlamsız kelimeler branş adı olamaz
           .filter(b => {
             const stopWords = new Set([
@@ -348,6 +370,25 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
         const beforeBrans = lower.substring(Math.max(0, bransIdx - 30), bransIdx).trim();
         if (/gibi\s*$/.test(beforeBrans)) {
           continue; // "... gibi palyatif bakım" → genişletici
+        }
+        // "anestezi" kelimesi: önünde "genel/lokal/rejyonel/spinal/epidural" varsa → yöntem adı, branş değil
+        // Tüm occurrence'ları kontrol et — hepsi yöntem bağlamındaysa skip
+        if (brans === 'anestezi') {
+          let allAreMethod = true;
+          let searchFrom = 0;
+          while (searchFrom < lower.length) {
+            const idx = lower.indexOf('anestezi', searchFrom);
+            if (idx === -1) break;
+            const before = lower.substring(Math.max(0, idx - 15), idx).trim();
+            if (!/(?:genel|lokal|rejyonel|spinal|epidural|sedasyon)\s*$/.test(before)) {
+              allAreMethod = false;
+              break;
+            }
+            searchFrom = idx + 8;
+          }
+          if (allAreMethod) {
+            continue; // Tüm "anestezi" kullanımları yöntem bağlamında → branş kısıtı değil
+          }
         }
         bulunan.push(brans);
       }
@@ -1040,11 +1081,33 @@ export function buildRulesMaster(
     const gilCfg: EkSourceConfig = { codeIdx: 0, puanIdx: 3, adiIdx: 1, aciklamaIdx: 2 };
     let sectionHeader = '';
     let sectionRules: ParsedRule[] = [];
+    let sectionExcludedCodes = new Set<string>(); // Başlıkta "hariç" denen kodlar
 
     for (const row of gilData.rows) {
       if (isHeaderRow(row, gilCfg)) {
         sectionHeader = getHeaderText(row, gilCfg);
         sectionRules = extractRulesFromAciklama(sectionHeader);
+        // Başlıkta "X kodlu işlemler hariç" kalıbını parse et
+        // Strateji: "kodlu işlemler hariç" ifadesini bul, ondan önceki metindeki tüm 6 haneli kodları çıkar
+        sectionExcludedCodes = new Set<string>();
+        const haricIdx = sectionHeader.search(/kodlu\s+işlemler\s+hariç/i);
+        if (haricIdx > 0) {
+          // "kodlu işlemler hariç" ifadesinden önceki metin (kod listesi)
+          const beforeHaric = sectionHeader.substring(0, haricIdx);
+          // Tüm 3+3 veya 6 haneli kodları çıkar (520.021, 520,013, 520 021 vb.)
+          const kodMatches = beforeHaric.match(/\d{3}[\.\s,]*\d{3}/g);
+          if (kodMatches) {
+            for (const k of kodMatches) {
+              const cleaned = k.replace(/[\.\s,]/g, '');
+              if (cleaned.length === 6) {
+                sectionExcludedCodes.add(cleaned);
+              }
+            }
+          }
+          if (sectionExcludedCodes.size > 0) {
+            console.log(`[GİL PROPAGASYON] Hariç kodlar: ${[...sectionExcludedCodes].join(', ')}`);
+          }
+        }
         continue;
       }
 
@@ -1055,6 +1118,9 @@ export function buildRulesMaster(
       const puan = parseFloat(puanStr) || 0;
       const fiyat = puan * 0.593;
       const aciklama = String(row[2] || '').trim();
+
+      // Hariç listesindeki kodlara başlık kurallarını propagate etme
+      const effectiveSectionRules = sectionExcludedCodes.has(kodu) ? [] : sectionRules;
 
       const existing = master.get(kodu);
       if (existing) {
@@ -1068,7 +1134,7 @@ export function buildRulesMaster(
           existing.section_header = sectionHeader;
         }
         // GİL açıklamasından + bölüm başlığından ek kurallar çıkar
-        const gilRules = stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), sectionRules), 'GİL');
+        const gilRules = stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), effectiveSectionRules), 'GİL');
         for (const r of gilRules) {
           // Aynı tip kural yoksa ekle
           if (!existing.parsed_rules.some(er => er.type === r.type)) {
@@ -1086,7 +1152,7 @@ export function buildRulesMaster(
           ameliyat_grubu: String(row[4] || '').trim(),
           gil_puani: puan,
           gil_fiyati: fiyat,
-          parsed_rules: stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), sectionRules), 'GİL'),
+          parsed_rules: stampKaynak(mergeRules(extractRulesFromAciklama(aciklama), effectiveSectionRules), 'GİL'),
           section_header: sectionHeader || undefined,
         };
         master.set(kodu, entry);
