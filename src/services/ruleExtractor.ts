@@ -12,7 +12,20 @@ import {
 } from '../types/complianceTypes';
 import { ExcelData } from '../../components/EkListeTanimlama';
 import { GilExcelData } from '../../components/GilModule';
-import { extractRulesWithAI, needsAIExtraction } from './ai/ruleExtractionAI';
+// Eski AI fonksiyonları kaldırıldı (v2.0 ile JSON-based sisteme geçildi)
+// Backward compat stub'ları:
+function needsAIExtraction(_text: string): boolean {
+  // Artık tüm kurallar AI v2.0 JSON sistemi ile çıkarılıyor
+  return false;
+}
+
+async function extractRulesWithAI(
+  _texts: string[],
+  _onProgress?: (current: number, total: number) => void
+): Promise<Map<string, ParsedRule[]>> {
+  console.warn('[DEPRECATED] extractRulesWithAI artık kullanılmıyor. Yeni sistem: ruleExtractionAI.extractAndSaveRules()');
+  return new Map();
+}
 
 // ── Türkçe güvenli lowercase ──
 function turkishLower(str: string): string {

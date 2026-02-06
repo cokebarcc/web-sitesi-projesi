@@ -6,7 +6,14 @@ import { getFinansalModuleFiles, getFinansalFileMetadata, downloadFinansalFile }
 import { parseEk2b, parseEk2c, parseEk2cd, ExcelData } from '../../components/EkListeTanimlama';
 import { parseGilExcel, GilExcelData } from '../../components/GilModule';
 import { buildRulesMaster, buildRulesMasterHybrid, buildRulesMasterFullAudit, BuildRulesMasterResult, FullAuditResult } from './ruleExtractor';
-import { RuleLoadStatus, AnalysisProgress, SutMaddesi } from '../types/complianceTypes';
+import {
+  RuleLoadStatus, AnalysisProgress, SutMaddesi,
+  RuleMasterEntry, ExtractedRulesJSON, ExtractedRulesMetadata,
+} from '../types/complianceTypes';
+import {
+  extractAndSaveRules, loadExtractedRulesFromFirebase, getExtractedRulesMetadata,
+  RegulationSourceData,
+} from './ai/ruleExtractionAI';
 import mammoth from 'mammoth';
 
 export interface RegulationDataResult {
@@ -283,4 +290,448 @@ export async function runFullAuditFromFirebase(
   );
 
   return { ...result, loadStatus: data.loadStatus };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// YENİ v2.0: AI-Extracted Kural Sistemi
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * ExtractedRulesJSON'dan RuleMasterEntry Map'e dönüştürücü.
+ * Compliance engine mevcut Map<string, RuleMasterEntry> formatını bekler.
+ */
+export function convertExtractedRulesToMaster(
+  extracted: ExtractedRulesJSON
+): Map<string, RuleMasterEntry> {
+  const master = new Map<string, RuleMasterEntry>();
+
+  for (const [kodu, entry] of Object.entries(extracted.rules)) {
+    const primaryKaynak = entry.kaynaklar.includes('EK-2C') ? 'EK-2C' :
+                          entry.kaynaklar.includes('EK-2B') ? 'EK-2B' :
+                          entry.kaynaklar.includes('GİL') ? 'GİL' :
+                          entry.kaynaklar.includes('EK-2Ç') ? 'EK-2Ç' : 'SUT';
+
+    // Tüm açıklamaları birleştir
+    const allAciklama = Object.values(entry.aciklamaRaw).filter(Boolean).join('\n---\n');
+
+    master.set(kodu, {
+      islem_kodu: entry.islemKodu,
+      islem_adi: entry.islemAdi,
+      kaynak: primaryKaynak as any,
+      islem_puani: entry.islemPuani,
+      islem_fiyati: entry.islemFiyati,
+      aciklama_raw: allAciklama,
+      islem_grubu: entry.islemGrubu,
+      ameliyat_grubu: entry.ameliyatGrubu,
+      gil_aciklama: entry.aciklamaRaw['GİL'],
+      gil_section_header: entry.sectionHeader,
+      parsed_rules: entry.kurallar.map(r => ({
+        type: r.type,
+        rawText: r.rawText,
+        params: r.params,
+        kaynak: r.kaynak,
+        fromSectionHeader: r.fromSectionHeader,
+        confidence: r.confidence,
+        extractionMethod: 'ai' as const,
+        aiExplanation: r.explanation,
+      })),
+      section_header: entry.sectionHeader,
+    });
+  }
+
+  // ── Post-processing: GENEL_ACIKLAMA'dan kaçırılmış kuralları kurtarma ──
+  let recoveredCount = 0;
+  for (const [kodu, entry] of master) {
+    const genelRules = entry.parsed_rules.filter(r => r.type === 'GENEL_ACIKLAMA');
+    if (genelRules.length === 0) continue;
+
+    for (const genelRule of genelRules) {
+      const rawLower = (genelRule.rawText || '').toLowerCase()
+        .replace(/İ/g, 'i').replace(/I/g, 'ı').replace(/Ğ/g, 'ğ')
+        .replace(/Ü/g, 'ü').replace(/Ş/g, 'ş').replace(/Ö/g, 'ö').replace(/Ç/g, 'ç');
+
+      // (1) Sıklık limiti kurtarma: "en az N gün/ay arayla/sonra"
+      const hasSiklik = entry.parsed_rules.some(r => r.type === 'SIKLIK_LIMIT');
+      if (!hasSiklik) {
+        const siklikMatch = rawLower.match(/en\s*az\s*(\d+)\s*(gün|ay)\s*(?:arayla|sonra|ara\s*ile)/);
+        if (siklikMatch) {
+          const miktar = parseInt(siklikMatch[1], 10);
+          const birim = siklikMatch[2];
+          entry.parsed_rules.push({
+            type: 'SIKLIK_LIMIT',
+            rawText: genelRule.rawText,
+            params: {
+              periyot: birim === 'gün' ? 'gun_aralik' : 'ay_aralik',
+              miktar,
+              maxTekrar: 1,
+            },
+            kaynak: genelRule.kaynak,
+            fromSectionHeader: genelRule.fromSectionHeader,
+            confidence: 0.7,
+            extractionMethod: 'ai' as const,
+            aiExplanation: 'GENEL_ACIKLAMA rawText kurtarma',
+          });
+          recoveredCount++;
+        }
+      }
+
+      // (2) Branş kısıtı kurtarma: "X uzmanı tarafından yapılır/faturalandırılır"
+      const hasBrans = entry.parsed_rules.some(r => r.type === 'BRANS_KISITI');
+      if (!hasBrans) {
+        const bransMatch = rawLower.match(/([\wçğıöşü\s]+?)\s+uzmanı\s+(?:tarafından|hekim)/);
+        if (bransMatch && !/için\s+de|da\s+yapabilir|de\s+puanland/.test(rawLower)) {
+          const bransAdi = bransMatch[1].trim();
+          if (bransAdi.length > 3 && bransAdi.split(' ').length <= 5) {
+            entry.parsed_rules.push({
+              type: 'BRANS_KISITI',
+              rawText: genelRule.rawText,
+              params: {
+                branslar: [bransAdi],
+                mode: 'dahil',
+              },
+              kaynak: genelRule.kaynak,
+              fromSectionHeader: genelRule.fromSectionHeader,
+              confidence: 0.65,
+              extractionMethod: 'ai' as const,
+              aiExplanation: 'GENEL_ACIKLAMA rawText kurtarma',
+            });
+            recoveredCount++;
+          }
+        }
+      }
+
+      // (3) Birlikte yapılamaz kurtarma: "X kodlu işlem ile birlikte faturalandırılamaz"
+      const hasBirlikte = entry.parsed_rules.some(r => r.type === 'BIRLIKTE_YAPILAMAZ');
+      if (!hasBirlikte) {
+        const birlikteMatch = rawLower.match(/(\d{6}(?:\s*,\s*\d{6})*)\s*kodlu\s*işlem(?:ler)?\s*ile\s*birlikte\s*(?:faturalandırılamaz|puanlandırılamaz)/);
+        if (birlikteMatch) {
+          const kodlar = birlikteMatch[1].split(/\s*,\s*/).map(k => k.trim()).filter(k => k.length === 6);
+          if (kodlar.length > 0) {
+            entry.parsed_rules.push({
+              type: 'BIRLIKTE_YAPILAMAZ',
+              rawText: genelRule.rawText,
+              params: {
+                yapilamazKodlari: kodlar,
+              },
+              kaynak: genelRule.kaynak,
+              fromSectionHeader: genelRule.fromSectionHeader,
+              confidence: 0.75,
+              extractionMethod: 'ai' as const,
+              aiExplanation: 'GENEL_ACIKLAMA rawText kurtarma',
+            });
+            recoveredCount++;
+          }
+        }
+      }
+    }
+  }
+  if (recoveredCount > 0) {
+    console.log(`[LOADER v2] GENEL_ACIKLAMA kurtarma: ${recoveredCount} ek kural üretildi`);
+  }
+
+  // Kural istatistikleri
+  let withRules = 0;
+  let totalParsedRules = 0;
+  for (const entry of master.values()) {
+    if (entry.parsed_rules && entry.parsed_rules.length > 0) {
+      withRules++;
+      totalParsedRules += entry.parsed_rules.length;
+    }
+  }
+  console.log(`[LOADER v2] ${master.size} işlem kodu dönüştürüldü → ${withRules} tanesinde kural var (toplam ${totalParsedRules} kural)`);
+  return master;
+}
+
+/**
+ * Mevzuat verilerini RegulationSourceData formatına dönüştür (AI extraction için)
+ */
+function regulationDataToSources(data: RegulationDataResult): RegulationSourceData[] {
+  const sources: RegulationSourceData[] = [];
+
+  // EK-2B
+  if (data.ek2b && data.ek2b.rows.length > 0) {
+    sources.push({
+      kaynak: 'EK-2B',
+      fileName: data.ek2b.fileName,
+      entries: data.ek2b.rows
+        .filter((r: any[]) => r[0] && String(r[0]).trim())
+        .map((r: any[]) => ({
+          kodu: String(r[0]).trim(),
+          adi: String(r[1] || '').trim(),
+          aciklama: String(r[2] || '').trim(),
+          puani: typeof r[3] === 'number' ? r[3] : parseFloat(String(r[3])) || 0,
+          fiyati: typeof r[4] === 'number' ? r[4] : parseFloat(String(r[4])) || 0,
+        })),
+    });
+  }
+
+  // EK-2C
+  if (data.ek2c && data.ek2c.rows.length > 0) {
+    sources.push({
+      kaynak: 'EK-2C',
+      fileName: data.ek2c.fileName,
+      entries: data.ek2c.rows
+        .filter((r: any[]) => r[0] && String(r[0]).trim())
+        .map((r: any[]) => ({
+          kodu: String(r[0]).trim(),
+          adi: String(r[1] || '').trim(),
+          aciklama: String(r[2] || '').trim(),
+          islemGrubu: String(r[3] || '').trim(),
+          puani: typeof r[4] === 'number' ? r[4] : parseFloat(String(r[4])) || 0,
+          fiyati: typeof r[5] === 'number' ? r[5] : parseFloat(String(r[5])) || 0,
+        })),
+    });
+  }
+
+  // EK-2Ç
+  if (data.ek2cd && data.ek2cd.rows.length > 0) {
+    sources.push({
+      kaynak: 'EK-2Ç',
+      fileName: data.ek2cd.fileName,
+      entries: data.ek2cd.rows
+        .filter((r: any[]) => r[0] && String(r[0]).trim())
+        .map((r: any[]) => ({
+          kodu: String(r[0]).trim(),
+          adi: String(r[1] || '').trim(),
+          aciklama: String(r[2] || '').trim(),
+          puani: typeof r[3] === 'number' ? r[3] : parseFloat(String(r[3])) || 0,
+          fiyati: typeof r[4] === 'number' ? r[4] : parseFloat(String(r[4])) || 0,
+        })),
+    });
+  }
+
+  // GİL
+  if (data.gil && data.gil.rows.length > 0) {
+    let currentSectionHeader = '';
+    sources.push({
+      kaynak: 'GİL',
+      fileName: data.gil.fileName,
+      entries: data.gil.rows
+        .filter((r: any[]) => {
+          // Bölüm başlığı satırlarını tespit et (kod yok ama açıklama var)
+          const kodu = String(r[0] || '').trim();
+          const adi = String(r[1] || '').trim();
+          if (!kodu && adi) {
+            currentSectionHeader = adi;
+            return false;
+          }
+          return kodu.length > 0;
+        })
+        .map((r: any[]) => ({
+          kodu: String(r[0]).trim(),
+          adi: String(r[1] || '').trim(),
+          aciklama: String(r[2] || '').trim(),
+          puani: typeof r[3] === 'number' ? r[3] : parseFloat(String(r[3])) || 0,
+          fiyati: 0,
+          ameliyatGrubu: String(r[4] || '').trim(),
+          sectionHeader: currentSectionHeader,
+        })),
+    });
+  }
+
+  // SUT
+  if (data.sutMaddeleri && data.sutMaddeleri.length > 0) {
+    sources.push({
+      kaynak: 'SUT',
+      entries: data.sutMaddeleri.map(m => ({
+        kodu: m.maddeNo,
+        adi: m.baslik,
+        aciklama: m.icerik,
+        puani: 0,
+        fiyati: 0,
+      })),
+    });
+  }
+
+  return sources;
+}
+
+/**
+ * AI master'ına regex kurallarını birleştir.
+ * Regex kuralları confidence=1.0 (doğrudan mevzuattan), AI kaçırdıklarını tamamlar.
+ * Aynı tip kural AI'da zaten varsa regex eklenmez (AI daha detaylı params üretir).
+ */
+function mergeRegexRulesIntoMaster(
+  aiMaster: Map<string, RuleMasterEntry>,
+  regexResult: BuildRulesMasterResult,
+): { mergedCount: number; newCodeCount: number } {
+  let mergedCount = 0;
+  let newCodeCount = 0;
+
+  for (const [kodu, regexEntry] of regexResult.rulesMaster) {
+    if (aiMaster.has(kodu)) {
+      // AI'da var: eksik kural tiplerini regex'ten ekle
+      const aiEntry = aiMaster.get(kodu)!;
+      const aiTypes = new Set(aiEntry.parsed_rules.map(r => r.type));
+
+      for (const regexRule of regexEntry.parsed_rules) {
+        if (!aiTypes.has(regexRule.type)) {
+          aiEntry.parsed_rules.push({
+            ...regexRule,
+            extractionMethod: 'regex' as const,
+            confidence: 1.0,
+          });
+          mergedCount++;
+        }
+      }
+    } else {
+      // AI'da yok: regex entry'sini olduğu gibi ekle
+      const newEntry: RuleMasterEntry = {
+        ...regexEntry,
+        parsed_rules: regexEntry.parsed_rules.map(r => ({
+          ...r,
+          extractionMethod: 'regex' as const,
+          confidence: 1.0,
+        })),
+      };
+      aiMaster.set(kodu, newEntry);
+      newCodeCount++;
+    }
+  }
+
+  return { mergedCount, newCodeCount };
+}
+
+/**
+ * v2.1 ANA FONKSİYON: AI kuralları + Regex kuralları birleşik (hibrit)
+ * 1. AI kurallarını Firebase'den yükle
+ * 2. Mevzuat verilerini yükle + regex ile kendi kurallarımızı çıkar (başlık propagasyonu dahil)
+ * 3. İkisini birleştir: AI temel, regex tamamlayıcı
+ */
+export async function loadOrExtractRules(
+  forceExtract: boolean = false,
+  onProgress?: (progress: AnalysisProgress) => void,
+): Promise<{ rulesMaster: Map<string, RuleMasterEntry>; loadStatus: RuleLoadStatus; extractedJSON: ExtractedRulesJSON | null }> {
+  // 1. Kaydedilmiş AI kurallarını yükle
+  let aiMaster: Map<string, RuleMasterEntry> | null = null;
+  let savedRules: ExtractedRulesJSON | null = null;
+
+  if (!forceExtract) {
+    onProgress?.({
+      phase: 'loading',
+      current: 0,
+      total: 3,
+      message: 'Kayıtlı AI kuralları kontrol ediliyor...',
+    });
+
+    savedRules = await loadExtractedRulesFromFirebase();
+    if (savedRules) {
+      console.log(`[LOADER v2.1] AI kuralları bulundu: v${savedRules.version}, ${Object.keys(savedRules.rules).length} işlem, ${savedRules.stats.rulesExtracted} kural`);
+
+      // Bozuk kayıt kontrolü
+      if (savedRules.stats.rulesExtracted === 0 && Object.keys(savedRules.rules).length > 0) {
+        console.warn('[LOADER v2.1] Kayıtlı kurallar bozuk (0 kural). AI kuralları atlanıyor.');
+        savedRules = null;
+      } else {
+        aiMaster = convertExtractedRulesToMaster(savedRules);
+        console.log(`[LOADER v2.1] AI master: ${aiMaster.size} işlem kodu`);
+      }
+    }
+  }
+
+  // 2. Mevzuat verilerini yükle ve regex kuralları çıkar (her zaman yapılır)
+  onProgress?.({
+    phase: 'loading',
+    current: 1,
+    total: 3,
+    message: 'Mevzuat verileri yükleniyor (regex kural çıkarma)...',
+  });
+
+  const data = await loadAllRegulationData(onProgress);
+
+  onProgress?.({
+    phase: 'building-rules',
+    current: 2,
+    total: 3,
+    message: 'Regex ile kendi kurallarımız çıkarılıyor (başlık propagasyonu dahil)...',
+  });
+
+  const regexResult = buildRulesMaster(data.ek2b, data.ek2c, data.ek2cd, data.gil, data.sutMaddeleri);
+  console.log(`[LOADER v2.1] Regex kuralları: ${regexResult.rulesMaster.size} işlem, ${regexResult.stats.withRules} kural içeren`);
+
+  // 3. AI yoksa sadece regex kullan
+  if (!aiMaster) {
+    // AI kuralları yok veya bozuk → sadece regex
+    if (!forceExtract) {
+      console.log('[LOADER v2.1] AI kuralları yok, sadece regex kuralları kullanılıyor');
+    } else {
+      // forceExtract = AI yeniden çıkar
+      onProgress?.({
+        phase: 'loading',
+        current: 2,
+        total: 3,
+        message: 'AI kural çıkarma başlatılıyor...',
+      });
+
+      const sources = regulationDataToSources(data);
+      if (sources.length > 0) {
+        const extractedJSON = await extractAndSaveRules(sources, onProgress);
+        aiMaster = convertExtractedRulesToMaster(extractedJSON);
+        savedRules = extractedJSON;
+      }
+    }
+  }
+
+  // 4. Birleştirme: AI master varsa regex ile tamamla, yoksa sadece regex
+  let finalMaster: Map<string, RuleMasterEntry>;
+
+  if (aiMaster) {
+    const { mergedCount, newCodeCount } = mergeRegexRulesIntoMaster(aiMaster, regexResult);
+    console.log(`[LOADER v2.1] Hibrit birleştirme: ${mergedCount} regex kural AI'a eklendi, ${newCodeCount} yeni işlem kodu regex'ten geldi`);
+    finalMaster = aiMaster;
+  } else {
+    finalMaster = regexResult.rulesMaster;
+    // Regex kurallarına extractionMethod ekle
+    for (const entry of finalMaster.values()) {
+      for (const rule of entry.parsed_rules) {
+        if (!rule.extractionMethod) {
+          rule.extractionMethod = 'regex' as const;
+          rule.confidence = 1.0;
+        }
+      }
+    }
+  }
+
+  // İstatistikler
+  let totalRulesCount = 0;
+  let withRulesCount = 0;
+  let regexOnlyCount = 0;
+  let aiOnlyCount = 0;
+  let hybridCount = 0;
+
+  for (const entry of finalMaster.values()) {
+    if (entry.parsed_rules.length > 0) withRulesCount++;
+    totalRulesCount += entry.parsed_rules.length;
+    const hasRegex = entry.parsed_rules.some(r => r.extractionMethod === 'regex');
+    const hasAI = entry.parsed_rules.some(r => r.extractionMethod === 'ai');
+    if (hasRegex && hasAI) hybridCount++;
+    else if (hasRegex) regexOnlyCount++;
+    else if (hasAI) aiOnlyCount++;
+  }
+
+  console.log(`[LOADER v2.1] Final master: ${finalMaster.size} işlem, ${withRulesCount} kural içeren, ${totalRulesCount} toplam kural`);
+  console.log(`[LOADER v2.1] Kaynak dağılımı: AI=${aiOnlyCount}, Regex=${regexOnlyCount}, Hibrit=${hybridCount}`);
+
+  const loadStatus: RuleLoadStatus = {
+    ek2b: { loaded: data.loadStatus.ek2b.loaded, count: data.loadStatus.ek2b.count },
+    ek2c: { loaded: data.loadStatus.ek2c.loaded, count: data.loadStatus.ek2c.count },
+    ek2cd: { loaded: data.loadStatus.ek2cd.loaded, count: data.loadStatus.ek2cd.count },
+    gil: { loaded: data.loadStatus.gil.loaded, count: data.loadStatus.gil.count },
+    sut: { loaded: data.loadStatus.sut.loaded, count: data.loadStatus.sut.count },
+    totalRules: finalMaster.size,
+  };
+
+  onProgress?.({
+    phase: 'complete',
+    current: 3,
+    total: 3,
+    message: `${finalMaster.size} kural yüklendi (AI: ${aiOnlyCount}, Regex: ${regexOnlyCount}, Hibrit: ${hybridCount})`,
+  });
+
+  // Debug: window'a expose et
+  (window as any).__RULES_MASTER__ = finalMaster;
+  (window as any).__EXTRACTED_JSON__ = savedRules;
+  console.log('[DEBUG] window.__RULES_MASTER__ ve window.__EXTRACTED_JSON__ erişime açıldı');
+
+  return { rulesMaster: finalMaster, loadStatus, extractedJSON: savedRules };
 }

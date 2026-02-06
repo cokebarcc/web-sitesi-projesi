@@ -142,6 +142,7 @@ const BRANS_LISTESI: BransBilgisi[] = [
 
 // Excel satır tipi
 export interface IslemSatiri {
+  hastaKayitId: string;
   tarih: string;
   saat: string;
   uzmanlik: string;
@@ -157,12 +158,16 @@ export interface IslemSatiri {
   hastaTc: string;
   adiSoyadi: string;
   islemNo: string;
+  yasi: number;
+  tani: string;
+  islemAciklama: string;
   disNumarasi: string;
   [key: string]: string | number; // Dinamik ekstra sütunlar
 }
 
 // Bilinen (sabit) tablo sütun tanımları
 const KNOWN_TABLE_COLUMNS: { key: string; label: string; align?: 'left' | 'right' | 'center'; minW?: string }[] = [
+  { key: 'hastaKayitId', label: 'Hasta Kayıt ID', minW: '100px' },
   { key: 'tarih', label: 'Tarih', minW: '90px' },
   { key: 'saat', label: 'Saat', minW: '60px' },
   { key: 'uzmanlik', label: 'Uzmanlık', minW: '160px' },
@@ -178,6 +183,9 @@ const KNOWN_TABLE_COLUMNS: { key: string; label: string; align?: 'left' | 'right
   { key: 'hastaTc', label: 'Hasta TC', minW: '100px' },
   { key: 'adiSoyadi', label: 'Adı Soyadı', minW: '160px' },
   { key: 'islemNo', label: 'İşlem No', minW: '100px' },
+  { key: 'yasi', label: 'Yaşı', align: 'right', minW: '50px' },
+  { key: 'tani', label: 'Tanı', minW: '100px' },
+  { key: 'islemAciklama', label: 'İşlem Açıklama', minW: '200px' },
   { key: 'disNumarasi', label: 'Diş No', minW: '60px' },
 ];
 
@@ -212,6 +220,13 @@ function excelTimeToString(value: any): string {
 
 // Sütun adı eşleştirme haritası
 const COLUMN_MAP: Record<string, string> = {
+  'hasta kayit id': 'hastaKayitId',
+  'hasta kayıt id': 'hastaKayitId',
+  'hastakayitid': 'hastaKayitId',
+  'hasta kayit': 'hastaKayitId',
+  'hasta kayıt': 'hastaKayitId',
+  'kayit id': 'hastaKayitId',
+  'kayıt id': 'hastaKayitId',
   'tarih': 'tarih',
   'saat': 'saat',
   'uzmanlik': 'uzmanlik',
@@ -242,6 +257,19 @@ const COLUMN_MAP: Record<string, string> = {
   'islem no': 'islemNo',
   'işlem no': 'islemNo',
   'islemno': 'islemNo',
+  'yasi': 'yasi',
+  'yaşı': 'yasi',
+  'yas': 'yasi',
+  'yaş': 'yasi',
+  'tani': 'tani',
+  'tanı': 'tani',
+  'tani kodu': 'tani',
+  'tanı kodu': 'tani',
+  'islem aciklama': 'islemAciklama',
+  'işlem açıklama': 'islemAciklama',
+  'islemaciklama': 'islemAciklama',
+  'işlem açıklaması': 'islemAciklama',
+  'islem aciklamasi': 'islemAciklama',
   'dis numarasi': 'disNumarasi',
   'diş numarası': 'disNumarasi',
   'dis no': 'disNumarasi',
@@ -348,6 +376,7 @@ function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): ParseResult {
       if (!hasData) continue;
 
       const satir: IslemSatiri = {
+        hastaKayitId: '',
         tarih: '',
         saat: '',
         uzmanlik: '',
@@ -363,6 +392,9 @@ function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): ParseResult {
         hastaTc: '',
         adiSoyadi: '',
         islemNo: '',
+        yasi: 0,
+        tani: '',
+        islemAciklama: '',
         disNumarasi: '',
       };
 
@@ -382,6 +414,9 @@ function parseHekimIslemExcel(arrayBuffer: ArrayBuffer): ParseResult {
           case 'fiyat':
           case 'tutar':
             satir[field] = typeof val === 'number' ? val : parseFloat(String(val).replace(',', '.')) || 0;
+            break;
+          case 'yasi':
+            satir.yasi = typeof val === 'number' ? Math.floor(val) : parseInt(String(val)) || 0;
             break;
           case 'hastaTc':
           case 'islemNo':

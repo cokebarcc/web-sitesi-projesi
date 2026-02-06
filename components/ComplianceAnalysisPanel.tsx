@@ -9,8 +9,10 @@ import {
   ParsedRuleType,
   RuleMasterEntry,
 } from '../src/types/complianceTypes';
-import { buildRulesMasterFromFirebase, buildRulesMasterHybridFromFirebase, runFullAuditFromFirebase } from '../src/services/complianceDataLoader';
+import { buildRulesMasterFromFirebase, buildRulesMasterHybridFromFirebase, runFullAuditFromFirebase, loadOrExtractRules } from '../src/services/complianceDataLoader';
 import { FullAuditResult } from '../src/services/ruleExtractor';
+import { getExtractedRulesMetadata } from '../src/services/ai/ruleExtractionAI';
+import type { ExtractedRulesMetadata } from '../src/types/complianceTypes';
 import { runComplianceAnalysis, generateSummary, exportResultsToExcel, IslemSatiriLike, KurumBilgisiLike } from '../src/services/complianceEngine';
 import ComplianceDetailModal from './ComplianceDetailModal';
 
@@ -40,8 +42,6 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
   const [progress, setProgress] = useState<AnalysisProgress | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [useAI, setUseAI] = useState(true);
-
   const [filterDurum, setFilterDurum] = useState<UygunlukDurumu | 'TUMU'>('TUMU');
   const [filterEsleme, setFilterEsleme] = useState<'TUMU' | 'ESLESTI' | 'ESLESEMEDI'>('TUMU');
   const [filterKuralTipi, setFilterKuralTipi] = useState<ParsedRuleType | 'TUMU'>('TUMU');
@@ -78,33 +78,51 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
   const tableRef = useRef<HTMLDivElement>(null);
 
-  const handleLoadRules = useCallback(async () => {
-    // AI açıkken API key kontrolü
-    if (useAI && !localStorage.getItem('claude_api_key')) {
-      setShowApiKeyInput(true);
-      setProgress({ phase: 'error', current: 0, total: 0, message: 'AI kullanmak için Claude API Key gerekli. Lütfen yukarıdan girin veya AI\'ı kapatın.' });
-      return;
+  // Kayıtlı kural metadata'sı
+  const [rulesMetadata, setRulesMetadata] = useState<ExtractedRulesMetadata | null>(null);
+
+  const handleLoadRules = useCallback(async (forceExtract: boolean = false) => {
+    // Kayıtlı kurallar yoksa ve AI kullanılacaksa API key kontrolü
+    if (!localStorage.getItem('claude_api_key')) {
+      // Önce kayıtlı kural var mı kontrol et
+      const metadata = await getExtractedRulesMetadata();
+      if (!metadata && !forceExtract) {
+        setShowApiKeyInput(true);
+        setProgress({ phase: 'error', current: 0, total: 0, message: 'Kayıtlı kural bulunamadı. İlk çıkarma için Claude API Key gerekli.' });
+        return;
+      }
     }
 
     setIsLoading(true);
     setProgress({ phase: 'loading', current: 0, total: 4, message: 'Başlatılıyor...' });
     try {
-      let result;
-      if (useAI) {
-        result = await buildRulesMasterHybridFromFirebase(true, (p) => setProgress(p));
-      } else {
-        result = await buildRulesMasterFromFirebase((p) => setProgress(p));
-      }
+      const result = await loadOrExtractRules(forceExtract, (p) => setProgress(p));
       setRulesMaster(result.rulesMaster);
       setRuleLoadStatus(result.loadStatus);
-      setProgress({ phase: 'complete', current: 1, total: 1, message: `${result.rulesMaster.size.toLocaleString('tr-TR')} kural yüklendi.${useAI ? ' (AI destekli)' : ''}` });
-    } catch (err) {
+      if (result.extractedJSON) {
+        const meta = await getExtractedRulesMetadata();
+        setRulesMetadata(meta);
+      }
+      setProgress({
+        phase: 'complete', current: 1, total: 1,
+        message: `${result.rulesMaster.size.toLocaleString('tr-TR')} kural yüklendi (AI v2.0)`,
+      });
+    } catch (err: any) {
       console.error('[COMPLIANCE] Kural yükleme hatası:', err);
-      setProgress({ phase: 'error', current: 0, total: 0, message: `Hata: ${err}` });
+      const errMsg = String(err?.message || err);
+      if (errMsg.includes('API_KEY_INVALID') || errMsg.includes('authentication') || errMsg.includes('401')) {
+        setProgress({ phase: 'error', current: 0, total: 0, message: 'API Key geçersiz veya süresi dolmuş. Lütfen yeni bir API Key girin.' });
+        setShowApiKeyInput(true);
+        // Geçersiz key'i sil
+        localStorage.removeItem('claude_api_key');
+        setHasApiKey(false);
+      } else {
+        setProgress({ phase: 'error', current: 0, total: 0, message: `Hata: ${errMsg}` });
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [useAI]);
+  }, []);
 
   const handleStartAnalysis = useCallback(async () => {
     if (!rulesMaster || tableData.length === 0) return;
@@ -116,6 +134,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     try {
       const analysisResults = await runComplianceAnalysis(tableData, rulesMaster, kurumBilgisi, (p) => setProgress(p));
       setResults(analysisResults);
+      (window as any).__COMPLIANCE_RESULTS__ = analysisResults;
       setSummary(generateSummary(analysisResults, Date.now() - start));
     } catch (err) {
       console.error('[COMPLIANCE] Analiz hatası:', err);
@@ -351,23 +370,8 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </svg>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kural Veritabanı</span>
           </div>
-          {/* AI Toggle */}
-          <button
-            onClick={() => setUseAI(!useAI)}
-            disabled={isLoading}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all flex items-center gap-1.5 disabled:opacity-50 ${
-              useAI
-                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'
-                : 'bg-slate-800/50 border-slate-700/30 text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            AI {useAI ? 'Açık' : 'Kapalı'}
-          </button>
-          {/* AI API Key Yönetimi */}
-          {useAI && !hasApiKey && !showApiKeyInput && (
+          {/* API Key Yönetimi */}
+          {!hasApiKey && !showApiKeyInput && (
             <button
               onClick={() => setShowApiKeyInput(true)}
               className="px-3 py-1.5 text-xs font-bold rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-all flex items-center gap-1.5"
@@ -375,18 +379,18 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
-              API Key Gerekli
+              API Key
             </button>
           )}
-          {useAI && hasApiKey && (
+          {hasApiKey && (
             <div className="flex items-center gap-1.5">
-              <span className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">🔑 Key Aktif</span>
+              <span className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Key Aktif</span>
               <button onClick={handleRemoveApiKey} className="p-1 text-slate-500 hover:text-red-400 transition-colors" title="API Key Sil">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
           )}
-          <button onClick={handleLoadRules} disabled={isLoading} className="px-4 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          <button onClick={() => handleLoadRules(false)} disabled={isLoading} className="px-4 py-1.5 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             {isLoading ? (
               <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>Yükleniyor...</>
             ) : ruleLoadStatus ? (
@@ -395,6 +399,12 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>Kuralları Yükle</>
             )}
           </button>
+          {ruleLoadStatus && (
+            <button onClick={() => handleLoadRules(true)} disabled={isLoading} className="px-3 py-1.5 text-xs font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5" title="Kuralları AI ile sıfırdan yeniden oluştur">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+              Yeniden Oluştur
+            </button>
+          )}
         </div>
 
         {/* API Key Input */}
@@ -441,6 +451,25 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </div>
           )}
         </div>
+
+        {/* Kayıtlı Kural Metadata Bilgisi */}
+        {rulesMetadata && (
+          <div className="mt-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/20">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kayıtlı Kural Bilgisi</span>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500">
+              <span>Versiyon: <span className="text-slate-300 font-bold">{rulesMetadata.version}</span></span>
+              <span>Oluşturulma: <span className="text-slate-300 font-bold">{new Date(rulesMetadata.createdAt).toLocaleDateString('tr-TR')} {new Date(rulesMetadata.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span></span>
+              <span>Toplam İşlem: <span className="text-slate-300 font-bold">{rulesMetadata.stats.totalProcedures.toLocaleString('tr-TR')}</span></span>
+              <span>Çıkarılan Kural: <span className="text-slate-300 font-bold">{rulesMetadata.stats.rulesExtracted.toLocaleString('tr-TR')}</span></span>
+              {rulesMetadata.stats.crossRefsResolved > 0 && (
+                <span>Çapraz Referans: <span className="text-slate-300 font-bold">{rulesMetadata.stats.crossRefsResolved.toLocaleString('tr-TR')}</span></span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Analiz Kontrol */}
@@ -647,6 +676,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <option value="BIRLIKTE_YAPILAMAZ">Birlikte</option>
               <option value="SIKLIK_LIMIT">Sıklık</option>
               <option value="TANI_KOSULU">Tanı</option>
+              <option value="YAS_KISITI">Yaş</option>
               <option value="DIS_TEDAVI">Diş</option>
             </select>
           </div>

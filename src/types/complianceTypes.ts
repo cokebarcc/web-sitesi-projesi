@@ -13,6 +13,7 @@ export type ParsedRuleType =
   | 'BIRLIKTE_YAPILAMAZ'
   | 'SIKLIK_LIMIT'
   | 'DIS_TEDAVI'
+  | 'YAS_KISITI'
   | 'GENEL_ACIKLAMA';
 
 // ── Çıkarılan Kural ──
@@ -25,9 +26,10 @@ export interface ParsedRule {
   //   dahil = SADECE bu branşlar yapabilir (varsayılan)
   //   haric = Bu branşlar HARİÇ herkes yapabilir
   // BIRLIKTE_YAPILAMAZ → { yapilamazKodlari: string[] }
-  // SIKLIK_LIMIT    → { periyot: 'gun' | 'yil' | 'ay' | 'hafta', limit: number }
+  // SIKLIK_LIMIT    → { periyot: 'gun' | 'yil' | 'ay' | 'hafta' | 'gun_aralik' | 'ay_aralik', limit: number }
   // TANI_KOSULU     → { taniKodlari: string[] }
   // DIS_TEDAVI      → { disKurali: string }
+  // YAS_KISITI      → { minYas?: number, maxYas?: number, mode: 'aralik' | 'alti' | 'ustu' }
   // GENEL_ACIKLAMA  → { metin: string }
   kaynak?: RuleKaynak;           // Bu kuralın geldiği kaynak (EK-2B, GİL, vs.)
   fromSectionHeader?: boolean;   // Bölüm başlığından mı geldi?
@@ -134,4 +136,78 @@ export interface SutMaddesi {
   baslik: string;        // Madde başlığı
   icerik: string;        // Madde tam metni
   altMaddeler?: string[]; // Alt madde listesi
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI Çıkarılmış Kural JSON Formatı (Firebase Storage)
+// ═══════════════════════════════════════════════════════════════
+
+export interface ExtractedRulesJSON {
+  version: string;                    // "2.0"
+  createdAt: number;
+  modelVersion: string;
+  sources: {
+    ek2b: { fileName: string; rowCount: number; uploadedAt: number } | null;
+    ek2c: { fileName: string; rowCount: number; uploadedAt: number } | null;
+    ek2cd: { fileName: string; rowCount: number; uploadedAt: number } | null;
+    gil: { fileName: string; rowCount: number; uploadedAt: number } | null;
+    sut: { fileName: string; maddeCount: number; uploadedAt: number } | null;
+  };
+  rules: Record<string, ExtractedProcedureEntry>;  // gilKodu → entry
+  crossReferences: CrossReferenceEntry[];
+  stats: {
+    totalProcedures: number;
+    rulesExtracted: number;
+    crossRefsResolved: number;
+    aiTokensUsed: number;
+  };
+}
+
+export interface ExtractedProcedureEntry {
+  islemKodu: string;
+  islemAdi: string;
+  kaynaklar: RuleKaynak[];
+  islemPuani: number;
+  islemFiyati: number;
+  islemGrubu?: string;
+  ameliyatGrubu?: string;
+  aciklamaRaw: Partial<Record<RuleKaynak, string>>;
+  kurallar: ExtractedRule[];
+  crossRefs: string[];
+  sectionHeader?: string;
+  aiValidation: {
+    confidence: number;
+    explanation: string;
+    extractedAt: number;
+  };
+}
+
+export interface ExtractedRule {
+  type: ParsedRuleType;
+  params: Record<string, any>;
+  kaynak: RuleKaynak;
+  rawText: string;
+  confidence: number;
+  explanation: string;
+  fromSectionHeader?: boolean;
+}
+
+export interface CrossReferenceEntry {
+  sourceKodu: string;
+  sourceKaynak: RuleKaynak;
+  targetRef: string;
+  targetKaynak: RuleKaynak;
+  resolved: boolean;
+  resolvedRules?: ExtractedRule[];
+}
+
+// ── Çıkarılmış Kural Metadata (Firestore) ──
+export interface ExtractedRulesMetadata {
+  version: string;
+  createdAt: number;
+  modelVersion: string;
+  storagePath: string;
+  fileUrl: string;
+  stats: ExtractedRulesJSON['stats'];
+  sourceHashes: Record<string, string>;  // kaynak → hash (değişiklik tespiti için)
 }
