@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import pptxgen from 'pptxgenjs';
 import {
   DetailedScheduleData,
   ScheduleVersion,
@@ -293,15 +294,15 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       const bPhys = base.physicians[key];
       const uPhys = upd.physicians[key];
 
-      const name = uPhys?.physicianName || bPhys?.physicianName || "Bilinmiyor";
+      const name = uPhys?.name || bPhys?.name || uPhys?.physicianName || bPhys?.physicianName || "Bilinmiyor";
       const branch = uPhys?.branch || bPhys?.branch || "Bilinmiyor";
 
       const baseline_capacity: number = bPhys?.totalCapacity || 0;
       const updated_capacity: number = uPhys?.totalCapacity || 0;
       const capacity_delta: number = updated_capacity - baseline_capacity;
 
-      const baseline_action_days = bPhys?.sessionsByAction || {};
-      const updated_action_days = uPhys?.sessionsByAction || {};
+      const baseline_action_days = bPhys?.actionDays || bPhys?.sessionsByAction || {};
+      const updated_action_days = uPhys?.actionDays || uPhys?.sessionsByAction || {};
       const all_actions = Array.from(new Set([...Object.keys(baseline_action_days), ...Object.keys(updated_action_days)]));
 
       const action_deltas: Record<string, number> = {};
@@ -331,24 +332,36 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
        branchAgg[d.branch].updated += d.updated_capacity;
     });
 
-    const topBranchChanges = Object.entries(branchAgg).map(([name, caps]) => {
+    const allBranchChanges = Object.entries(branchAgg).map(([name, caps]) => {
       const delta = caps.updated - caps.baseline;
       const pct = caps.baseline > 0 ? (delta / caps.baseline) * 100 : (caps.updated > 0 ? 100 : 0);
       return { name, delta, pct };
-    }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 5);
+    });
+    // Önce düşüşler (en büyük kayıptan), sonra artışlar (en büyükten)
+    const branchDecreases = allBranchChanges.filter(b => b.delta < -0.1).sort((a, b) => a.delta - b.delta);
+    const branchIncreases = allBranchChanges.filter(b => b.delta > 0.1).sort((a, b) => b.delta - a.delta);
+    const topBranchChanges = [...branchDecreases, ...branchIncreases].slice(0, 5);
 
-    const topDoctorDrivers = filteredDocs
+    // Önce düşüşler, 5'e tamamlanmazsa artışlar
+    const docDecreases = filteredDocs
       .filter(p => p.capacity_delta < -0.1)
-      .map(p => {
-        console.log('🔍 Doctor driver:', { name: p.name, branch: p.branch, delta: p.capacity_delta });
-        return { name: p.name, branch: p.branch, delta: p.capacity_delta, pct: p.baseline_capacity > 0 ? (p.capacity_delta / p.baseline_capacity) * 100 : -100 };
-      })
-      .sort((a, b) => a.delta - b.delta)
-      .slice(0, 5);
+      .map(p => ({ name: p.name, branch: p.branch, delta: p.capacity_delta, pct: p.baseline_capacity > 0 ? (p.capacity_delta / p.baseline_capacity) * 100 : -100 }))
+      .sort((a, b) => a.delta - b.delta);
+    const docIncreases = filteredDocs
+      .filter(p => p.capacity_delta > 0.1)
+      .map(p => ({ name: p.name, branch: p.branch, delta: p.capacity_delta, pct: p.baseline_capacity > 0 ? (p.capacity_delta / p.baseline_capacity) * 100 : 100 }))
+      .sort((a, b) => b.delta - a.delta);
+    const topDoctorDrivers = [...docDecreases, ...docIncreases].slice(0, 5);
+
+    // Sıralama: önce düşüşler (en büyük kayıp), sonra artışlar (en büyük artış), sonra değişmeyenler
+    const physCompareRaw = filteredDocs.filter(d => Math.abs(d.capacity_delta) > 0.1 || d.has_action_change);
+    const physDecreases = physCompareRaw.filter(d => d.capacity_delta < -0.1).sort((a, b) => a.capacity_delta - b.capacity_delta);
+    const physIncreases = physCompareRaw.filter(d => d.capacity_delta > 0.1).sort((a, b) => b.capacity_delta - a.capacity_delta);
+    const physNoChange = physCompareRaw.filter(d => Math.abs(d.capacity_delta) <= 0.1);
 
     // Cast the return object to 'any' to resolve inference issues in downstream useMemos and JSX.
-    return { 
-      phys_compare: filteredDocs.filter(d => Math.abs(d.capacity_delta) > 0.1 || d.has_action_change), 
+    return {
+      phys_compare: [...physDecreases, ...physIncreases, ...physNoChange],
       topBranchChanges, topDoctorDrivers,
       totalBaseCap: filteredDocs.reduce((s: number, p) => s + p.baseline_capacity, 0),
       totalUpdCap: filteredDocs.reduce((s: number, p) => s + p.updated_capacity, 0),
@@ -375,6 +388,193 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     const deltas = comparison.topDoctorDrivers.map((d: any) => Math.abs(Number(d.delta)));
     return Math.max(...(deltas as number[]));
   }, [comparison]);
+
+  // ========== POWERPOINT EXPORT ==========
+  const handleExportPowerPoint = async () => {
+    if (!comparison) return;
+    try {
+      const pptx = new pptxgen();
+      pptx.layout = 'LAYOUT_WIDE';
+      pptx.title = 'Degisim Analizi Raporu';
+      pptx.author = 'MEDIS';
+      pptx.company = 'Sanliurfa Il Saglik Mudurlugu';
+
+      const c = {
+        bg: 'f8fafc',
+        primary: '4f46e5',   // indigo-600
+        primaryLight: 'eef2ff', // indigo-50
+        text: '1e293b',
+        textMuted: '94a3b8',
+        success: '10b981',
+        danger: 'ef4444',
+        border: 'e2e8f0',
+        white: 'ffffff',
+        dark: '0f172a',
+        headerBg: '1e293b',
+      };
+
+      const totalDelta = Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap);
+      const deltaColor = totalDelta >= 0 ? c.success : c.danger;
+      const deltaSign = totalDelta > 0 ? '+' : '';
+      const pctChange = comparison.totalBaseCap > 0 ? ((totalDelta / Number(comparison.totalBaseCap)) * 100).toFixed(1) : '0';
+
+      // ===== SLAYT 1: KAPAK =====
+      const s1 = pptx.addSlide();
+      s1.background = { color: c.dark };
+
+      // Sag ust dekoratif ince serit
+      s1.addShape(pptx.shapes.RECTANGLE, { x: 8, y: 0, w: 5.33, h: 0.15, fill: { color: c.primary } });
+      // Orta dekoratif cizgi
+      s1.addShape(pptx.shapes.RECTANGLE, { x: 1, y: 3.6, w: 4, h: 0.06, fill: { color: c.primary } });
+
+      // Ust etiket
+      s1.addText('MHRS', { x: 1, y: 1.2, w: 11, h: 0.6, fontSize: 16, fontFace: 'Arial', bold: true, color: c.primary, letterSpacing: 8 });
+
+      // Ana baslik
+      s1.addText('KAPASiTE DEGiSiM', { x: 1, y: 1.9, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
+      s1.addText('ANALiZi RAPORU', { x: 1, y: 2.7, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
+
+      // Hastane ve donem bilgisi
+      s1.addText(`${selectedHospital}`, { x: 1, y: 3.9, w: 11, h: 0.5, fontSize: 18, fontFace: 'Arial', color: c.textMuted });
+      s1.addText(`${selectedMonth} ${selectedYear}`, { x: 1, y: 4.4, w: 11, h: 0.4, fontSize: 14, fontFace: 'Arial', color: '64748b' });
+
+      // ===== SLAYT 2: ÖZET DASHBOARD =====
+      const s2 = pptx.addSlide();
+      s2.background = { color: c.bg };
+      s2.addText('ÖZET DASHBOARD', { x: 0.5, y: 0.3, w: 12, h: 0.5, fontSize: 20, fontFace: 'Arial', bold: true, color: c.text });
+      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
+
+      // KPI kutuları
+      const kpiY = 1.5;
+      const kpiH = 2.5;
+      const kpiW = 3.8;
+
+      // Başlangıç Kapasitesi
+      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
+      s2.addText('BASLANGIÇ KAPASITESI', { x: 0.5, y: kpiY + 0.4, w: kpiW, h: 0.4, fontSize: 9, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'center' });
+      s2.addText(Number(comparison.totalBaseCap).toLocaleString('tr-TR'), { x: 0.5, y: kpiY + 0.9, w: kpiW, h: 0.8, fontSize: 36, fontFace: 'Arial', bold: true, color: c.text, align: 'center' });
+
+      // Net Fark
+      s2.addShape(pptx.shapes.RECTANGLE, { x: 4.8, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
+      s2.addText('NET FARK', { x: 4.8, y: kpiY + 0.4, w: kpiW, h: 0.4, fontSize: 9, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'center' });
+      s2.addText(`${deltaSign}${totalDelta.toLocaleString('tr-TR')}`, { x: 4.8, y: kpiY + 0.9, w: kpiW, h: 0.8, fontSize: 36, fontFace: 'Arial', bold: true, color: deltaColor, align: 'center' });
+      s2.addText(`%${pctChange}`, { x: 4.8, y: kpiY + 1.7, w: kpiW, h: 0.4, fontSize: 14, fontFace: 'Arial', bold: true, color: deltaColor, align: 'center' });
+
+      // Güncel Kapasite
+      s2.addShape(pptx.shapes.RECTANGLE, { x: 9.1, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
+      s2.addText('GUNCEL KAPASITE', { x: 9.1, y: kpiY + 0.4, w: kpiW, h: 0.4, fontSize: 9, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'center' });
+      s2.addText(Number(comparison.totalUpdCap).toLocaleString('tr-TR'), { x: 9.1, y: kpiY + 0.9, w: kpiW, h: 0.8, fontSize: 36, fontFace: 'Arial', bold: true, color: c.text, align: 'center' });
+
+      // Hekim değişim sayısı
+      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 4.5, w: 12.33, h: 1.2, fill: { color: c.primaryLight }, line: { color: c.border, pt: 1 } });
+      s2.addText([
+        { text: `${comparison.phys_compare.length}`, options: { fontSize: 24, bold: true, color: c.primary, fontFace: 'Arial' } },
+        { text: ' hekimde değişim tespit edildi', options: { fontSize: 14, color: c.text, fontFace: 'Arial' } },
+      ], { x: 0.5, y: 4.5, w: 12.33, h: 1.2, align: 'center', valign: 'middle' });
+
+      // ===== SLAYT 3: BRANŞ BAZLI DEĞİŞİM =====
+      const s3 = pptx.addSlide();
+      s3.background = { color: c.bg };
+      s3.addText('BRANŞ BAZLI KAPASİTE DEĞİŞİMİ', { x: 0.5, y: 0.3, w: 12, h: 0.5, fontSize: 20, fontFace: 'Arial', bold: true, color: c.text });
+      s3.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
+      s3.addText('TOP 5', { x: 10.5, y: 0.3, w: 2.5, h: 0.5, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
+
+      const branchHeader: pptxgen.TableRow = [
+        { text: '#', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+        { text: 'BRANŞ', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
+        { text: 'FARK', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+        { text: 'YÜZDE', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+      ];
+      const branchRows: pptxgen.TableRow[] = comparison.topBranchChanges.map((br: any, idx: number) => {
+        const rowBg = idx % 2 === 0 ? c.white : c.bg;
+        const dColor = br.delta >= 0 ? c.success : c.danger;
+        return [
+          { text: `${idx + 1}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
+          { text: br.name, options: { fontSize: 11, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+          { text: `${br.delta > 0 ? '+' : ''}${br.delta.toLocaleString('tr-TR')}`, options: { fontSize: 11, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: dColor } },
+          { text: `%${br.pct.toFixed(1)}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: dColor } },
+        ];
+      });
+      s3.addTable([branchHeader, ...branchRows], { x: 0.5, y: 1.2, w: 12.33, colW: [0.6, 7.13, 2.3, 2.3], border: { type: 'solid', pt: 0.5, color: c.border }, rowH: 0.55 });
+
+      // ===== SLAYT 4: HEKİM DRIVERLARI =====
+      const s4 = pptx.addSlide();
+      s4.background = { color: c.bg };
+      s4.addText('EN BÜYÜK HEKİM DRIVERLARI', { x: 0.5, y: 0.3, w: 12, h: 0.5, fontSize: 20, fontFace: 'Arial', bold: true, color: c.text });
+      s4.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.danger } });
+      s4.addText('TOP 5', { x: 9, y: 0.3, w: 4, h: 0.5, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
+
+      const driverHeader: pptxgen.TableRow = [
+        { text: '#', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+        { text: 'HEKİM', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
+        { text: 'BRANŞ', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
+        { text: 'FARK', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+        { text: 'YÜZDE', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+      ];
+      const driverRows: pptxgen.TableRow[] = comparison.topDoctorDrivers.map((doc: any, idx: number) => {
+        const rowBg = idx % 2 === 0 ? c.white : c.bg;
+        return [
+          { text: `${idx + 1}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
+          { text: doc.name, options: { fontSize: 11, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+          { text: doc.branch, options: { fontSize: 10, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
+          { text: `${doc.delta.toLocaleString('tr-TR')}`, options: { fontSize: 11, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.danger } },
+          { text: `%${doc.pct.toFixed(1)}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.danger } },
+        ];
+      });
+      s4.addTable([driverHeader, ...driverRows], { x: 0.5, y: 1.2, w: 12.33, colW: [0.6, 4, 3.73, 2, 2], border: { type: 'solid', pt: 0.5, color: c.border }, rowH: 0.55 });
+
+      // ===== SLAYT 5+: HEKİM BAZLI DEĞİŞİM DETAYLARI =====
+      const physData = comparison.phys_compare as any[];
+      const perPage = 14;
+      const pageCount = Math.ceil(physData.length / perPage);
+
+      for (let page = 0; page < pageCount; page++) {
+        const sN = pptx.addSlide();
+        sN.background = { color: c.bg };
+        sN.addText('HEKİM BAZLI DEĞİŞİM DETAYLARI', { x: 0.5, y: 0.2, w: 9, h: 0.45, fontSize: 18, fontFace: 'Arial', bold: true, color: c.text });
+        sN.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.primary } });
+        if (pageCount > 1) {
+          sN.addText(`Sayfa ${page + 1}/${pageCount}`, { x: 10, y: 0.2, w: 2.8, h: 0.45, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
+        }
+
+        const detailHeader: pptxgen.TableRow = [
+          { text: 'HEKİM', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
+          { text: 'BRANŞ', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
+          { text: 'ESKİ KAP', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+          { text: 'YENİ KAP', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+          { text: 'FARK', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+          { text: 'AKSİYON DEĞİŞİMLERİ', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
+        ];
+
+        const slice = physData.slice(page * perPage, (page + 1) * perPage);
+        const detailRows: pptxgen.TableRow[] = slice.map((p: any, idx: number) => {
+          const rowBg = idx % 2 === 0 ? c.white : c.bg;
+          const dColor = p.capacity_delta >= 0 ? c.success : c.danger;
+          const actionText = p.has_action_change
+            ? Object.entries(p.action_deltas).map(([act, d]) => `${act} ${Number(d) > 0 ? '+' : ''}${String(d).replace('.', ',')}`).join(', ')
+            : 'Değişmedi';
+          return [
+            { text: p.name, options: { fontSize: 9, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+            { text: p.branch, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
+            { text: p.baseline_capacity.toLocaleString('tr-TR'), options: { fontSize: 9, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
+            { text: p.updated_capacity.toLocaleString('tr-TR'), options: { fontSize: 9, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+            { text: `${p.capacity_delta > 0 ? '+' : ''}${p.capacity_delta.toLocaleString('tr-TR')}`, options: { fontSize: 9, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: dColor } },
+            { text: actionText, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: p.has_action_change ? c.text : c.textMuted } },
+          ];
+        });
+        sN.addTable([detailHeader, ...detailRows], { x: 0.3, y: 0.9, w: 12.73, colW: [2.5, 2.5, 1.2, 1.2, 1.2, 4.13], border: { type: 'solid', pt: 0.5, color: c.border }, rowH: 0.4 });
+      }
+
+      const safeHospital = selectedHospital.replace(/[^a-zA-Z0-9]/g, '_');
+      const safeMonth = selectedMonth.replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `Degisim_Analizi_${safeHospital}_${safeMonth}_${selectedYear}.pptx`;
+      await pptx.writeFile({ fileName });
+      showToast('PowerPoint sunumu indirildi', 'success');
+    } catch (err) {
+      console.error('PPTX export hatası:', err);
+      showToast('Sunum oluşturulurken hata oluştu', 'error');
+    }
+  };
 
   return (
     <div className="space-y-10 pb-20 animate-in fade-in duration-700">
@@ -455,6 +655,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                 <input id="newVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
               </>
             )}
+            {comparison && (
+              <button onClick={handleExportPowerPoint} className="bg-amber-600 text-white px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer hover:bg-amber-700 active:scale-95 flex items-center gap-2 transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Sunumu İndir
+              </button>
+            )}
           </>
         }
       />
@@ -524,7 +730,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                   <div className="w-1.5 h-4 bg-rose-500 rounded-full"></div>
                   EN BÜYÜK HEKİM DRIVERLARI
                 </h3>
-                <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">EN YÜKSEK KAYIPLAR</span>
+                <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">TOP 5</span>
               </div>
               <div className="space-y-2.5">
                 {comparison.topDoctorDrivers.map((doc: any, idx: number) => (
@@ -624,19 +830,19 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                         <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
                                       </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-50">
+                                    <tbody className="divide-y divide-[var(--border-1)]">
                                       {Array.from(new Set([...Object.keys(p.baseline_action_days), ...Object.keys(p.updated_action_days)])).sort().map(act => {
                                         const oldD = p.baseline_action_days[act] || 0;
                                         const newD = p.updated_action_days[act] || 0;
                                         const diff = newD - oldD;
                                         if (oldD === 0 && newD === 0) return null;
                                         return (
-                                          <tr key={act} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-3 text-[11px] font-bold text-slate-700 uppercase">{act}</td>
-                                            <td className="py-3 text-[11px] font-black text-slate-400 text-center">{oldD.toString().replace('.', ',')} G</td>
-                                            <td className="py-3 text-[11px] font-black text-slate-800 text-center">{newD.toString().replace('.', ',')} G</td>
+                                          <tr key={act} className={`transition-colors ${diff !== 0 ? 'bg-[var(--surface-2)]' : 'hover:bg-[var(--surface-hover)]'}`}>
+                                            <td className="py-3 text-[11px] font-bold text-[var(--text-1)] uppercase">{act}</td>
+                                            <td className="py-3 text-[11px] font-black text-[var(--text-muted)] text-center">{oldD.toString().replace('.', ',')} G</td>
+                                            <td className="py-3 text-[11px] font-black text-[var(--text-1)] text-center">{newD.toString().replace('.', ',')} G</td>
                                             <td className="py-3 text-center">
-                                              <span className={`text-[11px] font-black ${diff > 0 ? 'text-emerald-600' : diff < 0 ? 'text-rose-600' : 'text-slate-300'}`}>
+                                              <span className={`text-[11px] font-black ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-[var(--text-muted)]'}`}>
                                                 {diff > 0 ? '+' : ''}{diff.toString().replace('.', ',')} G
                                               </span>
                                             </td>

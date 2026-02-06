@@ -482,14 +482,14 @@ const App: React.FC = () => {
                     const processedDocs = allDocKeys.map(key => {
                       const bPhys = base.physicians[key];
                       const uPhys = upd.physicians[key];
-                      const name = uPhys?.physicianName || bPhys?.physicianName || 'Bilinmiyor';
+                      const name = uPhys?.name || bPhys?.name || uPhys?.physicianName || bPhys?.physicianName || 'Bilinmiyor';
                       const branch = uPhys?.branch || bPhys?.branch || 'Bilinmiyor';
                       const baseline_capacity = bPhys?.totalCapacity || 0;
                       const updated_capacity = uPhys?.totalCapacity || 0;
                       const capacity_delta = updated_capacity - baseline_capacity;
 
-                      const baseline_action_days = bPhys?.sessionsByAction || {};
-                      const updated_action_days = uPhys?.sessionsByAction || {};
+                      const baseline_action_days = bPhys?.actionDays || bPhys?.sessionsByAction || {};
+                      const updated_action_days = uPhys?.actionDays || uPhys?.sessionsByAction || {};
                       const all_actions = Array.from(new Set([
                         ...Object.keys(baseline_action_days),
                         ...Object.keys(updated_action_days)
