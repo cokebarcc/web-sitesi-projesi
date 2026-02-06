@@ -39,7 +39,7 @@ interface DoctorEfficiency {
   branchAvg: number;
   roleGroupBranchAvg: number | null;
   muayeneDailyCapacity: number; // Günlük ortalama muayene kapasitesi
-  status: 'low' | 'normal' | 'high' | 'no-data';
+  status: 'low' | 'normal' | 'high' | 'no-data' | 'no-plan';
 }
 
 interface Proposal {
@@ -227,6 +227,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
     });
 
     const efficiencyList: { normName: string; doctorName: string; branch: string; plannedDays: number; performedABC: number; efficiency: number; muayeneDailyCapacity: number }[] = [];
+    const addedNormNames = new Set<string>();
     doctorSurgeryDaysMap.forEach((days, normName) => {
       const info = doctorBranchMap.get(normName);
       if (!info) return;
@@ -238,12 +239,24 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       const totalMuayeneCapacity = doctorMuayeneCapacityMap.get(normName) || 0;
       const muayeneDailyCapacity = muayeneDays > 0 ? totalMuayeneCapacity / muayeneDays : 0;
       efficiencyList.push({ normName, doctorName: info.name, branch: info.branch, plannedDays, performedABC, efficiency, muayeneDailyCapacity });
+      addedNormNames.add(normName);
     });
 
-    // === KATMAN 2: Hastane branş ortalaması (sadece seçili hastane) ===
+    // Cetvelde ameliyat günü planlanmamış ama ameliyat verisi olan hekimleri de ekle
+    Object.entries(rawAmeliyatData).forEach(([normName, count]) => {
+      if (addedNormNames.has(normName) || !count) return;
+      const info = doctorBranchMap.get(normName);
+      if (!info) return; // Cetvelde hiç kaydı olmayan hekimleri dahil etme
+      const muayeneDays = doctorMuayeneDaysMap.get(normName)?.size || 0;
+      const totalMuayeneCapacity = doctorMuayeneCapacityMap.get(normName) || 0;
+      const muayeneDailyCapacity = muayeneDays > 0 ? totalMuayeneCapacity / muayeneDays : 0;
+      efficiencyList.push({ normName, doctorName: info.name, branch: info.branch, plannedDays: 0, performedABC: count, efficiency: 0, muayeneDailyCapacity });
+    });
+
+    // === KATMAN 2: Hastane branş ortalaması (sadece seçili hastane, ameliyat günü olan hekimler) ===
     const branchAverages = new Map<string, number>();
     const branchTotals = new Map<string, { totalABC: number; totalDays: number }>();
-    efficiencyList.forEach(doc => {
+    efficiencyList.filter(doc => doc.plannedDays > 0).forEach(doc => {
       const prev = branchTotals.get(doc.branch) || { totalABC: 0, totalDays: 0 };
       prev.totalABC += doc.performedABC;
       prev.totalDays += doc.plannedDays;
@@ -304,6 +317,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
 
         let status: DoctorEfficiency['status'] = 'normal';
         if (doc.plannedDays === 0 && doc.performedABC === 0) status = 'no-data';
+        else if (doc.plannedDays === 0 && doc.performedABC > 0) status = 'no-plan';
         else if (referenceAvg > 0 && doc.efficiency < referenceAvg * 0.8) status = 'low';
         else if (referenceAvg > 0 && doc.efficiency > referenceAvg * 1.5) status = 'high';
         return {
@@ -510,7 +524,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       'Branş Ortalaması': doc.branchAvg > 0 ? Number(doc.branchAvg.toFixed(2)) : 0,
       'Rol Grubu Ort.': doc.roleGroupBranchAvg !== null ? Number(doc.roleGroupBranchAvg.toFixed(2)) : '-',
       'Günlük Kapasite': doc.muayeneDailyCapacity > 0 ? Math.round(doc.muayeneDailyCapacity) : '-',
-      'Durum': doc.status === 'low' ? 'DÜŞÜK' : doc.status === 'high' ? 'YÜKSEK' : 'NORMAL',
+      'Durum': doc.status === 'low' ? 'DÜŞÜK' : doc.status === 'high' ? 'YÜKSEK' : doc.status === 'no-plan' ? 'PLANSIZ' : 'NORMAL',
     }));
 
     const propRows = proposals.map(p => ({
@@ -617,10 +631,10 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
 
         const slice = sortedDoctors.slice(page * perPage, (page + 1) * perPage);
         const effRows: pptxgen.TableRow[] = slice.map((doc, idx) => {
-          const rowBg = doc.status === 'low' ? (idx % 2 === 0 ? 'fce4e4' : 'fef2f2') : doc.status === 'high' ? (idx % 2 === 0 ? 'dcfce7' : 'f0fdf4') : idx % 2 === 0 ? 'e8eaf0' : c.white;
+          const rowBg = doc.status === 'low' ? (idx % 2 === 0 ? 'fce4e4' : 'fef2f2') : doc.status === 'high' ? (idx % 2 === 0 ? 'dcfce7' : 'f0fdf4') : doc.status === 'no-plan' ? (idx % 2 === 0 ? 'fff3cd' : 'fffbea') : idx % 2 === 0 ? 'e8eaf0' : c.white;
           const effColor = doc.status === 'low' ? c.danger : doc.status === 'high' ? c.success : c.text;
-          const statusText = doc.status === 'low' ? 'DÜŞÜK' : doc.status === 'high' ? 'YÜKSEK' : 'NORMAL';
-          const statusColor = doc.status === 'low' ? c.danger : doc.status === 'high' ? c.success : c.textMuted;
+          const statusText = doc.status === 'low' ? 'DÜŞÜK' : doc.status === 'high' ? 'YÜKSEK' : doc.status === 'no-plan' ? 'PLANSIZ' : 'NORMAL';
+          const statusColor = doc.status === 'low' ? c.danger : doc.status === 'high' ? c.success : doc.status === 'no-plan' ? 'b45309' : c.textMuted;
           return [
             { text: doc.doctorName, options: { fontSize: 9, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
             { text: doc.branchName, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
@@ -854,6 +868,8 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
                         ? (idx % 2 === 0 ? 'bg-red-500/10 hover:bg-red-500/18' : 'bg-red-500/[0.04] hover:bg-red-500/12')
                         : doc.status === 'high'
                         ? (idx % 2 === 0 ? 'bg-emerald-500/10 hover:bg-emerald-500/18' : 'bg-emerald-500/[0.04] hover:bg-emerald-500/12')
+                        : doc.status === 'no-plan'
+                        ? (idx % 2 === 0 ? 'bg-amber-500/10 hover:bg-amber-500/18' : 'bg-amber-500/[0.04] hover:bg-amber-500/12')
                         : idx % 2 === 0 ? 'bg-[var(--surface-2)]/40 hover:bg-[var(--surface-2)]/60' : 'hover:bg-[var(--surface-2)]/30'
                     }`}
                   >
@@ -878,9 +894,11 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
                           ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                           : doc.status === 'high'
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : doc.status === 'no-plan'
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                           : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)]'
                       }`}>
-                        {doc.status === 'low' ? 'DÜŞÜK' : doc.status === 'high' ? 'YÜKSEK' : 'NORMAL'}
+                        {doc.status === 'low' ? 'DÜŞÜK' : doc.status === 'high' ? 'YÜKSEK' : doc.status === 'no-plan' ? 'PLANSIZ' : 'NORMAL'}
                       </span>
                     </td>
                   </tr>
