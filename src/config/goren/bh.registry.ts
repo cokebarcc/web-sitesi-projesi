@@ -334,14 +334,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'count',
     unitLabel: 'Hasta',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-Nabız, ASOS',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Taburcu hasta sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Yatak sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Serviste yatan hasta sayısı (EK-4.1)', type: 'number', required: true },
+      { key: 'B', label: 'Servis yatak sayısı (ASOS)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 2 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 17. Yoğun Bakım Yatak Devir Hızı - Maks: 2
@@ -352,14 +356,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'count',
     unitLabel: 'Hasta',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-Nabız, ASOS',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Yoğun bakım taburcu hasta sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Yoğun bakım yatak sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Yoğun bakımda yatan hastaların yatış sayısı (YB SUT kodları)', type: 'number', required: true },
+      { key: 'B', label: 'Yoğun bakım yatak sayısı (ASOS)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 2 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 18. Cerrahi Klinisyen Hekim Başına Düşen Ameliyat (A, B, C) Sayısı - Maks: 2
@@ -370,32 +378,40 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'count',
     unitLabel: 'Sayı',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'e-Nabız, EKOBS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'A, B, C grubu ameliyat sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Cerrahi klinisyen hekim sayısı', type: 'number', required: true }
+      { key: 'A', label: 'A1,A2,A3,B,C grubu ameliyat sayısı (e-Nabız)', type: 'number', required: true },
+      { key: 'B', label: 'Cerrahi klinisyen hekim sayısı (EKOBS, adam-gün)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 2 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
-  // 19. Cerrahi Klinisyen Hekim Başına Düşen Ameliyat (A,B,C) Puanı - Maks: 2
+  // 19. Cerrahi Klinisyen Hekim Başına Düşen Ameliyat (A,B,C) Grup Katsayısı - Maks: 2
   {
     code: 'SYPG-BH-19',
-    name: 'Cerrahi Klinisyen Hekim Başına Düşen Ameliyat (A,B,C) Puanı',
+    name: 'Cerrahi Klinisyen Hekim Başına Düşen Ameliyat (A,B,C) Grup Katsayısı',
     category: 'BH',
     unit: 'score',
     unitLabel: 'Puan',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'e-Nabız, EKOBS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'A, B, C grubu ameliyat puanı toplamı', type: 'number', required: true },
-      { key: 'B', label: 'Cerrahi klinisyen hekim sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Ameliyat grup katsayılı puanı (A*5+B*2+C*1)', type: 'number', required: true },
+      { key: 'B', label: 'Cerrahi klinisyen hekim sayısı (EKOBS, adam-gün)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 2 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 20. Ameliyat Masası Başına Düşen Ameliyat (A,B,C) Puanı - Maks: 2
@@ -406,14 +422,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'score',
     unitLabel: 'Puan',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-Nabız, TSİM',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'A, B, C grubu ameliyat puanı toplamı', type: 'number', required: true },
-      { key: 'B', label: 'Ameliyat masası sayısı', type: 'number', required: true }
+      { key: 'A', label: 'A,B,C grubu ameliyat katsayılı toplam puanı (268 Hekim Puan)', type: 'number', required: true },
+      { key: 'B', label: 'Aktif kullanılan ameliyat masası sayısı (TSİM)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 2 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 21. 10 Günü Geçen Patoloji Sonuçlanma Oranı - Maks: 2
@@ -424,14 +444,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-Nabız',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: '10 günü geçen patoloji sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam patoloji sayısı', type: 'number', required: true }
+      { key: 'A', label: '10 günü geçen patoloji sonuç hasta sayısı (EK-4)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam patoloji sonucu verilen hasta sayısı (EK-4.2)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 22. Aktif Cihaz Başına Düşen İş Yükü - Maks: 2
@@ -442,14 +466,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'count',
     unitLabel: 'Sayı',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-Nabız, MKYS',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Toplam iş yükü', type: 'number', required: true },
-      { key: 'B', label: 'Aktif cihaz sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Yapılan çekim sayısı (EK-5)', type: 'number', required: true },
+      { key: 'B', label: 'Aktif cihaz sayısı (MKYS, EK-6)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 2 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 23. Aktif Cihaz Oranı - Maks: 2
@@ -460,14 +488,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'MKYS',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Aktif cihaz sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam cihaz sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Aktif cihaz sayısı (MKYS, EK-6)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam cihaz sayısı (MKYS, EK-6)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 2 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 24. 3 Günü Geçen BT Randevu Oranı - Maks: 3
@@ -478,14 +510,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 3,
-    source: 'HBYS',
+    source: 'e-Nabız',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: '3 günü geçen BT randevu sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam BT randevu sayısı', type: 'number', required: true }
+      { key: 'A', label: '3 günü geçen BT randevulu hasta sayısı (EK-7)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam BT randevulu hasta sayısı (EK-7)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 3 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 25. Ortalama BT Raporlama Süresi - Maks: 3
@@ -496,14 +532,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'days',
     unitLabel: 'Gün',
     maxPoints: 3,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'Teleradyoloji',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Toplam BT raporlama süresi', type: 'number', required: true },
-      { key: 'B', label: 'Toplam BT rapor sayısı', type: 'number', required: true }
+      { key: 'A', label: 'BT çekimlerinin raporlama süreleri toplamı (gün)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam BT çekim sayısı (Teleradyoloji)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 3 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 26. 7 Günü Geçen MR Randevu Oranı - Maks: 3
@@ -514,14 +554,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 3,
-    source: 'HBYS',
+    source: 'e-Nabız',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: '7 günü geçen MR randevu sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam MR randevu sayısı', type: 'number', required: true }
+      { key: 'A', label: '7 günü geçen MR randevulu hasta sayısı (EK-8)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam MR randevulu hasta sayısı (EK-8)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 3 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 27. Ortalama MR Raporlama Süresi - Maks: 3
@@ -532,14 +576,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'days',
     unitLabel: 'Gün',
     maxPoints: 3,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'Teleradyoloji',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Toplam MR raporlama süresi', type: 'number', required: true },
-      { key: 'B', label: 'Toplam MR rapor sayısı', type: 'number', required: true }
+      { key: 'A', label: 'MR çekimlerinin raporlama süreleri toplamı (gün)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam MR çekim sayısı (Teleradyoloji)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 3 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 28. 10 Günü Geçen USG Randevu Oranı - Maks: 3
@@ -550,14 +598,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 3,
-    source: 'HBYS',
+    source: 'e-Nabız',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: '10 günü geçen USG randevu sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam USG randevu sayısı', type: 'number', required: true }
+      { key: 'A', label: '10 günü geçen USG randevulu hasta sayısı (EK-9)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam USG çekimi yapılan hasta sayısı (EK-9)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 3 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 29. Aile Hekimliği Asistanı Başına Düşen EAHB Sayısı - Maks: 2
@@ -566,16 +618,20 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     name: 'Aile Hekimliği Asistanı Başına Düşen EAHB Sayısı',
     category: 'BH',
     unit: 'count',
-    unitLabel: 'Sayı',
+    unitLabel: '100 Kişide',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'EKOBS, EKİP/ÇKYS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'EAHB sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Aile hekimliği asistanı sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Eğitim AHB sayısı (ÇKYS/EKİP)', type: 'number', required: true },
+      { key: 'B', label: 'Aile hekimi asistan hekim sayısı (branş:4200, ünvan:6330/10505)', type: 'number', required: true }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= 0.5', points: 2 },
+      { operator: 'formula', formula: 'GD >= 0.25 && GD < 0.5', points: 1 },
+      { operator: 'formula', formula: 'GD < 0.25', points: 0 }
+    ]
   },
 
   // 30. Metrekare Başına Düşen Tüketim Miktarı - Maks: 2
@@ -584,16 +640,20 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     name: 'Metrekare Başına Düşen Tüketim Miktarı',
     category: 'BH',
     unit: 'ratio',
-    unitLabel: 'Birim/m²',
+    unitLabel: 'TL/m²',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'TDMS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Toplam tüketim miktarı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam metrekare', type: 'number', required: true }
+      { key: 'A', label: 'Elektrik, su ve yakacak giderleri toplamı (TDMS)', type: 'number', required: true },
+      { key: 'B', label: 'Kurum kullanım alanı m² (TDMS)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 31. Çalışma Cetvellerini Zamanında Girme Oranı - Maks: 4
@@ -604,14 +664,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 4,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'MHRS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Zamanında girilen cetvel sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam cetvel sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Zamanında girilen MHRS cetvel sayısı (15 gün öncesi)', type: 'number', required: true },
+      { key: 'B', label: 'İlgili ay açılan toplam MHRS cetveli sayısı', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 4 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 32. 60 Günü Geçen Stok Tutarının Toplam Tahakkuka Oranı - Maks: 2
@@ -622,14 +686,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'MKYS, TDMS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: '60 günü geçen stok tutarı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam tahakkuk tutarı', type: 'number', required: true }
+      { key: 'A', label: '60 günü geçen stoğun parasal değeri (MKYS)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam tahakkuk (TDMS)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 33. Muhasebeleştirme Süresi - Maks: 2
@@ -640,14 +708,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'days',
     unitLabel: 'Gün',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'TDMS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Toplam muhasebeleştirme süresi', type: 'number', required: true },
-      { key: 'B', label: 'Toplam işlem sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Toplam muhasebeleştirme gün süresi (TDMS)', type: 'number', required: true },
+      { key: 'B', label: 'Muhasebeleştirilen işlem sayısı (TDMS)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 34. Nöbet+İcap Ücretinin Taban Ücrete Oranı - Maks: 2
@@ -658,14 +730,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'TDMS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'Nöbet+İcap ücreti toplamı', type: 'number', required: true },
-      { key: 'B', label: 'Taban ücret toplamı', type: 'number', required: true }
+      { key: 'A', label: 'Nöbet+İcap ücreti toplamı (TDMS)', type: 'number', required: true },
+      { key: 'B', label: 'Personel taban ücreti toplamı (TDMS)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 35. Tahakkukun İlaç ve Tıbbi Malzeme Giderini Karşılama Oranı - Maks: 2
@@ -676,14 +752,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'TDMS',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'İlaç ve tıbbi malzeme tahakkuku', type: 'number', required: true },
-      { key: 'B', label: 'İlaç ve tıbbi malzeme gideri', type: 'number', required: true }
+      { key: 'A', label: 'İlaç ve tıbbi malzeme gideri (TDMS)', type: 'number', required: true },
+      { key: 'B', label: 'Toplam tahakkuk (TDMS)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 36. Ameliyat Masası Başına Düşen Ameliyat (A,B,C) Sayısı - Maks: 4
@@ -694,14 +774,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'count',
     unitLabel: 'Sayı',
     maxPoints: 4,
-    source: 'HBYS',
-    hbysCalculable: true,
+    source: 'e-Nabız, TSİM',
+    hbysCalculable: false,
     parameters: [
-      { key: 'A', label: 'A, B, C grubu ameliyat sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Ameliyat masası sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Yapılan A,B,C ameliyat sayısı (e-Nabız)', type: 'number', required: true },
+      { key: 'B', label: 'Aktif kullanılan ameliyat masası sayısı (TSİM)', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD >= GO', points: 4 },
+      { operator: 'formula', formula: 'GD < GO', points: 0 }
+    ]
   },
 
   // 37. Acil Servis Ortalama Bekleme Süresi (dk) - Maks: 2
@@ -712,14 +796,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'minutes',
     unitLabel: 'Dakika',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-Nabız',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Toplam bekleme süresi', type: 'number', required: true },
-      { key: 'B', label: 'Toplam hasta sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Acil kırmızı/sarı triaj toplam bekleme süresi (dk)', type: 'number', required: true },
+      { key: 'B', label: 'Acil kırmızı/sarı triaj başvuru sayısı', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: 'A / B',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   },
 
   // 38. Toplam İlaç İçindeki Antibiyotik Oranı - Maks: 2
@@ -730,14 +818,18 @@ export const BH_INDICATORS: IndicatorDefinition[] = [
     unit: 'percentage',
     unitLabel: '%',
     maxPoints: 2,
-    source: 'HBYS',
+    source: 'e-Nabız',
     hbysCalculable: true,
     parameters: [
-      { key: 'A', label: 'Antibiyotik sayısı', type: 'number', required: true },
-      { key: 'B', label: 'Toplam ilaç sayısı', type: 'number', required: true }
+      { key: 'A', label: 'Antibiyotik (J01) içeren ilaç barkodu sayısı', type: 'number', required: true },
+      { key: 'B', label: 'Toplam ilaç barkodu sayısı', type: 'number', required: true },
+      { key: 'GO', label: 'Gösterge referans değeri (Bakanlık hedefi)', type: 'number', required: false }
     ],
     gdFormula: '(A / B) * 100',
-    gpRules: []
+    gpRules: [
+      { operator: 'formula', formula: 'GD <= GO', points: 2 },
+      { operator: 'formula', formula: 'GD > GO', points: 0 }
+    ]
   }
 ];
 

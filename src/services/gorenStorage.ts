@@ -32,7 +32,7 @@ import {
   InstitutionType,
   IndicatorDefinition
 } from '../../components/goren/types/goren.types';
-import { BH_INDICATORS } from '../config/goren/bh.registry';
+import { getIndicatorsByCategory } from '../config/goren/index';
 
 // Firestore koleksiyon adları
 const GOREN_DATA_COLLECTION = 'gorenData';
@@ -81,7 +81,8 @@ export interface BHParseResult {
  * @param institutionType Kurum türü - BH için özel format kullanılır
  */
 export const parseGorenExcelBH = (
-  file: ArrayBuffer
+  file: ArrayBuffer,
+  institutionType: InstitutionType = 'BH'
 ): BHParseResult => {
   try {
     const workbook = XLSX.read(new Uint8Array(file), { type: 'array' });
@@ -105,7 +106,7 @@ export const parseGorenExcelBH = (
     if (!hasSiraColumn) {
       return {
         success: false,
-        error: 'Excel dosyasında "Sıra" kolonu bulunamadı. Lütfen BH şablonunu kullanın.'
+        error: 'Excel dosyasında "Sıra" kolonu bulunamadı. Lütfen şablonu kullanın.'
       };
     }
 
@@ -153,10 +154,17 @@ export const parseGorenExcelBH = (
       if (sira === undefined || sira === null || sira === '') continue;
 
       const siraNum = parseInt(String(sira), 10);
-      if (isNaN(siraNum) || siraNum < 1 || siraNum > 38) continue;
+      if (isNaN(siraNum) || siraNum < 1 || siraNum > 99) continue;
 
-      // Gösterge kodunu oluştur
-      const code = `SYPG-BH-${siraNum}`;
+      // Gösterge kodunu kurum tipine göre oluştur
+      const codePrefix: Record<InstitutionType, string> = {
+        'BH': 'SYPG-BH',
+        'ILSM': 'SYPG-İLSM',
+        'ILCESM': 'SYPG-İLÇESM',
+        'ADSH': 'SYPG-ADSH',
+        'ASH': 'SYPG-ASH'
+      };
+      const code = `${codePrefix[institutionType]}-${siraNum}`;
 
       // Gösterge adını kaydet
       const gostergeAdi = row[gostergeAdiColumn];
@@ -235,9 +243,10 @@ export const parseGorenExcelBH = (
         }
       }
 
-      // BH registry'den maxPoints değerini al
-      const bhIndicator = BH_INDICATORS.find(ind => ind.code === code);
-      const maxPuan = bhIndicator?.maxPoints ?? 4; // Varsayılan 4
+      // Registry'den maxPoints değerini al
+      const indicators = getIndicatorsByCategory(institutionType);
+      const indicator = indicators.find(ind => ind.code === code);
+      const maxPuan = indicator?.maxPoints ?? 4; // Varsayılan 4
 
       // BH tablo satırı oluştur
       bhTableRows.push({
@@ -292,9 +301,10 @@ export const parseGorenExcel = (
   file: ArrayBuffer,
   institutionType?: InstitutionType
 ): { success: boolean; data?: Record<string, ParameterValues>; directGP?: Record<string, number>; totalGP?: number; indicatorNames?: Record<string, string>; bhTableRows?: BHTableRow[]; error?: string } => {
-  // BH için özel parser kullan
-  if (institutionType === 'BH') {
-    return parseGorenExcelBH(file);
+  // Tüm modüller için BH tarzı parser'ı dene (Sıra kolonu varsa)
+  // institutionType verilmişse o tipi kullan
+  if (institutionType) {
+    return parseGorenExcelBH(file, institutionType);
   }
 
   try {
@@ -328,7 +338,7 @@ export const parseGorenExcel = (
       // Sıra kolonu varsa BH formatı olabilir
       const hasSiraColumn = 'Sıra' in firstRow || 'SIRA' in firstRow || 'Sira' in firstRow;
       if (hasSiraColumn) {
-        return parseGorenExcelBH(file);
+        return parseGorenExcelBH(file, institutionType || 'BH');
       }
 
       return {

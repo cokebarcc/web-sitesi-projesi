@@ -84,15 +84,21 @@ export type UnitType = 'percentage' | 'count' | 'ratio' | 'days' | 'person' | 's
  */
 export type DataSource =
   | 'SGGM'
+  | 'SGGM (SABİM)'
   | 'MHRS'
+  | 'MHRS, e-Nabız'
   | 'GÖREN'
   | 'DEN-İZ'
   | 'e-Nabız'
+  | 'e-Nabız, MHRS'
   | 'e-Rapor'
   | 'ÇKYS'
   | 'EKİP'
   | 'TÜİK'
   | 'HBYS'
+  | 'HYP'
+  | 'ASOS'
+  | 'DHSDS Yazılımı'
   | 'Manuel';
 
 /**
