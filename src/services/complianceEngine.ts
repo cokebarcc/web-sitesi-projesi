@@ -417,6 +417,27 @@ function analyzeRow(
           }
         }
 
+        // ── Güvenlik ağı: rawText'te geçen bilinen branşları listeye ekle ──
+        // Extraction aşamasında kaçırılan branşları kurtarır
+        if (branslar && branslar.length > 0 && rawTextLower) {
+          const bilinenBranslar = [
+            'kadın doğum', 'kadın hastalıkları', 'çocuk cerrahisi', 'çocuk üroloji',
+            'plastik cerrahi', 'çocuk endokrinoloji', 'genel cerrahi', 'ortopedi',
+            'üroloji', 'göz hastalıkları', 'kulak burun boğaz', 'nöroloji',
+            'beyin cerrahisi', 'kalp damar cerrahisi', 'göğüs cerrahisi',
+            'kardiyoloji', 'gastroenteroloji', 'dermatoloji', 'endokrinoloji',
+            'nefroloji', 'hematoloji', 'onkoloji', 'perinatoloji',
+          ];
+          const branslarLower = new Set(branslar.map(b => turkishLower(b)));
+          for (const bb of bilinenBranslar) {
+            if (rawTextLower.includes(bb) && !branslarLower.has(bb)) {
+              // Branş rawText'te geçiyor ama listede yok → ekle
+              branslar.push(bb);
+              branslarLower.add(bb);
+            }
+          }
+        }
+
         if (branslar && branslar.length > 0) {
           const formattedBranslar = branslar.map(b =>
             b.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
@@ -484,6 +505,10 @@ function analyzeRow(
       }
 
       case 'BIRLIKTE_YAPILAMAZ': {
+        // 520020 ve 520021 kodları BIRLIKTE_003 kuralından muaf
+        const birlikteYapilamazMuafKodlar = new Set(['520020', '520021']);
+        if (birlikteYapilamazMuafKodlar.has(normalizedKodu)) break;
+
         const yasakliKodlar = rule.params.yapilamazKodlari as string[];
         const birlikteRawLower = turkishLower(rule.rawText || '');
 
@@ -841,10 +866,58 @@ function applySiklikLimitChecks(
   // Sıklık limiti muafiyet listesi (bu kodlar günlük limit kontrolünden muaf)
   const siklikMuafKodlar = new Set(['520020', '520021', '520022', '520023', '520024']);
 
+  // ── 520046 özel kuralı: Aynı işlem numarası (islemNo) ile birden fazla 520046 bulunamaz ──
+  // Aynı hastada farklı işlem numaralarıyla birden fazla 520046 olabilir,
+  // ancak aynı islemNo ile mükerrer 520046 olamaz.
+  {
+    const islemNoMap520046 = new Map<string, number[]>(); // key: hastaTc_islemNo
+    for (let i = 0; i < rows.length; i++) {
+      if (normalizeGilKodu(rows[i].gilKodu) !== '520046') continue;
+      const mapKey = `${rows[i].hastaTc}_${(rows[i].islemNo || '').trim()}`;
+      if (!islemNoMap520046.has(mapKey)) islemNoMap520046.set(mapKey, []);
+      islemNoMap520046.get(mapKey)!.push(i);
+    }
+
+    for (const [, idxList] of islemNoMap520046) {
+      if (idxList.length <= 1) continue;
+
+      // Tarihe göre sırala, ilk kayıt uygun, sonrakiler ihlal
+      const sorted = [...idxList].sort((a, b) => {
+        const da = normalizeDate(rows[a].tarih);
+        const db = normalizeDate(rows[b].tarih);
+        return da.localeCompare(db) || a - b;
+      });
+
+      for (let j = 1; j < sorted.length; j++) {
+        const result = results[sorted[j]];
+        if (result) {
+          const firstRow = rows[sorted[0]];
+          const islemNo = (rows[sorted[j]].islemNo || '').trim();
+          const firstDetay = firstRow
+            ? ` (İlk giriş: ${firstRow.tarih} tarihinde ${firstRow.doktor || ''} tarafından girilmiş)`
+            : '';
+          result.ihlaller.push({
+            ihlal_kodu: 'SIKLIK_006',
+            ihlal_aciklamasi: `Bu işlem (520046 - Yatan hasta taburculuk değerlendirmesi) aynı işlem numarası (${islemNo}) ile birden fazla faturalandırılamaz. Bu işlem numarasında ${sorted.length} adet bulundu.${firstDetay}`,
+            kaynak: result.eslesen_kural?.kaynak || 'GİL',
+            referans_kural_metni: 'Aynı işlem numarası ile birden fazla 520046 faturalandırılamaz (özel kural).',
+            fromSectionHeader: true,
+            kural_tipi: 'SIKLIK_LIMIT',
+          });
+          if (result.uygunluk_durumu === 'UYGUN') {
+            result.uygunluk_durumu = 'UYGUNSUZ';
+          }
+        }
+      }
+    }
+  }
+
   for (const [key, indices] of codeMap) {
     if (indices.length <= 1) continue;
 
     const gilKodu = key.split('_').slice(1).join('_');
+    // 520046 özel kuralı yukarıda uygulandı, burada tekrar kontrol etme
+    if (gilKodu === '520046') continue;
     if (siklikMuafKodlar.has(gilKodu)) continue;
 
     const entry = rulesMaster.get(gilKodu);

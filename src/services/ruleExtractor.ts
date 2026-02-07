@@ -293,6 +293,25 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
             .replace(/^\s*(biri?|birisi)\s+/gi, '')
             .trim()
           )
+          // ── Uzun parçalarda gizli branş kurtarma ──
+          // "çocuk üroloji uzmanı olmak üzere kadın doğum" gibi parçalardan bilinen branşları çıkar
+          .flatMap(b => {
+            if (b.split(/\s+/).length <= 5) return [b];
+            // Parça çok uzun → içinde bilinen branş var mı kontrol et
+            const bLower = turkishLower(b);
+            const _bilinen = [
+              'çocuk cerrahisi', 'çocuk üroloji', 'kadın doğum', 'kadın hastalıkları',
+              'plastik cerrahi', 'çocuk endokrinoloji', 'genel cerrahi', 'ortopedi',
+              'göz hastalıkları', 'kulak burun boğaz', 'nöroloji', 'beyin cerrahisi',
+              'üroloji', 'kalp damar cerrahisi', 'göğüs cerrahisi', 'gastroenteroloji',
+              'kardiyoloji', 'dermatoloji', 'fizik tedavi', 'anesteziyoloji',
+              'enfeksiyon hastalıkları', 'endokrinoloji', 'nefroloji', 'hematoloji',
+              'romatoloji', 'onkoloji', 'radyoloji', 'nükleer tıp', 'acil tıp',
+              'perinatoloji', 'jinekolojik onkoloji',
+            ];
+            const found = _bilinen.filter(br => bLower.includes(br));
+            return found.length > 0 ? found : [b];
+          })
           .filter(b => b.length > 2 && b.length <= 50 && b.split(/\s+/).length <= 5)
           // Tanı kodu veya cümle parçası gibi görünen string'leri filtrele
           .filter(b => !/^\w\d+\.\d|faturalandırılır|puanlandırılır|olmak üzere|nedeniyle/.test(turkishLower(b)))

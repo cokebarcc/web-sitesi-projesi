@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import * as XLSX from 'xlsx';
 import {
   ComplianceResult,
@@ -23,6 +24,245 @@ interface ComplianceAnalysisPanelProps {
 }
 
 const PAGE_SIZES = [50, 100, 250, 500];
+
+type SortDirection = 'asc' | 'desc' | null;
+type SortableColumn = 'durum' | 'gilKodu' | 'gilAdi' | 'doktor' | 'uzmanlik' | 'ihlal' | 'kaynak' | 'guven' | 'ihlalAciklama';
+
+interface ColumnDef {
+  key: SortableColumn;
+  label: string;
+  minW: string;
+  align: 'left' | 'center';
+  type: 'text' | 'number';
+}
+
+const TABLE_COLUMNS: ColumnDef[] = [
+  { key: 'durum', label: 'Durum', minW: '90px', align: 'left', type: 'text' },
+  { key: 'gilKodu', label: 'GİL Kodu', minW: '80px', align: 'left', type: 'text' },
+  { key: 'gilAdi', label: 'GİL Adı', minW: '200px', align: 'left', type: 'text' },
+  { key: 'doktor', label: 'Doktor', minW: '140px', align: 'left', type: 'text' },
+  { key: 'uzmanlik', label: 'Uzmanlık', minW: '120px', align: 'left', type: 'text' },
+  { key: 'ihlal', label: 'İhlal', minW: '50px', align: 'center', type: 'number' },
+  { key: 'kaynak', label: 'Kaynak', minW: '60px', align: 'left', type: 'text' },
+  { key: 'guven', label: 'Güven', minW: '60px', align: 'left', type: 'text' },
+  { key: 'ihlalAciklama', label: 'İhlal Açıklaması', minW: '200px', align: 'left', type: 'text' },
+];
+
+function getColumnValue(result: ComplianceResult, row: IslemSatiriLike, key: SortableColumn): string | number {
+  switch (key) {
+    case 'durum': return result.uygunluk_durumu;
+    case 'gilKodu': return row.gilKodu;
+    case 'gilAdi': return row.gilAdi;
+    case 'doktor': return row.doktor;
+    case 'uzmanlik': return row.uzmanlik;
+    case 'ihlal': return result.ihlaller.length;
+    case 'kaynak': return result.eslesen_kural?.kaynak || '';
+    case 'guven': return result.eslesme_guveni || '';
+    case 'ihlalAciklama': return result.ihlaller.map(i => `[${i.ihlal_kodu}] ${i.ihlal_aciklamasi}`).join(' | ');
+    default: return '';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/* Excel Tarzı Filtre Dropdown — Portal ile render edilir        */
+/* ═══════════════════════════════════════════════════════════════ */
+interface FilterDropdownProps {
+  col: ColumnDef;
+  anchorRect: DOMRect;
+  uniqueVals: Map<string, number>;
+  /** Seçili değerler. undefined = hepsi seçili (filtre yok). */
+  selectedValues: Set<string> | undefined;
+  sortColumn: SortableColumn | null;
+  sortDirection: SortDirection;
+  onSort: (dir: SortDirection) => void;
+  onApply: (selected: Set<string> | undefined) => void;
+  onClose: () => void;
+}
+
+const FilterDropdown: React.FC<FilterDropdownProps> = ({
+  col, anchorRect, uniqueVals, selectedValues, sortColumn, sortDirection,
+  onSort, onApply, onClose,
+}) => {
+  // Dropdown içi local state — "Tamam"a basılana kadar ana state'i etkilemez
+  const [localSelected, setLocalSelected] = useState<Set<string>>(() => {
+    if (!selectedValues) {
+      // Hepsi seçili → tüm değerleri kopyala
+      return new Set(uniqueVals.keys());
+    }
+    return new Set(selectedValues);
+  });
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Tüm unique key'ler
+  const allKeys = useMemo(() => new Set(uniqueVals.keys()), [uniqueVals]);
+
+  // Arama ile filtrelenmiş + sıralanmış liste
+  const sortedEntries = useMemo(() => {
+    const term = search.toLowerCase();
+    return [...uniqueVals.entries()]
+      .filter(([v]) => !term || v.toLowerCase().includes(term))
+      .sort((a, b) => col.type === 'number'
+        ? Number(a[0]) - Number(b[0])
+        : a[0].localeCompare(b[0], 'tr'));
+  }, [uniqueVals, search, col.type]);
+
+  const allChecked = localSelected.size === allKeys.size;
+  const noneChecked = localSelected.size === 0;
+
+  // Dropdown pozisyonu — ekranın dışına taşmasın
+  const style = useMemo((): React.CSSProperties => {
+    const dropW = 300;
+    let left = anchorRect.left;
+    let top = anchorRect.bottom + 4;
+    if (left + dropW > window.innerWidth) left = window.innerWidth - dropW - 8;
+    if (left < 8) left = 8;
+    // Kullanılabilir dikey alan
+    const spaceBelow = window.innerHeight - anchorRect.bottom - 8;
+    const spaceAbove = anchorRect.top - 8;
+    let maxH: number;
+    if (spaceBelow >= 340) {
+      maxH = Math.min(spaceBelow, 440);
+    } else if (spaceAbove > spaceBelow) {
+      top = Math.max(8, anchorRect.top - Math.min(spaceAbove, 440));
+      maxH = Math.min(spaceAbove, 440);
+    } else {
+      maxH = Math.min(spaceBelow, 440);
+    }
+    return { position: 'fixed', left, top, width: dropW, maxHeight: maxH, zIndex: 9999 };
+  }, [anchorRect]);
+
+  // Autofocus arama input'u
+  useEffect(() => { searchInputRef.current?.focus(); }, []);
+
+  // Dropdown dışına tıklama → kapat
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    // Bir tick bekle — yoksa açan tıklama hemen kapatır
+    const timer = setTimeout(() => document.addEventListener('mousedown', handler), 0);
+    return () => { clearTimeout(timer); document.removeEventListener('mousedown', handler); };
+  }, [onClose]);
+
+  // ESC ile kapat
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const toggle = (val: string) => {
+    setLocalSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(val)) next.delete(val);
+      else next.add(val);
+      return next;
+    });
+  };
+
+  const selectAll = () => setLocalSelected(new Set(allKeys));
+  const deselectAll = () => setLocalSelected(new Set());
+
+  const handleApply = () => {
+    // Hepsi seçiliyse → filtre yok (undefined)
+    if (localSelected.size === allKeys.size) {
+      onApply(undefined);
+    } else {
+      onApply(new Set(localSelected));
+    }
+    onClose();
+  };
+
+  const isSortAsc = sortColumn === col.key && sortDirection === 'asc';
+  const isSortDesc = sortColumn === col.key && sortDirection === 'desc';
+
+  return ReactDOM.createPortal(
+    <div ref={dropdownRef} style={style}
+      className="bg-[#1e1e36] border border-slate-600/60 rounded-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
+    >
+      {/* Sıralama */}
+      <div className="px-3 pt-3 pb-1 flex gap-1">
+        <button
+          onClick={() => onSort(isSortAsc ? null : 'asc')}
+          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isSortAsc ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/30'}`}
+        >
+          <span>▲</span> {col.type === 'number' ? 'Küçük→Büyük' : 'A→Z'}
+        </button>
+        <button
+          onClick={() => onSort(isSortDesc ? null : 'desc')}
+          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isSortDesc ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/30'}`}
+        >
+          <span>▼</span> {col.type === 'number' ? 'Büyük→Küçük' : 'Z→A'}
+        </button>
+      </div>
+
+      <div className="border-t border-slate-700/40 mx-2" />
+
+      {/* Arama */}
+      <div className="px-3 py-2">
+        <input
+          ref={searchInputRef}
+          type="text" value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={`${col.label} ara...`}
+          className="w-full bg-slate-800/80 border border-slate-600/50 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder-slate-600"
+        />
+      </div>
+
+      {/* Tümünü Seç / Kaldır */}
+      <div className="px-3 pb-1 flex items-center gap-2">
+        <button onClick={selectAll} className={`text-[10px] font-bold transition-colors ${allChecked ? 'text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}>
+          Tümünü Seç
+        </button>
+        <span className="text-slate-700">|</span>
+        <button onClick={deselectAll} className={`text-[10px] font-bold transition-colors ${noneChecked ? 'text-red-400' : 'text-slate-500 hover:text-red-400'}`}>
+          Tümünü Kaldır
+        </button>
+        <span className="ml-auto text-[9px] text-slate-600">{sortedEntries.length} / {uniqueVals.size}</span>
+      </div>
+
+      {/* Checkbox listesi */}
+      <div className="overflow-y-auto px-1 flex-1 min-h-0">
+        {sortedEntries.map(([val, count]) => {
+          const checked = localSelected.has(val);
+          return (
+            <label key={val}
+              className={`flex items-center gap-2 px-2 py-[3px] rounded-md cursor-pointer transition-colors text-xs ${checked ? 'text-slate-300 hover:bg-slate-700/30' : 'text-slate-600 hover:bg-slate-700/20'}`}
+            >
+              <input type="checkbox" checked={checked} onChange={() => toggle(val)}
+                className="w-3 h-3 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500/30 focus:ring-1 cursor-pointer accent-cyan-500"
+              />
+              <span className="truncate flex-1">{val || '(Boş)'}</span>
+              <span className="text-[9px] text-slate-600 tabular-nums">{count}</span>
+            </label>
+          );
+        })}
+        {sortedEntries.length === 0 && (
+          <div className="text-center text-xs text-slate-600 py-3">Sonuç bulunamadı</div>
+        )}
+      </div>
+
+      {/* Alt butonlar: Tamam / İptal */}
+      <div className="border-t border-slate-700/40 px-3 py-2 flex items-center gap-2">
+        <button onClick={handleApply}
+          className="flex-1 px-3 py-1.5 text-[11px] font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-all"
+        >
+          Tamam
+        </button>
+        <button onClick={onClose}
+          className="flex-1 px-3 py-1.5 text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg border border-slate-700/40 transition-all"
+        >
+          İptal
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+};
 
 const statusStyles: Record<string, { label: string; color: string; bg: string; border: string; borderL: string }> = {
   UYGUN: { label: 'UYGUN', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', borderL: 'border-l-emerald-500' },
@@ -50,6 +290,49 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
+
+  // ── Sütun sıralama ve filtreleme ──
+  const [sortColumn, setSortColumn] = useState<SortableColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  // columnFilters: key → Set<string> (seçili değerler). Key yoksa filtre yok.
+  const [columnFilters, setColumnFilters] = useState<Record<string, Set<string>>>({});
+  // Açık dropdown bilgisi: { key, rect } veya null
+  const [openFilter, setOpenFilter] = useState<{ key: SortableColumn; rect: DOMRect } | null>(null);
+
+  // Her sütundaki benzersiz değerleri hesapla
+  const columnUniqueValues = useMemo(() => {
+    const map: Record<string, Map<string, number>> = {};
+    for (const col of TABLE_COLUMNS) {
+      const valMap = new Map<string, number>();
+      for (const r of results) {
+        const row = tableData[r.satirIndex];
+        if (!row) continue;
+        const val = String(getColumnValue(r, row, col.key));
+        valMap.set(val, (valMap.get(val) || 0) + 1);
+      }
+      map[col.key] = valMap;
+    }
+    return map;
+  }, [results, tableData]);
+
+  const handleFilterApply = useCallback((colKey: string, selected: Set<string> | undefined) => {
+    setColumnFilters(prev => {
+      if (!selected) {
+        // Filtre kaldırıldı
+        const next = { ...prev };
+        delete next[colKey];
+        return next;
+      }
+      return { ...prev, [colKey]: selected };
+    });
+    setCurrentPage(1);
+  }, []);
+
+  const handleSortFromDropdown = useCallback((colKey: SortableColumn, dir: SortDirection) => {
+    setSortColumn(dir ? colKey : null);
+    setSortDirection(dir);
+    setCurrentPage(1);
+  }, []);
 
   const [detailRow, setDetailRow] = useState<IslemSatiriLike | null>(null);
   const [detailResult, setDetailResult] = useState<ComplianceResult | null>(null);
@@ -191,6 +474,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     setFilterEsleme('TUMU');
     setFilterKuralTipi('TUMU');
     setSearchTerm('');
+    setSortColumn(null);
+    setSortDirection(null);
+    setColumnFilters({});
+    setOpenFilter(null);
     setUygunsuzSearchTerm('');
     setUygunsuzCurrentPage(1);
     setSelectedDoktor('TUMU');
@@ -343,8 +630,36 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
         return row.gilKodu.toLowerCase().includes(term) || row.gilAdi.toLowerCase().includes(term) || row.doktor.toLowerCase().includes(term) || row.uzmanlik.toLowerCase().includes(term) || row.hastaTc.includes(term) || row.adiSoyadi.toLowerCase().includes(term);
       });
     }
+    // Sütun bazlı filtreler (Excel tarzı checkbox seçim)
+    const activeColFilters = Object.entries(columnFilters);
+    if (activeColFilters.length > 0) {
+      filtered = filtered.filter(r => {
+        const row = tableData[r.satirIndex];
+        if (!row) return false;
+        return activeColFilters.every(([colKey, allowedSet]) => {
+          if (allowedSet.size === 0) return false; // Hiçbir şey seçili değil
+          const val = String(getColumnValue(r, row, colKey as SortableColumn));
+          return allowedSet.has(val);
+        });
+      });
+    }
+    // Sıralama
+    if (sortColumn && sortDirection) {
+      filtered = [...filtered].sort((a, b) => {
+        const rowA = tableData[a.satirIndex];
+        const rowB = tableData[b.satirIndex];
+        if (!rowA || !rowB) return 0;
+        const valA = getColumnValue(a, rowA, sortColumn);
+        const valB = getColumnValue(b, rowB, sortColumn);
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return sortDirection === 'asc' ? valA - valB : valB - valA;
+        }
+        const cmp = String(valA).localeCompare(String(valB), 'tr');
+        return sortDirection === 'asc' ? cmp : -cmp;
+      });
+    }
     return filtered;
-  }, [results, filterDurum, filterEsleme, filterKuralTipi, searchTerm, tableData]);
+  }, [results, filterDurum, filterEsleme, filterKuralTipi, searchTerm, tableData, columnFilters, sortColumn, sortDirection]);
 
   const totalPages = Math.ceil(filteredResults.length / pageSize);
   const paginatedResults = useMemo(() => {
@@ -692,7 +1007,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
       )}
 
       {/* Sonuç Tablosu */}
-      {filteredResults.length > 0 && (
+      {results.length > 0 && (
         <>
           <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-t-2xl border border-b-0 border-slate-700/30 px-5 py-3 flex items-center justify-between">
             <span className="text-xs text-slate-500">{filteredResults.length.toLocaleString('tr-TR')} sonuç / {results.length.toLocaleString('tr-TR')} toplam</span>
@@ -709,17 +1024,50 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <thead className="sticky top-0 z-10">
                 <tr className="bg-[#1a1a2e] border-b border-slate-700/50">
                   <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider w-[40px]">#</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[90px]">Durum</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[80px]">GİL Kodu</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[200px]">GİL Adı</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[140px]">Doktor</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[120px]">Uzmanlık</th>
-                  <th className="px-3 py-2.5 text-center text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[50px]">İhlal</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[60px]">Kaynak</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[60px]">Güven</th>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider min-w-[200px]">İhlal Açıklaması</th>
+                  {TABLE_COLUMNS.map(col => {
+                    const hasFilter = !!columnFilters[col.key];
+                    const isActive = sortColumn === col.key || hasFilter;
+
+                    return (
+                      <th key={col.key} className={`px-3 py-2.5 text-${col.align} text-[10px] font-bold uppercase tracking-wider min-w-[${col.minW}] ${isActive ? 'text-cyan-400' : 'text-amber-400'}`}>
+                        <button
+                          onClick={(e) => {
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            setOpenFilter(prev => prev?.key === col.key ? null : { key: col.key, rect });
+                          }}
+                          className="flex items-center gap-1 hover:text-white transition-colors w-full"
+                        >
+                          <span>{col.label}</span>
+                          {sortColumn === col.key && sortDirection === 'asc' && <span className="text-cyan-400 text-[8px]">▲</span>}
+                          {sortColumn === col.key && sortDirection === 'desc' && <span className="text-cyan-400 text-[8px]">▼</span>}
+                          {hasFilter && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block" />}
+                          <svg className={`w-2.5 h-2.5 ${isActive ? 'opacity-80' : 'opacity-40'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                        </button>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
+
+              {/* Excel filtre dropdown — Portal ile body'ye render edilir */}
+              {openFilter && (() => {
+                const col = TABLE_COLUMNS.find(c => c.key === openFilter.key)!;
+                const uniqueVals = columnUniqueValues[col.key] || new Map();
+                return (
+                  <FilterDropdown
+                    key={col.key}
+                    col={col}
+                    anchorRect={openFilter.rect}
+                    uniqueVals={uniqueVals}
+                    selectedValues={columnFilters[col.key]}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={(dir) => handleSortFromDropdown(col.key, dir)}
+                    onApply={(selected) => handleFilterApply(col.key, selected)}
+                    onClose={() => setOpenFilter(null)}
+                  />
+                );
+              })()}
               <tbody>
                 {paginatedResults.map((result, idx) => {
                   const row = tableData[result.satirIndex];
@@ -746,6 +1094,13 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                     </tr>
                   );
                 })}
+                {paginatedResults.length === 0 && (
+                  <tr>
+                    <td colSpan={TABLE_COLUMNS.length + 1} className="px-4 py-8 text-center text-xs text-slate-600">
+                      Filtre kriterlerine uygun sonuç bulunamadı.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
