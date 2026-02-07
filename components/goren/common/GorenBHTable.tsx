@@ -5,9 +5,11 @@
  * Satıra tıklayınca genişleyen hesaplama detayı
  */
 
-import React, { useState } from 'react';
-import { BH_INDICATOR_DETAILS } from '../../../src/config/goren/bhIndicatorDetails';
+import React, { useState, useMemo } from 'react';
+import { BH_INDICATOR_DETAILS, IndicatorDetail } from '../../../src/config/goren/bhIndicatorDetails';
 import { getAppendixData, AppendixData } from '../../../src/config/goren/bhAppendixData';
+import { InstitutionType } from '../types/goren.types';
+import { getIndicatorsByCategory } from '../../../src/config/goren';
 
 interface BHTableRow {
   sira: number;
@@ -26,6 +28,7 @@ interface GorenBHTableProps {
   data: BHTableRow[];
   totalGP: number;
   isLoading?: boolean;
+  moduleType?: InstitutionType;
 }
 
 // EK Modal Bileşeni
@@ -68,13 +71,66 @@ const AppendixModal: React.FC<{
   );
 };
 
+/**
+ * Registry'deki IndicatorDefinition'dan detay paneli için IndicatorDetail objesi oluştur
+ */
+function buildIndicatorDetailFromRegistry(sira: number, moduleType: InstitutionType): IndicatorDetail | undefined {
+  const indicators = getIndicatorsByCategory(moduleType);
+  // Sıra numarasına göre gösterge bul - code'un sonundaki sayıyı kontrol et
+  const indicator = indicators.find(ind => {
+    const match = ind.code.match(/-(\d+)$/);
+    return match && parseInt(match[1]) === sira;
+  });
+
+  if (!indicator) return undefined;
+
+  return {
+    code: indicator.code,
+    name: indicator.name,
+    unit: indicator.unitLabel || indicator.unit,
+    source: indicator.source,
+    hbysCalculable: indicator.hbysCalculable,
+    maxPoints: indicator.maxPoints,
+    acceptedDate: '',
+    parameters: indicator.parameters.map(p => ({
+      key: p.key,
+      name: p.label,
+      description: p.description || '',
+      calculation: p.description || ''
+    })),
+    gdFormula: `GD = ${indicator.gdFormula}`,
+    scoringRules: indicator.gpRules.map(r => ({
+      condition: r.condition,
+      points: r.points
+    })),
+    notes: indicator.notes
+  };
+}
+
 export const GorenBHTable: React.FC<GorenBHTableProps> = ({
   data,
   totalGP,
-  isLoading = false
+  isLoading = false,
+  moduleType = 'BH'
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [activeAppendix, setActiveAppendix] = useState<AppendixData | null>(null);
+
+  // Modül tipine göre gösterge detaylarını hazırla
+  const getIndicatorDetail = useMemo(() => {
+    if (moduleType === 'BH') {
+      // BH için mevcut detaylı veriyi kullan
+      return (sira: number) => BH_INDICATOR_DETAILS[sira];
+    }
+    // Diğer modüller için registry'den oluştur
+    const cache: Record<number, IndicatorDetail | undefined> = {};
+    return (sira: number) => {
+      if (!(sira in cache)) {
+        cache[sira] = buildIndicatorDetailFromRegistry(sira, moduleType);
+      }
+      return cache[sira];
+    };
+  }, [moduleType]);
 
   // EK butonuna tıklama
   const handleAppendixClick = (appendixId: string, e: React.MouseEvent) => {
@@ -165,7 +221,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                 const puan = hasData ? (row.donemIciPuan as number) : null;
                 const maxPuan = row.maxPuan || 4;
                 const isExpanded = expandedRow === row.sira;
-                const indicatorDetail = BH_INDICATOR_DETAILS[row.sira];
+                const indicatorDetail = getIndicatorDetail(row.sira);
 
                 // Puan badge rengi
                 const getPuanBadge = () => {

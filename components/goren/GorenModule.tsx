@@ -25,7 +25,6 @@ import { useGorenCalculator } from '../../src/hooks/useGorenCalculator';
 import {
   uploadGorenDataFile,
   saveGorenCalculation,
-  loadGorenCalculation,
   downloadGorenTemplate,
   exportGorenResultsToExcel,
   parseGorenExcel,
@@ -172,86 +171,57 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       );
       setTrRolOrtalamasi(trRolValue);
 
-      // BH modülü için özel yükleme
-      if (moduleType === 'BH') {
-        const bhData = await loadGorenBHData(
-          filterState.institutionId,
-          filterState.year,
-          filterState.month
-        );
+      // Tüm modüller için veri yükleme (Excel'den birebir)
+      const bhData = await loadGorenBHData(
+        filterState.institutionId,
+        filterState.year,
+        filterState.month
+      );
 
-        if (bhData && bhData.bhTableRows && bhData.bhTableRows.length > 0) {
-          // BH verileri bulundu
-          setBhTableData(bhData.bhTableRows);
-          setTotalDirectGP(bhData.totalGP);
-          setMuafCount(bhData.muafCount);
+      if (bhData && bhData.bhTableRows && bhData.bhTableRows.length > 0) {
+        setBhTableData(bhData.bhTableRows);
+        setTotalDirectGP(bhData.totalGP);
+        setMuafCount(bhData.muafCount);
 
-          // Summary oluştur
-          const maxPossibleGP = definitions.reduce((sum, d) => sum + d.maxPoints, 0);
-          const completedCount = bhData.bhTableRows.filter(r => typeof r.donemIciPuan === 'number').length;
+        // Summary oluştur
+        const maxPossibleGP = definitions.reduce((sum, d) => sum + d.maxPoints, 0);
+        const completedCount = bhData.bhTableRows.filter(r => typeof r.donemIciPuan === 'number').length;
 
-          setSummary({
-            totalGP: bhData.totalGP,
-            maxPossibleGP,
-            achievementRate: maxPossibleGP > 0 ? (bhData.totalGP / maxPossibleGP) * 100 : 0,
-            completedIndicators: completedCount,
-            totalIndicators: definitions.length,
-            incompleteIndicators: definitions.length - completedCount,
-            topIndicators: [],
-            bottomIndicators: []
-          });
-
-          showNotification('success', `${MONTHS[filterState.month - 1]} ${filterState.year} verileri yüklendi. Toplam Puan: ${bhData.totalGP}`);
-        } else {
-          // BH verisi yok
-          setBhTableData([]);
-          setTotalDirectGP(null);
-          setMuafCount(0);
-          setSummary(null);
-          setResults([]);
-          showNotification('info', 'Bu dönem için kayıtlı veri bulunamadı. Excel dosyası yükleyebilirsiniz.');
-        }
-
-        // Geçmiş verileri yükle (grafik için) - arka planda
-        setIsLoadingHistory(true);
-        loadBHHistoryData(
-          filterState.institutionId,
-          filterState.year,
-          filterState.month,
-          12 // Son 12 ay
-        ).then(history => {
-          setHistoryData(history);
-          setIsLoadingHistory(false);
-        }).catch(err => {
-          console.error('[GÖREN Module] Geçmiş veri yükleme hatası:', err);
-          setIsLoadingHistory(false);
+        setSummary({
+          totalGP: bhData.totalGP,
+          maxPossibleGP,
+          achievementRate: maxPossibleGP > 0 ? (bhData.totalGP / maxPossibleGP) * 100 : 0,
+          completedIndicators: completedCount,
+          totalIndicators: definitions.length,
+          incompleteIndicators: definitions.length - completedCount,
+          topIndicators: [],
+          bottomIndicators: []
         });
+
+        showNotification('success', `${MONTHS[filterState.month - 1]} ${filterState.year} verileri yüklendi. Toplam Puan: ${bhData.totalGP}`);
       } else {
-        // Diğer modüller için mevcut mantık
-        const savedResult = await loadGorenCalculation(
-          filterState.institutionId,
-          filterState.year,
-          filterState.month
-        );
-
-        if (savedResult) {
-          setResults(savedResult.indicators);
-          setSummary(savedResult.summary);
-
-          const loadedParams: Record<string, ParameterValues> = {};
-          savedResult.indicators.forEach(ind => {
-            loadedParams[ind.code] = ind.parameterValues;
-          });
-          setParameterValues(loadedParams);
-
-          showNotification('success', `${MONTHS[filterState.month - 1]} ${filterState.year} verileri yüklendi`);
-        } else {
-          setResults([]);
-          setSummary(null);
-          setParameterValues({});
-          showNotification('info', 'Bu dönem için kayıtlı veri bulunamadı. Excel dosyası yükleyebilirsiniz.');
-        }
+        setBhTableData([]);
+        setTotalDirectGP(null);
+        setMuafCount(0);
+        setSummary(null);
+        setResults([]);
+        showNotification('info', 'Bu dönem için kayıtlı veri bulunamadı. Excel dosyası yükleyebilirsiniz.');
       }
+
+      // Geçmiş verileri yükle (grafik için) - arka planda
+      setIsLoadingHistory(true);
+      loadBHHistoryData(
+        filterState.institutionId,
+        filterState.year,
+        filterState.month,
+        12 // Son 12 ay
+      ).then(history => {
+        setHistoryData(history);
+        setIsLoadingHistory(false);
+      }).catch(err => {
+        console.error('[GÖREN Module] Geçmiş veri yükleme hatası:', err);
+        setIsLoadingHistory(false);
+      });
     } catch (error) {
       console.error('[GÖREN Module] Yükleme hatası:', error);
       showNotification('error', 'Veriler yüklenirken hata oluştu');
@@ -331,8 +301,8 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       if (result.success && result.data) {
         setParameterValues(result.data);
 
-        // BH için doğrudan GP değerlerini kaydet
-        if (moduleType === 'BH' && result.directGP) {
+        // Tüm modüller için doğrudan GP değerlerini kaydet
+        if (result.directGP) {
           setDirectGPValues(result.directGP);
           setTotalDirectGP(result.totalGP || 0);
           if (result.indicatorNames) {
@@ -344,12 +314,19 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
             setBhTableData(result.bhTableRows);
           }
 
-          // BH için özel sonuç oluştur - Excel'den okunan GP değerlerini kullan
+          // Tüm modüller için özel sonuç oluştur - Excel'den okunan GP değerlerini kullan
           // bhTableRows'dan donemIciPuan değerini kontrol et
+          const codePrefix: Record<InstitutionType, string> = {
+            'BH': 'SYPG-BH',
+            'ILSM': 'SYPG-İLSM',
+            'ILCESM': 'SYPG-İLÇESM',
+            'ADSH': 'SYPG-ADSH',
+            'ASH': 'SYPG-ASH'
+          };
           const bhTableRowsMap = new Map<string, BHTableRow>();
           if (result.bhTableRows) {
             for (const row of result.bhTableRows) {
-              const code = `SYPG-BH-${row.sira}`;
+              const code = `${codePrefix[moduleType]}-${row.sira}`;
               bhTableRowsMap.set(code, row);
             }
           }
@@ -667,11 +644,11 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         isLoading={isLoading}
         canUpload={canUpload}
         hasData={results.length > 0 && summary !== null}
-        showInstitutionTypeFilter={moduleType !== 'BH'}
+        showInstitutionTypeFilter={false}
       />
 
       {/* BH için Toplam Puan Büyük Kart */}
-      {moduleType === 'BH' && totalDirectGP !== null && (
+      {totalDirectGP !== null && (
         <div className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-indigo-600/20 backdrop-blur-xl rounded-3xl border border-indigo-500/30 p-8 mb-6">
           <div className="flex items-center justify-between">
             <div>
@@ -711,8 +688,8 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
       {/* İçerik */}
       {filterState.institutionId ? (
-        moduleType === 'BH' && bhTableData.length > 0 ? (
-          // BH için özel tablo - Excel'den birebir yansıtma
+        bhTableData.length > 0 ? (
+          // Tüm modüller için Excel'den birebir yansıtma tablosu
           <>
             {/* BH için Performans Trendi Grafiği - Tablonun üzerinde */}
             <div className="mb-6">
@@ -723,22 +700,25 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
               />
             </div>
 
-            {/* BH için Radar (Örümcek Ağı) Grafiği */}
-            <div className="mb-6">
-              <GorenRadarChart
-                data={bhTableData}
-                isLoading={isLoading}
-                currentInstitutionId={filterState.institutionId}
-                currentInstitutionName={filterState.institutionName}
-                year={filterState.year}
-                month={filterState.month}
-              />
-            </div>
+            {/* Radar (Örümcek Ağı) Grafiği - ILSM ve ASH hariç */}
+            {moduleType !== 'ILSM' && moduleType !== 'ASH' && (
+              <div className="mb-6">
+                <GorenRadarChart
+                  data={bhTableData}
+                  isLoading={isLoading}
+                  currentInstitutionId={filterState.institutionId}
+                  currentInstitutionName={filterState.institutionName}
+                  year={filterState.year}
+                  month={filterState.month}
+                />
+              </div>
+            )}
 
             <GorenBHTable
               data={bhTableData}
               totalGP={totalDirectGP || 0}
               isLoading={isLoading}
+              moduleType={moduleType}
             />
           </>
         ) : (

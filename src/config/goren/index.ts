@@ -7,21 +7,19 @@
 import { IndicatorDefinition, InstitutionType } from '../../../components/goren/types/goren.types';
 import { ILSM_INDICATORS, ILSM_INDICATOR_COUNT, ILSM_MAX_TOTAL_POINTS } from './ilsm.registry';
 import { BH_INDICATORS, BH_INDICATOR_COUNT, BH_MAX_TOTAL_POINTS } from './bh.registry';
-
-// TODO: Diğer registryleri ekle
-// import { ILCESM_INDICATORS } from './ilcesm.registry';
-// import { ADSH_INDICATORS } from './adsh.registry';
-// import { ASH_INDICATORS } from './ash.registry';
+import { ILCESM_INDICATORS, ILCESM_INDICATOR_COUNT, ILCESM_MAX_TOTAL_POINTS } from './ilcesm.registry';
+import { ADSH_INDICATORS, ADSH_INDICATOR_COUNT, ADSH_MAX_TOTAL_POINTS } from './adsh.registry';
+import { ASH_INDICATORS, ASH_INDICATOR_COUNT, ASH_MAX_TOTAL_POINTS } from './ash.registry';
 
 /**
  * Tüm göstergelerin registry'si
  */
 export const GOREN_INDICATOR_REGISTRY: Record<InstitutionType, IndicatorDefinition[]> = {
   ILSM: ILSM_INDICATORS,
-  ILCESM: [], // TODO: ilcesm.registry.ts
+  ILCESM: ILCESM_INDICATORS,
   BH: BH_INDICATORS,
-  ADSH: [],   // TODO: adsh.registry.ts
-  ASH: [],    // TODO: ash.registry.ts
+  ADSH: ADSH_INDICATORS,
+  ASH: ASH_INDICATORS,
 };
 
 /**
@@ -29,10 +27,10 @@ export const GOREN_INDICATOR_REGISTRY: Record<InstitutionType, IndicatorDefiniti
  */
 export const INDICATOR_COUNTS: Record<InstitutionType, number> = {
   ILSM: ILSM_INDICATOR_COUNT,
-  ILCESM: 17, // Placeholder
+  ILCESM: ILCESM_INDICATOR_COUNT,
   BH: BH_INDICATOR_COUNT,
-  ADSH: 14,   // Placeholder
-  ASH: 5,     // Placeholder
+  ADSH: ADSH_INDICATOR_COUNT,
+  ASH: ASH_INDICATOR_COUNT,
 };
 
 /**
@@ -40,10 +38,10 @@ export const INDICATOR_COUNTS: Record<InstitutionType, number> = {
  */
 export const MAX_POINTS: Record<InstitutionType, number> = {
   ILSM: ILSM_MAX_TOTAL_POINTS,
-  ILCESM: 100, // Placeholder - hesaplanacak
+  ILCESM: ILCESM_MAX_TOTAL_POINTS,
   BH: BH_MAX_TOTAL_POINTS,
-  ADSH: 100,   // Placeholder - hesaplanacak
-  ASH: 100,    // Placeholder - hesaplanacak
+  ADSH: ADSH_MAX_TOTAL_POINTS,
+  ASH: ASH_MAX_TOTAL_POINTS,
 };
 
 /**
@@ -106,4 +104,7 @@ export const INSTITUTION_TYPE_SHORT_LABELS: Record<InstitutionType, string> = {
 
 // Re-export individual registries
 export { ILSM_INDICATORS, ILSM_INDICATOR_COUNT, ILSM_MAX_TOTAL_POINTS };
+export { ILCESM_INDICATORS, ILCESM_INDICATOR_COUNT, ILCESM_MAX_TOTAL_POINTS };
 export { BH_INDICATORS, BH_INDICATOR_COUNT, BH_MAX_TOTAL_POINTS };
+export { ADSH_INDICATORS, ADSH_INDICATOR_COUNT, ADSH_MAX_TOTAL_POINTS };
+export { ASH_INDICATORS, ASH_INDICATOR_COUNT, ASH_MAX_TOTAL_POINTS };

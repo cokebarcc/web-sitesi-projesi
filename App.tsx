@@ -47,6 +47,7 @@ import ActiveDemand from './components/ActiveDemand';
 import AICetvelPlanlama from './components/AICetvelPlanlama';
 import GorenModule from './components/goren/GorenModule';
 import GorenManuelHesaplama from './components/goren/GorenManuelHesaplama';
+import PdfViewer from './components/PdfViewer';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -1009,6 +1010,12 @@ const App: React.FC = () => {
                   userEmail={user?.email || ''}
                   canUpload={true}
                   isAdmin={isAdmin}
+                />
+              );
+            case 'pdf-viewer':
+              return (
+                <PdfViewer
+                  onBack={() => setView('welcome')}
                 />
               );
             default: return null;

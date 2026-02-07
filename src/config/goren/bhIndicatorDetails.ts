@@ -491,9 +491,661 @@ export const BH_INDICATOR_DETAILS: Record<number, IndicatorDetail> = {
       { condition: 'GD > GO', points: 0 }
     ],
     notes: 'Kaynak Paket: 101 Hasta Kayıt, 106 Çıkış Bilgisi Kayıt, 102 Hizmet / İlaç / Malzeme Bilgisi Kayıt.'
+  },
+  16: {
+    code: 'SYPG-BH-16',
+    name: 'Servis Yatak Devir Hızı',
+    unit: 'Hasta',
+    source: 'e-Nabız, ASOS',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Serviste Yatan Hasta Sayısı',
+        description: 'Serviste yatan hasta sayısı',
+        calculation: 'Yatış kabul zamanı dolu ve çıkış zamanı dolu olan kişiler üzerinden yatan hasta sayısı hesaplanmıştır. Günübirlik yatışlar ve Yoğun bakım klinikleri üzerinden yapılan yatışlar hariç tutulmuştur. (EK-4.1)'
+      },
+      {
+        key: 'B',
+        name: 'Servis Yatak Sayısı',
+        description: 'Servis yatak sayısı',
+        calculation: 'İlgili aylık dönemde yer alan ilk ayda bulunan yatak sayıları ASOS\'tan elde edilmiştir.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 2 },
+      { condition: 'GD < GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 101 Hasta Kayıt, 106 Çıkış Bilgisi Kayıt, 102 Hizmet/İlaç/Malzeme Bilgisi Kayıt.'
+  },
+  17: {
+    code: 'SYPG-BH-17',
+    name: 'Yoğun Bakım Yatak Devir Hızı',
+    unit: 'Hasta',
+    source: 'e-Nabız, ASOS',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Yoğun Bakımda Yatan Hastaların Yatış Sayısı',
+        description: 'Yoğun bakımda yatan hastaların yatış sayısı',
+        calculation: 'Aşağıda yer alan yoğun bakım SUT kodları üzerinden çalışma yapılmıştır. Bu çalışmada her bir SUT kodu 1 gün olarak değerlendirilmiş olup peş peşe gönderilen SUT kodları toplam kalınan gün sayısını ifade etmektedir. Bir gün için iki farklı SUT kodu gönderilmiş ise yalnızca bir gün sayılmıştır. Günübirlik yatışlar hariç tutulmuştur.\n\nYoğun Bakım SUT Kodları: 510090, 510122, 552001, 552002, 552003, 552004, 552005, 552006, 552007, 552008, 552009, 552010, P552001, P552002, P552003, P552006, P552007, P552008\n\nKişilerin her bir yatışı ayrı ayrı sayılmıştır. Tekilleştirme yapılmamıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Yoğun Bakım Yatak Sayısı',
+        description: 'Yoğun bakım yatak sayısı',
+        calculation: 'İlgili aylık dönemde yer alan ilk ayda bulunan yatak sayıları ASOS\'tan elde edilmiştir.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 2 },
+      { condition: 'GD < GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 101 Hasta Kayıt, 106 Çıkış Bilgisi Kayıt, 102 Hizmet/İlaç/Malzeme Bilgisi Kayıt.'
+  },
+  18: {
+    code: 'SYPG-BH-18',
+    name: 'Cerrahi Klinisyen Hekim Başına Düşen Ameliyat (A, B, C) Sayısı',
+    unit: 'Sayı',
+    source: 'e-Nabız, EKOBS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Toplam Ameliyat Sayısı',
+        description: 'A1, A2, A3, B, C ameliyat grubunda yer alan ameliyat sayısı',
+        calculation: 'A1, A2, A3, B, C ameliyat grubunda yer alan ameliyat sayısı işlem referans numarası ve işlem kodu birleştirilerek hesaplanmıştır. İlgili ameliyat gruplarındaki SUT kodları üzerinden çalışma sağlanmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Cerrahi Klinisyen Hekim Sayısı',
+        description: 'Cerrahi klinisyen hekim sayısı (adam-gün)',
+        calculation: '5352, 5351, 1200, 802, 900, 5101, 5141, 5400, 5210, 800, 1000, 1800, 1602, 1600, 1100, 1700, 1400, 1301, 1900 branş kodları ve 6325, 10503, 1555, 1556, 1567, 1568, 5986, 5987, 1570, 1550, 1551, 6175, 8100, 8122, 8105, 10504 ünvan kodları ile toplam cerrahi klinisyen hekim kimlik numaraları kullanılarak aktif çalışma gün katsayısı (adam gün) olarak hekim sayısı hesaplanmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 2 },
+      { condition: 'GD < GO', points: 0 }
+    ]
+  },
+  19: {
+    code: 'SYPG-BH-19',
+    name: 'Cerrahi Klinisyen Hekim Başına Düşen Ameliyat (A,B,C) Grup Katsayısı',
+    unit: 'Puan',
+    source: 'e-Nabız, EKOBS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Ameliyat Grup Katsayılı Puanı',
+        description: 'A*5 + B*2 + C*1 formülü ile hesaplanan ameliyat puanı',
+        calculation: 'A1, A2, A3, B, C ameliyat grubunda yer alan SUT kodları üzerinden 102 İşlem paketine gönderilen işlem kodu ve işlem referans numarası birleştirilerek ve sonrasında tekilleştirilerek saydırılmıştır.\n\nNOT: A grubu ameliyat sayısı × 5 + B grubu ameliyat sayısı × 2 + C grubu ameliyat sayısı × 1'
+      },
+      {
+        key: 'B',
+        name: 'Cerrahi Klinisyen Hekim Sayısı',
+        description: 'Cerrahi klinisyen hekim sayısı (adam-gün)',
+        calculation: '5352, 5351, 1200, 802, 900, 5101, 5141, 5400, 5210, 800, 1000, 1800, 1602, 1600, 1100, 1700, 1400, 1301, 1900 branş kodları ve 6325, 10503, 1555, 1556, 1567, 1568, 5986, 5987, 1570, 1550, 1551, 6175, 8100, 8122, 8105, 10504 ünvan kodları ile toplam cerrahi klinisyen hekim kimlik numaraları kullanılarak aktif çalışma gün katsayısı (adam gün) olarak hekim sayısı hesaplanmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 2 },
+      { condition: 'GD < GO', points: 0 }
+    ]
+  },
+  20: {
+    code: 'SYPG-BH-20',
+    name: 'Ameliyat Masası Başına Düşen Ameliyat (A,B,C) Puanı',
+    unit: 'Puan',
+    source: 'e-Nabız, TSİM',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'A, B ve C Grubu Ameliyatların Toplam Katsayıları Puanı',
+        description: 'Ameliyat grup katsayılı toplam puan',
+        calculation: 'A1, A2, A3, B, C ameliyat grubunda yer alan ameliyat SUT kodları ile 102 hizmet malzeme ilaç paketinde gönderilen işlem referans numarası ve işlem kodu birleştirilerek elde edilen ameliyat sayısı ile 268 hekim puan veri setinde bulunan puan bilgisi üzerinden toplam puan hesaplanmıştır. 268 Hekim Puan Bilgisi paketine veri gönderimi gerçekleşmemiş ise ameliyat puanı hesaplanmamaktadır.'
+      },
+      {
+        key: 'B',
+        name: 'Aktif Kullanılan Ameliyat Masası Sayısı',
+        description: 'Aktif kullanılan ameliyat masası sayısı',
+        calculation: 'TSİM\'den aktif ameliyat masa sayısı alınmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 2 },
+      { condition: 'GD < GO', points: 0 }
+    ]
+  },
+  21: {
+    code: 'SYPG-BH-21',
+    name: '10 Günü Geçen Patoloji Sonuçlanma Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '24.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Patoloji Sonuç Verme Gün Süresi 10 Günden Fazla Olan Hasta Sayısı',
+        description: '10 günden fazla süren patoloji sonuçlarının hasta sayısı',
+        calculation: 'Ek göstergede yer alan SUT kodları ile veri gönderiminde işlem zamanı ile işlem gerçekleşme zamanı arasındaki farkın 10 gün üzerinde olan hasta sayısı hesaplanmıştır. (EK-4)'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Patoloji Sonucu Verilen Hasta Sayısı',
+        description: 'Toplam patoloji sonucu verilen hasta sayısı',
+        calculation: '201 Patoloji paketi ile aşağıda yer alan patoloji SUT kodları üzerinden yapılan incelemede patoloji sonucu bulunan hasta sayısı hesaplanmıştır. (EK-4.2)'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    appendix: ['EK-4', 'EK-4.2']
+  },
+  22: {
+    code: 'SYPG-BH-22',
+    name: 'Aktif Cihaz Başına Düşen İş Yükü',
+    unit: 'Sayı',
+    source: 'e-Nabız, MKYS',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Yapılan Çekim Sayısı',
+        description: 'Yapılan çekim sayısı',
+        calculation: 'e-Nabız sisteminde aşağıda yer alan SUT kodları üzerinden sys takip numarası ve işlem referans numarası birleştirilerek çekim sayısı hesaplanmıştır. (EK-5)'
+      },
+      {
+        key: 'B',
+        name: 'Aktif Cihaz Sayısı',
+        description: 'Aktif cihaz sayısı',
+        calculation: 'MKYS\'den aşağıda yer alan tur ve tanımlamalara göre aylık dönemlerdeki son aylarda kayıtlı olan aktif cihaz sayısı hesaplanmıştır. tur_id in (288, 134, 207, 216) and tanim_adi (EK-6)'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 2 },
+      { condition: 'GD < GO', points: 0 }
+    ],
+    appendix: ['EK-5', 'EK-6']
+  },
+  23: {
+    code: 'SYPG-BH-23',
+    name: 'Aktif Cihaz Oranı',
+    unit: '%',
+    source: 'MKYS',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Aktif Cihaz Sayısı',
+        description: 'Aktif cihaz sayısı',
+        calculation: 'MKYS\'den aşağıda yer alan tur ve tanımlamalara göre aylık dönemlerdeki son aylarda kayıtlı olan toplam aktif cihaz sayısı hesaplanmıştır. tur_id in (288, 134, 207, 216) and tanim_adi (EK-6)'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Cihaz Sayısı',
+        description: 'Toplam cihaz sayısı',
+        calculation: 'MKYS\'den aşağıda yer alan tur ve tanımlamalara göre aylık dönemlerdeki son aylarda kayıtlı olan toplam cihaz sayısı hesaplanmıştır. tur_id in (288, 134, 207, 216) and tanim_adi (EK-6)'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 2 },
+      { condition: 'GD < GO', points: 0 }
+    ],
+    appendix: ['EK-6']
+  },
+  24: {
+    code: 'SYPG-BH-24',
+    name: '3 Günü Geçen BT Randevu Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 3,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'BT Randevu Verme Süresi 3 Günün Üzerinde Olan Hasta Sayısı',
+        description: '3 günü geçen BT randevulu hasta sayısı',
+        calculation: 'Ek göstergede yer alan SUT kodları ile veri gönderiminde işlem zamanı ile işlem gerçekleşme zamanı arasındaki farkın 3 gün üzerinde olan başvuran hasta sayısı hesaplanmıştır. (tekilleştirilmemiştir.) (EK-7)'
+      },
+      {
+        key: 'B',
+        name: 'Toplam BT Randevulu Hasta Sayısı',
+        description: 'Toplam BT randevulu hasta sayısı',
+        calculation: 'Ek göstergede yer alan SUT kodları üzerinden e-Nabız\'a veri gönderimi gerçekleşen hasta sayısı hesaplanmıştır. (tekilleştirilmemiştir.) (EK-7)'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 3 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    appendix: ['EK-7']
+  },
+  25: {
+    code: 'SYPG-BH-25',
+    name: 'Ortalama BT Raporlama Süresi',
+    unit: 'Gün',
+    source: 'Teleradyoloji',
+    hbysCalculable: false,
+    maxPoints: 3,
+    acceptedDate: '22.12.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'BT Çekimlerinin Raporlama Sürelerinin Toplamı (Gün)',
+        description: 'BT çekimlerinin raporlama süreleri toplamı',
+        calculation: 'Teleradyoloji sisteminde BT çekimlerinin çekim tarihi ile raporlama tarihleri arasındaki günler toplanarak hesaplanmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam BT Çekim Sayısı',
+        description: 'Toplam BT çekim sayısı',
+        calculation: 'Teleradyoloji sisteminde BT istem sayısı 0\'dan farklı olan tüm istem sayılarının toplamı olarak hesaplanmıştır. NOT: Raporlanmış tüm istemler dahil edilmiştir.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 3 },
+      { condition: 'GD > GO', points: 0 }
+    ]
+  },
+  26: {
+    code: 'SYPG-BH-26',
+    name: '7 Günü Geçen MR Randevu Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 3,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'MR Randevu Verme Süresi 7 Günün Üzerinde Olan Hasta Sayısı',
+        description: '7 günü geçen MR randevulu hasta sayısı',
+        calculation: 'Ek göstergede yer alan SUT kodları ile veri gönderiminde işlem zamanı ile işlem zamanı arasındaki farkın 7 gün üzerinde olan başvuran hasta sayısı hesaplanmıştır. (tekilleştirilmemiştir.) (EK-8)'
+      },
+      {
+        key: 'B',
+        name: 'Toplam MR Randevulu Hasta Sayısı',
+        description: 'Toplam MR randevulu hasta sayısı',
+        calculation: 'Ek göstergede yer alan SUT kodları ile veri gönderiminde gerçekleşen hasta sayısı hesaplanmıştır. (tekilleştirilmemiştir.) (EK-8)'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 3 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    appendix: ['EK-8']
+  },
+  27: {
+    code: 'SYPG-BH-27',
+    name: 'Ortalama MR Raporlama Süresi',
+    unit: 'Gün',
+    source: 'Teleradyoloji',
+    hbysCalculable: false,
+    maxPoints: 3,
+    acceptedDate: '22.12.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'MR Çekimlerinin Raporlama Sürelerinin Toplamı (Gün)',
+        description: 'MR çekimlerinin raporlama süreleri toplamı',
+        calculation: 'Teleradyoloji sisteminde MR çekimlerinin çekim tarihi ile raporlama tarihleri arasındaki günler toplanarak hesaplanmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam MR Çekim Sayısı',
+        description: 'Toplam MR çekim sayısı',
+        calculation: 'Teleradyoloji sisteminde MR istem sayısı 0\'dan farklı olan tüm istem sayılarının toplamı olarak hesaplanmıştır. NOT: Raporlanmış tüm istemler dahil edilmiştir.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 3 },
+      { condition: 'GD > GO', points: 0 }
+    ]
+  },
+  28: {
+    code: 'SYPG-BH-28',
+    name: '10 Günü Geçen USG Randevu Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 3,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'USG Randevu Verme Süresi 10 Günün Üzerinde Olan Hasta Sayısı',
+        description: '10 günü geçen USG randevulu hasta sayısı',
+        calculation: 'Ek göstergede yer alan SUT kodları ile veri gönderiminde işlem zamanı ile işlem gerçekleşme zamanı arasındaki farkın 10 gün üzerinde olan başvuran hasta sayısı hesaplanmıştır. (tekilleştirilmemiştir.) (EK-9)'
+      },
+      {
+        key: 'B',
+        name: 'Toplam USG Çekimi Yapılan Toplam Hasta Sayısı',
+        description: 'Toplam USG çekimi yapılan hasta sayısı',
+        calculation: 'Ek göstergede yer alan SUT kodları ile veri gönderimi gerçekleşen hasta sayısı hesaplanmıştır. (tekilleştirilmemiştir.) (EK-9)'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 3 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    appendix: ['EK-9']
+  },
+  29: {
+    code: 'SYPG-BH-29',
+    name: 'Aile Hekimliği Asistanı Başına Düşen EAHB Sayısı',
+    unit: '100 Kişide',
+    source: 'EKOBS, EKİP/ÇKYS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Eğitim AHB Sayısı',
+        description: 'Eğitim Aile Hekimliği Birimi sayısı',
+        calculation: 'ÇKYS/EKİP\'ten Eğitim AHB sayısı alınmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Aile Hekimi Asistan Hekim Sayısı',
+        description: 'Aile hekimi asistan hekim sayısı',
+        calculation: 'ÇKYS/EKİP\'te Kadro branş kodu 4200 ve kadro ünvan kodu 6330, 10505 olan tekil Hekim Kimlik Numarası saydırılmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ 1/2', points: 2 },
+      { condition: '1/4 ≤ GD < 1/2', points: 1 },
+      { condition: 'GD < 1/4', points: 0 }
+    ]
+  },
+  30: {
+    code: 'SYPG-BH-30',
+    name: 'Metrekare Başına Düşen Tüketim Miktarı',
+    unit: 'TL/m²',
+    source: 'TDMS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '23.05.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Elektrik, Su ve Yakacak Giderleri Toplamı',
+        description: 'Elektrik, su ve yakacak giderleri toplamı',
+        calculation: 'TDMS\'den alınmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Kurum Kullanım Alanı (m²)',
+        description: 'Kurum kullanım alanı metrekare cinsinden',
+        calculation: 'TDMS\'den alınmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ]
+  },
+  31: {
+    code: 'SYPG-BH-31',
+    name: 'Çalışma Cetvellerini Zamanında Girme Oranı',
+    unit: '%',
+    source: 'MHRS',
+    hbysCalculable: false,
+    maxPoints: 4,
+    acceptedDate: '19.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Zamanında Girilen MHRS Cetvel Sayısı',
+        description: 'Zamanında girilen MHRS cetvel sayısı',
+        calculation: 'cetvel_baslama_saati ile slot_kayit_zamani (yoksa cetvel_son_islem_zamani) arasındaki gün farkı 15 günden büyük olan toplam tekil cetvel ID sayısını ifade etmektedir.'
+      },
+      {
+        key: 'B',
+        name: 'İlgili Ay Açılan MHRS Cetveli',
+        description: 'İlgili ayda açılan toplam MHRS cetveli sayısı',
+        calculation: 'Toplam tekil cetvel ID sayısını ifade etmektedir.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 4 },
+      { condition: 'GD < GO', points: 0 }
+    ]
+  },
+  32: {
+    code: 'SYPG-BH-32',
+    name: '60 Günü Geçen Stok Tutarının Toplam Tahakkuka Oranı',
+    unit: '%',
+    source: 'MKYS, TDMS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '23.05.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: '60 Günü Geçen Stoğun Parasal Değeri',
+        description: '60 günü geçen stok tutarı',
+        calculation: 'MKYS\'den alınmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Tahakkuk',
+        description: 'Toplam tahakkuk tutarı',
+        calculation: 'TDMS\'den alınmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ]
+  },
+  33: {
+    code: 'SYPG-BH-33',
+    name: 'Muhasebeleştirme Süresi',
+    unit: 'Gün',
+    source: 'TDMS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '23.05.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Toplam Muhasebeleştirme Gün Süresi',
+        description: 'Toplam muhasebeleştirme gün süresi',
+        calculation: 'TDMS\'den alınmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Muhasebeleştirilen İşlem Sayısı',
+        description: 'Muhasebeleştirilen işlem sayısı',
+        calculation: 'TDMS\'den alınmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ]
+  },
+  34: {
+    code: 'SYPG-BH-34',
+    name: 'Nöbet+İcap Ücretinin Taban Ücrete Oranı',
+    unit: '%',
+    source: 'TDMS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '23.05.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Nöbet+İcap Ücreti Toplamı',
+        description: 'Nöbet ve icap ücreti toplamı',
+        calculation: 'TDMS\'den alınmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Personel Taban Ücreti Toplamı',
+        description: 'Personel taban ücreti toplamı',
+        calculation: 'TDMS\'den alınmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ]
+  },
+  35: {
+    code: 'SYPG-BH-35',
+    name: 'Tahakkukun İlaç ve Tıbbi Malzeme Giderini Karşılama Oranı',
+    unit: '%',
+    source: 'TDMS',
+    hbysCalculable: false,
+    maxPoints: 2,
+    acceptedDate: '23.05.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'İlaç ve Tıbbi Malzeme Gideri',
+        description: 'İlaç ve tıbbi malzeme gideri',
+        calculation: 'TDMS\'den alınmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam Tahakkuk',
+        description: 'Toplam tahakkuk tutarı',
+        calculation: 'TDMS\'den alınmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ]
+  },
+  36: {
+    code: 'SYPG-BH-36',
+    name: 'Ameliyat Masası Başına Düşen Ameliyat (A,B,C) Sayısı',
+    unit: 'Sayı',
+    source: 'e-Nabız, TSİM',
+    hbysCalculable: false,
+    maxPoints: 4,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Yapılan A, B, C Ameliyat Sayısı',
+        description: 'A, B, C grubu ameliyat sayısı',
+        calculation: 'A1, A2, A3, B, C ameliyat grubunda yer alan ameliyat sayısı işlem referans numarası ve işlem kodu birleştirilerek hesaplanmıştır. İlgili ameliyat gruplarındaki SUT kodları üzerinden çalışma sağlanmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Aktif Kullanılan Ameliyat Masası Sayısı',
+        description: 'Aktif kullanılan ameliyat masası sayısı',
+        calculation: 'TSİM\'den aktif ameliyat masa sayısı alınmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≥ GO', points: 4 },
+      { condition: 'GD < GO', points: 0 }
+    ]
+  },
+  37: {
+    code: 'SYPG-BH-37',
+    name: 'Acil Servis Ortalama Bekleme Süresi',
+    unit: 'Dakika',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '02.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Acil Kliniklerinde Triajı Kırmızı veya Sarı Olan Kişilerin Kabul Zamanı ile İlk İşlem Zamanı Arasında Geçen Toplam Süre (dakika)',
+        description: 'Acil serviste kırmızı/sarı triajlı hastaların bekleme süresi toplamı',
+        calculation: 'Yalnızca ayaktan hastaların (yatış kabul zamanı boş veya günübirlik yatışı olmayan) acil kliniklerine (115, 101, 1) başvurularında triajı kırmızı veya sarı olan kişilerin başvuru zamanı ile ilk işlem zamanı arasındaki toplam geçen süre (dakika) hesaplanmıştır. 101 Hasta Kayıt Paketinde triaj bilgisi iletilmemiş ise sarı ve kırmızı haricinde bir veri ise çalışmaya dahil edilmemiştir.'
+      },
+      {
+        key: 'B',
+        name: 'Acil Kliniklerinde Triajı Kırmızı veya Sarı Olan Başvuru Sayısı',
+        description: 'Acil serviste kırmızı/sarı triajlı başvuru sayısı',
+        calculation: 'Yalnızca ayaktan hastaların (yatış kabul zamanı boş veya günübirlik yatışı olmayan) acil kliniklerine (115, 101, 1) başvurularında triajı kırmızı veya sarı olan başvuru sayıları hesaplanmıştır.'
+      }
+    ],
+    gdFormula: 'GD = A / B',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ],
+    notes: 'Kaynak Paket: 101 Hasta Kayıt. Triaj bilgisi: kırmızı veya sarı.'
+  },
+  38: {
+    code: 'SYPG-BH-38',
+    name: 'Toplam İlaç İçindeki Antibiyotik Oranı',
+    unit: '%',
+    source: 'e-Nabız',
+    hbysCalculable: true,
+    maxPoints: 2,
+    acceptedDate: '22.06.2025',
+    parameters: [
+      {
+        key: 'A',
+        name: 'Antibiyotik İçeren İlaç Sayısı',
+        description: 'Antibiyotik içeren ilaç sayısı',
+        calculation: 'Ayaktan hastaların (yatış kabul zamanı boş veya günübirlik yatışı olmayan) antibiyotik (J01) içeren ilaç barkodu saydırılmıştır.'
+      },
+      {
+        key: 'B',
+        name: 'Toplam İlaç Sayısı',
+        description: 'Toplam ilaç sayısı',
+        calculation: 'Ayaktan hastaların (yatış kabul zamanı boş veya günübirlik yatışı olmayan) ilaç barkodu saydırılmıştır.'
+      }
+    ],
+    gdFormula: 'GD = (A / B) × 100',
+    scoringRules: [
+      { condition: 'GD ≤ GO', points: 2 },
+      { condition: 'GD > GO', points: 0 }
+    ]
   }
-  // Gösterge 16-38 için henüz hesaplama mantığı girilmedi.
-  // Gerçek veriler sağlandığında eklenecek.
 };
 
 export default BH_INDICATOR_DETAILS;

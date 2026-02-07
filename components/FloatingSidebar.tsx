@@ -101,10 +101,10 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       items: [
         { id: 'goren-manuel', label: 'Manuel Hesaplama', view: 'goren-manuel', hasAccess: true },
         { id: 'goren-ilsm', label: 'İl Sağlık Müdürlüğü', view: 'goren-ilsm', hasAccess: true },
-        { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: true, disabled: true },
+        { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: true },
         { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: true },
-        { id: 'goren-adsh', label: 'ADSH', view: 'goren-adsh', hasAccess: true, disabled: true },
-        { id: 'goren-ash', label: 'Acil Sağlık', view: 'goren-ash', hasAccess: true, disabled: true }
+        { id: 'goren-adsh', label: 'ADSH', view: 'goren-adsh', hasAccess: true },
+        { id: 'goren-ash', label: 'Acil Sağlık', view: 'goren-ash', hasAccess: true }
       ]
     },
     {
@@ -163,6 +163,17 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       ),
       view: 'goren',
       hasAccess: hasModuleAccess('gorenBashekimlik')
+    },
+    {
+      id: 'pdf-viewer',
+      label: 'PDF Yükle',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      view: 'pdf-viewer',
+      hasAccess: true
     }
   ];
 
