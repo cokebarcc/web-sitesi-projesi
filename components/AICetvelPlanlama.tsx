@@ -654,7 +654,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           sN.addText(`Sayfa ${page + 1}/${pageCount}`, { x: 10, y: 0.2, w: 2.8, h: 0.45, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
         }
 
-        const hOpts = (align: 'left' | 'center' = 'center') => ({ bold: true as const, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align, fontFace: 'Arial' });
+        const hOpts = (align: 'left' | 'center' = 'center') => ({ bold: true as const, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align, fontFace: 'Calibri' });
         const effHeader: pptxgen.TableRow = [
           { text: 'HEKİM', options: hOpts('left') },
           { text: 'BRANŞ', options: hOpts('left') },
@@ -674,22 +674,22 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           const statusText = doc.status === 'low' ? 'DÜŞÜK' : doc.status === 'high' ? 'YÜKSEK' : doc.status === 'no-plan' ? 'PLANSIZ' : 'NORMAL';
           const statusColor = doc.status === 'low' ? c.danger : doc.status === 'high' ? c.success : doc.status === 'no-plan' ? 'b45309' : c.textMuted;
           return [
-            { text: doc.doctorName, options: { fontSize: 9, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-            { text: doc.branchName, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-            { text: String(doc.plannedDays), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-            { text: String(doc.hedefPlannedDays), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.amber } },
-            { text: String(doc.performedABC), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-            { text: formatNum(doc.efficiency), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: effColor } },
-            { text: formatNum(doc.branchAvg), options: { fontSize: 9, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-            { text: doc.roleGroupBranchAvg !== null ? formatNum(doc.roleGroupBranchAvg) : '-', options: { fontSize: 9, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: '6366f1' } },
-            { text: statusText, options: { fontSize: 8, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: statusColor } },
+            { text: doc.doctorName, options: { fontSize: 12, bold: true, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: doc.branchName, options: { fontSize: 12, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: String(doc.plannedDays), options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: String(doc.hedefPlannedDays), options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: String(doc.performedABC), options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: formatNum(doc.efficiency), options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: effColor } },
+            { text: formatNum(doc.branchAvg), options: { fontSize: 12, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: doc.roleGroupBranchAvg !== null ? formatNum(doc.roleGroupBranchAvg) : '-', options: { fontSize: 12, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: statusText, options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: statusColor } },
           ];
         });
 
         sN.addTable([effHeader, ...effRows], {
           x: 0.3, y: 0.9, w: 12.73,
           colW: [2.2, 1.8, 1.1, 1.1, 0.9, 1.2, 1.3, 1.3, 1.33],
-          border: { type: 'solid', pt: 0.5, color: c.border },
+          border: { type: 'solid', pt: 0.5, color: '000000' },
           rowH: 0.4,
         });
       }
@@ -710,7 +710,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
             x: 0.5, y: 0.7, w: 8, h: 0.25, fontSize: 9, fontFace: 'Arial', bold: true, color: c.amber, align: 'left',
           });
 
-          const pHdr = (t: string, a: 'left' | 'center' = 'center') => ({ text: t, options: { bold: true as const, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: a, fontFace: 'Arial' } });
+          const pHdr = (t: string, a: 'left' | 'center' = 'center') => ({ text: t, options: { bold: true as const, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: a, fontFace: 'Calibri' } });
           const propHeader: pptxgen.TableRow = [
             pHdr('HEKİM', 'left'), pHdr('BRANŞ', 'left'), pHdr(`MEVCUT GÜN ${hedefMonth.toLocaleUpperCase('tr-TR')}`),
             pHdr('ÖNERİLEN GÜN'), pHdr('AZALTIM'), pHdr('VERİMLİLİK'),
@@ -721,21 +721,21 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           const propRows: pptxgen.TableRow[] = propSlice.map((p, idx) => {
             const rowBg = idx % 2 === 0 ? 'fde8d8' : 'fef2f2';
             return [
-              { text: p.doctorName, options: { fontSize: 9, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-              { text: p.branchName, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-              { text: String(p.currentDays), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-              { text: String(p.proposedDays), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.success } },
-              { text: `-${p.reduction}`, options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.danger } },
-              { text: formatNum(p.efficiency), options: { fontSize: 9, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.danger } },
-              { text: formatNum(p.targetEfficiency), options: { fontSize: 9, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: '6366f1' } },
-              { text: `+${p.estimatedCapacityGain}`, options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.amber } },
+              { text: p.doctorName, options: { fontSize: 12, bold: true, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+              { text: p.branchName, options: { fontSize: 12, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+              { text: String(p.currentDays), options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+              { text: String(p.proposedDays), options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.success } },
+              { text: `-${p.reduction}`, options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.danger } },
+              { text: formatNum(p.efficiency), options: { fontSize: 12, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.danger } },
+              { text: formatNum(p.targetEfficiency), options: { fontSize: 12, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+              { text: `+${p.estimatedCapacityGain}`, options: { fontSize: 12, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
             ];
           });
 
           sP.addTable([propHeader, ...propRows], {
             x: 0.3, y: 0.9, w: 12.73,
             colW: [2.5, 2.0, 1.2, 1.3, 1.1, 1.3, 1.3, 2.03],
-            border: { type: 'solid', pt: 0.5, color: c.border },
+            border: { type: 'solid', pt: 0.5, color: '000000' },
             rowH: 0.4,
           });
         }

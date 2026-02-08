@@ -842,6 +842,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
         x: 1.0, y: 1.1, w: 11.33,
         colW: [0.8, 6, 2.5, 2],
         fontSize: 12,
+        fontFace: 'Calibri',
         border: { type: 'solid', pt: 1, color: '000000' },
         fill: { color: 'ffffff' }
       });
@@ -894,6 +895,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
         x: 1.0, y: 1.1, w: 11.33,
         colW: [0.8, 6.5, 2.5, 2],
         fontSize: 12,
+        fontFace: 'Calibri',
         border: { type: 'solid', pt: 1, color: '000000' },
         fill: { color: 'ffffff' }
       });
@@ -968,6 +970,8 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           detailSlide.addTable(branchRows, {
             x: xPos, y: 1.7, w: cardWidth,
             colW: [3, 1],
+            fontSize: 12,
+            fontFace: 'Calibri',
             border: { type: 'solid', pt: 1, color: '000000' },
             fill: { color: 'ffffff' }
           });

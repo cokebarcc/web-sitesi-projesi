@@ -480,22 +480,22 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       s3.addText('TOP 5', { x: 10.5, y: 0.3, w: 2.5, h: 0.5, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
 
       const branchHeader: pptxgen.TableRow = [
-        { text: '#', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
-        { text: 'BRANŞ', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
-        { text: 'FARK', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
-        { text: 'YÜZDE', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+        { text: '#', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
+        { text: 'BRANŞ', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, fontFace: 'Calibri' } },
+        { text: 'FARK', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
+        { text: 'YÜZDE', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
       ];
       const branchRows: pptxgen.TableRow[] = comparison.topBranchChanges.map((br: any, idx: number) => {
         const rowBg = idx % 2 === 0 ? c.white : c.bg;
         const dColor = br.delta >= 0 ? c.success : c.danger;
         return [
-          { text: `${idx + 1}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-          { text: br.name, options: { fontSize: 11, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-          { text: `${br.delta > 0 ? '+' : ''}${br.delta.toLocaleString('tr-TR')}`, options: { fontSize: 11, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: dColor } },
-          { text: `%${br.pct.toFixed(1)}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: dColor } },
+          { text: `${idx + 1}`, options: { fontSize: 12, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+          { text: br.name, options: { fontSize: 12, bold: true, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+          { text: `${br.delta > 0 ? '+' : ''}${br.delta.toLocaleString('tr-TR')}`, options: { fontSize: 12, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: dColor } },
+          { text: `%${br.pct.toFixed(1)}`, options: { fontSize: 12, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: dColor } },
         ];
       });
-      s3.addTable([branchHeader, ...branchRows], { x: 0.5, y: 1.2, w: 12.33, colW: [0.6, 7.13, 2.3, 2.3], border: { type: 'solid', pt: 0.5, color: c.border }, rowH: 0.55 });
+      s3.addTable([branchHeader, ...branchRows], { x: 0.5, y: 1.2, w: 12.33, colW: [0.6, 7.13, 2.3, 2.3], border: { type: 'solid', pt: 0.5, color: '000000' }, rowH: 0.55 });
 
       // ===== SLAYT 4: HEKİM DRIVERLARI =====
       const s4 = pptx.addSlide();
@@ -505,23 +505,23 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       s4.addText('TOP 5', { x: 9, y: 0.3, w: 4, h: 0.5, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
 
       const driverHeader: pptxgen.TableRow = [
-        { text: '#', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
-        { text: 'HEKİM', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
-        { text: 'BRANŞ', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
-        { text: 'FARK', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
-        { text: 'YÜZDE', options: { bold: true, fontSize: 10, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
+        { text: '#', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
+        { text: 'HEKİM', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, fontFace: 'Calibri' } },
+        { text: 'BRANŞ', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, fontFace: 'Calibri' } },
+        { text: 'FARK', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
+        { text: 'YÜZDE', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
       ];
       const driverRows: pptxgen.TableRow[] = comparison.topDoctorDrivers.map((doc: any, idx: number) => {
         const rowBg = idx % 2 === 0 ? c.white : c.bg;
         return [
-          { text: `${idx + 1}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-          { text: doc.name, options: { fontSize: 11, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-          { text: doc.branch, options: { fontSize: 10, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-          { text: `${doc.delta.toLocaleString('tr-TR')}`, options: { fontSize: 11, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.danger } },
-          { text: `%${doc.pct.toFixed(1)}`, options: { fontSize: 11, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.danger } },
+          { text: `${idx + 1}`, options: { fontSize: 12, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+          { text: doc.name, options: { fontSize: 12, bold: true, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+          { text: doc.branch, options: { fontSize: 12, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+          { text: `${doc.delta.toLocaleString('tr-TR')}`, options: { fontSize: 12, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: c.danger } },
+          { text: `%${doc.pct.toFixed(1)}`, options: { fontSize: 12, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: c.danger } },
         ];
       });
-      s4.addTable([driverHeader, ...driverRows], { x: 0.5, y: 1.2, w: 12.33, colW: [0.6, 4, 3.73, 2, 2], border: { type: 'solid', pt: 0.5, color: c.border }, rowH: 0.55 });
+      s4.addTable([driverHeader, ...driverRows], { x: 0.5, y: 1.2, w: 12.33, colW: [0.6, 4, 3.73, 2, 2], border: { type: 'solid', pt: 0.5, color: '000000' }, rowH: 0.55 });
 
       // ===== SLAYT 5+: HEKİM BAZLI DEĞİŞİM DETAYLARI =====
       const physData = comparison.phys_compare as any[];
@@ -538,12 +538,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
         }
 
         const detailHeader: pptxgen.TableRow = [
-          { text: 'HEKİM', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
-          { text: 'BRANŞ', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
-          { text: 'ESKİ KAP', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
-          { text: 'YENİ KAP', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
-          { text: 'FARK', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Arial' } },
-          { text: 'AKSİYON DEĞİŞİMLERİ', options: { bold: true, fontSize: 9, color: c.white, fill: { color: c.headerBg }, fontFace: 'Arial' } },
+          { text: 'HEKİM', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, fontFace: 'Calibri' } },
+          { text: 'BRANŞ', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, fontFace: 'Calibri' } },
+          { text: 'ESKİ KAP', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
+          { text: 'YENİ KAP', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
+          { text: 'FARK', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, align: 'center', fontFace: 'Calibri' } },
+          { text: 'AKSİYON DEĞİŞİMLERİ', options: { bold: true, fontSize: 12, color: c.white, fill: { color: c.headerBg }, fontFace: 'Calibri' } },
         ];
 
         const slice = physData.slice(page * perPage, (page + 1) * perPage);
@@ -554,15 +554,15 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             ? Object.entries(p.action_deltas).map(([act, d]) => `${act} ${Number(d) > 0 ? '+' : ''}${String(d).replace('.', ',')}`).join(', ')
             : 'Değişmedi';
           return [
-            { text: p.name, options: { fontSize: 9, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-            { text: p.branch, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-            { text: p.baseline_capacity.toLocaleString('tr-TR'), options: { fontSize: 9, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
-            { text: p.updated_capacity.toLocaleString('tr-TR'), options: { fontSize: 9, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
-            { text: `${p.capacity_delta > 0 ? '+' : ''}${p.capacity_delta.toLocaleString('tr-TR')}`, options: { fontSize: 9, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Arial', color: dColor } },
-            { text: actionText, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: p.has_action_change ? c.text : c.textMuted } },
+            { text: p.name, options: { fontSize: 12, bold: true, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: p.branch, options: { fontSize: 12, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: p.baseline_capacity.toLocaleString('tr-TR'), options: { fontSize: 12, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: p.updated_capacity.toLocaleString('tr-TR'), options: { fontSize: 12, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
+            { text: `${p.capacity_delta > 0 ? '+' : ''}${p.capacity_delta.toLocaleString('tr-TR')}`, options: { fontSize: 12, bold: true, align: 'center', fill: { color: rowBg }, fontFace: 'Calibri', color: dColor } },
+            { text: actionText, options: { fontSize: 12, fill: { color: rowBg }, fontFace: 'Calibri', color: c.text } },
           ];
         });
-        sN.addTable([detailHeader, ...detailRows], { x: 0.3, y: 0.9, w: 12.73, colW: [2.5, 2.5, 1.2, 1.2, 1.2, 4.13], border: { type: 'solid', pt: 0.5, color: c.border }, rowH: 0.4 });
+        sN.addTable([detailHeader, ...detailRows], { x: 0.3, y: 0.9, w: 12.73, colW: [2.5, 2.5, 1.2, 1.2, 1.2, 4.13], border: { type: 'solid', pt: 0.5, color: '000000' }, rowH: 0.4 });
       }
 
       const safeHospital = selectedHospital.replace(/[^a-zA-Z0-9]/g, '_');
