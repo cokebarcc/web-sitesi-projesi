@@ -8,7 +8,7 @@
 import React, { useState, useMemo } from 'react';
 import { BH_INDICATOR_DETAILS, IndicatorDetail } from '../../../src/config/goren/bhIndicatorDetails';
 import { getAppendixData, AppendixData } from '../../../src/config/goren/bhAppendixData';
-import { InstitutionType } from '../types/goren.types';
+import { InstitutionType, ScoreRecommendation } from '../types/goren.types';
 import { getIndicatorsByCategory } from '../../../src/config/goren';
 
 interface BHTableRow {
@@ -29,6 +29,7 @@ interface GorenBHTableProps {
   totalGP: number;
   isLoading?: boolean;
   moduleType?: InstitutionType;
+  recommendations?: ScoreRecommendation[];
 }
 
 // EK Modal Bileşeni
@@ -111,7 +112,8 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
   data,
   totalGP,
   isLoading = false,
-  moduleType = 'BH'
+  moduleType = 'BH',
+  recommendations = []
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [activeAppendix, setActiveAppendix] = useState<AppendixData | null>(null);
@@ -217,35 +219,39 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
               </tr>
             ) : (
               data.map((row, idx) => {
+                const isMuaf = row.muaf === 1;
                 const hasData = typeof row.donemIciPuan === 'number';
-                const puan = hasData ? (row.donemIciPuan as number) : null;
+                // Muaf değilse ve puanı yoksa 0 göster, muafsa boş kalsın
+                const puan = hasData ? (row.donemIciPuan as number) : (isMuaf ? null : 0);
                 const maxPuan = row.maxPuan || 4;
                 const isExpanded = expandedRow === row.sira;
                 const indicatorDetail = getIndicatorDetail(row.sira);
 
                 // Puan badge rengi
                 const getPuanBadge = () => {
-                  if (!hasData) return null;
+                  // Muaf ve veri yoksa boş bırak
+                  if (isMuaf && !hasData) return null;
 
-                  const isFullScore = puan === maxPuan;
-                  const isZero = puan === 0;
+                  const displayPuan = puan ?? 0;
+                  const isFullScore = displayPuan === maxPuan;
+                  const isZero = displayPuan === 0;
 
                   if (isFullScore) {
                     return (
                       <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded bg-emerald-500 text-white text-sm font-medium">
-                        {puan}
+                        {displayPuan}
                       </span>
                     );
                   } else if (isZero) {
                     return (
                       <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded bg-red-500 text-white text-sm font-medium">
-                        {puan}
+                        {displayPuan}
                       </span>
                     );
                   } else {
                     return (
                       <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded bg-orange-400 text-white text-sm font-medium">
-                        {puan}
+                        {displayPuan}
                       </span>
                     );
                   }
@@ -487,6 +493,86 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                                 )}
                               </div>
                             </div>
+
+                            {/* Puan İyileştirme Önerisi */}
+                            {(() => {
+                              const rec = recommendations.find(r => r.sira === row.sira);
+                              if (!rec || rec.pointsGainable <= 0) return null;
+
+                              const priorityColors: Record<string, { bg: string; border: string; text: string; label: string }> = {
+                                critical: { bg: 'bg-rose-500/10', border: 'border-rose-500/30', text: 'text-rose-400', label: 'Kritik' },
+                                high: { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-400', label: 'Yüksek' },
+                                medium: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', label: 'Orta' },
+                                low: { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', label: 'Düşük' }
+                              };
+                              const pStyle = priorityColors[rec.priority] || priorityColors.medium;
+
+                              return (
+                                <div className={`mt-6 ${pStyle.bg} rounded-xl p-4 border ${pStyle.border}`}>
+                                  <h5 className={`${pStyle.text} font-semibold mb-3 flex items-center gap-2`}>
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                    Puan İyileştirme Önerisi
+                                    <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${pStyle.bg} ${pStyle.text} border ${pStyle.border}`}>
+                                      {pStyle.label} Öncelik
+                                    </span>
+                                  </h5>
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                                    {/* Mevcut Durum */}
+                                    <div className="bg-slate-900/50 rounded-lg p-3">
+                                      <span className="text-xs text-slate-500 block mb-1">Mevcut Puan</span>
+                                      <span className="text-lg font-bold text-white">{rec.currentGP} <span className="text-sm text-slate-400">/ {rec.maxPoints}</span></span>
+                                    </div>
+                                    {/* Kazanılacak Puan */}
+                                    <div className="bg-slate-900/50 rounded-lg p-3">
+                                      <span className="text-xs text-slate-500 block mb-1">Kazanılacak Puan</span>
+                                      <span className={`text-lg font-bold ${pStyle.text}`}>+{rec.pointsGainable}</span>
+                                    </div>
+                                    {/* Hedef Puan */}
+                                    <div className="bg-slate-900/50 rounded-lg p-3">
+                                      <span className="text-xs text-slate-500 block mb-1">Hedef Puan</span>
+                                      <span className="text-lg font-bold text-emerald-400">{rec.targetGP} <span className="text-sm text-slate-400">/ {rec.maxPoints}</span></span>
+                                    </div>
+                                  </div>
+
+                                  {/* GD Bilgileri */}
+                                  {rec.currentGD !== null && rec.targetGD !== null && (
+                                    <div className="bg-slate-900/50 rounded-lg p-3 mb-3 flex items-center gap-3">
+                                      <span className="text-sm text-slate-400">GD:</span>
+                                      <span className="text-sm font-mono text-white">{rec.currentGD.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</span>
+                                      <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                      </svg>
+                                      <span className={`text-sm font-mono font-bold ${pStyle.text}`}>{rec.targetGD.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</span>
+                                      <span className="text-xs text-slate-500 ml-1">(fark: {Math.abs(rec.gdGap!).toLocaleString('tr-TR', { maximumFractionDigits: 2 })})</span>
+                                    </div>
+                                  )}
+
+                                  {/* Koşul */}
+                                  <div className="bg-slate-900/50 rounded-lg p-3 mb-3">
+                                    <span className="text-xs text-slate-500 block mb-1">Bir Sonraki Kademe</span>
+                                    <span className="text-sm font-medium text-white">{rec.nextTierCondition}</span>
+                                  </div>
+
+                                  {/* Aksiyon Önerisi */}
+                                  {rec.actionHint && (
+                                    <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3">
+                                      <div className="flex items-start gap-2">
+                                        <svg className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                        <div>
+                                          <span className="text-xs text-cyan-500 block mb-0.5">Ne Yapılmalı?</span>
+                                          <span className="text-sm font-medium text-cyan-300">{rec.actionHint}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </td>
                       </tr>

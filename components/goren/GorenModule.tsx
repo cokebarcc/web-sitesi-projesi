@@ -46,6 +46,9 @@ import GorenDetailPanel from './common/GorenDetailPanel';
 import GorenBHTable from './common/GorenBHTable';
 import GorenHistoryChart from './common/GorenHistoryChart';
 import GorenRadarChart from './common/GorenRadarChart';
+import GorenRecommendations from './common/GorenRecommendations';
+import GorenHospitalRanking from './common/GorenHospitalRanking';
+import { generateRecommendations } from '../../utils/gorenRecommendations';
 
 // BHTableRow artık gorenStorage'dan import ediliyor
 
@@ -67,6 +70,25 @@ const MONTHS = [
   'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
   'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
 ];
+
+/**
+ * Eşit ağırlıklı başarı oranı hesapla.
+ * Her gösterge eşit değerlendirilir: gösterge başarı yüzdesi (GP/maxPoints*100) ortalaması.
+ * Muaf göstergeler hesaptan hariç tutulur.
+ */
+function calculateEqualWeightAchievementRate(rows: BHTableRow[]): number {
+  // Muaf olmayan tüm göstergeler dahil (puanı boş olanlar 0 olarak sayılır)
+  const eligibleRows = rows.filter(r => r.muaf !== 1);
+  if (eligibleRows.length === 0) return 0;
+
+  const totalPercent = eligibleRows.reduce((sum, r) => {
+    const maxP = r.maxPuan || 4;
+    const gp = typeof r.donemIciPuan === 'number' ? r.donemIciPuan : 0;
+    return sum + (maxP > 0 ? (gp / maxP) * 100 : 0);
+  }, 0);
+
+  return totalPercent / eligibleRows.length;
+}
 
 export const GorenModule: React.FC<GorenModuleProps> = ({
   moduleType,
@@ -126,6 +148,9 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   const [historyData, setHistoryData] = useState<BHHistoryData[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
+  // Uygula butonuna basıldı mı? (Sıralama vb. bileşenler buna bağlı)
+  const [isApplied, setIsApplied] = useState(false);
+
   // moduleType değiştiğinde filtre state'ini güncelle
   useEffect(() => {
     setFilterState(prev => ({
@@ -141,6 +166,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     setIndicatorNamesFromExcel({});
     setBhTableData([]);
     setMuafCount(0);
+    setIsApplied(false);
   }, [moduleType]);
 
   // Bildirim göster
@@ -162,6 +188,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     }
 
     setIsLoading(true);
+    setIsApplied(true);
     try {
       // TR Rol Ortalaması'nı yükle
       const trRolValue = await loadTrRolOrtalamasi(
@@ -190,7 +217,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         setSummary({
           totalGP: bhData.totalGP,
           maxPossibleGP,
-          achievementRate: maxPossibleGP > 0 ? (bhData.totalGP / maxPossibleGP) * 100 : 0,
+          achievementRate: calculateEqualWeightAchievementRate(bhData.bhTableRows),
           completedIndicators: completedCount,
           totalIndicators: definitions.length,
           incompleteIndicators: definitions.length - completedCount,
@@ -430,7 +457,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
           setSummary({
             totalGP: roundedWeightedTotalGP,
             maxPossibleGP,
-            achievementRate: maxPossibleGP > 0 ? (roundedWeightedTotalGP / maxPossibleGP) * 100 : 0,
+            achievementRate: calculateEqualWeightAchievementRate(result.bhTableRows || []),
             completedIndicators: completedResults.length,
             totalIndicators: definitions.length,
             incompleteIndicators: definitions.length - completedResults.length,
@@ -581,6 +608,19 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     return options.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
   }, [availableInstitutions]);
 
+  // Ranking için hastane listesi (modül türüne uygun olanlar)
+  const rankingHospitals = useMemo(() => {
+    return institutionOptions
+      .filter(o => o.type === moduleType)
+      .map(o => ({ id: o.id, name: o.name }));
+  }, [institutionOptions, moduleType]);
+
+  // Puan iyileştirme önerilerini hesapla
+  const recommendationsSummary = useMemo(() => {
+    if (bhTableData.length === 0 || !totalDirectGP) return null;
+    return generateRecommendations(bhTableData, definitions, totalDirectGP);
+  }, [bhTableData, definitions, totalDirectGP]);
+
   // Gösterge yoksa uyarı göster
   if (definitions.length === 0) {
     return (
@@ -647,6 +687,18 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         showInstitutionTypeFilter={false}
       />
 
+      {/* Hastane Başarı Sıralaması - Uygula butonuna basıldıktan sonra göster */}
+      {isApplied && rankingHospitals.length > 1 && (
+        <GorenHospitalRanking
+          hospitals={rankingHospitals}
+          year={filterState.year}
+          month={filterState.month}
+          maxGP={definitions.reduce((sum, d) => sum + d.maxPoints, 0)}
+          currentInstitutionId={filterState.institutionId}
+          moduleLabel={INSTITUTION_TYPE_LABELS[moduleType]}
+        />
+      )}
+
       {/* BH için Toplam Puan Büyük Kart */}
       {totalDirectGP !== null && (
         <div className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-indigo-600/20 backdrop-blur-xl rounded-3xl border border-indigo-500/30 p-8 mb-6">
@@ -686,6 +738,16 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         onTrRolOrtalamasiChange={handleTrRolOrtalamasiChange}
       />
 
+      {/* Puan İyileştirme Önerileri - Sadece BH modülünde ve veri varken */}
+      {moduleType === 'BH' && bhTableData.length > 0 && summary && (
+        <GorenRecommendations
+          bhTableData={bhTableData}
+          definitions={definitions}
+          summary={summary}
+          totalGP={totalDirectGP || 0}
+        />
+      )}
+
       {/* İçerik */}
       {filterState.institutionId ? (
         bhTableData.length > 0 ? (
@@ -719,6 +781,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
               totalGP={totalDirectGP || 0}
               isLoading={isLoading}
               moduleType={moduleType}
+              recommendations={recommendationsSummary?.recommendations}
             />
           </>
         ) : (

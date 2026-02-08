@@ -384,3 +384,47 @@ export interface IndicatorTrend {
     gp: number;
   }>;
 }
+
+// ========== PUAN İYİLEŞTİRME ÖNERİLERİ ==========
+
+/**
+ * Tek bir gösterge için puan iyileştirme önerisi
+ */
+export interface ScoreRecommendation {
+  indicatorCode: string;
+  sira: number;
+  indicatorName: string;
+  categoryName: string;
+  currentGD: number | null;
+  currentGO: number | null;
+  currentGP: number;
+  maxPoints: number;
+  targetGD: number | null;
+  targetGP: number;
+  pointsGainable: number;
+  gdGap: number | null;
+  direction: 'increase' | 'decrease';
+  ruleType: 'go_threshold' | 'go_tiered' | 'fixed_threshold' | 'detail_rules';
+  ruleDescription: string;
+  nextTierCondition: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  isExempt: boolean;
+  hasData: boolean;
+  /** Somut aksiyon önerisi: "180 adet daha çekim yapılmalı" gibi */
+  actionHint: string | null;
+}
+
+/**
+ * Tüm önerilerin özeti
+ */
+export interface RecommendationsSummary {
+  recommendations: ScoreRecommendation[];
+  totalPotentialGain: number;
+  currentTotalGP: number;
+  estimatedTotalGP: number;
+  estimatedAchievementRate: number;
+  quickWins: ScoreRecommendation[];
+  zeroPointIndicators: number;
+  partialPointIndicators: number;
+  fullPointIndicators: number;
+}

@@ -1079,3 +1079,92 @@ export const loadBHHistoryData = async (
 
   return results;
 };
+
+// ========== TÜM HASTANELER BH VERİLERİ ==========
+
+/**
+ * Bir hastane başarı sıralaması kaydı
+ */
+export interface HospitalRankingEntry {
+  institutionId: string;
+  institutionName: string;
+  totalGP: number;
+  maxGP: number;
+  achievementRate: number; // Eşit ağırlıklı başarı oranı (%)
+  dataExists: boolean;
+}
+
+/**
+ * Belirli bir ay/yıl için tüm hastanelerin BH verilerini yükle
+ * Başarı sıralaması için kullanılır - hastane yetkisi gözetmeksizin
+ */
+export const loadAllHospitalsBHRanking = async (
+  hospitalIds: { id: string; name: string }[],
+  year: number,
+  month: number,
+  maxGP: number
+): Promise<HospitalRankingEntry[]> => {
+  // Tüm hastaneleri paralel olarak yükle (performans için)
+  const promises = hospitalIds.map(async (hospital) => {
+    try {
+      const bhData = await loadGorenBHData(hospital.id, year, month);
+
+      if (bhData && bhData.bhTableRows && bhData.bhTableRows.length > 0) {
+        // Eşit ağırlıklı başarı oranı hesapla
+        // Muaf olmayan tüm göstergeler dahil (puanı boş olanlar 0 olarak sayılır)
+        const eligibleRows = bhData.bhTableRows.filter(
+          (r: BHTableRow) => r.muaf !== 1
+        );
+        let achievementRate = 0;
+        if (eligibleRows.length > 0) {
+          const totalPercent = eligibleRows.reduce((sum: number, r: BHTableRow) => {
+            const maxP = r.maxPuan || 4;
+            const gp = typeof r.donemIciPuan === 'number' ? r.donemIciPuan : 0;
+            return sum + (maxP > 0 ? (gp / maxP) * 100 : 0);
+          }, 0);
+          achievementRate = totalPercent / eligibleRows.length;
+        }
+
+        return {
+          institutionId: hospital.id,
+          institutionName: hospital.name,
+          totalGP: bhData.totalGP,
+          maxGP,
+          achievementRate,
+          dataExists: true
+        } as HospitalRankingEntry;
+      } else {
+        return {
+          institutionId: hospital.id,
+          institutionName: hospital.name,
+          totalGP: 0,
+          maxGP,
+          achievementRate: 0,
+          dataExists: false
+        } as HospitalRankingEntry;
+      }
+    } catch (error) {
+      console.error(`[GÖREN Storage] Hastane verisi yükleme hatası (${hospital.name}):`, error);
+      return {
+        institutionId: hospital.id,
+        institutionName: hospital.name,
+        totalGP: 0,
+        maxGP,
+        achievementRate: 0,
+        dataExists: false
+      } as HospitalRankingEntry;
+    }
+  });
+
+  const results = await Promise.all(promises);
+
+  // Başarı oranına göre sırala (yüksekten düşüğe)
+  results.sort((a, b) => {
+    // Verisi olmayanlar en sona
+    if (a.dataExists && !b.dataExists) return -1;
+    if (!a.dataExists && b.dataExists) return 1;
+    return b.achievementRate - a.achievementRate;
+  });
+
+  return results;
+};
