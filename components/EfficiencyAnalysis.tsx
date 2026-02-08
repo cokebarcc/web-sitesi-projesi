@@ -4,6 +4,7 @@ import { DetailedScheduleData, MuayeneMetrics, ScheduleVersion, ProcessedPhysici
 import { MONTHS, YEARS } from '../constants';
 import { getPeriodKey, normalizeDoctorName } from '../utils/formatters';
 import DataFilterPanel from './common/DataFilterPanel';
+import pptxgen from 'pptxgenjs';
 
 interface EfficiencyAnalysisProps {
   detailedScheduleData: DetailedScheduleData[];
@@ -89,12 +90,15 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
 
   const [distBranchFilter, setDistBranchFilter] = useState<string>(overrideBranch || 'ALL');
 
+  const [actionDaysBranchFilter, setActionDaysBranchFilter] = useState<string>(overrideBranch || 'ALL');
+
   const [hoursBranchFilter, setHoursBranchFilter] = useState<string>(overrideBranch || 'ALL');
   const [hoursViewLimit, setHoursViewLimit] = useState<number | 'ALL'>(12);
   const [hoursCurrentPage, setHoursCurrentPage] = useState(1);
 
   const [selectedDoctorForDetail, setSelectedDoctorForDetail] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isExportingPptx, setIsExportingPptx] = useState(false);
 
   // Filtre değişimlerinde sayfalamayı sıfırla
   useEffect(() => {
@@ -105,6 +109,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
       setChartBranchFilter(selectedBranch);
       setSurgBranchFilter(selectedBranch);
       setDistBranchFilter(selectedBranch);
+      setActionDaysBranchFilter(selectedBranch);
       setHoursBranchFilter(selectedBranch);
     }
   }, [selectedMonth, selectedYear, selectedBranch]);
@@ -122,8 +127,8 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
 
   const isPeriodSelected = !!(selectedMonth && selectedYear);
 
-  const { stats, fullChartData, fullSurgeryChartData, fullSurgHoursChartData, eligibleSurgicalBranches, distributionChartData } = useMemo(() => {
-    if (!isPeriodSelected) return { stats: { totalCapacityCount: 0, totalExamsCount: 0, totalMhrsExamsCount: 0, totalSurgeryDays: 0, totalAbcSurgeriesCount: 0, totalScheduledSurgeryHours: 0, hasSchedule: false, hasMuayene: false, hasAmeliyat: false, rowCount: 0 }, fullChartData: [], fullSurgeryChartData: [], fullSurgHoursChartData: [], eligibleSurgicalBranches: [], distributionChartData: [] };
+  const { stats, fullChartData, fullSurgeryChartData, fullSurgHoursChartData, eligibleSurgicalBranches, distributionChartData, actionDaysChartData, branchActionChangeData, doctorActionChangeData } = useMemo(() => {
+    if (!isPeriodSelected) return { stats: { totalCapacityCount: 0, totalExamsCount: 0, totalMhrsExamsCount: 0, totalSurgeryDays: 0, totalAbcSurgeriesCount: 0, totalScheduledSurgeryHours: 0, hasSchedule: false, hasMuayene: false, hasAmeliyat: false, rowCount: 0 }, fullChartData: [], fullSurgeryChartData: [], fullSurgHoursChartData: [], eligibleSurgicalBranches: [], distributionChartData: [], actionDaysChartData: [], branchActionChangeData: [] as any[], doctorActionChangeData: [] as any[] };
     const periodSchedules = detailedScheduleData.filter(d => d.month === selectedMonth && d.year === Number(selectedYear));
     const rawMuayeneData = muayeneByPeriod[periodKey] || {};
     const rawAmeliyatData = ameliyatByPeriod[periodKey] || {};
@@ -149,8 +154,147 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
     const distributionChartData = Array.from(actionMap.values()).map(item => ({ ...item, color: getActionColor(item.label) })).sort((a, b) => b.totalHours - a.totalHours);
     const surgicalBranchesSet = new Set<string>(); surgeryList.forEach(item => { if (item.plannedDays > 0 || item.performedABC > 0) surgicalBranchesSet.add(item.branchName); });
     const eligibleSurgicalBranches = Array.from(surgicalBranchesSet).sort((a, b) => a.localeCompare(b, 'tr-TR'));
-    return { stats: { totalCapacityCount, totalExamsCount, totalMhrsExamsCount, totalSurgeryDays, totalAbcSurgeriesCount, totalScheduledSurgeryHours, hasSchedule: periodSchedules.length > 0, hasMuayene: !!muayeneMetaByPeriod[periodKey], hasAmeliyat: !!ameliyatMetaByPeriod[periodKey], rowCount: kpiSchedules.length }, fullChartData: [...underGroup, ...noCapGroup, ...overGroup], fullSurgeryChartData: surgeryList.filter(item => surgBranchFilter === 'ALL' || item.branchName === surgBranchFilter).sort((a, b) => b.efficiencyVal - a.efficiencyVal), fullSurgHoursChartData: surgHoursList.filter(item => hoursBranchFilter === 'ALL' || item.branchName === hoursBranchFilter).sort((a, b) => b.avgHoursPerCase - a.avgHoursPerCase), eligibleSurgicalBranches, distributionChartData };
-  }, [detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, selectedMonth, selectedYear, periodKey, isPeriodSelected, selectedBranch, chartBranchFilter, surgBranchFilter, hoursBranchFilter, distBranchFilter]);
+
+    // Hastane geneli aksiyon gün dağılımı (AM/PM yarım gün esaslı)
+    const getTimeMinsLocal = (t: string) => { const p = t.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); };
+    const getOverlapLocal = (s1: number, e1: number, s2: number, e2: number) => Math.max(0, Math.min(e1, e2) - Math.max(s1, s2));
+    const calcActionDayTotals = (schedules: DetailedScheduleData[]): Record<string, number> => {
+      const daily: Record<string, { AM: Record<string, { mins: number, firstStart: number }>, PM: Record<string, { mins: number, firstStart: number }> }> = {};
+      schedules.forEach(item => {
+        const act = item.action.trim().toLocaleUpperCase('tr-TR');
+        if (EXCLUDED_SCHEDULE_ACTION_LABELS.includes(act)) return;
+        if (EXCLUDED_DAY_COUNT_ACTIONS.some(ex => act.includes(ex))) return;
+        const key = `${item.doctorName}|${item.startDate}`;
+        const rowStart = getTimeMinsLocal(item.startTime);
+        const rowEnd = rowStart + (item.duration || 0);
+        if (!daily[key]) daily[key] = { AM: {}, PM: {} };
+        const amOv = getOverlapLocal(rowStart, rowEnd, 8 * 60, 12 * 60);
+        if (amOv > 0) {
+          if (!daily[key].AM[act]) daily[key].AM[act] = { mins: 0, firstStart: Infinity };
+          daily[key].AM[act].mins += amOv;
+          daily[key].AM[act].firstStart = Math.min(daily[key].AM[act].firstStart, rowStart);
+        }
+        const pmOv = getOverlapLocal(rowStart, rowEnd, 13 * 60, 17 * 60);
+        if (pmOv > 0) {
+          if (!daily[key].PM[act]) daily[key].PM[act] = { mins: 0, firstStart: Infinity };
+          daily[key].PM[act].mins += pmOv;
+          daily[key].PM[act].firstStart = Math.min(daily[key].PM[act].firstStart, rowStart);
+        }
+      });
+      const totals: Record<string, number> = {};
+      Object.values(daily).forEach(sessions => {
+        let amWinner = ""; let amMax = -1; let amEarliest = Infinity;
+        Object.entries(sessions.AM).forEach(([act, s]) => {
+          if (s.mins >= 30) {
+            if (s.mins > amMax) { amMax = s.mins; amWinner = act; amEarliest = s.firstStart; }
+            else if (s.mins === amMax && s.firstStart < amEarliest) { amWinner = act; amEarliest = s.firstStart; }
+          }
+        });
+        let pmWinner = ""; let pmMax = -1; let pmEarliest = Infinity;
+        Object.entries(sessions.PM).forEach(([act, s]) => {
+          if (s.mins >= 30) {
+            if (s.mins > pmMax) { pmMax = s.mins; pmWinner = act; pmEarliest = s.firstStart; }
+            else if (s.mins === pmMax && s.firstStart < pmEarliest) { pmWinner = act; pmEarliest = s.firstStart; }
+          }
+        });
+        if (amWinner) totals[amWinner] = (totals[amWinner] || 0) + 0.5;
+        if (pmWinner) totals[pmWinner] = (totals[pmWinner] || 0) + 0.5;
+      });
+      return totals;
+    };
+    const adFilteredSchedules = actionDaysBranchFilter === 'ALL' ? periodSchedules : periodSchedules.filter(s => s.specialty === actionDaysBranchFilter);
+    const actionDayTotals = calcActionDayTotals(adFilteredSchedules);
+
+    // Bir önceki ayın verilerini hesapla (karşılaştırma için)
+    const monthIdx = MONTHS.indexOf(selectedMonth);
+    const prevMonthName = monthIdx > 0 ? MONTHS[monthIdx - 1] : MONTHS[11];
+    const prevYear = monthIdx > 0 ? Number(selectedYear) : Number(selectedYear) - 1;
+    const prevPeriodSchedules = detailedScheduleData.filter(d => d.month === prevMonthName && d.year === prevYear);
+    const prevAdFiltered = actionDaysBranchFilter === 'ALL' ? prevPeriodSchedules : prevPeriodSchedules.filter(s => s.specialty === actionDaysBranchFilter);
+    const prevActionDayTotals = prevAdFiltered.length > 0 ? calcActionDayTotals(prevAdFiltered) : null;
+
+    const allActions = new Set([...Object.keys(actionDayTotals), ...(prevActionDayTotals ? Object.keys(prevActionDayTotals) : [])]);
+    const SIGNIFICANT_CHANGE_THRESHOLD = 0.25; // %25 değişim = önemli
+    const actionDaysChartData = Array.from(allActions)
+      .filter(action => actionDayTotals[action] > 0)
+      .map(action => {
+        const days = actionDayTotals[action] || 0;
+        const prevDays = prevActionDayTotals ? (prevActionDayTotals[action] || 0) : null;
+        const delta = prevDays !== null ? days - prevDays : null;
+        const deltaPct = prevDays !== null && prevDays > 0 ? (days - prevDays) / prevDays : (prevDays !== null && prevDays === 0 && days > 0 ? 1 : null);
+        const isSignificant = deltaPct !== null && Math.abs(deltaPct) >= SIGNIFICANT_CHANGE_THRESHOLD && Math.abs(delta!) >= 3;
+        return { action, days, prevDays, delta, deltaPct, isSignificant, color: getActionColor(action) };
+      })
+      .sort((a, b) => b.days - a.days);
+
+    // === BRANŞ BAZLI AKSİYON DEĞİŞİM TABLOSU ===
+    const branchGroupedCurrent: Record<string, DetailedScheduleData[]> = {};
+    const adSchedulesForBranch = actionDaysBranchFilter === 'ALL' ? periodSchedules : periodSchedules.filter(s => s.specialty === actionDaysBranchFilter);
+    adSchedulesForBranch.forEach(s => {
+      const br = s.specialty || 'Bilinmiyor';
+      if (!branchGroupedCurrent[br]) branchGroupedCurrent[br] = [];
+      branchGroupedCurrent[br].push(s);
+    });
+    const branchGroupedPrev: Record<string, DetailedScheduleData[]> = {};
+    const prevAdSchedulesForBranch = actionDaysBranchFilter === 'ALL' ? prevPeriodSchedules : prevPeriodSchedules.filter(s => s.specialty === actionDaysBranchFilter);
+    prevAdSchedulesForBranch.forEach(s => {
+      const br = s.specialty || 'Bilinmiyor';
+      if (!branchGroupedPrev[br]) branchGroupedPrev[br] = [];
+      branchGroupedPrev[br].push(s);
+    });
+    const allBranchNames = new Set([...Object.keys(branchGroupedCurrent), ...Object.keys(branchGroupedPrev)]);
+    const branchActionChangeData = Array.from(allBranchNames).sort((a, b) => a.localeCompare(b, 'tr-TR')).map(branch => {
+      const curTotals = branchGroupedCurrent[branch] ? calcActionDayTotals(branchGroupedCurrent[branch]) : {};
+      const prevTotals = branchGroupedPrev[branch] ? calcActionDayTotals(branchGroupedPrev[branch]) : {};
+      const allActs = new Set([...Object.keys(curTotals), ...Object.keys(prevTotals)]);
+      const actions: Record<string, { current: number; prev: number; delta: number }> = {};
+      let totalCurrent = 0, totalPrev = 0;
+      allActs.forEach(act => {
+        const cur = curTotals[act] || 0;
+        const prev = prevTotals[act] || 0;
+        actions[act] = { current: cur, prev: prev, delta: cur - prev };
+        totalCurrent += cur;
+        totalPrev += prev;
+      });
+      return { branch, actions, totalCurrent, totalPrev, totalDelta: totalCurrent - totalPrev };
+    }).filter(row => row.totalCurrent > 0 || row.totalPrev > 0);
+
+    // === HEKİM BAZLI AKSİYON DEĞİŞİM TABLOSU ===
+    const doctorGroupedCurrent: Record<string, { schedules: DetailedScheduleData[], branch: string }> = {};
+    adSchedulesForBranch.forEach(s => {
+      const normDoc = normalizeDoctorName(s.doctorName);
+      if (!doctorGroupedCurrent[normDoc]) doctorGroupedCurrent[normDoc] = { schedules: [], branch: s.specialty };
+      doctorGroupedCurrent[normDoc].schedules.push(s);
+    });
+    const doctorGroupedPrev: Record<string, { schedules: DetailedScheduleData[], branch: string }> = {};
+    prevAdSchedulesForBranch.forEach(s => {
+      const normDoc = normalizeDoctorName(s.doctorName);
+      if (!doctorGroupedPrev[normDoc]) doctorGroupedPrev[normDoc] = { schedules: [], branch: s.specialty };
+      doctorGroupedPrev[normDoc].schedules.push(s);
+    });
+    const allDoctorNorms = new Set([...Object.keys(doctorGroupedCurrent), ...Object.keys(doctorGroupedPrev)]);
+    const doctorActionChangeData = Array.from(allDoctorNorms).map(normDoc => {
+      const curData = doctorGroupedCurrent[normDoc];
+      const prevData = doctorGroupedPrev[normDoc];
+      const docName = curData?.schedules[0]?.doctorName || prevData?.schedules[0]?.doctorName || normDoc;
+      const branch = curData?.branch || prevData?.branch || 'Bilinmiyor';
+      const curTotals = curData ? calcActionDayTotals(curData.schedules) : {};
+      const prevTotals = prevData ? calcActionDayTotals(prevData.schedules) : {};
+      const allActs = new Set([...Object.keys(curTotals), ...Object.keys(prevTotals)]);
+      const actions: Record<string, { current: number; prev: number; delta: number }> = {};
+      let totalCurrent = 0, totalPrev = 0;
+      allActs.forEach(act => {
+        const cur = curTotals[act] || 0;
+        const prev = prevTotals[act] || 0;
+        actions[act] = { current: cur, prev: prev, delta: cur - prev };
+        totalCurrent += cur;
+        totalPrev += prev;
+      });
+      return { doctorName: docName, branch, actions, totalCurrent, totalPrev, totalDelta: totalCurrent - totalPrev };
+    }).filter(row => row.totalCurrent > 0 || row.totalPrev > 0).sort((a, b) => a.branch.localeCompare(b.branch, 'tr-TR') || a.doctorName.localeCompare(b.doctorName, 'tr-TR'));
+
+    return { stats: { totalCapacityCount, totalExamsCount, totalMhrsExamsCount, totalSurgeryDays, totalAbcSurgeriesCount, totalScheduledSurgeryHours, hasSchedule: periodSchedules.length > 0, hasMuayene: !!muayeneMetaByPeriod[periodKey], hasAmeliyat: !!ameliyatMetaByPeriod[periodKey], rowCount: kpiSchedules.length }, fullChartData: [...underGroup, ...noCapGroup, ...overGroup], fullSurgeryChartData: surgeryList.filter(item => surgBranchFilter === 'ALL' || item.branchName === surgBranchFilter).sort((a, b) => b.efficiencyVal - a.efficiencyVal), fullSurgHoursChartData: surgHoursList.filter(item => hoursBranchFilter === 'ALL' || item.branchName === hoursBranchFilter).sort((a, b) => b.avgHoursPerCase - a.avgHoursPerCase), eligibleSurgicalBranches, distributionChartData, actionDaysChartData, branchActionChangeData, doctorActionChangeData };
+  }, [detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, muayeneMetaByPeriod, ameliyatMetaByPeriod, selectedMonth, selectedYear, periodKey, isPeriodSelected, selectedBranch, chartBranchFilter, surgBranchFilter, hoursBranchFilter, distBranchFilter, actionDaysBranchFilter]);
 
   const paginatedChartData = useMemo(() => { if (viewLimit === 'ALL') return fullChartData; const startIndex = (currentPage - 1) * viewLimit; return fullChartData.slice(startIndex, startIndex + (viewLimit as number)); }, [fullChartData, viewLimit, currentPage]);
   const paginatedSurgData = useMemo(() => { if (surgViewLimit === 'ALL') return fullSurgeryChartData; const startIndex = (surgCurrentPage - 1) * surgViewLimit; return fullSurgeryChartData.slice(startIndex, startIndex + (surgViewLimit as number)); }, [fullSurgeryChartData, surgViewLimit, surgCurrentPage]);
@@ -169,6 +313,299 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
       setSelectedDoctorForDetail(enrichedDoctor || data); 
       setIsDetailModalOpen(true); 
     } 
+  };
+
+  // === AKSİYON GÜN DAĞILIMI PPTX EXPORT ===
+  const handleExportActionDaysPptx = async () => {
+    if (!isPeriodSelected || actionDaysChartData.length === 0) return;
+    setIsExportingPptx(true);
+    try {
+      const pptx = new pptxgen();
+      pptx.layout = 'LAYOUT_WIDE';
+      pptx.title = 'Aksiyon Gün Dağılımı Raporu';
+      pptx.author = 'MEDIS';
+      pptx.company = 'Şanlıurfa İl Sağlık Müdürlüğü';
+
+      const c = {
+        bg: 'f8fafc', primary: '4f46e5', primaryLight: 'eef2ff',
+        text: '1e293b', textMuted: '94a3b8', success: '10b981',
+        danger: 'ef4444', border: 'e2e8f0', white: 'ffffff',
+        dark: '0f172a', headerBg: '1e293b', amber: 'd97706',
+      };
+
+      const monthIdx = MONTHS.indexOf(selectedMonth);
+      const prevMonthName = monthIdx > 0 ? MONTHS[monthIdx - 1] : MONTHS[11];
+      const prevYear = monthIdx > 0 ? Number(selectedYear) : Number(selectedYear) - 1;
+      const hasPrevData = branchActionChangeData.some(r => r.totalPrev > 0);
+
+      const formatDay = (v: number): string => v === 0 ? '-' : (v % 1 === 0 ? String(v) : v.toFixed(1)).replace('.', ',');
+      const formatDelta = (v: number): string => v === 0 ? '' : `(${v > 0 ? '+' : ''}${formatDay(v)})`;
+
+      const hOpts = (align: 'left' | 'center' = 'center'): pptxgen.TextPropsOptions => ({
+        bold: true as const, fontSize: 11, color: c.white,
+        fill: { color: c.headerBg }, align, fontFace: 'Arial',
+      });
+
+      // Hücre içinde değer + delta'yı farklı renkte gösteren TextProps dizisi üret
+      const cellWithDelta = (cur: number, delta: number, rowBg: string, isBold = false): pptxgen.TableCell => {
+        if (cur === 0 && delta === 0) return { text: '-', options: { fontSize: 11, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } };
+        const deltaColor = delta > 0 ? c.success : delta < 0 ? c.danger : c.textMuted;
+        if (delta === 0) return { text: formatDay(cur), options: { fontSize: 11, bold: isBold, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: isBold ? c.primary : c.text } };
+        return {
+          text: [
+            { text: formatDay(cur), options: { fontSize: 11, bold: isBold, fontFace: 'Arial', color: isBold ? c.primary : c.text } },
+            { text: ` ${formatDelta(delta)}`, options: { fontSize: 11, bold: true, fontFace: 'Arial', color: deltaColor } },
+          ],
+          options: { align: 'center' as const, fill: { color: rowBg }, valign: 'middle' },
+        };
+      };
+
+      // ── SLAYT 1: KAPAK ──
+      const s1 = pptx.addSlide();
+      s1.background = { color: c.dark };
+      s1.addShape((pptx as any).shapes.RECTANGLE, { x: 8, y: 0, w: 5.33, h: 0.15, fill: { color: c.primary } });
+      s1.addShape((pptx as any).shapes.RECTANGLE, { x: 1, y: 3.6, w: 4, h: 0.06, fill: { color: c.primary } });
+      s1.addText('MHRS', { x: 1, y: 1.2, w: 11, h: 0.6, fontSize: 16, fontFace: 'Arial', bold: true, color: c.primary });
+      s1.addText('AKSİYON GÜN DAĞILIMI', { x: 1, y: 1.9, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
+      s1.addText('RAPORU', { x: 1, y: 2.7, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
+      s1.addText(selectedHospital, { x: 1, y: 3.9, w: 11, h: 0.5, fontSize: 18, fontFace: 'Arial', color: c.textMuted });
+      s1.addText(`${selectedMonth} ${selectedYear}`, { x: 1, y: 4.4, w: 11, h: 0.4, fontSize: 14, fontFace: 'Arial', color: '64748b' });
+      if (actionDaysBranchFilter !== 'ALL') {
+        s1.addText(`Branş: ${actionDaysBranchFilter}`, { x: 1, y: 4.9, w: 11, h: 0.4, fontSize: 12, fontFace: 'Arial', color: c.primary });
+      }
+
+      // ── SLAYT 2: AKSİYON GÜN DAĞILIMI ÖZET TABLOSU ──
+      if (actionDaysChartData.length > 0) {
+        const s2 = pptx.addSlide();
+        s2.background = { color: c.bg };
+        s2.addText('AKSİYON GÜN DAĞILIMI', { x: 0.5, y: 0.2, w: 9, h: 0.45, fontSize: 18, fontFace: 'Arial', bold: true, color: c.text });
+        s2.addShape((pptx as any).shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.primary } });
+        s2.addText(`${selectedHospital} • ${selectedMonth} ${selectedYear}${actionDaysBranchFilter !== 'ALL' ? ` • ${actionDaysBranchFilter}` : ''}`, { x: 4, y: 0.2, w: 8.8, h: 0.45, fontSize: 11, fontFace: 'Arial', color: c.textMuted, align: 'right' });
+        if (hasPrevData) s2.addText(`Karşılaştırma: ${prevMonthName} ${prevYear} → ${selectedMonth} ${selectedYear}`, { x: 0.5, y: 0.6, w: 8, h: 0.25, fontSize: 11, fontFace: 'Arial', color: c.amber });
+
+        const adHeader: pptxgen.TableRow = [
+          { text: 'AKSİYON', options: hOpts('left') },
+          { text: 'BU AY (GÜN)', options: hOpts() },
+          ...(hasPrevData ? [
+            { text: 'ÖNCEKİ AY (GÜN)', options: hOpts() },
+            { text: 'DEĞİŞİM', options: hOpts() },
+            { text: 'DEĞİŞİM %', options: hOpts() },
+          ] : []),
+        ];
+
+        const adRows: pptxgen.TableRow[] = actionDaysChartData.map((item, idx) => {
+          const rowBg = idx % 2 === 0 ? 'f1f5f9' : c.white;
+          const deltaColor = (item.delta || 0) > 0 ? c.success : (item.delta || 0) < 0 ? c.danger : c.text;
+          return [
+            { text: item.action, options: { fontSize: 11, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+            { text: formatDay(item.days), options: { fontSize: 11, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.primary } },
+            ...(hasPrevData ? [
+              { text: item.prevDays !== null ? formatDay(item.prevDays) : '-', options: { fontSize: 11, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
+              { text: item.delta !== null ? formatDelta(item.delta) : '-', options: { fontSize: 11, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: deltaColor } },
+              { text: item.deltaPct !== null ? `${item.deltaPct > 0 ? '+' : ''}${(item.deltaPct * 100).toFixed(0)}%` : '-', options: { fontSize: 11, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: deltaColor } },
+            ] : []),
+          ];
+        });
+
+        // Toplam satırı
+        const totalCur = actionDaysChartData.map(d => d.days).reduce((a, b) => a + b, 0);
+        const totalPrev = hasPrevData ? actionDaysChartData.map(d => d.prevDays || 0).reduce((a, b) => a + b, 0) : 0;
+        const totalDeltaVal = totalCur - totalPrev;
+        const totalDeltaColor = totalDeltaVal > 0 ? c.success : totalDeltaVal < 0 ? c.danger : c.text;
+        const totalRow: pptxgen.TableRow = [
+          { text: 'TOPLAM', options: { fontSize: 11, bold: true, fill: { color: 'e0e7ff' }, fontFace: 'Arial', color: c.primary } },
+          { text: formatDay(totalCur), options: { fontSize: 11, bold: true, align: 'center' as const, fill: { color: 'e0e7ff' }, fontFace: 'Arial', color: c.primary } },
+          ...(hasPrevData ? [
+            { text: formatDay(totalPrev), options: { fontSize: 11, bold: true, align: 'center' as const, fill: { color: 'e0e7ff' }, fontFace: 'Arial', color: c.textMuted } },
+            { text: formatDelta(totalDeltaVal), options: { fontSize: 11, bold: true, align: 'center' as const, fill: { color: 'e0e7ff' }, fontFace: 'Arial', color: totalDeltaColor } },
+            { text: totalPrev > 0 ? `${totalDeltaVal > 0 ? '+' : ''}${((totalDeltaVal / totalPrev) * 100).toFixed(0)}%` : '-', options: { fontSize: 11, bold: true, align: 'center' as const, fill: { color: 'e0e7ff' }, fontFace: 'Arial', color: totalDeltaColor } },
+          ] : []),
+        ];
+        adRows.push(totalRow);
+
+        const adColW = hasPrevData ? [4.5, 2.0, 2.0, 2.0, 2.23] : [7.0, 5.73];
+        const adTableY = hasPrevData ? 0.95 : 0.8;
+        const adAvailH = 7.5 - adTableY - 0.15;
+        const adRowH = 0.35;
+        const adPerPage = Math.floor((adAvailH - adRowH) / adRowH); // header hariç satır sayısı
+
+        if (adRows.length <= adPerPage) {
+          s2.addTable([adHeader, ...adRows], {
+            x: 0.3, y: adTableY, w: 12.73, colW: adColW,
+            border: { type: 'solid', pt: 0.5, color: c.border }, rowH: adRowH,
+          });
+        } else {
+          // Sayfalama: özet tablosu bile taşabilir
+          const adPageCount = Math.ceil(adRows.length / adPerPage);
+          // İlk sayfa zaten eklendi (s2), geri kalanlar için yeni slayt ekle
+          for (let ap = 0; ap < adPageCount; ap++) {
+            const slide = ap === 0 ? s2 : pptx.addSlide();
+            if (ap > 0) {
+              slide.background = { color: c.bg };
+              slide.addText('AKSİYON GÜN DAĞILIMI', { x: 0.5, y: 0.2, w: 9, h: 0.45, fontSize: 18, fontFace: 'Arial', bold: true, color: c.text });
+              slide.addShape((pptx as any).shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.primary } });
+              slide.addText(`Sayfa ${ap + 1}/${adPageCount}`, { x: 10, y: 0.2, w: 2.8, h: 0.45, fontSize: 11, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
+            }
+            const sliceRows = adRows.slice(ap * adPerPage, (ap + 1) * adPerPage);
+            slide.addTable([adHeader, ...sliceRows], {
+              x: 0.3, y: ap === 0 ? adTableY : 0.8, w: 12.73, colW: adColW,
+              border: { type: 'solid', pt: 0.5, color: c.border }, rowH: adRowH,
+            });
+          }
+        }
+      }
+
+      // ── SLAYT 3: BRANŞ BAZLI GENEL TABLO ──
+      if (branchActionChangeData.length > 0) {
+        const allBranchActs = Array.from(new Set(branchActionChangeData.flatMap(r => Object.keys(r.actions)))).sort((a, b) => {
+          const ta = branchActionChangeData.map(r => r.actions[a]?.current || 0).reduce((x, y) => x + y, 0);
+          const tb = branchActionChangeData.map(r => r.actions[b]?.current || 0).reduce((x, y) => x + y, 0);
+          return tb - ta;
+        });
+
+        // Aksiyon sütun sayısını delta gösterimle uyumlu şekilde sınırla
+        const maxActCols = hasPrevData ? 6 : 8;
+        const visibleActs = allBranchActs.slice(0, maxActCols);
+        const tableStartY = hasPrevData ? 0.95 : 0.8;
+        const availableH = 7.5 - tableStartY - 0.15; // slayt yüksekliği - üst - alt boşluk
+        const rowH = 0.35;
+        const perPage = Math.floor((availableH - rowH) / rowH); // header dahil
+        const pageCount = Math.ceil(branchActionChangeData.length / perPage);
+
+        for (let page = 0; page < pageCount; page++) {
+          const sB = pptx.addSlide();
+          sB.background = { color: c.bg };
+          sB.addText('BRANŞ BAZLI AKSİYON DEĞİŞİM TABLOSU', { x: 0.5, y: 0.15, w: 9, h: 0.4, fontSize: 16, fontFace: 'Arial', bold: true, color: c.text });
+          sB.addShape((pptx as any).shapes.RECTANGLE, { x: 0.5, y: 0.55, w: 2, h: 0.04, fill: { color: c.primary } });
+          if (hasPrevData) sB.addText(`Karşılaştırma: ${prevMonthName} ${prevYear} → ${selectedMonth} ${selectedYear}`, { x: 0.5, y: 0.6, w: 8, h: 0.25, fontSize: 11, fontFace: 'Arial', color: c.amber });
+          if (pageCount > 1) sB.addText(`Sayfa ${page + 1}/${pageCount}`, { x: 10, y: 0.15, w: 2.8, h: 0.4, fontSize: 11, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
+
+          const headerRow: pptxgen.TableRow = [
+            { text: 'BRANŞ', options: hOpts('left') },
+            ...visibleActs.map(act => ({ text: act.length > 12 ? act.substring(0, 10) + '…' : act, options: hOpts() })),
+            { text: 'TOPLAM', options: hOpts() },
+          ];
+
+          const brSlice = branchActionChangeData.slice(page * perPage, (page + 1) * perPage);
+          const dataRows: pptxgen.TableRow[] = brSlice.map((row, idx) => {
+            const rowBg = idx % 2 === 0 ? 'f1f5f9' : c.white;
+            return [
+              { text: row.branch, options: { fontSize: 11, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+              ...visibleActs.map(act => {
+                const cell = row.actions[act];
+                const cur = cell?.current || 0;
+                const delta = hasPrevData ? (cell?.delta || 0) : 0;
+                return cellWithDelta(cur, delta, rowBg);
+              }),
+              cellWithDelta(row.totalCurrent, hasPrevData ? row.totalDelta : 0, rowBg, true),
+            ];
+          });
+
+          const brColW = 2.6;
+          const totColW = 1.5;
+          const actColW = (12.73 - brColW - totColW) / visibleActs.length;
+          sB.addTable([headerRow, ...dataRows], {
+            x: 0.3, y: tableStartY, w: 12.73,
+            colW: [brColW, ...visibleActs.map(() => actColW), totColW],
+            border: { type: 'solid', pt: 0.5, color: c.border },
+            rowH,
+          });
+        }
+      }
+
+      // ── SLAYT 4+: HER BRANŞ İÇİN AYRI SAYFA ──
+      if (branchActionChangeData.length > 0) {
+        branchActionChangeData.forEach(branchRow => {
+          const branchDoctors = doctorActionChangeData.filter(d => d.branch === branchRow.branch);
+          if (branchDoctors.length === 0) return;
+
+          const branchActionsSet = new Set<string>();
+          (Object.entries(branchRow.actions) as [string, { current: number; prev: number; delta: number }][]).forEach(([act, v]) => { if (v.current > 0 || v.prev > 0) branchActionsSet.add(act); });
+          branchDoctors.forEach(doc => {
+            (Object.entries(doc.actions) as [string, { current: number; prev: number; delta: number }][]).forEach(([act, v]) => { if (v.current > 0 || v.prev > 0) branchActionsSet.add(act); });
+          });
+          const branchActs = Array.from(branchActionsSet).sort((a, b) => {
+            const ta = branchDoctors.map(r => r.actions[a]?.current || 0).reduce((x, y) => x + y, 0);
+            const tb = branchDoctors.map(r => r.actions[b]?.current || 0).reduce((x, y) => x + y, 0);
+            return tb - ta;
+          });
+
+          const maxActCols = hasPrevData ? 6 : 8;
+          const visActs = branchActs.slice(0, maxActCols);
+          const tableStartY = hasPrevData ? 0.95 : 0.8;
+          const availableH = 7.5 - tableStartY - 0.15;
+          const rowH = 0.35;
+          // Son sayfada +1 özet satırı olacağı için hesapla
+          const perPage = Math.floor((availableH - rowH) / rowH) - 1; // header + 1 özet satırı pay
+          const pageCount = Math.ceil(branchDoctors.length / perPage);
+
+          for (let page = 0; page < pageCount; page++) {
+            const sD = pptx.addSlide();
+            sD.background = { color: c.bg };
+            sD.addText(branchRow.branch.toLocaleUpperCase('tr-TR'), { x: 0.5, y: 0.15, w: 9, h: 0.4, fontSize: 16, fontFace: 'Arial', bold: true, color: c.text });
+            sD.addShape((pptx as any).shapes.RECTANGLE, { x: 0.5, y: 0.55, w: 2, h: 0.04, fill: { color: c.primary } });
+            if (hasPrevData) sD.addText(`Karşılaştırma: ${prevMonthName} ${prevYear} → ${selectedMonth} ${selectedYear}`, { x: 0.5, y: 0.6, w: 8, h: 0.25, fontSize: 11, fontFace: 'Arial', color: c.amber });
+            sD.addText(`Hekim Sayısı: ${branchDoctors.length}`, { x: 9, y: 0.15, w: 3.8, h: 0.25, fontSize: 11, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
+            if (pageCount > 1) sD.addText(`Sayfa ${page + 1}/${pageCount}`, { x: 10, y: 0.4, w: 2.8, h: 0.25, fontSize: 11, fontFace: 'Arial', color: c.textMuted, align: 'right' });
+
+            const headerRow: pptxgen.TableRow = [
+              { text: 'HEKİM', options: hOpts('left') },
+              ...visActs.map(act => ({ text: act.length > 12 ? act.substring(0, 10) + '…' : act, options: hOpts() })),
+              { text: 'TOPLAM', options: hOpts() },
+            ];
+
+            const docSlice = branchDoctors.slice(page * perPage, (page + 1) * perPage);
+            const dataRows: pptxgen.TableRow[] = docSlice.map((doc, idx) => {
+              const rowBg = idx % 2 === 0 ? 'f1f5f9' : c.white;
+              return [
+                { text: doc.doctorName, options: { fontSize: 11, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+                ...visActs.map(act => {
+                  const cell = doc.actions[act];
+                  const cur = cell?.current || 0;
+                  const delta = hasPrevData ? (cell?.delta || 0) : 0;
+                  return cellWithDelta(cur, delta, rowBg);
+                }),
+                cellWithDelta(doc.totalCurrent, hasPrevData ? doc.totalDelta : 0, rowBg, true),
+              ];
+            });
+
+            // Branş özet satırı (son sayfanın sonuna ekle)
+            if (page === pageCount - 1) {
+              const summaryRow: pptxgen.TableRow = [
+                { text: 'BRANŞ TOPLAMI', options: { fontSize: 11, bold: true, fill: { color: 'e0e7ff' }, fontFace: 'Arial', color: c.primary } },
+                ...visActs.map(act => {
+                  const total = branchDoctors.reduce((s, d) => s + (d.actions[act]?.current || 0), 0);
+                  const totalDelta = hasPrevData ? branchDoctors.reduce((s, d) => s + (d.actions[act]?.delta || 0), 0) : 0;
+                  return cellWithDelta(total, totalDelta, 'e0e7ff', true);
+                }),
+                cellWithDelta(branchRow.totalCurrent, hasPrevData ? branchRow.totalDelta : 0, 'e0e7ff', true),
+              ];
+              dataRows.push(summaryRow);
+            }
+
+            const docColW = 2.6;
+            const totColW2 = 1.5;
+            const actColW2 = (12.73 - docColW - totColW2) / visActs.length;
+            sD.addTable([headerRow, ...dataRows], {
+              x: 0.3, y: tableStartY, w: 12.73,
+              colW: [docColW, ...visActs.map(() => actColW2), totColW2],
+              border: { type: 'solid', pt: 0.5, color: c.border },
+              rowH,
+            });
+          }
+        });
+      }
+
+      const safeHospital = selectedHospital.replace(/[^a-zA-Z0-9]/g, '_');
+      const safeMonth = selectedMonth.replace(/[^a-zA-Z0-9]/g, '_');
+      const safeBranch = actionDaysBranchFilter !== 'ALL' ? `_${actionDaysBranchFilter.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+      await pptx.writeFile({ fileName: `Aksiyon_Gun_Dagilimi_${safeHospital}_${safeMonth}_${selectedYear}${safeBranch}.pptx` });
+    } catch (err) {
+      console.error('PPTX export hatası:', err);
+      alert('Sunum oluşturulurken hata oluştu');
+    } finally {
+      setIsExportingPptx(false);
+    }
   };
 
   // Merkezi Uygula butonu handler
@@ -243,6 +680,47 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
           {isPeriodSelected && <LocalFilters value={hoursBranchFilter} onChange={setHoursBranchFilter} limit={hoursViewLimit} onLimitChange={setHoursViewLimit} currentPage={hoursCurrentPage} totalPages={totalHoursPages} onPageChange={setHoursCurrentPage} branches={availableBranches} />}
         </div>
         {!isPeriodSelected ? <EmptyState /> : <SurgHoursChart data={paginatedHoursData} />}
+      </div>
+
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
+          <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">AKSİYON GÜN DAĞILIMI</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Hastane genelinde aksiyonların toplam gün sayısı (AM/PM yarım gün esaslı)</p></div>
+          {isPeriodSelected && (
+            <div className="flex flex-wrap items-center gap-3 bg-[var(--surface-2)] p-2 rounded-2xl border border-[var(--border-1)]">
+              <div className="flex items-center gap-2 px-3"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">BRANŞ:</span><select value={actionDaysBranchFilter} onChange={(e) => setActionDaysBranchFilter(e.target.value)} className="bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none min-w-[140px]"><option value="ALL">Tüm Hastane</option>{availableBranches.map((br:string) => <option key={br} value={br}>{br}</option>)}</select></div>
+              <div className="border-l border-[var(--border-2)] pl-3">
+                <button onClick={handleExportActionDaysPptx} disabled={isExportingPptx || actionDaysChartData.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all active:scale-95 shadow-sm">
+                  {isExportingPptx ? (
+                    <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>OLUŞTURULUYOR...</>
+                  ) : (
+                    <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>PPTX İNDİR</>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        {!isPeriodSelected ? <EmptyState /> : actionDaysChartData.length === 0 ? <NoResults text="Seçili filtrelere uygun aksiyon bulunamadı." /> : <>
+          <ActionDaysChart data={actionDaysChartData} hasPrevData={actionDaysChartData.some(d => d.prevDays !== null)} />
+          {branchActionChangeData.length > 0 && (() => {
+            const allBranchActions = Array.from(new Set(branchActionChangeData.flatMap(r => Object.keys(r.actions)))).sort((a, b) => {
+              const totalA = branchActionChangeData.map(r => r.actions[a]?.current || 0).reduce((x, y) => x + y, 0);
+              const totalB = branchActionChangeData.map(r => r.actions[b]?.current || 0).reduce((x, y) => x + y, 0);
+              return totalB - totalA;
+            });
+            const hasPrev = branchActionChangeData.some(r => r.totalPrev > 0);
+            return <ActionChangeTable title="BRANŞ BAZLI AKSİYON DEĞİŞİM TABLOSU" subtitle={`Branş bazında aksiyon gün dağılımı${hasPrev ? ' ve bir önceki ayla karşılaştırma' : ''}`} rows={branchActionChangeData} labelKey="branch" hasPrevData={hasPrev} allActions={allBranchActions} />;
+          })()}
+          {doctorActionChangeData.length > 0 && (() => {
+            const allDoctorActions = Array.from(new Set(doctorActionChangeData.flatMap(r => Object.keys(r.actions)))).sort((a, b) => {
+              const totalA = doctorActionChangeData.map(r => r.actions[a]?.current || 0).reduce((x, y) => x + y, 0);
+              const totalB = doctorActionChangeData.map(r => r.actions[b]?.current || 0).reduce((x, y) => x + y, 0);
+              return totalB - totalA;
+            });
+            const hasPrev = doctorActionChangeData.some(r => r.totalPrev > 0);
+            return <ActionChangeTable title="HEKİM BAZLI AKSİYON DEĞİŞİM TABLOSU" subtitle={`Hekim bazında aksiyon gün dağılımı${hasPrev ? ' ve bir önceki ayla karşılaştırma' : ''}`} rows={doctorActionChangeData} labelKey="doctorName" hasPrevData={hasPrev} allActions={allDoctorActions} />;
+          })()}
+        </>}
       </div>
 
       {isDetailModalOpen && (
@@ -367,6 +845,198 @@ export const SurgHoursChart = ({ data }: any) => (
     </ResponsiveContainer>
   </div>
 );
+
+export const ActionDaysChart = ({ data, hasPrevData }: { data: { action: string; days: number; prevDays: number | null; delta: number | null; deltaPct: number | null; isSignificant: boolean; color: string }[]; hasPrevData: boolean }) => {
+  const count = data.length;
+  const barSize = count <= 8 ? 40 : count <= 14 ? 28 : count <= 20 ? 20 : 14;
+
+  const CustomBar = (props: any) => {
+    const { x, y, width, height, payload } = props;
+    const isSignificant = payload?.isSignificant;
+    const days = payload?.days;
+    const label = days !== undefined ? String(days % 1 === 0 ? days : days.toFixed(1)).replace('.', ',') : '';
+    return (
+      <g>
+        {isSignificant && (
+          <rect x={x} y={y} width={width} height={height} rx={4} ry={4} fill="#ef4444">
+            <animate attributeName="opacity" values="0.15;0.5;0.15" dur="2s" repeatCount="indefinite" />
+          </rect>
+        )}
+        <rect x={x} y={y} width={width} height={height} rx={4} ry={4} fill={payload?.color || '#6366f1'} />
+        <text x={x + width / 2} y={y - 6} textAnchor="middle" fill="#94a3b8" fontSize={10} fontWeight={800}>{label}</text>
+      </g>
+    );
+  };
+
+  return (
+    <div className="bg-[var(--surface-2)] p-8 rounded-[20px] border border-[var(--border-1)] h-[550px]">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-wide">Aksiyon Gün Dağılımı</h3>
+        <div className="flex items-center gap-4">
+          {hasPrevData && <>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm bg-red-500 action-days-pulse-legend"></div><span className="text-[9px] font-black text-[var(--text-muted)] uppercase whitespace-nowrap">Önemli Değişim</span></div>
+          </>}
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height="90%">
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={8}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="action" interval={0} tick={<CustomizedXAxisTick />} axisLine={false} tickLine={false} height={100} />
+          <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
+          <Tooltip cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              const d = payload[0].payload;
+              const metrics: any[] = [{ label: 'Bu Ay', val: `${formatMetric(d.days)} gün`, color: 'text-indigo-400' }];
+              if (d.prevDays !== null) metrics.push({ label: 'Önceki Ay', val: `${formatMetric(d.prevDays)} gün`, color: 'text-slate-400' });
+              return <TooltipCard name={d.action} branch="" metrics={metrics}
+                footerLabel={d.delta !== null ? "Değişim" : "Toplam"}
+                footer={d.delta !== null ? `${d.delta > 0 ? '+' : ''}${formatMetric(d.delta)} gün (${d.deltaPct !== null ? `${d.deltaPct > 0 ? '+' : ''}${(d.deltaPct * 100).toFixed(0)}%` : '—'})` : `${formatMetric(d.days)} gün`}
+                footerColor={d.delta !== null ? (d.delta > 0 ? 'text-emerald-400' : d.delta < 0 ? 'text-rose-400' : 'text-slate-400') : 'text-indigo-400'} />;
+            }
+            return null;
+          }} />
+          <Bar dataKey="days" barSize={barSize} shape={<CustomBar />} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+type ActionChangeRow = { actions: Record<string, { current: number; prev: number; delta: number }>; totalCurrent: number; totalPrev: number; totalDelta: number };
+const fmtDay = (v: number): string => v === 0 ? '-' : (v % 1 === 0 ? String(v) : v.toFixed(1)).replace('.', ',');
+const fmtDelta = (v: number): string => v === 0 ? '-' : `${v > 0 ? '+' : ''}${fmtDay(v)}`;
+
+const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allActions }: {
+  title: string; subtitle: string;
+  rows: (ActionChangeRow & { [key: string]: any })[];
+  labelKey: string; hasPrevData: boolean;
+  allActions: string[];
+}) => {
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const toggleRow = (idx: number) => setExpandedRows(prev => { const s = new Set(prev); s.has(idx) ? s.delete(idx) : s.add(idx); return s; });
+
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="bg-[var(--surface-2)] p-6 rounded-[20px] border border-[var(--border-1)] mt-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h4 className="text-sm font-black text-[var(--text-1)] uppercase tracking-wide">{title}</h4>
+          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-0.5">{subtitle}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {hasPrevData && <>
+            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div><span className="text-[8px] font-black text-[var(--text-muted)] uppercase">Artış</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-500"></div><span className="text-[8px] font-black text-[var(--text-muted)] uppercase">Azalış</span></div>
+          </>}
+        </div>
+      </div>
+      <div className="overflow-x-auto custom-scrollbar">
+        <table className="w-full text-left min-w-[600px]">
+          <thead>
+            <tr className="border-b-2 border-[var(--border-1)]">
+              <th className="py-3 px-3 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest sticky left-0 bg-[var(--surface-2)] z-10 min-w-[160px]">
+                {labelKey === 'branch' ? 'BRANŞ' : 'HEKİM'}
+              </th>
+              {labelKey === 'doctorName' && <th className="py-3 px-2 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest min-w-[120px]">BRANŞ</th>}
+              {allActions.map(act => (
+                <th key={act} className="py-3 px-2 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-w-[80px]">
+                  <span className="block truncate max-w-[80px]" title={act}>{act.length > 12 ? act.substring(0, 10) + '…' : act}</span>
+                </th>
+              ))}
+              <th className="py-3 px-3 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-w-[80px] bg-[var(--surface-2)]">TOPLAM</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--border-1)]">
+            {rows.map((row, idx) => {
+              const isExpanded = expandedRows.has(idx);
+              const label = row[labelKey] || '';
+              return (
+                <React.Fragment key={idx}>
+                  <tr className="hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group" onClick={() => hasPrevData && toggleRow(idx)}>
+                    <td className="py-2.5 px-3 sticky left-0 bg-[var(--surface-2)] group-hover:bg-[var(--surface-hover)] z-10">
+                      <div className="flex items-center gap-2">
+                        {hasPrevData && (
+                          <svg className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
+                        )}
+                        <span className="text-[10px] font-black text-[var(--text-1)] uppercase truncate" title={label}>{label}</span>
+                      </div>
+                    </td>
+                    {labelKey === 'doctorName' && <td className="py-2.5 px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase">{row.branch}</td>}
+                    {allActions.map(act => {
+                      const cell = row.actions[act];
+                      const val = cell?.current || 0;
+                      const delta = cell?.delta || 0;
+                      return (
+                        <td key={act} className="py-2.5 px-2 text-center">
+                          <span className="text-[10px] font-black text-[var(--text-1)]">{fmtDay(val)}</span>
+                          {hasPrevData && delta !== 0 && (
+                            <span className={`block text-[8px] font-black ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{fmtDelta(delta)}</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="py-2.5 px-3 text-center bg-[var(--surface-2)] group-hover:bg-[var(--surface-hover)]">
+                      <span className="text-[10px] font-black text-indigo-400">{fmtDay(row.totalCurrent)}</span>
+                      {hasPrevData && row.totalDelta !== 0 && (
+                        <span className={`block text-[8px] font-black ${row.totalDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{fmtDelta(row.totalDelta)}</span>
+                      )}
+                    </td>
+                  </tr>
+                  {isExpanded && hasPrevData && (
+                    <tr className="bg-[var(--surface-1)]">
+                      <td className="py-2 px-3 sticky left-0 bg-[var(--surface-1)] z-10">
+                        <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase pl-5 italic">↳ Önceki Ay</span>
+                      </td>
+                      {labelKey === 'doctorName' && <td className="py-2 px-2"></td>}
+                      {allActions.map(act => {
+                        const cell = row.actions[act];
+                        const prev = cell?.prev || 0;
+                        return (
+                          <td key={act} className="py-2 px-2 text-center">
+                            <span className="text-[9px] font-bold text-[var(--text-muted)]">{fmtDay(prev)}</span>
+                          </td>
+                        );
+                      })}
+                      <td className="py-2 px-3 text-center bg-[var(--surface-1)]">
+                        <span className="text-[9px] font-bold text-[var(--text-muted)]">{fmtDay(row.totalPrev)}</span>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+          {rows.length > 1 && (
+            <tfoot>
+              <tr className="border-t-2 border-[var(--border-1)] bg-[var(--surface-2)]">
+                <td className="py-3 px-3 sticky left-0 bg-[var(--surface-2)] z-10 text-[10px] font-black text-[var(--text-1)] uppercase" colSpan={labelKey === 'doctorName' ? 2 : 1}>TOPLAM</td>
+                {allActions.map(act => {
+                  const total = rows.reduce((s, r) => s + (r.actions[act]?.current || 0), 0);
+                  const totalDelta = rows.reduce((s, r) => s + (r.actions[act]?.delta || 0), 0);
+                  return (
+                    <td key={act} className="py-3 px-2 text-center">
+                      <span className="text-[10px] font-black text-[var(--text-1)]">{fmtDay(total)}</span>
+                      {hasPrevData && totalDelta !== 0 && (
+                        <span className={`block text-[8px] font-black ${totalDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{fmtDelta(totalDelta)}</span>
+                      )}
+                    </td>
+                  );
+                })}
+                <td className="py-3 px-3 text-center">
+                  <span className="text-[10px] font-black text-indigo-400">{fmtDay(rows.reduce((s, r) => s + r.totalCurrent, 0))}</span>
+                  {hasPrevData && (
+                    <span className={`block text-[8px] font-black ${rows.reduce((s, r) => s + r.totalDelta, 0) > 0 ? 'text-emerald-400' : rows.reduce((s, r) => s + r.totalDelta, 0) < 0 ? 'text-rose-400' : 'text-[var(--text-muted)]'}`}>{fmtDelta(rows.reduce((s, r) => s + r.totalDelta, 0))}</span>
+                  )}
+                </td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+    </div>
+  );
+};
 
 const CustomizedXAxisTick = ({ x, y, payload, onClick }: any) => {
   const l = payload.value; const t = l.length > 16 ? l.substring(0, 14) + '...' : l;

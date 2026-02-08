@@ -419,6 +419,15 @@ const App: React.FC = () => {
       setGlobalAppliedYears(years);
       setGlobalAppliedMonths(months);
 
+      // Verimlilik Analizleri karşılaştırması için bir önceki ayın cetvel verisini sessizce yükle
+      const minMonth = Math.min(...months);
+      for (const year of years) {
+        const prevMonthIdx = minMonth > 1 ? minMonth - 1 : 12;
+        const prevYear = minMonth > 1 ? year : year - 1;
+        const prevMonthName = MONTHS[prevMonthIdx - 1];
+        await handleLoadPeriodData(hospital, prevYear, prevMonthName, true);
+      }
+
       // Her yıl/ay kombinasyonu için veri yükle
       for (const year of years) {
         for (const monthIdx of months) {

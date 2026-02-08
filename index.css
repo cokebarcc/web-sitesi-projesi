@@ -385,3 +385,12 @@ code {
     display: none !important;
   }
 }
+
+/* Aksiyon Gün Dağılımı - Legend animasyonu */
+@keyframes actionDaysPulseLegend {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.action-days-pulse-legend {
+  animation: actionDaysPulseLegend 2s ease-in-out infinite;
+}
