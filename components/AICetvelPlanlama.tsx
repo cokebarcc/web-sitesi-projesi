@@ -33,7 +33,8 @@ const MUAYENE_ACTIONS = ['MUAYENE', 'POLİKLİNİK'];
 interface DoctorEfficiency {
   doctorName: string;
   branchName: string;
-  plannedDays: number;
+  plannedDays: number;         // Referans ay ameliyat gün sayısı
+  hedefPlannedDays: number;    // Hedef ay ameliyat gün sayısı
   performedABC: number;
   efficiency: number;
   branchAvg: number;
@@ -142,11 +143,25 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
   onLoadPeriodData,
   isLoading = false,
 }) => {
-  const selectedMonth = globalAppliedMonths.length > 0 ? MONTHS[globalAppliedMonths[0] - 1] : '';
+  // --- Çift ay seçimi state ---
+  const [referansMonthIdx, setReferansMonthIdx] = useState<number | null>(null);
+  const [hedefMonthIdx, setHedefMonthIdx] = useState<number | null>(null);
+
   const selectedYear = globalAppliedYears.length > 0 ? String(globalAppliedYears[0]) : '';
 
+  // Türetilmiş ay adları
+  const referansMonth = referansMonthIdx !== null ? MONTHS[referansMonthIdx - 1] : '';
+  const hedefMonth = hedefMonthIdx !== null ? MONTHS[hedefMonthIdx - 1] : '';
+
+  // Period key'ler
+  const referansPeriodKey = referansMonth && selectedYear && selectedHospital
+    ? `${selectedHospital}-${getPeriodKey(Number(selectedYear), referansMonth)}`
+    : '';
+  const hedefPeriodKey = hedefMonth && selectedYear && selectedHospital
+    ? `${selectedHospital}-${getPeriodKey(Number(selectedYear), hedefMonth)}`
+    : '';
+
   const [selectedBranch, setSelectedBranch] = useState<string>('ALL');
-  // Kademeli azaltım eşikleri: ≥%80 normal, %60-80 ılımlı, <%60 agresif
   const [sortColumn, setSortColumn] = useState<string>('efficiency');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [roleGroupLoadingStatus, setRoleGroupLoadingStatus] = useState('');
@@ -154,18 +169,14 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
   // Rol grubu verileri icin cache - ayni grup+donem icin tekrar Firebase'den cekmez
   const roleGroupCacheRef = useRef<Set<string>>(new Set());
 
-  const isPeriodSelected = !!(selectedMonth && selectedYear);
+  const isPeriodSelected = !!(referansMonth && hedefMonth && selectedYear);
 
-  const periodKey = selectedMonth && selectedYear && selectedHospital
-    ? `${selectedHospital}-${getPeriodKey(Number(selectedYear), selectedMonth)}`
-    : '';
-
-  // Ameliyat yapan branşlar (seçili hastane)
+  // Ameliyat yapan branşlar (hedef aydan - kullanıcı hedef aydaki cetveli görecek)
   const surgicalBranches = useMemo(() => {
     if (!isPeriodSelected) return [];
     const branches = new Set<string>();
     detailedScheduleData
-      .filter(d => d.month === selectedMonth && d.year === Number(selectedYear))
+      .filter(d => d.month === hedefMonth && d.year === Number(selectedYear))
       .forEach(d => {
         const actionNorm = d.action.toLocaleUpperCase('tr-TR');
         if (SURGERY_ACTIONS.some(sa => actionNorm.includes(sa))) {
@@ -173,13 +184,13 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         }
       });
     return Array.from(branches).sort((a, b) => a.localeCompare(b, 'tr-TR'));
-  }, [detailedScheduleData, selectedMonth, selectedYear, isPeriodSelected]);
+  }, [detailedScheduleData, hedefMonth, selectedYear, isPeriodSelected]);
 
   // Seçili hastanenin rol grubu bilgisi
   const currentRoleGroup = useMemo(() => getRoleGroup(selectedHospital), [selectedHospital]);
   const sameGroupHospitals = useMemo(() => getSameRoleGroupHospitalsMixed(selectedHospital), [selectedHospital]);
 
-  // === ANA HESAPLAMA ===
+  // === ANA HESAPLAMA (Referans ay: verimlilik, Hedef ay: planlama) ===
   const { doctorEfficiencies, branchAverages, roleGroupBranchAverages, kpiStats, roleGroupHospitalCount } = useMemo(() => {
     const empty = {
       doctorEfficiencies: [] as DoctorEfficiency[],
@@ -190,17 +201,20 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
     };
     if (!isPeriodSelected) return empty;
 
-    const periodSchedules = detailedScheduleData.filter(d => d.month === selectedMonth && d.year === Number(selectedYear));
-    const rawAmeliyatData = ameliyatByPeriod[periodKey] || {};
+    // --- REFERANS AY VERİLERİ (verimlilik hesabı) ---
+    const refSchedules = detailedScheduleData.filter(d => d.month === referansMonth && d.year === Number(selectedYear));
+    const rawAmeliyatData = ameliyatByPeriod[referansPeriodKey] || {};
 
-    // === KATMAN 1: Hekim bazlı cerrahi verimlilik ===
+    // --- HEDEF AY VERİLERİ (planlama) ---
+    const hedefSchedules = detailedScheduleData.filter(d => d.month === hedefMonth && d.year === Number(selectedYear));
+
+    // === KATMAN 1: Hekim bazlı cerrahi verimlilik (referans aydan) ===
     const doctorSurgeryDaysMap = new Map<string, Set<string>>();
     const doctorBranchMap = new Map<string, { name: string; branch: string }>();
-    // Muayene kapasitesi: sadece muayene/poliklinik aksiyonlarının kapasitesi ve gün sayısı
     const doctorMuayeneDaysMap = new Map<string, Set<string>>();
     const doctorMuayeneCapacityMap = new Map<string, number>();
 
-    periodSchedules.forEach(item => {
+    refSchedules.forEach(item => {
       const normName = normalizeDoctorName(item.doctorName);
       if (!doctorBranchMap.has(normName)) {
         doctorBranchMap.set(normName, { name: item.doctorName, branch: item.specialty });
@@ -218,7 +232,6 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         doctorSurgeryDaysMap.get(normName)!.add(item.startDate);
       }
 
-      // Sadece muayene/poliklinik aksiyonlarının kapasitesini ve günlerini topla
       if (isMuayene) {
         if (!doctorMuayeneDaysMap.has(normName)) doctorMuayeneDaysMap.set(normName, new Set());
         doctorMuayeneDaysMap.get(normName)!.add(item.startDate);
@@ -226,34 +239,66 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       }
     });
 
-    const efficiencyList: { normName: string; doctorName: string; branch: string; plannedDays: number; performedABC: number; efficiency: number; muayeneDailyCapacity: number }[] = [];
+    // === HEDEF AY: Hekim ameliyat günleri haritası ===
+    const doctorHedefSurgeryDaysMap = new Map<string, Set<string>>();
+
+    hedefSchedules.forEach(item => {
+      const normName = normalizeDoctorName(item.doctorName);
+      if (!doctorBranchMap.has(normName)) {
+        doctorBranchMap.set(normName, { name: item.doctorName, branch: item.specialty });
+      }
+      const actionNorm = item.action.toLocaleUpperCase('tr-TR');
+      if (SURGERY_ACTIONS.some(sa => actionNorm.includes(sa))) {
+        if (!doctorHedefSurgeryDaysMap.has(normName)) doctorHedefSurgeryDaysMap.set(normName, new Set());
+        doctorHedefSurgeryDaysMap.get(normName)!.add(item.startDate);
+      }
+    });
+
+    const efficiencyList: { normName: string; doctorName: string; branch: string; plannedDays: number; hedefPlannedDays: number; performedABC: number; efficiency: number; muayeneDailyCapacity: number }[] = [];
     const addedNormNames = new Set<string>();
+
+    // Referans ayda ameliyat günü olan hekimler
     doctorSurgeryDaysMap.forEach((days, normName) => {
       const info = doctorBranchMap.get(normName);
       if (!info) return;
       const plannedDays = days.size;
       const performedABC = rawAmeliyatData[normName] || 0;
       const efficiency = plannedDays > 0 ? performedABC / plannedDays : 0;
-      // Günlük kapasite: muayene/poliklinik kapasitesi / muayene gün sayısı
+      const hedefPlannedDays = doctorHedefSurgeryDaysMap.get(normName)?.size || 0;
       const muayeneDays = doctorMuayeneDaysMap.get(normName)?.size || 0;
       const totalMuayeneCapacity = doctorMuayeneCapacityMap.get(normName) || 0;
       const muayeneDailyCapacity = muayeneDays > 0 ? totalMuayeneCapacity / muayeneDays : 0;
-      efficiencyList.push({ normName, doctorName: info.name, branch: info.branch, plannedDays, performedABC, efficiency, muayeneDailyCapacity });
+      efficiencyList.push({ normName, doctorName: info.name, branch: info.branch, plannedDays, hedefPlannedDays, performedABC, efficiency, muayeneDailyCapacity });
       addedNormNames.add(normName);
     });
 
-    // Cetvelde ameliyat günü planlanmamış ama ameliyat verisi olan hekimleri de ekle
+    // Referans cetvelde ameliyat günü planlanmamış ama ameliyat verisi olan hekimler
     Object.entries(rawAmeliyatData).forEach(([normName, count]) => {
       if (addedNormNames.has(normName) || !count) return;
       const info = doctorBranchMap.get(normName);
-      if (!info) return; // Cetvelde hiç kaydı olmayan hekimleri dahil etme
+      if (!info) return;
+      const hedefPlannedDays = doctorHedefSurgeryDaysMap.get(normName)?.size || 0;
       const muayeneDays = doctorMuayeneDaysMap.get(normName)?.size || 0;
       const totalMuayeneCapacity = doctorMuayeneCapacityMap.get(normName) || 0;
       const muayeneDailyCapacity = muayeneDays > 0 ? totalMuayeneCapacity / muayeneDays : 0;
-      efficiencyList.push({ normName, doctorName: info.name, branch: info.branch, plannedDays: 0, performedABC: count, efficiency: 0, muayeneDailyCapacity });
+      efficiencyList.push({ normName, doctorName: info.name, branch: info.branch, plannedDays: 0, hedefPlannedDays, performedABC: count, efficiency: 0, muayeneDailyCapacity });
+      addedNormNames.add(normName);
     });
 
-    // === KATMAN 2: Hastane branş ortalaması (sadece seçili hastane, ameliyat günü olan hekimler) ===
+    // Hedef ayda ameliyat günü olan ama referans ayda hiç olmayan hekimler
+    doctorHedefSurgeryDaysMap.forEach((days, normName) => {
+      if (addedNormNames.has(normName)) return;
+      const info = doctorBranchMap.get(normName);
+      if (!info) return;
+      efficiencyList.push({
+        normName, doctorName: info.name, branch: info.branch,
+        plannedDays: 0, hedefPlannedDays: days.size,
+        performedABC: 0, efficiency: 0, muayeneDailyCapacity: 0,
+      });
+      addedNormNames.add(normName);
+    });
+
+    // === KATMAN 2: Hastane branş ortalaması (referans aydan) ===
     const branchAverages = new Map<string, number>();
     const branchTotals = new Map<string, { totalABC: number; totalDays: number }>();
     efficiencyList.filter(doc => doc.plannedDays > 0).forEach(doc => {
@@ -266,7 +311,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       branchAverages.set(branch, totals.totalDays > 0 ? totals.totalABC / totals.totalDays : 0);
     });
 
-    // === KATMAN 3: İl rol grubu branş ortalaması (TÜM aynı gruptaki hastaneler) ===
+    // === KATMAN 3: İl rol grubu branş ortalaması (referans aydan) ===
     const roleGroupBranchAverages = new Map<string, number>();
     let roleGroupHospitalCount = 0;
 
@@ -275,19 +320,16 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       const loadedHospitals = new Set<string>();
 
       sameGroupHospitals.forEach(hospMixed => {
-        // Bu hastane için period key oluştur
-        const hospPeriodKey = `${hospMixed}-${getPeriodKey(Number(selectedYear), selectedMonth)}`;
+        const hospPeriodKey = `${hospMixed}-${getPeriodKey(Number(selectedYear), referansMonth)}`;
         const hospAmeliyatData = ameliyatByPeriod[hospPeriodKey];
 
-        // Bu hastanenin cetvel verisini allDetailedScheduleData'dan al
         const hospSchedules = allDetailedScheduleData.filter(d =>
-          d.hospital === hospMixed && d.month === selectedMonth && d.year === Number(selectedYear)
+          d.hospital === hospMixed && d.month === referansMonth && d.year === Number(selectedYear)
         );
 
-        // Hem cetvel hem ameliyat verisi olan hastaneleri say
         if (hospSchedules.length > 0 && hospAmeliyatData) {
           loadedHospitals.add(hospMixed);
-          const hospBranchTotals = computeHospitalSurgeryData(hospSchedules, hospAmeliyatData, selectedMonth, Number(selectedYear));
+          const hospBranchTotals = computeHospitalSurgeryData(hospSchedules, hospAmeliyatData, referansMonth, Number(selectedYear));
           hospBranchTotals.forEach((totals, branch) => {
             const prev = rgBranchTotals.get(branch) || { totalABC: 0, totalDays: 0 };
             prev.totalABC += totals.totalABC;
@@ -311,8 +353,6 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         const branchAvg = branchAverages.get(doc.branch) || 0;
         const rgAvg = roleGroupBranchAverages.size > 0 ? (roleGroupBranchAverages.get(doc.branch) ?? null) : null;
 
-        // Referans verimlilik: rol grubu ortalaması varsa onu, yoksa hastane branş ortalamasını kullan
-        // Tek hekimli branşlarda hastane ort. = hekim kendisi olur, rol grubu daha anlamlı
         const referenceAvg = (rgAvg !== null && rgAvg > 0) ? rgAvg : branchAvg;
 
         let status: DoctorEfficiency['status'] = 'normal';
@@ -324,6 +364,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           doctorName: doc.doctorName,
           branchName: doc.branch,
           plannedDays: doc.plannedDays,
+          hedefPlannedDays: doc.hedefPlannedDays,
           performedABC: doc.performedABC,
           efficiency: doc.efficiency,
           branchAvg,
@@ -350,7 +391,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       },
       roleGroupHospitalCount,
     };
-  }, [detailedScheduleData, allDetailedScheduleData, ameliyatByPeriod, selectedMonth, selectedYear, periodKey, isPeriodSelected, selectedHospital, selectedBranch, sameGroupHospitals]);
+  }, [detailedScheduleData, allDetailedScheduleData, ameliyatByPeriod, referansMonth, hedefMonth, selectedYear, referansPeriodKey, hedefPeriodKey, isPeriodSelected, selectedHospital, selectedBranch, sameGroupHospitals]);
 
   // Sıralama
   const sortedDoctors = useMemo(() => {
@@ -361,6 +402,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         case 'doctorName': return sortDirection === 'asc' ? a.doctorName.localeCompare(b.doctorName, 'tr-TR') : b.doctorName.localeCompare(a.doctorName, 'tr-TR');
         case 'branchName': return sortDirection === 'asc' ? a.branchName.localeCompare(b.branchName, 'tr-TR') : b.branchName.localeCompare(a.branchName, 'tr-TR');
         case 'plannedDays': valA = a.plannedDays; valB = b.plannedDays; break;
+        case 'hedefPlannedDays': valA = a.hedefPlannedDays; valB = b.hedefPlannedDays; break;
         case 'performedABC': valA = a.performedABC; valB = b.performedABC; break;
         case 'efficiency': valA = a.efficiency; valB = b.efficiency; break;
         case 'branchAvg': valA = a.branchAvg; valB = b.branchAvg; break;
@@ -371,85 +413,73 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
     return sorted;
   }, [doctorEfficiencies, sortColumn, sortDirection]);
 
-  // Öneri hesaplama - kademeli azaltım: ≥%80 → yok, %60-80 → ılımlı, %40-60 → orta, <%40 → agresif
+  // Öneri hesaplama - verimlilik referans aydan, azaltım hedef aydaki günler üzerinden
+  // Kademeli azaltım: ≥%80 → yok, %60-80 → ılımlı, %40-60 → orta, <%40 → agresif
   // Kadın Hastalıkları ve Doğum: ≥%30 → min 2 gün korunsun, <%30 → normal azaltım
   const proposals: Proposal[] = useMemo(() => {
     return doctorEfficiencies
-      .filter(doc => doc.status === 'low' && doc.plannedDays > 0)
+      .filter(doc => doc.status === 'low' && doc.hedefPlannedDays > 0)
       .map(doc => {
-        // Hedef verimlilik: önce rol grubu ortalaması, yoksa hastane branş ortalaması
         const targetEff = (doc.roleGroupBranchAvg !== null && doc.roleGroupBranchAvg > 0)
           ? doc.roleGroupBranchAvg
           : (doc.branchAvg > 0 ? doc.branchAvg : 1);
 
-        // Verimlilik oranı: hekimin verimliliği / referans ortalama
+        // Verimlilik oranı: referans ay verimliliği / referans ortalama
         const ratio = targetEff > 0 ? doc.efficiency / targetEff : 0;
 
-        // Kadın Hastalıkları ve Doğum branşı özel kuralı
         const isKHD = doc.branchName.toLocaleUpperCase('tr-TR').includes('KADIN HASTALIKLARI');
 
         let proposedDays: number;
 
         if (isKHD && ratio >= 0.3) {
-          // KHD branşı %30 üzeri: ameliyat günü 2'nin altına düşmesin
-          if (doc.plannedDays <= 2) return null; // Zaten 2 veya altında, azaltma
-          // Normal kademeli azaltım uygula ama min 2 gün
+          if (doc.hedefPlannedDays <= 2) return null;
           if (ratio >= 0.8) return null;
           else if (ratio >= 0.6) {
-            const azaltim = doc.plannedDays >= 5 ? 2 : 1;
-            proposedDays = Math.max(2, doc.plannedDays - azaltim);
+            const azaltim = doc.hedefPlannedDays >= 5 ? 2 : 1;
+            proposedDays = Math.max(2, doc.hedefPlannedDays - azaltim);
           } else if (ratio >= 0.4) {
-            const azaltim = doc.plannedDays >= 5 ? 3 : 2;
-            proposedDays = Math.max(2, doc.plannedDays - azaltim);
+            const azaltim = doc.hedefPlannedDays >= 5 ? 3 : 2;
+            proposedDays = Math.max(2, doc.hedefPlannedDays - azaltim);
           } else {
-            // %30-40 arası: orta azaltım ama min 2 gün
-            const azaltim = doc.plannedDays >= 5 ? 3 : 2;
-            proposedDays = Math.max(2, doc.plannedDays - azaltim);
+            const azaltim = doc.hedefPlannedDays >= 5 ? 3 : 2;
+            proposedDays = Math.max(2, doc.hedefPlannedDays - azaltim);
           }
         } else if (ratio >= 0.8) {
-          // %80 ve üzeri: azaltıma gitme
           return null;
         } else if (ratio >= 0.6) {
-          // %60-80 arası: ılımlı azaltım
-          const azaltim = doc.plannedDays >= 5 ? 2 : 1;
-          proposedDays = Math.max(1, doc.plannedDays - azaltim);
+          const azaltim = doc.hedefPlannedDays >= 5 ? 2 : 1;
+          proposedDays = Math.max(1, doc.hedefPlannedDays - azaltim);
         } else if (ratio >= 0.4) {
-          // %40-60 arası: orta düzey azaltım
-          const azaltim = doc.plannedDays >= 5 ? 3 : 2;
-          proposedDays = Math.max(1, doc.plannedDays - azaltim);
+          const azaltim = doc.hedefPlannedDays >= 5 ? 3 : 2;
+          proposedDays = Math.max(1, doc.hedefPlannedDays - azaltim);
         } else {
-          // %40 altı: agresif azaltım
           if (doc.performedABC > 0) {
             proposedDays = Math.max(1, Math.round(doc.performedABC / targetEff));
           } else {
-            proposedDays = Math.max(1, Math.round(doc.plannedDays * 0.5));
+            proposedDays = Math.max(1, Math.round(doc.hedefPlannedDays * 0.5));
           }
-          if (proposedDays >= doc.plannedDays) {
-            proposedDays = Math.max(1, doc.plannedDays - 1);
+          if (proposedDays >= doc.hedefPlannedDays) {
+            proposedDays = Math.max(1, doc.hedefPlannedDays - 1);
           }
         }
 
-        // Ameliyat hacmi koruma: önerilen günlerde hedef verimlilikle çalışsa bile
-        // mevcut ameliyat sayısını karşılayabilmeli
+        // Ameliyat hacmi koruma
         if (doc.performedABC > 0 && targetEff > 0) {
           const minDaysForVolume = Math.ceil(doc.performedABC / targetEff);
           if (proposedDays < minDaysForVolume) {
-            proposedDays = Math.min(minDaysForVolume, doc.plannedDays);
+            proposedDays = Math.min(minDaysForVolume, doc.hedefPlannedDays);
           }
         }
 
-        // Azaltım yoksa öneri üretme
-        if (proposedDays >= doc.plannedDays) return null;
+        if (proposedDays >= doc.hedefPlannedDays) return null;
 
-        const reduction = doc.plannedDays - proposedDays;
-        // Kapasite kazanımı: azaltılan gün × hekimin günlük ort. kapasite
-        // Kapasite verisi yoksa minimum 42 kabul et
+        const reduction = doc.hedefPlannedDays - proposedDays;
         const dailyCap = doc.muayeneDailyCapacity > 0 ? doc.muayeneDailyCapacity : 42;
         const estimatedCapacityGain = reduction * Math.round(dailyCap);
         return {
           doctorName: doc.doctorName,
           branchName: doc.branchName,
-          currentDays: doc.plannedDays,
+          currentDays: doc.hedefPlannedDays,
           proposedDays,
           reduction: Math.max(0, reduction),
           efficiency: doc.efficiency,
@@ -465,22 +495,28 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
 
   const totalReduction = proposals.reduce((sum, p) => sum + p.reduction, 0);
   const totalCapacityGain = proposals.reduce((sum, p) => sum + p.estimatedCapacityGain, 0);
+  const totalHedefSurgeryDays = doctorEfficiencies.reduce((sum, d) => sum + d.hedefPlannedDays, 0);
 
-  // Uygula: Önce seçili hastane, sonra rol grubu hastaneleri (cache'li + sessiz)
+  // Uygula: Önce seçili hastane (her iki ay), sonra rol grubu hastaneleri (cache'li + sessiz)
   const handleApply = async () => {
-    if (!selectedHospital || globalSelectedYears.length === 0 || globalSelectedMonths.length === 0) {
-      alert('Lütfen hastane, yıl ve ay seçiniz!');
+    if (!selectedHospital || globalSelectedYears.length === 0 || referansMonthIdx === null || hedefMonthIdx === null) {
+      alert('Lütfen hastane, yıl, referans ay ve hedef ay seçiniz!');
       return;
     }
 
-    // 1. Seçili hastane verilerini yükle
-    await onCentralDataLoad(selectedHospital, globalSelectedYears, globalSelectedMonths);
+    // Her iki ayı birleştir, aynıysa deduplicate
+    const uniqueMonths = Array.from(new Set([referansMonthIdx, hedefMonthIdx]));
+
+    // Parent'a hangi ayların yüklendiğini bildir
+    setGlobalSelectedMonths(uniqueMonths);
+
+    // 1. Seçili hastane verilerini yükle (her iki ay)
+    await onCentralDataLoad(selectedHospital, globalSelectedYears, uniqueMonths);
 
     // 2. Aynı rol grubundaki diğer hastanelerin verilerini yükle (cache kontrollü)
     const otherHospitals = sameGroupHospitals.filter(h => h !== selectedHospital);
     if (otherHospitals.length > 0) {
-      // Cache key: rolGrubu-yıllar-aylar
-      const rgCacheKey = `${currentRoleGroup}-${globalSelectedYears.join(',')}-${globalSelectedMonths.join(',')}`;
+      const rgCacheKey = `${currentRoleGroup}-${globalSelectedYears.join(',')}-${[...uniqueMonths].sort().join(',')}`;
 
       if (roleGroupCacheRef.current.has(rgCacheKey)) {
         console.log(`✅ Rol grubu verileri cache'den kullanılıyor: ${rgCacheKey}`);
@@ -490,7 +526,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       setRoleGroupLoadingStatus(`Rol grubu verileri yükleniyor...`);
       for (const hosp of otherHospitals) {
         for (const year of globalSelectedYears) {
-          for (const monthIdx of globalSelectedMonths) {
+          for (const monthIdx of uniqueMonths) {
             const month = MONTHS[monthIdx - 1];
             try {
               await onLoadPeriodData(hosp, year, month, true);
@@ -518,7 +554,8 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
     const effRows = sortedDoctors.map(doc => ({
       'Hekim Adı': doc.doctorName,
       'Branş': doc.branchName,
-      'Ameliyat Günü': doc.plannedDays,
+      [`Ameliyat Günü ${referansMonth}`]: doc.plannedDays,
+      [`Ameliyat Günü ${hedefMonth}`]: doc.hedefPlannedDays,
       'ABC Ameliyat': doc.performedABC,
       'Verimlilik (ABC/Gün)': doc.efficiency > 0 ? Number(doc.efficiency.toFixed(2)) : 0,
       'Branş Ortalaması': doc.branchAvg > 0 ? Number(doc.branchAvg.toFixed(2)) : 0,
@@ -530,7 +567,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
     const propRows = proposals.map(p => ({
       'Hekim Adı': p.doctorName,
       'Branş': p.branchName,
-      'Mevcut Gün': p.currentDays,
+      [`Mevcut Gün ${hedefMonth}`]: p.currentDays,
       'Önerilen Gün': p.proposedDays,
       'Azaltım': p.reduction,
       'Mevcut Verimlilik': Number(p.efficiency.toFixed(2)),
@@ -544,7 +581,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
     XLSX.utils.book_append_sheet(wb, ws1, 'Verimlilik Analizi');
     const ws2 = XLSX.utils.json_to_sheet(propRows);
     XLSX.utils.book_append_sheet(wb, ws2, 'Cetvel Önerileri');
-    XLSX.writeFile(wb, `AI_Cetvel_Planlama_${selectedHospital}_${selectedMonth}_${selectedYear}.xlsx`);
+    XLSX.writeFile(wb, `AI_Cetvel_Planlama_${selectedHospital}_Ref${referansMonth}_Hedef${hedefMonth}_${selectedYear}.xlsx`);
   };
 
   const handleExportPowerPoint = async () => {
@@ -572,7 +609,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       s1.addText('AI CETVEL PLANLAMA', { x: 1, y: 1.9, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
       s1.addText('RAPORU', { x: 1, y: 2.7, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
       s1.addText(selectedHospital, { x: 1, y: 3.9, w: 11, h: 0.5, fontSize: 18, fontFace: 'Arial', color: c.textMuted });
-      s1.addText(`${selectedMonth} ${selectedYear}`, { x: 1, y: 4.4, w: 11, h: 0.4, fontSize: 14, fontFace: 'Arial', color: '64748b' });
+      s1.addText(`Referans: ${referansMonth} | Hedef: ${hedefMonth} - ${selectedYear}`, { x: 1, y: 4.4, w: 11, h: 0.4, fontSize: 14, fontFace: 'Arial', color: '64748b' });
       if (currentRoleGroup) {
         s1.addText(`Rol Grubu: ${currentRoleGroup}`, { x: 1, y: 4.9, w: 11, h: 0.4, fontSize: 12, fontFace: 'Arial', color: c.primary });
       }
@@ -621,7 +658,8 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         const effHeader: pptxgen.TableRow = [
           { text: 'HEKİM', options: hOpts('left') },
           { text: 'BRANŞ', options: hOpts('left') },
-          { text: 'AMEL. GÜNÜ', options: hOpts() },
+          { text: `AMEL. GÜNÜ ${referansMonth.toLocaleUpperCase('tr-TR')}`, options: hOpts() },
+          { text: `AMEL. GÜNÜ ${hedefMonth.toLocaleUpperCase('tr-TR')}`, options: hOpts() },
           { text: 'ABC', options: hOpts() },
           { text: 'VERİMLİLİK', options: hOpts() },
           { text: 'BRANŞ ORT.', options: hOpts() },
@@ -639,6 +677,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
             { text: doc.doctorName, options: { fontSize: 9, bold: true, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
             { text: doc.branchName, options: { fontSize: 8, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
             { text: String(doc.plannedDays), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
+            { text: String(doc.hedefPlannedDays), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.amber } },
             { text: String(doc.performedABC), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.text } },
             { text: formatNum(doc.efficiency), options: { fontSize: 10, bold: true, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: effColor } },
             { text: formatNum(doc.branchAvg), options: { fontSize: 9, align: 'center' as const, fill: { color: rowBg }, fontFace: 'Arial', color: c.textMuted } },
@@ -649,7 +688,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
 
         sN.addTable([effHeader, ...effRows], {
           x: 0.3, y: 0.9, w: 12.73,
-          colW: [2.5, 2.3, 1.2, 1.0, 1.3, 1.5, 1.5, 1.43],
+          colW: [2.2, 1.8, 1.1, 1.1, 0.9, 1.2, 1.3, 1.3, 1.33],
           border: { type: 'solid', pt: 0.5, color: c.border },
           rowH: 0.4,
         });
@@ -673,7 +712,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
 
           const pHdr = (t: string, a: 'left' | 'center' = 'center') => ({ text: t, options: { bold: true as const, fontSize: 9, color: c.white, fill: { color: c.headerBg }, align: a, fontFace: 'Arial' } });
           const propHeader: pptxgen.TableRow = [
-            pHdr('HEKİM', 'left'), pHdr('BRANŞ', 'left'), pHdr('MEVCUT GÜN'),
+            pHdr('HEKİM', 'left'), pHdr('BRANŞ', 'left'), pHdr(`MEVCUT GÜN ${hedefMonth.toLocaleUpperCase('tr-TR')}`),
             pHdr('ÖNERİLEN GÜN'), pHdr('AZALTIM'), pHdr('VERİMLİLİK'),
             pHdr('HEDEF ORT.'), pHdr('KAPASİTE KAZANIMI'),
           ];
@@ -703,8 +742,9 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       }
 
       const safeHospital = selectedHospital.replace(/[^a-zA-Z0-9]/g, '_');
-      const safeMonth = selectedMonth.replace(/[^a-zA-Z0-9]/g, '_');
-      await pptx.writeFile({ fileName: `AI_Cetvel_Planlama_${safeHospital}_${safeMonth}_${selectedYear}.pptx` });
+      const safeRefMonth = referansMonth.replace(/[^a-zA-Z0-9]/g, '_');
+      const safeHedefMonth = hedefMonth.replace(/[^a-zA-Z0-9]/g, '_');
+      await pptx.writeFile({ fileName: `AI_Cetvel_Planlama_${safeHospital}_Ref${safeRefMonth}_Hedef${safeHedefMonth}_${selectedYear}.pptx` });
     } catch (err) {
       console.error('PPTX export hatası:', err);
       alert('Sunum oluşturulurken hata oluştu');
@@ -738,7 +778,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         selectedYears={globalSelectedYears}
         availableYears={YEARS}
         onYearsChange={setGlobalSelectedYears}
-        showMonthFilter={true}
+        showMonthFilter={false}
         selectedMonths={globalSelectedMonths}
         onMonthsChange={setGlobalSelectedMonths}
         showBranchFilter={true}
@@ -748,9 +788,42 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         showApplyButton={true}
         onApply={handleApply}
         isLoading={isLoading}
-        applyDisabled={!selectedHospital || globalSelectedYears.length === 0 || globalSelectedMonths.length === 0}
-        selectionCount={globalAppliedYears.length * globalAppliedMonths.length}
+        applyDisabled={!selectedHospital || globalSelectedYears.length === 0 || referansMonthIdx === null || hedefMonthIdx === null}
+        selectionCount={isPeriodSelected ? 1 : 0}
         selectionLabel="dönem yüklendi"
+        customFilters={
+          <>
+            {/* Referans Ay */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[var(--text-3)]">Referans Ay</label>
+              <select
+                value={referansMonthIdx ?? ''}
+                onChange={(e) => setReferansMonthIdx(e.target.value ? Number(e.target.value) : null)}
+                className="px-3 py-2 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 min-w-[140px] h-[38px]"
+              >
+                <option value="">Referans Ay Seçin</option>
+                {MONTHS.map((m, i) => (
+                  <option key={i + 1} value={i + 1}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Hedef Ay */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-amber-400">Hedef Ay</label>
+              <select
+                value={hedefMonthIdx ?? ''}
+                onChange={(e) => setHedefMonthIdx(e.target.value ? Number(e.target.value) : null)}
+                className="px-3 py-2 rounded-lg border border-amber-500/30 bg-[var(--input-bg)] text-amber-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 min-w-[140px] h-[38px]"
+              >
+                <option value="" className="text-[var(--text-1)]">Hedef Ay Seçin</option>
+                {MONTHS.map((m, i) => (
+                  <option key={i + 1} value={i + 1} className="text-[var(--text-1)]">{m}</option>
+                ))}
+              </select>
+            </div>
+          </>
+        }
       />
 
       {/* Rol Grubu Yükleme Durumu */}
@@ -761,7 +834,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       )}
 
       {/* KPI Kartlari */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <KpiCard
           title="Cerrahi Hekim Sayısı"
           value={isPeriodSelected ? kpiStats.surgicalDoctorCount : null}
@@ -769,8 +842,14 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           isEmpty={!isPeriodSelected}
         />
         <KpiCard
-          title="Toplam Ameliyat Günü"
+          title={`Ameliyat Günü ${referansMonth || '—'}`}
           value={isPeriodSelected ? kpiStats.totalSurgeryDays : null}
+          accent="surgeryDay"
+          isEmpty={!isPeriodSelected}
+        />
+        <KpiCard
+          title={`Ameliyat Günü ${hedefMonth || '—'}`}
+          value={isPeriodSelected ? totalHedefSurgeryDays : null}
           accent="surgeryDay"
           isEmpty={!isPeriodSelected}
         />
@@ -845,7 +924,8 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
                 <tr className="bg-[var(--surface-2)]/60 border-b-2 border-[var(--border-1)]">
                   <SortHeader column="doctorName" label="Hekim" className="!text-left !justify-start" />
                   <SortHeader column="branchName" label="Branş" className="!text-left !justify-start" />
-                  <SortHeader column="plannedDays" label="Ameliyat Günü" />
+                  <SortHeader column="plannedDays" label={`Ameliyat Günü ${referansMonth}`} />
+                  <SortHeader column="hedefPlannedDays" label={`Ameliyat Günü ${hedefMonth}`} />
                   <SortHeader column="performedABC" label="ABC Ameliyat" />
                   <SortHeader column="efficiency" label="Verimlilik" />
                   <SortHeader column="branchAvg" label="Branş Ort." />
@@ -876,6 +956,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
                     <td className="px-4 py-3 text-[13px] font-semibold text-[var(--text-1)] whitespace-nowrap">{doc.doctorName}</td>
                     <td className="px-4 py-3 text-[12px] font-medium text-[var(--text-muted)] whitespace-nowrap">{doc.branchName}</td>
                     <td className="px-4 py-3 text-[14px] font-bold text-center text-[var(--text-1)]">{doc.plannedDays}</td>
+                    <td className="px-4 py-3 text-[14px] font-bold text-center text-amber-300">{doc.hedefPlannedDays}</td>
                     <td className="px-4 py-3 text-[14px] font-bold text-center text-[var(--text-1)]">{doc.performedABC}</td>
                     <td className={`px-4 py-3 text-[14px] font-black text-center ${
                       doc.status === 'low' ? 'text-red-400' : doc.status === 'high' ? 'text-emerald-400' : 'text-[var(--text-1)]'
@@ -920,6 +1001,9 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
               <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">
                 Verimlilik eşiği altındaki hekimler - Ameliyat günlerinin azaltılması önerilir
               </p>
+              <p className="text-[9px] font-bold text-indigo-400 mt-1">
+                Referans: {referansMonth} {selectedYear} | Hedef: {hedefMonth} {selectedYear}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30">
@@ -936,7 +1020,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
                 <tr className="bg-[var(--surface-2)]/60 border-b-2 border-[var(--border-1)]">
                   <th className="px-4 py-3.5 text-left text-[11px] font-black uppercase tracking-wider">Hekim</th>
                   <th className="px-4 py-3.5 text-left text-[11px] font-black uppercase tracking-wider">Branş</th>
-                  <th className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-wider">Mevcut Gün</th>
+                  <th className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-wider">Mevcut Gün {hedefMonth}</th>
                   <th className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-wider">Önerilen Gün</th>
                   <th className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-wider">Azaltım</th>
                   <th className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-wider">Verimlilik</th>
