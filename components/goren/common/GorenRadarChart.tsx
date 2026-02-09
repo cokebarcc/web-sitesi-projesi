@@ -1,22 +1,17 @@
 /**
  * GÖREN Radar (Örümcek Ağı) Grafiği
  *
- * BH modülü için 38 göstergeyi 8 kategoride gruplandırarak
+ * Tüm GÖREN modülleri için göstergeleri kategorilerde gruplandırarak
  * radar grafiği şeklinde gösteren bileşen.
- * İki hastane karşılaştırma özelliği destekler.
+ * İki kurum karşılaştırma özelliği destekler.
  *
- * Kategoriler:
- * 1. Memnuniyet (Hasta & Çalışan)
- * 2. Poliklinik ve Acil
- * 3. Doğum ve Sezaryen
- * 4. İlaç ve Reçete
- * 5. Yatak ve Yoğun Bakım
- * 6. Ameliyathane ve Cerrahi
- * 7. Görüntüleme (BT/MR/USG/Patoloji)
- * 8. Finansal ve İdari
+ * Modül bazlı kategoriler:
+ * - BH: Memnuniyet, Poliklinik/Acil, Doğum/Sezaryen, İlaç/Reçete, Yatak/YB, Ameliyathane, Görüntüleme, Finansal, İdari
+ * - ILCESM: Memnuniyet, Aşılama, Kronik Hastalık Takibi, Kanser Taraması, Anne-Bebek Sağlığı, Birinci Basamak, Tütün Denetimi, İlaç/Reçete
+ * - ADSH: Memnuniyet, Randevu/Veri, Tedavi Kalitesi, Protez/Yer Tutucu, İdari, Finansal
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   RadarChart,
   PolarGrid,
@@ -27,7 +22,7 @@ import {
   Legend
 } from 'recharts';
 import { BHTableRow, loadGorenBHData } from '../../../src/services/gorenStorage';
-import { HOSPITALS } from '../../../constants';
+import { InstitutionType } from '../types/goren.types';
 
 interface GorenRadarChartProps {
   data: BHTableRow[];
@@ -36,17 +31,23 @@ interface GorenRadarChartProps {
   currentInstitutionName?: string;
   year?: number;
   month?: number;
+  moduleType?: InstitutionType;
+  /** Karşılaştırma için kurum listesi */
+  compareInstitutions?: { id: string; name: string }[];
 }
 
-// Kategori tanımları - gösterge sıra numaralarına göre
-const CATEGORIES: {
+// Kategori tipi
+interface CategoryDef {
   id: string;
   name: string;
   shortName: string;
   icon: string;
   color: string;
   indicators: number[];
-}[] = [
+}
+
+// BH Kategorileri - 38 gösterge, 9 kategori
+const BH_CATEGORIES: CategoryDef[] = [
   {
     id: 'memnuniyet',
     name: 'Memnuniyet',
@@ -121,6 +122,139 @@ const CATEGORIES: {
   }
 ];
 
+// ILCESM Kategorileri - 13 gösterge (sıra: 1,2,3,4,8,10,11,12,13,14,15,16,17), 8 kategori
+const ILCESM_CATEGORIES: CategoryDef[] = [
+  {
+    id: 'memnuniyet',
+    name: 'Memnuniyet',
+    shortName: 'Memnuniyet',
+    icon: '😊',
+    color: '#06b6d4',
+    indicators: [1, 2]
+  },
+  {
+    id: 'asilama',
+    name: 'Aşılama',
+    shortName: 'Aşılama',
+    icon: '💉',
+    color: '#8b5cf6',
+    indicators: [3, 4]
+  },
+  {
+    id: 'kronik-hastalik',
+    name: 'Kronik Hastalık Takibi',
+    shortName: 'HYP Takip',
+    icon: '🩺',
+    color: '#ec4899',
+    indicators: [8]
+  },
+  {
+    id: 'kanser-taramasi',
+    name: 'Kanser Taraması',
+    shortName: 'Kanser Tar.',
+    icon: '🔬',
+    color: '#3b82f6',
+    indicators: [10, 11]
+  },
+  {
+    id: 'anne-bebek',
+    name: 'Anne-Bebek Sağlığı',
+    shortName: 'Anne/Bebek',
+    icon: '👶',
+    color: '#f59e0b',
+    indicators: [12]
+  },
+  {
+    id: 'birinci-basamak',
+    name: 'Birinci Basamak Erişim',
+    shortName: '1.Basamak',
+    icon: '🏥',
+    color: '#10b981',
+    indicators: [13, 15]
+  },
+  {
+    id: 'tutun-denetim',
+    name: 'Tütün Denetimi',
+    shortName: 'Tütün Den.',
+    icon: '🚭',
+    color: '#ef4444',
+    indicators: [14]
+  },
+  {
+    id: 'ilac-recete',
+    name: 'İlaç ve Reçete',
+    shortName: 'İlaç/Reçete',
+    icon: '💊',
+    color: '#22c55e',
+    indicators: [16, 17]
+  }
+];
+
+// ADSH Kategorileri - 14 gösterge, 6 kategori
+const ADSH_CATEGORIES: CategoryDef[] = [
+  {
+    id: 'memnuniyet',
+    name: 'Memnuniyet',
+    shortName: 'Memnuniyet',
+    icon: '😊',
+    color: '#06b6d4',
+    indicators: [1, 2]
+  },
+  {
+    id: 'randevu-veri',
+    name: 'Randevu ve Veri',
+    shortName: 'Randevu/Veri',
+    icon: '📊',
+    color: '#8b5cf6',
+    indicators: [3, 4, 5]
+  },
+  {
+    id: 'tedavi-kalitesi',
+    name: 'Tedavi Kalitesi',
+    shortName: 'Tedavi Kal.',
+    icon: '🦷',
+    color: '#ec4899',
+    indicators: [6, 7, 8]
+  },
+  {
+    id: 'protez-yer-tutucu',
+    name: 'Protez ve Yer Tutucu',
+    shortName: 'Protez/YT',
+    icon: '🔧',
+    color: '#f59e0b',
+    indicators: [9, 10, 11]
+  },
+  {
+    id: 'finansal',
+    name: 'Finansal',
+    shortName: 'Finansal',
+    icon: '💰',
+    color: '#22c55e',
+    indicators: [12, 13, 14]
+  }
+];
+
+// Modül tipine göre kategori döndür
+const getCategoriesForModule = (moduleType?: InstitutionType): CategoryDef[] => {
+  switch (moduleType) {
+    case 'ILCESM': return ILCESM_CATEGORIES;
+    case 'ADSH': return ADSH_CATEGORIES;
+    case 'BH':
+    default: return BH_CATEGORIES;
+  }
+};
+
+// Modül tipine göre toplam gösterge sayısını döndür
+const getIndicatorCountForModule = (moduleType?: InstitutionType): number => {
+  const categories = getCategoriesForModule(moduleType);
+  return categories.reduce((sum, cat) => sum + cat.indicators.length, 0);
+};
+
+// Modül tipine göre toplam kategori sayısını döndür
+const getCategoryCountForModule = (moduleType?: InstitutionType): number => {
+  return getCategoriesForModule(moduleType).length;
+};
+
 interface IndicatorDetail {
   name: string;
   score: number;
@@ -142,13 +276,14 @@ interface CategoryDetail {
 }
 
 // Veriyi kategori skorlarına dönüştür
-const calculateCategoryScores = (data: BHTableRow[]) => {
+const calculateCategoryScores = (data: BHTableRow[], moduleType?: InstitutionType) => {
+  const categories = getCategoriesForModule(moduleType);
   const dataMap = new Map<number, BHTableRow>();
   data.forEach(row => {
     dataMap.set(row.sira, row);
   });
 
-  return CATEGORIES.map(category => {
+  return categories.map(category => {
     let totalWeightedScore = 0;
     let validIndicatorCount = 0;
     const indicatorDetails: { name: string; score: number; maxScore: number; normalized: number }[] = [];
@@ -197,7 +332,9 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   currentInstitutionId,
   currentInstitutionName,
   year,
-  month
+  month,
+  moduleType = 'BH',
+  compareInstitutions = []
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryDetail | null>(null);
   const [compareHospitalId, setCompareHospitalId] = useState<string>('');
@@ -207,23 +344,15 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Muaf hastaneler
-  const excludedHospitals = ['Harran DH', 'Balıklıgöl DH'];
+  // Filtrelenmiş kurum listesi (modül tipine göre dinamik)
+  const filteredInstitutions = useMemo(() => {
+    return compareInstitutions
+      .filter(inst => inst.id !== currentInstitutionId)
+      .filter(inst => searchQuery === '' || inst.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+  }, [compareInstitutions, currentInstitutionId, searchQuery]);
 
-  // Filtrelenmiş hastane listesi
-  const filteredHospitals = HOSPITALS
-    .filter(h => !excludedHospitals.includes(h))
-    .filter(h => {
-      const id = `bh-${h.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
-        const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
-        return map[c] || c;
-      })}`;
-      return id !== currentInstitutionId;
-    })
-    .filter(h => searchQuery === '' || h.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => a.localeCompare(b, 'tr'));
-
-  // Karşılaştırma hastanesi değiştiğinde veri yükle
+  // Karşılaştırma kurumu değiştiğinde veri yükle
   useEffect(() => {
     const loadCompareData = async () => {
       if (!compareHospitalId || !year || !month) {
@@ -282,10 +411,10 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   }
 
   // Ana veri için kategori skorları
-  const radarData = calculateCategoryScores(data);
+  const radarData = calculateCategoryScores(data, moduleType);
 
   // Karşılaştırma verisi için kategori skorları
-  const compareRadarData = compareData.length > 0 ? calculateCategoryScores(compareData) : null;
+  const compareRadarData = compareData.length > 0 ? calculateCategoryScores(compareData, moduleType) : null;
 
   // Birleştirilmiş grafik verisi
   const combinedData = radarData.map((item, idx) => ({
@@ -310,7 +439,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
             Gösterge Dağılım Haritası
           </h3>
           <p className="text-xs text-[var(--text-muted)] mt-1">
-            9 kategori, 38 gösterge - Ağırlıklandırılmış performans analizi
+            {getCategoryCountForModule(moduleType)} kategori, {getIndicatorCountForModule(moduleType)} gösterge - Ağırlıklandırılmış performans analizi
           </p>
         </div>
 
@@ -335,7 +464,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     <svg className="w-4 h-4 text-slate-500 group-hover:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <span className="text-sm text-slate-400">Hastane seçin...</span>
+                    <span className="text-sm text-slate-400">Kurum seçin...</span>
                   </>
                 )}
               </div>
@@ -388,7 +517,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     </svg>
                     <input
                       type="text"
-                      placeholder="Hastane ara..."
+                      placeholder="Kurum ara..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full bg-slate-900/50 border border-slate-600/50 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
@@ -397,22 +526,18 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                   </div>
                 </div>
 
-                {/* Hospital List */}
+                {/* Kurum Listesi */}
                 <div className="max-h-64 overflow-y-auto">
-                  {filteredHospitals.length > 0 ? (
-                    filteredHospitals.map(hospital => {
-                      const id = `bh-${hospital.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
-                        const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
-                        return map[c] || c;
-                      })}`;
-                      const isSelected = id === compareHospitalId;
+                  {filteredInstitutions.length > 0 ? (
+                    filteredInstitutions.map(inst => {
+                      const isSelected = inst.id === compareHospitalId;
 
                       return (
                         <button
-                          key={id}
+                          key={inst.id}
                           onClick={() => {
-                            setCompareHospitalId(id);
-                            setCompareHospitalName(hospital);
+                            setCompareHospitalId(inst.id);
+                            setCompareHospitalName(inst.name);
                             setIsDropdownOpen(false);
                             setSearchQuery('');
                           }}
@@ -424,7 +549,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                           <span className={`text-sm ${isSelected ? 'text-emerald-400 font-medium' : 'text-slate-300'}`}>
-                            {hospital}
+                            {inst.name}
                           </span>
                           {isSelected && (
                             <svg className="w-4 h-4 text-emerald-400 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -436,7 +561,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     })
                   ) : (
                     <div className="px-4 py-8 text-center text-slate-500 text-sm">
-                      Hastane bulunamadı
+                      Kurum bulunamadı
                     </div>
                   )}
                 </div>
@@ -449,7 +574,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       {/* Skor Kartları */}
       <div className="flex items-center justify-center gap-8 mb-4">
         <div className="text-center">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{currentInstitutionName || 'Mevcut Hastane'}</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{currentInstitutionName || 'Mevcut Kurum'}</p>
           <p className="text-3xl font-black text-emerald-400">%{Math.round(overallScore)}</p>
         </div>
         {compareOverallScore !== null && (
@@ -481,7 +606,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
               axisLine={false}
             />
 
-            {/* Karşılaştırma hastanesi (varsa) - Turuncu */}
+            {/* Karşılaştırma kurumu (varsa) - Turuncu */}
             {compareRadarData && (
               <Radar
                 name={compareHospitalName}
@@ -499,9 +624,9 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
               />
             )}
 
-            {/* Ana hastane - Yeşil */}
+            {/* Ana kurum - Yeşil */}
             <Radar
-              name={currentInstitutionName || 'Mevcut Hastane'}
+              name={currentInstitutionName || 'Mevcut Kurum'}
               dataKey="score"
               stroke="#10b981"
               fill="#10b981"
@@ -617,7 +742,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-emerald-500" />
-            <span>{currentInstitutionName || 'Mevcut Hastane'}</span>
+            <span>{currentInstitutionName || 'Mevcut Kurum'}</span>
           </div>
           {compareRadarData && (
             <div className="flex items-center gap-2">
@@ -684,7 +809,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
 
             {/* Göstergeler Listesi */}
             <div className="p-5 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 200px)' }}>
-              {/* Hastane başlıkları - karşılaştırma varsa göster */}
+              {/* Kurum başlıkları - karşılaştırma varsa göster */}
               {selectedCategory.compareDetails && selectedCategory.compareDetails.length > 0 && (
                 <div className="flex items-center justify-end gap-4 mb-4 pr-2">
                   <div className="flex items-center gap-2">
@@ -701,7 +826,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
               {selectedCategory.details.length > 0 ? (
                 <div className="space-y-3">
                   {selectedCategory.details.map((detail, idx) => {
-                    // Karşılaştırma hastanesinin aynı göstergesi
+                    // Karşılaştırma kurumunun aynı göstergesi
                     const compareDetail = selectedCategory.compareDetails?.find(
                       cd => cd.name === detail.name
                     );
@@ -716,7 +841,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                             {detail.name}
                           </span>
                           <div className="flex items-center gap-3">
-                            {/* Ana hastane puanı - Yeşil tonları */}
+                            {/* Ana kurum puanı - Yeşil tonları */}
                             <div className="flex flex-col items-center gap-1">
                               <span
                                 className="text-white font-bold text-sm px-3 py-1.5 rounded-lg"
@@ -733,7 +858,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                               </span>
                             </div>
 
-                            {/* Karşılaştırma hastanesi puanı - Turuncu tonları */}
+                            {/* Karşılaştırma kurumu puanı - Turuncu tonları */}
                             {compareDetail && (
                               <div className="flex flex-col items-center gap-1">
                                 <span
