@@ -47,7 +47,7 @@ export const useUserPermissions = (userEmail: string | null) => {
           setUserPermissions({
             uid: 'admin',
             email: userEmail,
-            displayName: 'Admin',
+            displayName: 'Yakup Çağlın',
             role: 'admin',
             permissions: {
               allowedHospitals: [], // Tüm hastaneler

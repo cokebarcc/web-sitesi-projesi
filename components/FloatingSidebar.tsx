@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 interface FloatingSidebarProps {
   currentView: string;
@@ -9,6 +9,7 @@ interface FloatingSidebarProps {
   hasModuleAccess: (module: string) => boolean;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
+  dataStatus?: Record<string, boolean>;
 }
 
 const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
@@ -19,10 +20,35 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
   isAdmin = false,
   hasModuleAccess,
   theme = 'dark',
-  onToggleTheme
+  onToggleTheme,
+  dataStatus = {}
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  // Load favorites from localStorage
+  useEffect(() => {
+    try {
+      const key = `medis_favorites_${userEmail || 'default'}`;
+      const saved = localStorage.getItem(key);
+      if (saved) setFavorites(JSON.parse(saved));
+    } catch {}
+  }, [userEmail]);
+
+  // Save favorites to localStorage
+  const toggleFavorite = useCallback((viewId: string) => {
+    setFavorites(prev => {
+      const next = prev.includes(viewId)
+        ? prev.filter(v => v !== viewId)
+        : prev.length < 5 ? [...prev, viewId] : prev;
+      try {
+        const key = `medis_favorites_${userEmail || 'default'}`;
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, [userEmail]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev =>
@@ -165,6 +191,17 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       hasAccess: hasModuleAccess('gorenBashekimlik')
     },
     {
+      id: 'comparison-wizard',
+      label: 'Karşılaştırma',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      view: 'comparison-wizard',
+      hasAccess: true
+    },
+    {
       id: 'pdf-viewer',
       label: 'PDF Yükle',
       icon: (
@@ -198,7 +235,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           flex flex-col overflow-hidden
           ${isExpanded ? 'w-64' : 'w-[72px]'}
           ${isDark
-            ? 'bg-[#0a0a14] border-slate-700/30 shadow-black/50'
+            ? 'bg-[#0c1423] border-[#2d4163]/30 shadow-black/50'
             : 'bg-white/95 border-slate-200/60 shadow-slate-300/50'
           }
         `}
@@ -247,6 +284,51 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
               )}
             </button>
           ))}
+
+          {/* Favorites Section */}
+          {favorites.length > 0 && (
+            <>
+              <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
+              {isExpanded && (
+                <p className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? 'text-amber-500/60' : 'text-amber-600/60'}`}>
+                  Favoriler
+                </p>
+              )}
+              {favorites.map(favView => {
+                // Find the label for this view from all menu structures
+                const allItems = [
+                  ...menuItems,
+                  ...menuGroups.flatMap(g => g.items || []),
+                  ...supportItems
+                ];
+                const item = allItems.find(i => i.view === favView);
+                if (!item) return null;
+                return (
+                  <button
+                    key={`fav-${favView}`}
+                    onClick={() => onNavigate(favView)}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200
+                      ${isViewActive(favView)
+                        ? isDark ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700'
+                        : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }
+                    `}
+                    title={!isExpanded ? item.label : undefined}
+                  >
+                    <div className="shrink-0 relative">
+                      <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </div>
+                    {isExpanded && (
+                      <span className="text-xs font-medium whitespace-nowrap">{item.label}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </>
+          )}
 
           {/* Divider */}
           <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
@@ -305,28 +387,48 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                       {visibleItems.map(item => {
                         const isDisabled = (item as any).disabled;
                         const isGoren = group.id === 'goren-perf';
+                        const hasData = dataStatus[item.view];
+                        const isFav = favorites.includes(item.view);
                         return (
-                          <button
-                            key={item.id}
-                            onClick={() => !isDisabled && onNavigate(item.view)}
-                            disabled={isDisabled}
-                            className={`
-                              w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 whitespace-nowrap
-                              ${isDisabled
-                                ? 'text-slate-600 cursor-not-allowed opacity-50'
-                                : isViewActive(item.view)
-                                  ? isDark
-                                    ? isGoren ? 'text-white bg-purple-500/20 font-medium' : 'text-white bg-slate-700/30 font-medium'
-                                    : isGoren ? 'text-purple-700 bg-purple-50 font-medium' : 'text-blue-700 bg-blue-50 font-medium'
-                                  : isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                              }
-                            `}
-                          >
-                            {item.label}
-                            {isDisabled && (
-                              <span className="ml-2 text-[9px] text-slate-500">(Yakında)</span>
-                            )}
-                          </button>
+                          <div key={item.id} className="group/item flex items-center">
+                            <button
+                              onClick={() => !isDisabled && onNavigate(item.view)}
+                              disabled={isDisabled}
+                              className={`
+                                flex-1 text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-2
+                                ${isDisabled
+                                  ? 'text-slate-600 cursor-not-allowed opacity-50'
+                                  : isViewActive(item.view)
+                                    ? isDark
+                                      ? isGoren ? 'text-white bg-purple-500/20 font-medium' : 'text-white bg-slate-700/30 font-medium'
+                                      : isGoren ? 'text-purple-700 bg-purple-50 font-medium' : 'text-blue-700 bg-blue-50 font-medium'
+                                    : isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                                }
+                              `}
+                            >
+                              {hasData !== undefined && (
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasData ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+                              )}
+                              {item.label}
+                              {isDisabled && (
+                                <span className="ml-2 text-[9px] text-slate-500">(Yakında)</span>
+                              )}
+                            </button>
+                            {/* Favorite star - visible on hover */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleFavorite(item.view); }}
+                              className={`shrink-0 p-1 rounded transition-all duration-200 ${
+                                isFav
+                                  ? 'text-amber-400 opacity-100'
+                                  : 'text-slate-600 opacity-0 group-hover/item:opacity-100 hover:text-amber-400'
+                              }`}
+                              title={isFav ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                            >
+                              <svg className="w-3 h-3" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                              </svg>
+                            </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -504,11 +606,11 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #334155;
+          background: #2d4163;
           border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #475569;
+          background: #3d5580;
         }
       `}</style>
     </>

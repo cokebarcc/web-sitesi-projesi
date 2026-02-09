@@ -215,6 +215,7 @@ export type ViewType =
   | 'goren-ash'              // GÖREN - Acil Sağlık Hizmetleri
   | 'ai-cetvel-planlama'     // AI Cetvel Planlama modülü (MHRS)
   | 'pdf-viewer'             // PDF Yükle ve Oku
+  | 'comparison-wizard'      // Veri Karşılaştırma Wizard'ı
   | 'admin';
 
 // Aktif Talep (Active Demand) Types

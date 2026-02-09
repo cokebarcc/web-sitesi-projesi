@@ -50,7 +50,15 @@
       "Bash(git pull:*)",
       "Bash(npx vite build)",
       "Bash(timeout:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(tasklist:*)",
+      "Bash(FINDSTR:*)",
+      "Bash(taskkill:*)",
+      "Bash(wc:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(done)",
+      "Bash(find:*)"
     ]
   }
 }

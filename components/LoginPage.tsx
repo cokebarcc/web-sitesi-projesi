@@ -90,9 +90,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           <defs>
             <linearGradient id="ekgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="transparent" />
-              <stop offset="20%" stopColor="#10B7C6" />
-              <stop offset="50%" stopColor="#10B7C6" />
-              <stop offset="80%" stopColor="#10B7C6" />
+              <stop offset="20%" stopColor="#5b9cff" />
+              <stop offset="50%" stopColor="#5b9cff" />
+              <stop offset="80%" stopColor="#5b9cff" />
               <stop offset="100%" stopColor="transparent" />
             </linearGradient>
           </defs>
@@ -112,7 +112,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <div
           className="absolute -left-40 top-1/4 w-[600px] h-[600px] rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(16, 183, 198, 0.15) 0%, rgba(16, 183, 198, 0.05) 40%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(91, 156, 255, 0.15) 0%, rgba(91, 156, 255, 0.05) 40%, transparent 70%)',
             filter: 'blur(60px)'
           }}
         />
@@ -128,7 +128,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <div
           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px]"
           style={{
-            background: 'radial-gradient(ellipse, rgba(16, 183, 198, 0.05) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse, rgba(91, 156, 255, 0.05) 0%, transparent 70%)',
             filter: 'blur(40px)'
           }}
         />
@@ -142,10 +142,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           {/* Radar circles decoration */}
           <div className="absolute left-0 bottom-0 w-[400px] h-[400px] pointer-events-none opacity-20">
             <svg viewBox="0 0 400 400" className="w-full h-full">
-              <circle cx="50" cy="350" r="80" fill="none" stroke="rgba(16, 183, 198, 0.3)" strokeWidth="1" />
-              <circle cx="50" cy="350" r="140" fill="none" stroke="rgba(16, 183, 198, 0.2)" strokeWidth="1" />
-              <circle cx="50" cy="350" r="200" fill="none" stroke="rgba(16, 183, 198, 0.1)" strokeWidth="1" />
-              <circle cx="50" cy="350" r="260" fill="none" stroke="rgba(16, 183, 198, 0.05)" strokeWidth="1" />
+              <circle cx="50" cy="350" r="80" fill="none" stroke="rgba(91, 156, 255, 0.3)" strokeWidth="1" />
+              <circle cx="50" cy="350" r="140" fill="none" stroke="rgba(91, 156, 255, 0.2)" strokeWidth="1" />
+              <circle cx="50" cy="350" r="200" fill="none" stroke="rgba(91, 156, 255, 0.1)" strokeWidth="1" />
+              <circle cx="50" cy="350" r="260" fill="none" stroke="rgba(91, 156, 255, 0.05)" strokeWidth="1" />
             </svg>
           </div>
 
@@ -163,15 +163,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               <div className="relative w-20 h-20 flex items-center justify-center">
                 {/* Rotating square frames */}
                 <div
-                  className="absolute w-20 h-20 rounded-xl border border-[#10B7C6]/40"
+                  className="absolute w-20 h-20 rounded-xl border border-[#5b9cff]/40"
                   style={{ animation: 'rotateSquare1 8s linear infinite' }}
                 />
                 <div
-                  className="absolute w-[72px] h-[72px] rounded-xl border border-[#10B7C6]/30"
+                  className="absolute w-[72px] h-[72px] rounded-xl border border-[#5b9cff]/30"
                   style={{ animation: 'rotateSquare2 6s linear infinite reverse' }}
                 />
                 <div
-                  className="absolute w-16 h-16 rounded-lg border border-[#10B7C6]/20"
+                  className="absolute w-16 h-16 rounded-lg border border-[#5b9cff]/20"
                   style={{ animation: 'rotateSquare1 10s linear infinite' }}
                 />
 
@@ -179,12 +179,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 <div
                   className="relative w-14 h-14 rounded-xl flex items-center justify-center"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(16, 183, 198, 0.15) 0%, rgba(16, 183, 198, 0.05) 100%)',
-                    border: '1px solid rgba(16, 183, 198, 0.3)',
-                    boxShadow: '0 0 30px rgba(16, 183, 198, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
+                    background: 'linear-gradient(135deg, rgba(91, 156, 255, 0.15) 0%, rgba(91, 156, 255, 0.05) 100%)',
+                    border: '1px solid rgba(91, 156, 255, 0.3)',
+                    boxShadow: '0 0 30px rgba(91, 156, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.05)'
                   }}
                 >
-                  <svg className="w-7 h-7 text-[#10B7C6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-7 h-7 text-[#5b9cff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -198,9 +198,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
             {/* Subtitle */}
             <h2 className="text-xl lg:text-2xl font-semibold mb-8">
-              <span className="text-[#10B7C6]">Yapay Zekâ Destekli</span>
+              <span className="text-[#5b9cff]">Yapay Zekâ Destekli</span>
               <br />
-              <span className="text-[#1AB57A]">Sağlık Analiz Platformu</span>
+              <span className="text-[#38bdf8]">Sağlık Analiz Platformu</span>
             </h2>
 
             {/* Feature Pills */}
@@ -208,8 +208,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               {['Yapay Zekâ Analizi', 'Sesli Asistan', 'Akıllı Raporlar'].map((feature, i) => (
                 <div
                   key={i}
-                  className="px-4 py-2 rounded-full text-sm font-medium text-[#10B7C6] border border-[#10B7C6]/30 bg-[#10B7C6]/5 hover:bg-[#10B7C6]/10 hover:border-[#10B7C6]/50 transition-all duration-300 cursor-default"
-                  style={{ boxShadow: 'inset 0 1px 0 rgba(16, 183, 198, 0.1)' }}
+                  className="px-4 py-2 rounded-full text-sm font-medium text-[#5b9cff] border border-[#5b9cff]/30 bg-[#5b9cff]/5 hover:bg-[#5b9cff]/10 hover:border-[#5b9cff]/50 transition-all duration-300 cursor-default"
+                  style={{ boxShadow: 'inset 0 1px 0 rgba(91, 156, 255, 0.1)' }}
                 >
                   {feature}
                 </div>
@@ -228,7 +228,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 100px rgba(16, 183, 198, 0.05)'
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 100px rgba(91, 156, 255, 0.05)'
             }}
           >
             {/* Card Header */}
@@ -254,8 +254,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     border: '1px solid rgba(255, 255, 255, 0.06)'
                   }}
                   onFocus={(e) => {
-                    e.target.style.border = '1px solid rgba(16, 183, 198, 0.4)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 183, 198, 0.1)';
+                    e.target.style.border = '1px solid rgba(91, 156, 255, 0.4)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(91, 156, 255, 0.1)';
                   }}
                   onBlur={(e) => {
                     e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
@@ -282,8 +282,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     border: '1px solid rgba(255, 255, 255, 0.06)'
                   }}
                   onFocus={(e) => {
-                    e.target.style.border = '1px solid rgba(16, 183, 198, 0.4)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 183, 198, 0.1)';
+                    e.target.style.border = '1px solid rgba(91, 156, 255, 0.4)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(91, 156, 255, 0.1)';
                   }}
                   onBlur={(e) => {
                     e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
@@ -315,16 +315,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 disabled={isLoading}
                 className="w-full py-4 rounded-xl font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
                 style={{
-                  background: 'linear-gradient(135deg, #10B7C6 0%, #1AB57A 100%)',
-                  boxShadow: '0 10px 40px -10px rgba(16, 183, 198, 0.5)'
+                  background: 'linear-gradient(135deg, #5b9cff 0%, #38bdf8 100%)',
+                  boxShadow: '0 10px 40px -10px rgba(91, 156, 255, 0.5)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 15px 50px -10px rgba(16, 183, 198, 0.6)';
-                  e.currentTarget.style.background = 'linear-gradient(135deg, #12D0C7 0%, #1EC97A 100%)';
+                  e.currentTarget.style.boxShadow = '0 15px 50px -10px rgba(91, 156, 255, 0.6)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #6ba8ff 0%, #4dc9f6 100%)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 10px 40px -10px rgba(16, 183, 198, 0.5)';
-                  e.currentTarget.style.background = 'linear-gradient(135deg, #10B7C6 0%, #1AB57A 100%)';
+                  e.currentTarget.style.boxShadow = '0 10px 40px -10px rgba(91, 156, 255, 0.5)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #5b9cff 0%, #38bdf8 100%)';
                 }}
               >
                 <span className="flex items-center justify-center gap-2">
@@ -351,7 +351,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
-                className="w-full text-center text-[#9AA8B5] hover:text-[#10B7C6] text-sm font-medium transition-colors py-2"
+                className="w-full text-center text-[#9AA8B5] hover:text-[#5b9cff] text-sm font-medium transition-colors py-2"
               >
                 Şifremi Unuttum
               </button>
@@ -423,8 +423,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     border: '1px solid rgba(255, 255, 255, 0.06)'
                   }}
                   onFocus={(e) => {
-                    e.target.style.border = '1px solid rgba(16, 183, 198, 0.4)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(16, 183, 198, 0.1)';
+                    e.target.style.border = '1px solid rgba(91, 156, 255, 0.4)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(91, 156, 255, 0.1)';
                   }}
                   onBlur={(e) => {
                     e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
@@ -461,7 +461,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   type="submit"
                   disabled={isLoading}
                   className="flex-1 py-3 rounded-xl font-medium text-white transition-all disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #10B7C6 0%, #1AB57A 100%)' }}
+                  style={{ background: 'linear-gradient(135deg, #5b9cff 0%, #38bdf8 100%)' }}
                 >
                   {isLoading ? 'Gönderiliyor...' : 'Gönder'}
                 </button>
