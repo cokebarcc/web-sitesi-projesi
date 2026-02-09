@@ -42,12 +42,15 @@ import DashboardCategory from './components/DashboardCategory';
 import EmergencyService from './components/EmergencyService';
 import WelcomeDashboard from './components/WelcomeDashboard';
 import FloatingSidebar from './components/FloatingSidebar';
+import CommandPalette from './components/CommandPalette';
 import SchedulePlanning from './components/SchedulePlanning';
 import ActiveDemand from './components/ActiveDemand';
 import AICetvelPlanlama from './components/AICetvelPlanlama';
 import GorenModule from './components/goren/GorenModule';
 import GorenManuelHesaplama from './components/goren/GorenManuelHesaplama';
 import PdfViewer from './components/PdfViewer';
+import StickyNotes from './components/StickyNotes';
+import ComparisonWizard from './components/ComparisonWizard';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 
@@ -96,6 +99,24 @@ const App: React.FC = () => {
 
   // User Permissions
   const { userPermissions, loading: permissionsLoading, hasModuleAccess, canUploadData, isAdmin } = useUserPermissions(user?.email || null);
+
+  // Theme state
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('medis_theme');
+    return (saved === 'light') ? 'light' : 'dark';
+  });
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('medis_theme', next);
+      return next;
+    });
+  }, []);
+
+  // Apply theme class to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const [view, setViewState] = useState<ViewType>(() => {
     const saved = localStorage.getItem('medis_active_view');
@@ -276,6 +297,8 @@ const App: React.FC = () => {
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState('');
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isStickyNotesOpen, setIsStickyNotesOpen] = useState(false);
 
   const [isMhrsExpanded, setIsMhrsExpanded] = useState(true);
   const [isFinancialExpanded, setIsFinancialExpanded] = useState(true);
@@ -287,6 +310,18 @@ const App: React.FC = () => {
 
   // Otomatik veri yükleme kaldırıldı - kullanıcı "Uygula" butonuna tıklayacak
   // Modül geçişlerinde filtreler ve veriler KORUNUR - sıfırlama kaldırıldı
+
+  // Ctrl+K / Cmd+K command palette shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Firebase Authentication Listener
   useEffect(() => {
@@ -719,9 +754,20 @@ const App: React.FC = () => {
             case 'welcome':
               return (
                 <WelcomeDashboard
-                  userName={user?.email?.split('@')[0]}
+                  userName={userPermissions?.displayName || user?.email?.split('@')[0]}
                   userEmail={user?.email || ''}
                   onNavigate={(v) => setView(v as ViewType)}
+                  onLogout={handleLogout}
+                  isAdmin={isAdmin}
+                  hasModuleAccess={hasModuleAccess}
+                  detailedScheduleData={detailedScheduleData}
+                  muayeneByPeriod={muayeneByPeriod}
+                  ameliyatByPeriod={ameliyatByPeriod}
+                  scheduleVersions={scheduleVersions}
+                  selectedHospital={selectedHospital}
+                  isDataLoaded={isDataLoaded}
+                  theme={theme}
+                  onToggleTheme={toggleTheme}
                 />
               );
 
@@ -1027,6 +1073,13 @@ const App: React.FC = () => {
                   onBack={() => setView('welcome')}
                 />
               );
+            case 'comparison-wizard':
+              return (
+                <ComparisonWizard
+                  theme={theme}
+                  selectedHospital={selectedHospital}
+                />
+              );
             default: return null;
           }
         })()}
@@ -1088,9 +1141,9 @@ const App: React.FC = () => {
   // Show loading screen while checking authentication
   if (authLoading) {
     return (
-      <div className="fixed inset-0 bg-slate-900 flex items-center justify-center">
+      <div className="fixed inset-0 bg-[#0f1729] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-16 h-16 border-4 border-[#5b9cff] border-t-transparent rounded-full animate-spin"></div>
           <p className="text-white font-black text-lg">Yükleniyor...</p>
         </div>
       </div>
@@ -1106,41 +1159,93 @@ const App: React.FC = () => {
   if (view === 'welcome') {
     return (
       <div className="min-h-screen font-['Inter']">
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          onClose={() => setIsCommandPaletteOpen(false)}
+          onNavigate={(v) => { setView(v); setIsCommandPaletteOpen(false); }}
+          hasModuleAccess={hasModuleAccess}
+        />
         {toast && (
-          <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
-            {toast.message}
+          <div className={`fixed top-6 right-6 z-[500] px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl flex items-center gap-3 max-w-md transition-all duration-300 animate-in slide-in-from-right ${
+            toast.type === 'success'
+              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+              : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+          }`}>
+            {toast.type === 'success' ? (
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            )}
+            <span className="text-sm font-semibold">{toast.message}</span>
           </div>
         )}
         <WelcomeDashboard
-          userName={user?.email?.split('@')[0]}
+          userName={userPermissions?.displayName || user?.email?.split('@')[0]}
           userEmail={user?.email || ''}
           onNavigate={(v) => setView(v as ViewType)}
           onLogout={handleLogout}
           isAdmin={isAdmin}
           hasModuleAccess={hasModuleAccess}
+          detailedScheduleData={detailedScheduleData}
+          muayeneByPeriod={muayeneByPeriod}
+          ameliyatByPeriod={ameliyatByPeriod}
+          scheduleVersions={scheduleVersions}
+          selectedHospital={selectedHospital}
+          isDataLoaded={isDataLoaded}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen text-slate-200 bg-gradient-to-br from-[#0a0a1a] via-[#0d1025] to-[#0a0a1a] relative font-['Inter']">
+    <div className={`flex min-h-screen relative font-['Inter'] transition-colors duration-500 ${
+      theme === 'dark'
+        ? 'text-slate-200 bg-gradient-to-br from-[#0f1729] via-[#131d33] to-[#0f1729]'
+        : 'text-slate-800 bg-gradient-to-br from-[#f0f4f8] via-[#e8eef5] to-[#f0f4f8]'
+    }`}>
       {toast && (
-        <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-rose-600 text-white border-rose-500'}`}>
-          {toast.message}
+        <div className={`fixed top-6 right-6 z-[500] px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl flex items-center gap-3 max-w-md transition-all duration-300 animate-in slide-in-from-right ${
+          toast.type === 'success'
+            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+            : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+        }`}>
+          {toast.type === 'success' ? (
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+          )}
+          <span className="text-sm font-semibold">{toast.message}</span>
         </div>
       )}
 
       {isLoading && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] flex items-center justify-center">
-          <div className="bg-[#12121a] border border-slate-700/50 p-10 rounded-[32px] shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in-95 min-w-[400px]">
+        <div className="fixed inset-0 bg-[#0f1729]/70 backdrop-blur-sm z-[250] flex items-center justify-center">
+          <div className="bg-[#131d33] border border-[#2d4163]/50 p-10 rounded-[32px] shadow-2xl flex flex-col items-center gap-6 animate-in zoom-in-95 min-w-[400px]">
              {/* ECG Kalp Ritmi Animasyonu */}
              <div className="relative w-full h-24 flex items-center justify-center overflow-hidden">
                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
                  <defs>
                    <linearGradient id="ecgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                     <stop offset="0%" style={{stopColor: '#3b82f6', stopOpacity: 0.8}} />
-                     <stop offset="100%" style={{stopColor: '#60a5fa', stopOpacity: 0.4}} />
+                     <stop offset="0%" style={{stopColor: '#5b9cff', stopOpacity: 0.8}} />
+                     <stop offset="100%" style={{stopColor: '#38bdf8', stopOpacity: 0.4}} />
                    </linearGradient>
                  </defs>
                  {/* ECG Çizgisi */}
@@ -1161,7 +1266,13 @@ const App: React.FC = () => {
                  </svg>
                </div>
              </div>
-             <p className="font-black text-slate-200 text-center">{loadingText}</p>
+             <p className="font-bold text-slate-200 text-center text-sm">{loadingText}</p>
+             {/* Progress indicator dots */}
+             <div className="flex items-center gap-1.5">
+               <div className="w-2 h-2 rounded-full bg-[#5b9cff] animate-bounce" style={{ animationDelay: '0ms' }} />
+               <div className="w-2 h-2 rounded-full bg-[#5b9cff] animate-bounce" style={{ animationDelay: '150ms' }} />
+               <div className="w-2 h-2 rounded-full bg-[#5b9cff] animate-bounce" style={{ animationDelay: '300ms' }} />
+             </div>
           </div>
         </div>
       )}
@@ -1204,16 +1315,46 @@ const App: React.FC = () => {
         .animate-heartbeat {
           animation: heartbeat 1.5s ease-in-out infinite;
         }
+
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .slide-in-from-right {
+          animation: slideInRight 0.3s ease-out forwards;
+        }
+
+        @keyframes viewFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .view-transition {
+          animation: viewFadeIn 0.25s ease-out forwards;
+        }
       `}</style>
 
       {isBranchModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-          <div className="bg-[#12121a] border border-slate-700/50 w-full max-w-md rounded-[32px] shadow-2xl p-8">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-[#131d33] border border-[#2d4163]/50 w-full max-w-md rounded-[32px] shadow-2xl p-8">
             <h2 className="text-xl font-black mb-4 text-white">Yeni Branş Ekle</h2>
-            <input autoFocus className="w-full border border-slate-700 bg-slate-800/50 text-white p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-blue-500 font-bold placeholder-slate-500" value={newBranchName} onChange={e => setNewBranchName(e.target.value)} placeholder="Branş adı..." />
+            <input autoFocus className="w-full border border-[#2d4163] bg-[#0f1729] text-white p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-[#5b9cff] font-bold placeholder-[#556a85]" value={newBranchName} onChange={e => setNewBranchName(e.target.value)} placeholder="Branş adı..." />
             <div className="flex gap-2">
                <button onClick={() => setIsBranchModalOpen(false)} className="flex-1 p-4 font-bold text-slate-400 hover:text-white transition-colors">İptal</button>
-               <button onClick={() => { if (newBranchName) { setDepartments(prev => [...prev, newBranchName].sort()); setBranchFilters(prev => ({ ...prev, [view]: newBranchName })); setNewBranchName(''); setIsBranchModalOpen(false); } }} className="flex-1 bg-blue-600 text-white p-4 rounded-2xl font-black hover:bg-blue-700 transition-colors">Ekle</button>
+               <button onClick={() => { if (newBranchName) { setDepartments(prev => [...prev, newBranchName].sort()); setBranchFilters(prev => ({ ...prev, [view]: newBranchName })); setNewBranchName(''); setIsBranchModalOpen(false); } }} className="flex-1 bg-[#5b9cff] text-white p-4 rounded-2xl font-black hover:bg-[#4388f5] transition-colors">Ekle</button>
             </div>
           </div>
         </div>
@@ -1227,27 +1368,143 @@ const App: React.FC = () => {
         onLogout={handleLogout}
         isAdmin={isAdmin}
         hasModuleAccess={hasModuleAccess}
+        dataStatus={{
+          'detailed-schedule': detailedScheduleData.length > 0,
+          'physician-data': Object.keys(muayeneByPeriod).length > 0,
+          'change-analysis': Object.keys(scheduleVersions).length > 0,
+          'efficiency-analysis': detailedScheduleData.length > 0 && Object.keys(muayeneByPeriod).length > 0,
+          'active-demand': false,
+          'emergency-service': false,
+          'service-analysis': sutServiceData.length > 0,
+        }}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+
+      {/* Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigate={(v) => { setView(v); setIsCommandPaletteOpen(false); }}
+        hasModuleAccess={hasModuleAccess}
+      />
+
+      {/* Sticky Notes */}
+      <StickyNotes
+        isOpen={isStickyNotesOpen}
+        onClose={() => setIsStickyNotesOpen(false)}
+        userEmail={user?.email || ''}
+        theme={theme}
       />
 
       {/* Main Content - Sidebar için padding-left eklendi */}
       <main className="flex-1 min-w-0 overflow-y-auto w-full custom-scrollbar ml-[88px]">
         <div className="w-full px-8 py-6">
-          {/* Üst Bar - Logo sağda */}
-          <header className="mb-6 flex justify-end items-center no-print">
-            {/* Sağlık Bakanlığı Logo ve Yazı - Sağda (Logo solda, yazı sağda) */}
-            <div className="flex items-center gap-3 bg-[#12121a]/80 backdrop-blur-xl px-4 py-2 rounded-2xl border border-slate-700/30">
+          {/* Üst Bar - Breadcrumb solda, Logo sağda */}
+          <header className="mb-6 flex justify-between items-center no-print">
+            {/* Breadcrumb Navigasyon */}
+            {view !== 'welcome' && (() => {
+              const viewMeta: Record<string, { group?: string; label: string; groupView?: string }> = {
+                'welcome': { label: 'Ana Sayfa' },
+                'dashboard': { label: 'Kontrol Paneli' },
+                'dashboard-mhrs': { label: 'MHRS', group: 'Kontrol Paneli', groupView: 'dashboard' },
+                'dashboard-financial': { label: 'Finansal', group: 'Kontrol Paneli', groupView: 'dashboard' },
+                'dashboard-preparation': { label: 'Hazırlama', group: 'Kontrol Paneli', groupView: 'dashboard' },
+                'dashboard-support': { label: 'Destek', group: 'Kontrol Paneli', groupView: 'dashboard' },
+                'dashboard-emergency': { label: 'Acil Servis', group: 'Kontrol Paneli', groupView: 'dashboard' },
+                'emergency-service': { label: 'Yeşil Alan Oranları', group: 'Acil Servis' },
+                'active-demand': { label: 'Aktif Talep', group: 'MHRS' },
+                'detailed-schedule': { label: 'Detaylı Cetveller', group: 'MHRS' },
+                'physician-data': { label: 'Hekim Verileri', group: 'MHRS' },
+                'change-analysis': { label: 'Değişim Analizleri', group: 'MHRS' },
+                'efficiency-analysis': { label: 'Verimlilik Analizleri', group: 'MHRS' },
+                'ai-cetvel-planlama': { label: 'AI Cetvel Planlama', group: 'MHRS' },
+                'goren-ilsm': { label: 'İl Sağlık Müdürlüğü', group: 'GÖREN Performans' },
+                'goren-ilcesm': { label: 'İlçe Sağlık Müdürlüğü', group: 'GÖREN Performans' },
+                'goren-bh': { label: 'Başhekimlik', group: 'GÖREN Performans' },
+                'goren-adsh': { label: 'ADSH', group: 'GÖREN Performans' },
+                'goren-ash': { label: 'Acil Sağlık', group: 'GÖREN Performans' },
+                'goren-manuel': { label: 'Manuel Hesaplama', group: 'GÖREN Performans' },
+                'service-analysis': { label: 'Hizmet Girişim', group: 'Finansal' },
+                'etik-kurul': { label: 'Etik Kurul', group: 'Finansal' },
+                'hekim-islem-listesi': { label: 'Hekim İşlem Listesi', group: 'Finansal' },
+                'ek-liste-tanimlama': { label: 'Ek Liste Tanımlama', group: 'Finansal' },
+                'sut-mevzuati': { label: 'SUT Mevzuatı', group: 'Finansal' },
+                'gil': { label: 'GİL', group: 'Finansal' },
+                'analysis-module': { label: 'Analiz Modülü', group: 'Hazırlama' },
+                'schedule-planning': { label: 'Cetvel Planlama', group: 'Hazırlama' },
+                'presentation': { label: 'Sunum / Rapor', group: 'Hazırlama' },
+                'ai-chatbot': { label: 'AI Asistan' },
+                'goren': { label: 'GÖREN Başarı' },
+                'pdf-viewer': { label: 'PDF Görüntüleyici' },
+                'comparison-wizard': { label: 'Veri Karşılaştırma' },
+                'admin': { label: 'Kullanıcı Yönetimi' },
+                'performance-planning': { label: 'Performans Planlama' },
+              };
+              const meta = viewMeta[view] || { label: view };
+              return (
+                <nav className="flex items-center gap-2 text-sm">
+                  <button
+                    onClick={() => setView('welcome')}
+                    className="text-slate-500 hover:text-[#5b9cff] transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>Ana Sayfa</span>
+                  </button>
+                  {meta.group && (
+                    <>
+                      <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span className="text-slate-400 font-medium">{meta.group}</span>
+                    </>
+                  )}
+                  <svg className="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span className="text-[#5b9cff] font-semibold">{meta.label}</span>
+                </nav>
+              );
+            })()}
+            {view === 'welcome' && <div />}
+            <div className="flex items-center gap-2">
+              {/* Sticky Notes Button */}
+              <button
+                onClick={() => setIsStickyNotesOpen(prev => !prev)}
+                className={`relative p-2.5 rounded-xl transition-all duration-200 ${
+                  isStickyNotesOpen
+                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    : theme === 'dark'
+                      ? 'text-slate-400 hover:text-amber-400 hover:bg-[#131d33]/80 border border-transparent hover:border-[#2d4163]/30'
+                      : 'text-slate-500 hover:text-amber-500 hover:bg-white/80 border border-transparent hover:border-slate-200/60'
+                }`}
+                title="Hızlı Notlar"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+              </button>
+            {/* Sağlık Bakanlığı Logo ve Yazı - Sağda */}
+            <div className={`flex items-center gap-3 backdrop-blur-xl px-4 py-2 rounded-2xl border transition-colors duration-500 ${
+              theme === 'dark'
+                ? 'bg-[#131d33]/80 border-[#2d4163]/30'
+                : 'bg-white/80 border-slate-200/60 shadow-sm'
+            }`}>
               <img
                 src={sbLogo}
                 alt="T.C. Sağlık Bakanlığı"
-                className="h-8 w-auto object-contain brightness-0 invert"
+                className={`h-8 w-auto object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
               />
               <div className="text-left">
-                <p className="text-[9px] font-bold text-white tracking-wide">T.C. SAĞLIK BAKANLIĞI</p>
-                <p className="text-[9px] font-semibold text-white/80">ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
+                <p className={`text-[9px] font-bold tracking-wide ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>T.C. SAĞLIK BAKANLIĞI</p>
+                <p className={`text-[9px] font-semibold ${theme === 'dark' ? 'text-white/70' : 'text-slate-500'}`}>ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
               </div>
             </div>
+            </div>
           </header>
-          <section className="animate-in fade-in slide-in-from-top-4 duration-500">{renderView()}</section>
+          <section key={view} className="view-transition">{renderView()}</section>
         </div>
       </main>
     </div>
