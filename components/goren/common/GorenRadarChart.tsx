@@ -681,16 +681,24 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       {/* Kategori Kartları */}
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
         {combinedData.map((item, idx) => {
-          const isLowScore = item.score < 50;
-          const scoreColor = isLowScore ? 'text-rose-400' : 'text-emerald-400';
-          const barColor = isLowScore ? '#f43f5e' : '#10b981';
+          const scoreColor = item.score >= 70 ? 'text-emerald-400'
+            : item.score >= 50 ? 'text-amber-400'
+            : item.score >= 30 ? 'text-orange-400'
+            : 'text-rose-400';
+          const barColor = item.score >= 70 ? '#10b981'
+            : item.score >= 50 ? '#fbbf24'
+            : item.score >= 30 ? '#f97316'
+            : '#f43f5e';
 
           return (
             <div
               key={idx}
               onClick={() => setSelectedCategory(item)}
               className={`bg-slate-800/30 rounded-xl p-3 border hover:border-slate-500/50 hover:bg-slate-700/30 transition-all cursor-pointer ${
-                isLowScore ? 'border-rose-500/30' : 'border-slate-700/30'
+                item.score < 30 ? 'border-rose-500/30'
+                : item.score < 50 ? 'border-orange-500/30'
+                : item.score < 70 ? 'border-amber-500/30'
+                : 'border-slate-700/30'
               }`}
             >
               <div className="flex items-center gap-2 mb-2">
@@ -793,7 +801,12 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
             <div className="flex items-center justify-between px-5 py-4 bg-slate-800/50">
               <span className="text-slate-300 text-base font-medium">Kategori Skoru:</span>
               <div className="flex items-center gap-3">
-                <span className="text-4xl font-black text-emerald-400">
+                <span className={`text-4xl font-black ${
+                  selectedCategory.score >= 70 ? 'text-emerald-400'
+                  : selectedCategory.score >= 50 ? 'text-amber-400'
+                  : selectedCategory.score >= 30 ? 'text-orange-400'
+                  : 'text-rose-400'
+                }`}>
                   %{selectedCategory.score}
                 </span>
                 {selectedCategory.compareScore !== undefined && (
@@ -841,35 +854,39 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                             {detail.name}
                           </span>
                           <div className="flex items-center gap-3">
-                            {/* Ana kurum puanı - Yeşil tonları */}
+                            {/* Ana kurum puanı - Renk skalası */}
                             <div className="flex flex-col items-center gap-1">
                               <span
                                 className="text-white font-bold text-sm px-3 py-1.5 rounded-lg"
                                 style={{
-                                  backgroundColor:
-                                    detail.score === detail.maxScore
-                                      ? 'rgb(16, 185, 129)' // Yeşil - tam puan
-                                      : detail.score > 0
-                                        ? 'rgb(52, 211, 153)' // Açık yeşil - kısmi puan
-                                        : 'rgb(239, 68, 68)' // Kırmızı - sıfır puan
+                                  backgroundColor: (() => {
+                                    const ratio = detail.maxScore > 0 ? detail.score / detail.maxScore : 0;
+                                    if (ratio >= 1) return 'rgb(16, 185, 129)';      // Tam puan - yeşil
+                                    if (ratio >= 0.7) return 'rgb(52, 211, 153)';     // %70+ - açık yeşil
+                                    if (ratio >= 0.4) return 'rgb(251, 191, 36)';     // %40-70 - amber
+                                    if (ratio > 0) return 'rgb(249, 115, 22)';        // %1-40 - turuncu
+                                    return 'rgb(239, 68, 68)';                         // Sıfır - kırmızı
+                                  })()
                                 }}
                               >
                                 {detail.score}/{detail.maxScore}
                               </span>
                             </div>
 
-                            {/* Karşılaştırma kurumu puanı - Turuncu tonları */}
+                            {/* Karşılaştırma kurumu puanı - Turuncu renk skalası */}
                             {compareDetail && (
                               <div className="flex flex-col items-center gap-1">
                                 <span
                                   className="text-white font-bold text-sm px-3 py-1.5 rounded-lg"
                                   style={{
-                                    backgroundColor:
-                                      compareDetail.score === compareDetail.maxScore
-                                        ? 'rgb(249, 115, 22)' // Turuncu - tam puan
-                                        : compareDetail.score > 0
-                                          ? 'rgb(251, 146, 60)' // Açık turuncu - kısmi puan
-                                          : 'rgb(239, 68, 68)' // Kırmızı - sıfır puan
+                                    backgroundColor: (() => {
+                                      const ratio = compareDetail.maxScore > 0 ? compareDetail.score / compareDetail.maxScore : 0;
+                                      if (ratio >= 1) return 'rgb(249, 115, 22)';      // Tam puan - turuncu
+                                      if (ratio >= 0.7) return 'rgb(251, 146, 60)';     // %70+ - açık turuncu
+                                      if (ratio >= 0.4) return 'rgb(251, 191, 36)';     // %40-70 - amber
+                                      if (ratio > 0) return 'rgb(234, 179, 8)';         // %1-40 - sarı
+                                      return 'rgb(239, 68, 68)';                         // Sıfır - kırmızı
+                                    })()
                                   }}
                                 >
                                   {compareDetail.score}/{compareDetail.maxScore}

@@ -1087,8 +1087,8 @@ export const loadBHHistoryData = async (
     }
   }
 
-  // Son monthCount kadar ayı al (en güncel aylar)
-  const monthsToCheck = allMonths.slice(-monthCount);
+  // Tüm ayları tara (minDate'ten seçili yılın sonuna kadar)
+  const monthsToCheck = allMonths;
 
   for (const { year, month } of monthsToCheck) {
     try {

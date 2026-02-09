@@ -424,6 +424,12 @@ export interface RecommendationsSummary {
   estimatedTotalGP: number;
   estimatedAchievementRate: number;
   quickWins: ScoreRecommendation[];
+  /** Kolay ulaşılabilir hedefler (GD gap %10'dan az olanlar) */
+  easyTargets: ScoreRecommendation[];
+  /** Kolay hedeflerden kazanılacak toplam puan */
+  easyTargetGain: number;
+  /** Kolay hedefler uygulanırsa tahmini toplam puan */
+  easyTargetTotalGP: number;
   zeroPointIndicators: number;
   partialPointIndicators: number;
   fullPointIndicators: number;

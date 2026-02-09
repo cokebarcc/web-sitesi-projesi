@@ -48,7 +48,7 @@ import GorenHistoryChart from './common/GorenHistoryChart';
 import GorenRadarChart from './common/GorenRadarChart';
 import GorenRecommendations from './common/GorenRecommendations';
 import GorenHospitalRanking from './common/GorenHospitalRanking';
-import { generateRecommendations } from '../../utils/gorenRecommendations';
+import { generateRecommendations, generateGenericRecommendations } from '../../utils/gorenRecommendations';
 
 // BHTableRow artık gorenStorage'dan import ediliyor
 
@@ -584,7 +584,9 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
     // ADSH için ağız diş sağlığı hastaneleri
     options.push(
       { id: 'adsh-sanliurfa', name: 'Şanlıurfa ADSH', type: 'ADSH' as InstitutionType },
-      { id: 'adsh-haliliye', name: 'Haliliye ADSH', type: 'ADSH' as InstitutionType }
+      { id: 'adsh-haliliye', name: 'Haliliye ADSH', type: 'ADSH' as InstitutionType },
+      { id: 'adsh-eyyubiye', name: 'Eyyübiye ADSM', type: 'ADSH' as InstitutionType },
+      { id: 'adsh-siverek', name: 'Siverek ADSM', type: 'ADSH' as InstitutionType }
     );
 
     // İLÇESM için ilçe sağlık müdürlükleri
@@ -616,11 +618,15 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
       .map(o => ({ id: o.id, name: o.name }));
   }, [institutionOptions, moduleType]);
 
-  // Puan iyileştirme önerilerini hesapla
+  // Puan iyileştirme önerilerini hesapla (tüm modüller için)
   const recommendationsSummary = useMemo(() => {
     if (bhTableData.length === 0 || !totalDirectGP) return null;
-    return generateRecommendations(bhTableData, definitions, totalDirectGP);
-  }, [bhTableData, definitions, totalDirectGP]);
+    if (moduleType === 'BH') {
+      return generateRecommendations(bhTableData, definitions, totalDirectGP);
+    }
+    // İLÇESM, ADSH ve diğer modüller için generic fonksiyon kullan
+    return generateGenericRecommendations(bhTableData, definitions, totalDirectGP, moduleType);
+  }, [bhTableData, definitions, totalDirectGP, moduleType]);
 
   // Gösterge yoksa uyarı göster
   if (definitions.length === 0) {
@@ -739,13 +745,14 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         onTrRolOrtalamasiChange={handleTrRolOrtalamasiChange}
       />
 
-      {/* Puan İyileştirme Önerileri - Sadece BH modülünde ve veri varken */}
-      {moduleType === 'BH' && bhTableData.length > 0 && summary && (
+      {/* Puan İyileştirme Önerileri - BH, İLÇESM ve ADSH modüllerinde veri varken */}
+      {(moduleType === 'BH' || moduleType === 'ILCESM' || moduleType === 'ADSH') && bhTableData.length > 0 && summary && (
         <GorenRecommendations
           bhTableData={bhTableData}
           definitions={definitions}
           summary={summary}
           totalGP={totalDirectGP || 0}
+          moduleType={moduleType}
         />
       )}
 
