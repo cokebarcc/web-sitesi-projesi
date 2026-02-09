@@ -241,7 +241,8 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         filterState.institutionId,
         filterState.year,
         filterState.month,
-        12 // Son 12 ay
+        12, // Son 12 ay
+        moduleType
       ).then(history => {
         setHistoryData(history);
         setIsLoadingHistory(false);
@@ -696,7 +697,6 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
           maxGP={definitions.reduce((sum, d) => sum + d.maxPoints, 0)}
           currentInstitutionId={filterState.institutionId}
           moduleLabel={INSTITUTION_TYPE_LABELS[moduleType]}
-          moduleType={moduleType}
         />
       )}
 
@@ -760,7 +760,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
                 data={historyData}
                 isLoading={isLoadingHistory}
                 institutionName={filterState.institutionName}
-                moduleType={moduleType}
+                moduleLabel={INSTITUTION_TYPE_LABELS[moduleType]}
               />
             </div>
 
@@ -775,6 +775,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
                   year={filterState.year}
                   month={filterState.month}
                   moduleType={moduleType}
+                  compareInstitutions={rankingHospitals}
                 />
               </div>
             )}

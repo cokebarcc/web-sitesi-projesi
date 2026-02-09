@@ -32,7 +32,7 @@ interface GorenHistoryChartProps {
   data: BHHistoryData[];
   isLoading?: boolean;
   institutionName?: string;
-  moduleType?: string;
+  moduleLabel?: string;
 }
 
 type ChartStyle = 'line' | 'bar' | 'area';
@@ -41,9 +41,8 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   data,
   isLoading = false,
   institutionName = '',
-  moduleType
+  moduleLabel = 'Kurum'
 }) => {
-  const scoreLabel = moduleType === 'ILCESM' ? 'Kurum Puanı' : 'Hastane Puanı';
   const [chartStyle, setChartStyle] = useState<ChartStyle>('line');
 
   // Yükleme durumu
@@ -260,7 +259,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
               <Line
                 type="monotone"
                 dataKey="hastanetoplam"
-                name={scoreLabel}
+                name={`${moduleLabel} Puanı`}
                 stroke="#6366f1"
                 strokeWidth={3}
                 dot={{ fill: '#6366f1', strokeWidth: 2, r: 5 }}
@@ -290,7 +289,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
               {/* Kurum Puanı */}
               <Bar
                 dataKey="hastanetoplam"
-                name={scoreLabel}
+                name={`${moduleLabel} Puanı`}
                 fill="#6366f1"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={40}
@@ -353,7 +352,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
               <Area
                 type="monotone"
                 dataKey="hastanetoplam"
-                name={scoreLabel}
+                name={`${moduleLabel} Puanı`}
                 stroke="#6366f1"
                 strokeWidth={3}
                 fill="url(#colorHastane)"
@@ -368,7 +367,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 rounded bg-indigo-500" />
-            <span>{scoreLabel}</span>
+            <span>{moduleLabel} Puanı</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 rounded bg-amber-500 opacity-70" style={{ borderStyle: 'dashed' }} />

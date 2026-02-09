@@ -1054,7 +1054,8 @@ export const loadBHHistoryData = async (
   institutionId: string,
   endYear: number,
   endMonth: number,
-  monthCount: number = 12
+  monthCount: number = 12,
+  moduleType?: string
 ): Promise<BHHistoryData[]> => {
   const results: BHHistoryData[] = [];
   const monthNames = [
@@ -1062,9 +1063,10 @@ export const loadBHHistoryData = async (
     'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
   ];
 
-  // Minimum tarih: 2025 Haziran (bu tarihten önce veri gösterilmeyecek)
+  // Minimum tarih: modül tipine göre belirlenir
+  // ILSM: 2025 Mayıs, diğerleri: 2025 Haziran
   const minYear = 2025;
-  const minMonth = 6; // Haziran
+  const minMonth = moduleType === 'ILSM' ? 5 : 6; // ILSM: Mayıs, diğerleri: Haziran
 
   // Seçili aydan Aralık'a kadar ileriye de bak (aynı yıl içinde)
   // Örn: Kasım seçiliyse Aralık'ı da kontrol et

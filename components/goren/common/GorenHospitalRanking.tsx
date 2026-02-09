@@ -1,5 +1,5 @@
 /**
- * GÖREN Hastane Başarı Sıralaması - Podyum Tasarımı
+ * GÖREN Kurum Başarı Sıralaması - Podyum Tasarımı
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -15,7 +15,6 @@ interface GorenHospitalRankingProps {
   maxGP: number;
   currentInstitutionId?: string;
   moduleLabel?: string;
-  moduleType?: string;
 }
 
 const MONTHS = [
@@ -228,10 +227,8 @@ const VariantPodium: React.FC<{
 /* ========== ANA BİLEŞEN ========== */
 
 export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
-  hospitals, year, month, maxGP, currentInstitutionId, moduleLabel = 'Başhekimlik', moduleType
+  hospitals, year, month, maxGP, currentInstitutionId, moduleLabel = 'Başhekimlik'
 }) => {
-  // Modül tipine göre dinamik metin
-  const entityLabel = moduleType === 'ILCESM' ? 'ilçe' : 'hastane';
   const [rankings, setRankings] = useState<HospitalRankingEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -281,9 +278,9 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
               </svg>
             </div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-white tracking-tight">Kurum Başarı Sıralaması</h3>
+              <h3 className="text-lg font-bold text-white tracking-tight">{moduleLabel} Başarı Sıralaması</h3>
               <p className="text-sm text-indigo-300/70 mt-0.5">
-                {MONTHS[month - 1]} {year} &middot; {moduleLabel} &middot; {hospitalsWithData}/{rankings.length} {entityLabel}
+                {MONTHS[month - 1]} {year} &middot; {moduleLabel} &middot; {hospitalsWithData}/{rankings.length} kurum
               </p>
             </div>
           </button>
@@ -308,7 +305,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
                 <svg className="w-16 h-16 text-slate-700 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <p className="text-lg text-slate-500 font-medium">Bu dönem için henüz {entityLabel} verisi yüklenmemiş.</p>
+                <p className="text-lg text-slate-500 font-medium">Bu dönem için henüz kurum verisi yüklenmemiş.</p>
               </div>
             ) : (
               <VariantPodium withData={withData} noData={noData} maxGP={maxGP} currentInstitutionId={currentInstitutionId} />
