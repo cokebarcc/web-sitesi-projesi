@@ -36,17 +36,21 @@ interface GorenRadarChartProps {
   currentInstitutionName?: string;
   year?: number;
   month?: number;
+  moduleType?: string;
 }
 
-// Kategori tanımları - gösterge sıra numaralarına göre
-const CATEGORIES: {
+// Kategori tipi
+type CategoryDef = {
   id: string;
   name: string;
   shortName: string;
   icon: string;
   color: string;
   indicators: number[];
-}[] = [
+};
+
+// BH (Başhekimlik) kategori tanımları - 9 kategori, 38 gösterge
+const BH_CATEGORIES: CategoryDef[] = [
   {
     id: 'memnuniyet',
     name: 'Memnuniyet',
@@ -121,6 +125,84 @@ const CATEGORIES: {
   }
 ];
 
+// İLÇESM (İlçe Sağlık Müdürlüğü) kategori tanımları - 8 kategori, 13 gösterge
+const ILCESM_CATEGORIES: CategoryDef[] = [
+  {
+    id: 'memnuniyet',
+    name: 'Memnuniyet',
+    shortName: 'Memnuniyet',
+    icon: '😊',
+    color: '#06b6d4',
+    indicators: [1, 2]
+  },
+  {
+    id: 'asilama',
+    name: 'Aşılama',
+    shortName: 'Aşılama',
+    icon: '💉',
+    color: '#8b5cf6',
+    indicators: [3, 4]
+  },
+  {
+    id: 'kronik-hastalik',
+    name: 'Kronik Hastalık Takibi',
+    shortName: 'Kronik Hast.',
+    icon: '🩺',
+    color: '#ec4899',
+    indicators: [8]
+  },
+  {
+    id: 'kanser-taramasi',
+    name: 'Kanser Taraması',
+    shortName: 'Kanser Tar.',
+    icon: '🔬',
+    color: '#10b981',
+    indicators: [10, 11]
+  },
+  {
+    id: 'anne-cocuk',
+    name: 'Anne-Çocuk Sağlığı',
+    shortName: 'Anne-Çocuk',
+    icon: '🤱',
+    color: '#f59e0b',
+    indicators: [12]
+  },
+  {
+    id: 'birinci-basamak',
+    name: 'Birinci Basamak',
+    shortName: 'Birinci Bas.',
+    icon: '🏥',
+    color: '#3b82f6',
+    indicators: [13, 15]
+  },
+  {
+    id: 'tutun-ihbarlari',
+    name: 'Tütün İhbarları',
+    shortName: 'Tütün İhbar.',
+    icon: '🚭',
+    color: '#ef4444',
+    indicators: [14]
+  },
+  {
+    id: 'ilac-kullanimi',
+    name: 'İlaç Kullanımı',
+    shortName: 'İlaç Kull.',
+    icon: '💊',
+    color: '#22c55e',
+    indicators: [16, 17]
+  }
+];
+
+// Modül tipine göre kategori seçimi
+const getCategoriesForModule = (moduleType?: string): CategoryDef[] => {
+  switch (moduleType) {
+    case 'ILCESM':
+      return ILCESM_CATEGORIES;
+    default:
+      return BH_CATEGORIES;
+  }
+};
+
 interface IndicatorDetail {
   name: string;
   score: number;
@@ -142,13 +224,13 @@ interface CategoryDetail {
 }
 
 // Veriyi kategori skorlarına dönüştür
-const calculateCategoryScores = (data: BHTableRow[]) => {
+const calculateCategoryScores = (data: BHTableRow[], categories: CategoryDef[]) => {
   const dataMap = new Map<number, BHTableRow>();
   data.forEach(row => {
     dataMap.set(row.sira, row);
   });
 
-  return CATEGORIES.map(category => {
+  return categories.map(category => {
     let totalWeightedScore = 0;
     let validIndicatorCount = 0;
     const indicatorDetails: { name: string; score: number; maxScore: number; normalized: number }[] = [];
@@ -197,8 +279,10 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   currentInstitutionId,
   currentInstitutionName,
   year,
-  month
+  month,
+  moduleType
 }) => {
+  const categories = getCategoriesForModule(moduleType);
   const [selectedCategory, setSelectedCategory] = useState<CategoryDetail | null>(null);
   const [compareHospitalId, setCompareHospitalId] = useState<string>('');
   const [compareHospitalName, setCompareHospitalName] = useState<string>('');
@@ -207,17 +291,27 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Türkçe karakter dönüşümü (ID oluşturmak için)
+  const toSlug = (s: string) => s.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
+    const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
+    return map[c] || c;
+  });
+
+  // İlçe Sağlık Müdürlükleri listesi
+  const ILCESM_LIST = ['Akçakale', 'Birecik', 'Bozova', 'Ceylanpınar', 'Eyyübiye', 'Halfeti', 'Haliliye', 'Harran', 'Hilvan', 'Karaköprü', 'Siverek', 'Suruç', 'Viranşehir'];
+
   // Muaf hastaneler
   const excludedHospitals = ['Harran DH', 'Balıklıgöl DH'];
 
-  // Filtrelenmiş hastane listesi
-  const filteredHospitals = HOSPITALS
-    .filter(h => !excludedHospitals.includes(h))
+  // Modül tipine göre kurum listesi ve ID prefix'i
+  const idPrefix = moduleType === 'ILCESM' ? 'ilcesm' : 'bh';
+  const sourceList = moduleType === 'ILCESM' ? ILCESM_LIST : HOSPITALS;
+
+  // Filtrelenmiş kurum listesi
+  const filteredHospitals = sourceList
+    .filter(h => moduleType === 'ILCESM' || !excludedHospitals.includes(h))
     .filter(h => {
-      const id = `bh-${h.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
-        const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
-        return map[c] || c;
-      })}`;
+      const id = `${idPrefix}-${toSlug(h)}`;
       return id !== currentInstitutionId;
     })
     .filter(h => searchQuery === '' || h.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -282,10 +376,10 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   }
 
   // Ana veri için kategori skorları
-  const radarData = calculateCategoryScores(data);
+  const radarData = calculateCategoryScores(data, categories);
 
   // Karşılaştırma verisi için kategori skorları
-  const compareRadarData = compareData.length > 0 ? calculateCategoryScores(compareData) : null;
+  const compareRadarData = compareData.length > 0 ? calculateCategoryScores(compareData, categories) : null;
 
   // Birleştirilmiş grafik verisi
   const combinedData = radarData.map((item, idx) => ({
@@ -310,7 +404,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
             Gösterge Dağılım Haritası
           </h3>
           <p className="text-xs text-[var(--text-muted)] mt-1">
-            9 kategori, 38 gösterge - Ağırlıklandırılmış performans analizi
+            {categories.length} kategori, {categories.reduce((sum, c) => sum + c.indicators.length, 0)} gösterge - Ağırlıklandırılmış performans analizi
           </p>
         </div>
 
@@ -335,7 +429,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     <svg className="w-4 h-4 text-slate-500 group-hover:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <span className="text-sm text-slate-400">Hastane seçin...</span>
+                    <span className="text-sm text-slate-400">{moduleType === 'ILCESM' ? 'İlçe seçin...' : 'Hastane seçin...'}</span>
                   </>
                 )}
               </div>
@@ -388,7 +482,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     </svg>
                     <input
                       type="text"
-                      placeholder="Hastane ara..."
+                      placeholder={moduleType === 'ILCESM' ? 'İlçe ara...' : 'Hastane ara...'}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full bg-slate-900/50 border border-slate-600/50 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
@@ -401,10 +495,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                 <div className="max-h-64 overflow-y-auto">
                   {filteredHospitals.length > 0 ? (
                     filteredHospitals.map(hospital => {
-                      const id = `bh-${hospital.toLowerCase().replace(/\s+/g, '-').replace(/[ışğüöçİŞĞÜÖÇ]/g, c => {
-                        const map: Record<string, string> = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'İ': 'i', 'Ş': 's', 'Ğ': 'g', 'Ü': 'u', 'Ö': 'o', 'Ç': 'c' };
-                        return map[c] || c;
-                      })}`;
+                      const id = `${idPrefix}-${toSlug(hospital)}`;
                       const isSelected = id === compareHospitalId;
 
                       return (
@@ -436,7 +527,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     })
                   ) : (
                     <div className="px-4 py-8 text-center text-slate-500 text-sm">
-                      Hastane bulunamadı
+                      {moduleType === 'ILCESM' ? 'İlçe bulunamadı' : 'Hastane bulunamadı'}
                     </div>
                   )}
                 </div>
@@ -449,7 +540,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       {/* Skor Kartları */}
       <div className="flex items-center justify-center gap-8 mb-4">
         <div className="text-center">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{currentInstitutionName || 'Mevcut Hastane'}</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{currentInstitutionName || 'Mevcut Kurum'}</p>
           <p className="text-3xl font-black text-emerald-400">%{Math.round(overallScore)}</p>
         </div>
         {compareOverallScore !== null && (
@@ -501,7 +592,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
 
             {/* Ana hastane - Yeşil */}
             <Radar
-              name={currentInstitutionName || 'Mevcut Hastane'}
+              name={currentInstitutionName || 'Mevcut Kurum'}
               dataKey="score"
               stroke="#10b981"
               fill="#10b981"
@@ -525,10 +616,10 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
               }}
             />
 
-            {/* Referans çizgisi - %65 */}
+            {/* Referans çizgisi - modüle göre hedef */}
             <Radar
-              name="Hedef (%65)"
-              dataKey={() => 65}
+              name={`Hedef (%${moduleType === 'ILCESM' ? 70 : 65})`}
+              dataKey={() => moduleType === 'ILCESM' ? 70 : 65}
               stroke="#f59e0b"
               strokeDasharray="5 5"
               fill="none"
@@ -617,7 +708,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-emerald-500" />
-            <span>{currentInstitutionName || 'Mevcut Hastane'}</span>
+            <span>{currentInstitutionName || 'Mevcut Kurum'}</span>
           </div>
           {compareRadarData && (
             <div className="flex items-center gap-2">
@@ -627,7 +718,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
           )}
           <div className="flex items-center gap-2">
             <div className="w-6 h-0.5 border-t-2 border-dashed border-amber-500" />
-            <span>Hedef (%65)</span>
+            <span>Hedef (%{moduleType === 'ILCESM' ? 70 : 65})</span>
           </div>
         </div>
         <span className="opacity-70">
@@ -716,7 +807,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                             {detail.name}
                           </span>
                           <div className="flex items-center gap-3">
-                            {/* Ana hastane puanı - Yeşil tonları */}
+                            {/* Ana hastane puanı - Tam: yeşil, Kısmi: turuncu, Sıfır: kırmızı */}
                             <div className="flex flex-col items-center gap-1">
                               <span
                                 className="text-white font-bold text-sm px-3 py-1.5 rounded-lg"
@@ -725,7 +816,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                                     detail.score === detail.maxScore
                                       ? 'rgb(16, 185, 129)' // Yeşil - tam puan
                                       : detail.score > 0
-                                        ? 'rgb(52, 211, 153)' // Açık yeşil - kısmi puan
+                                        ? 'rgb(249, 115, 22)' // Turuncu - kısmi puan
                                         : 'rgb(239, 68, 68)' // Kırmızı - sıfır puan
                                 }}
                               >

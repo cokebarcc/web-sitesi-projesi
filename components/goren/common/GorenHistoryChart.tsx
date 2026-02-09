@@ -32,6 +32,7 @@ interface GorenHistoryChartProps {
   data: BHHistoryData[];
   isLoading?: boolean;
   institutionName?: string;
+  moduleType?: string;
 }
 
 type ChartStyle = 'line' | 'bar' | 'area';
@@ -39,8 +40,10 @@ type ChartStyle = 'line' | 'bar' | 'area';
 export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   data,
   isLoading = false,
-  institutionName = ''
+  institutionName = '',
+  moduleType
 }) => {
+  const scoreLabel = moduleType === 'ILCESM' ? 'Kurum Puanı' : 'Hastane Puanı';
   const [chartStyle, setChartStyle] = useState<ChartStyle>('line');
 
   // Yükleme durumu
@@ -253,11 +256,11 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
               <Tooltip content={<CustomTooltip />} />
               <Legend {...legendProps} />
 
-              {/* Hastane Puanı */}
+              {/* Kurum Puanı */}
               <Line
                 type="monotone"
                 dataKey="hastanetoplam"
-                name="Hastane Puanı"
+                name={scoreLabel}
                 stroke="#6366f1"
                 strokeWidth={3}
                 dot={{ fill: '#6366f1', strokeWidth: 2, r: 5 }}
@@ -284,10 +287,10 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
               <Tooltip content={<CustomTooltip />} />
               <Legend {...legendProps} />
 
-              {/* Hastane Puanı */}
+              {/* Kurum Puanı */}
               <Bar
                 dataKey="hastanetoplam"
-                name="Hastane Puanı"
+                name={scoreLabel}
                 fill="#6366f1"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={40}
@@ -346,11 +349,11 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
                 fill="url(#colorTrRol)"
               />
 
-              {/* Hastane Puanı (ön planda) */}
+              {/* Kurum Puanı (ön planda) */}
               <Area
                 type="monotone"
                 dataKey="hastanetoplam"
-                name="Hastane Puanı"
+                name={scoreLabel}
                 stroke="#6366f1"
                 strokeWidth={3}
                 fill="url(#colorHastane)"
@@ -365,7 +368,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 rounded bg-indigo-500" />
-            <span>Hastane Puanı</span>
+            <span>{scoreLabel}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 rounded bg-amber-500 opacity-70" style={{ borderStyle: 'dashed' }} />

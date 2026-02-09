@@ -687,7 +687,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         showInstitutionTypeFilter={false}
       />
 
-      {/* Hastane Başarı Sıralaması - Uygula butonuna basıldıktan sonra göster */}
+      {/* Kurum Başarı Sıralaması - Uygula butonuna basıldıktan sonra göster */}
       {isApplied && rankingHospitals.length > 1 && (
         <GorenHospitalRanking
           hospitals={rankingHospitals}
@@ -696,6 +696,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
           maxGP={definitions.reduce((sum, d) => sum + d.maxPoints, 0)}
           currentInstitutionId={filterState.institutionId}
           moduleLabel={INSTITUTION_TYPE_LABELS[moduleType]}
+          moduleType={moduleType}
         />
       )}
 
@@ -705,7 +706,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-indigo-300 uppercase tracking-wider mb-2">
-                {filterState.institutionName || 'Seçili Hastane'} - {MONTHS[filterState.month - 1]} {filterState.year}
+                {filterState.institutionName || 'Seçili Kurum'} - {MONTHS[filterState.month - 1]} {filterState.year}
               </p>
               <h2 className="text-5xl font-black text-white mb-2">
                 {totalDirectGP}
@@ -759,6 +760,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
                 data={historyData}
                 isLoading={isLoadingHistory}
                 institutionName={filterState.institutionName}
+                moduleType={moduleType}
               />
             </div>
 
@@ -772,6 +774,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
                   currentInstitutionName={filterState.institutionName}
                   year={filterState.year}
                   month={filterState.month}
+                  moduleType={moduleType}
                 />
               </div>
             )}
