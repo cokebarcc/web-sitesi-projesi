@@ -241,7 +241,8 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
         filterState.institutionId,
         filterState.year,
         filterState.month,
-        12 // Son 12 ay
+        12, // Son 12 ay
+        moduleType
       ).then(history => {
         setHistoryData(history);
         setIsLoadingHistory(false);
