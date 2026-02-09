@@ -39,6 +39,7 @@ const GOREN_DATA_COLLECTION = 'gorenData';
 const GOREN_FILES_COLLECTION = 'gorenFiles';
 const GOREN_AUDIT_COLLECTION = 'gorenAuditLogs';
 
+
 // ========== DOSYA YÜKLEME ==========
 
 /**
@@ -110,36 +111,67 @@ export const parseGorenExcelBH = (
       };
     }
 
+    // Türkçe karakter normalizasyonu (İ→i, Ş→ş, vb.)
+    const normalizeTr = (s: string): string =>
+      s.toLowerCase()
+        .replace(/İ/g, 'i').replace(/I/g, 'ı')
+        .replace(/i̇/g, 'i') // combining dot above
+        .normalize('NFC')
+        .replace(/\s+/g, ' ').trim();
+
+    const allColumns = Object.keys(firstRow);
+
     // Kolon isimlerini bul
-    const siraColumn = Object.keys(firstRow).find(k =>
-      k.toLowerCase().includes('sıra') || k.toLowerCase() === 'sira'
+    const siraColumn = allColumns.find(k =>
+      normalizeTr(k).includes('sıra') || normalizeTr(k) === 'sira'
     ) || 'Sıra';
 
-    const puanColumn = Object.keys(firstRow).find(k =>
-      k.toLowerCase().includes('dönem içi puan') || k.toLowerCase().includes('dönem i̇çi̇ puan')
+    // Önce "Dönem İçi Puan" sütununu bul (daha spesifik - önce aranmalı)
+    const puanColumn = allColumns.find(k =>
+      normalizeTr(k).includes('dönem içi puan') || normalizeTr(k).includes('donem ici puan')
     ) || 'Dönem İçi Puan';
 
-    const gostergeAdiColumn = Object.keys(firstRow).find(k =>
-      k.toLowerCase().includes('gösterge adı') || k.toLowerCase().includes('gösterge adi')
+    const gostergeAdiColumn = allColumns.find(k =>
+      normalizeTr(k).includes('gösterge adı') || normalizeTr(k).includes('gosterge adi')
     ) || 'Gösterge Adı';
 
-    const donemIciColumn = Object.keys(firstRow).find(k =>
-      (k.toLowerCase().includes('dönem içi') || k.toLowerCase().includes('dönem i̇çi̇')) &&
-      !k.toLowerCase().includes('puan')
-    ) || 'Dönem İçi';
+    // "Dönem İçi" sütunu: "puan" ve "rol" içermeyen, sadece "dönem içi" olanı bul
+    const donemIciColumn = allColumns.find(k => {
+      const n = normalizeTr(k);
+      return (n.includes('dönem içi') || n.includes('donem ici')) &&
+        !n.includes('puan') && !n.includes('rol');
+    }) || 'Dönem İçi';
 
-    const trRolOrtalamaColumn = Object.keys(firstRow).find(k =>
-      k.toLowerCase().includes('tr rol') || k.toLowerCase().includes('türkiye rol') ||
-      k.toLowerCase().includes('rol ortalama')
-    ) || 'TR Rol Ortalama';
+    // "TR Rol Ortalama" sütunu
+    const trRolOrtalamaColumn = allColumns.find(k => {
+      const n = normalizeTr(k);
+      return n.includes('tr rol') || n.includes('türkiye rol') ||
+        n.includes('rol ortalama') || n.includes('rol ort');
+    }) || 'TR Rol Ortalama';
 
-    const birimColumn = Object.keys(firstRow).find(k =>
-      k.toLowerCase().includes('birim')
+    const birimColumn = allColumns.find(k =>
+      normalizeTr(k).includes('birim')
     ) || 'Birim';
 
-    const muafColumn = Object.keys(firstRow).find(k =>
-      k.toLowerCase().includes('muaf')
+    const muafColumn = allColumns.find(k =>
+      normalizeTr(k).includes('muaf')
     ) || 'Muaf';
+
+    // DEBUG: Sütun eşleştirme kontrolü
+    console.log('[GÖREN Parse] Excel sütunları:', allColumns);
+    console.log('[GÖREN Parse] Normalize edilmiş:', allColumns.map(c => `"${c}" → "${normalizeTr(c)}"`));
+    console.log('[GÖREN Parse] Algılanan sütunlar:', {
+      siraColumn,
+      gostergeAdiColumn,
+      donemIciColumn,
+      trRolOrtalamaColumn,
+      puanColumn,
+      birimColumn,
+      muafColumn
+    });
+    console.log('[GÖREN Parse] donemIci === trRolOrtalama?', donemIciColumn === trRolOrtalamaColumn);
+    console.log('[GÖREN Parse] İlk satır verileri:', firstRow);
+    console.log('[GÖREN Parse] İlk satır dönemİçi:', firstRow[donemIciColumn], 'trRol:', firstRow[trRolOrtalamaColumn]);
 
     // Parametre değerlerini ve puanları çıkar
     const parameterData: Record<string, ParameterValues> = {};
