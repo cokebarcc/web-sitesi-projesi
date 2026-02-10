@@ -231,77 +231,172 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
     }
   };
 
-  // Renk hesapla (oran bazlı) - 65+ yeşil, 60-65 sarı, 60 altı kırmızı (koyu tema)
-  const getRateColor = (rate: number | null): string => {
-    if (rate === null) return 'bg-slate-700/30 text-slate-500';
-    if (rate >= 65) return 'bg-emerald-500/20 text-emerald-400';
-    if (rate >= 60) return 'bg-yellow-500/20 text-yellow-400';
-    return 'bg-red-500/20 text-red-400';
+  // Hastane ortalama rengi (sol bar için) - 65+ yeşil, 60-64 sarı, 60 altı kırmızı
+  const getAvgBarColor = (trend: (number | null)[]): string => {
+    const valid = trend.filter(r => r !== null) as number[];
+    if (valid.length === 0) return '#64748b';
+    const avg = valid.reduce((a, b) => a + b, 0) / valid.length;
+    if (avg >= 65) return '#34d399'; // emerald-400
+    if (avg >= 60) return '#fbbf24'; // yellow-400
+    return '#f87171'; // red-400
   };
 
-  // PNG olarak indir (açık tema ile)
+  // Renk hesapla (oran bazlı) - site: sadece metin rengi, arka plan yok
+  const getRateColor = (rate: number | null): string => {
+    if (rate === null) return 'text-slate-500';
+    if (rate >= 65) return 'text-emerald-400';
+    if (rate >= 60) return 'text-yellow-400';
+    return 'text-red-400';
+  };
+
+  // PNG export için: hücre arka plan rengi (koyu tema → açık tema dönüşümünde kullanılır)
+  const getRateBgLight = (rate: number | null): string => {
+    if (rate === null) return '#f1f5f9'; // slate-100
+    if (rate >= 65) return '#d1fae5'; // emerald-100
+    if (rate >= 60) return '#fef9c3'; // yellow-100
+    return '#fee2e2'; // red-100
+  };
+
+  // PNG olarak indir (beyaz tema ile)
   const handlePngExport = async () => {
     if (!containerRef.current) return;
 
     try {
-      // Export için geçici olarak overflow'u kaldır ve genişliği auto yap
       const container = containerRef.current;
-      const tableWrapper = container.querySelector('.overflow-x-auto') as HTMLElement;
+      const tableWrapper = container.querySelector('[data-table-scroll]') as HTMLElement;
 
-      const originalOverflow = tableWrapper?.style.overflow;
-      const originalWidth = container.style.width;
+      const savedOverflow = tableWrapper?.style.overflow || '';
+      const savedWidth = container.style.width;
+      const savedMinWidth = container.style.minWidth;
 
-      if (tableWrapper) {
-        tableWrapper.style.overflow = 'visible';
-      }
+      if (tableWrapper) tableWrapper.style.overflow = 'visible';
       container.style.width = 'fit-content';
       container.style.minWidth = '100%';
 
-      // Export için geçici olarak açık tema uygula
-      const originalClasses = container.className;
-      container.className = container.className
-        .replace(/bg-slate-800\/50/g, 'bg-white')
-        .replace(/border-slate-700\/60/g, 'border-slate-200')
-        .replace(/border-slate-700/g, 'border-slate-200');
+      // Butonları gizle
+      const hideEls = container.querySelectorAll('[data-export-hide]');
+      hideEls.forEach(el => (el as HTMLElement).style.display = 'none');
 
-      // İç elementlere de açık tema uygula
-      const allElements = container.querySelectorAll('*');
-      const originalStyles: { el: Element; classes: string }[] = [];
+      // Koyu→beyaz tema dönüşümü: computed style ile inline override
+      const savedStyles: { el: HTMLElement; origStyle: string }[] = [];
 
-      allElements.forEach(el => {
-        const htmlEl = el as HTMLElement;
-        // SVG elementleri için className string değil, kontrol et
-        if (typeof htmlEl.className !== 'string') return;
-        originalStyles.push({ el, classes: htmlEl.className });
-        htmlEl.className = htmlEl.className
-          .replace(/bg-slate-800\/50/g, 'bg-white')
-          .replace(/bg-slate-800\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-700\/50/g, 'bg-slate-100')
-          .replace(/bg-slate-700\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-700\/20/g, 'bg-slate-50')
-          .replace(/bg-slate-600\/50/g, 'bg-slate-100')
-          .replace(/bg-slate-600\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-600\/20/g, 'bg-slate-50')
-          .replace(/border-slate-700\/60/g, 'border-slate-200')
-          .replace(/border-slate-700\/50/g, 'border-slate-200')
-          .replace(/border-slate-700/g, 'border-slate-200')
-          .replace(/border-slate-600\/60/g, 'border-slate-200')
-          .replace(/border-slate-600\/50/g, 'border-slate-200')
-          .replace(/border-slate-600/g, 'border-slate-200')
-          .replace(/text-white/g, 'text-slate-800')
-          .replace(/text-slate-400/g, 'text-slate-600')
-          .replace(/text-slate-300/g, 'text-slate-700')
-          .replace(/text-emerald-400/g, 'text-emerald-600')
-          .replace(/bg-emerald-500\/20/g, 'bg-emerald-100')
-          .replace(/bg-emerald-500\/10/g, 'bg-emerald-50')
-          .replace(/bg-emerald-500\/30/g, 'bg-emerald-100')
-          .replace(/bg-yellow-500\/20/g, 'bg-yellow-100')
-          .replace(/bg-yellow-500\/30/g, 'bg-yellow-100')
-          .replace(/bg-red-500\/20/g, 'bg-red-100')
-          .replace(/bg-red-500\/30/g, 'bg-red-100')
-          .replace(/text-yellow-400/g, 'text-yellow-600')
-          .replace(/text-red-400/g, 'text-red-600')
-          .replace(/text-slate-500/g, 'text-slate-400');
+      const convertToLight = (el: HTMLElement) => {
+        savedStyles.push({ el, origStyle: el.getAttribute('style') || '' });
+
+        // Renkli barları (data-avg-bar) ve legend pill'leri olduğu gibi bırak
+        if (el.hasAttribute('data-avg-bar')) return;
+
+        const cs = window.getComputedStyle(el);
+
+        // Arka plan rengi
+        const bg = cs.backgroundColor;
+        if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+          const nums = bg.match(/[\d.]+/g)?.map(Number) || [];
+          const [r, g, b] = nums;
+          // Renkli hücre arka planlarını dönüştür (koyu tema → açık tema)
+          // emerald-500/20 (~16,185,129 alpha) → emerald-100
+          if (g > 120 && r < 80 && b > 80 && b < 200) {
+            el.style.backgroundColor = '#d1fae5'; // emerald-100
+          }
+          // yellow-500/20 → yellow-100
+          else if (r > 180 && g > 150 && b < 50) {
+            el.style.backgroundColor = '#fef9c3'; // yellow-100
+          }
+          // red-500/20 → red-100
+          else if (r > 180 && g < 100 && b < 100) {
+            el.style.backgroundColor = '#fee2e2'; // red-100
+          }
+          // Koyu arka planlar → beyaz/açık
+          else if (r < 60 && g < 60 && b < 80) {
+            el.style.backgroundColor = '#ffffff';
+          } else if (r < 80 && g < 80) {
+            el.style.backgroundColor = '#f8fafc'; // slate-50
+          }
+        }
+
+        // Metin rengi
+        const color = cs.color;
+        if (color) {
+          const nums = color.match(/[\d.]+/g)?.map(Number) || [];
+          const [r, g, b] = nums;
+          // Beyaz/çok açık metin → koyu
+          if (r > 200 && g > 200 && b > 200) {
+            el.style.color = '#1e293b'; // slate-800
+          }
+          // emerald-400 (~52,211,153) → emerald-700
+          else if (g > 160 && r < 100 && b > 100 && b < 200) {
+            el.style.color = '#047857'; // emerald-700
+          }
+          // yellow-400 (~250,204,21) → yellow-700
+          else if (r > 200 && g > 180 && b < 80) {
+            el.style.color = '#a16207'; // yellow-700
+          }
+          // red-400 (~248,113,113) → red-700
+          else if (r > 200 && g < 140 && b < 140) {
+            el.style.color = '#b91c1c'; // red-700
+          }
+          // Orta tonlar (slate-400/500) → slate-600
+          else if (r > 90 && r < 180 && g > 90 && b > 90) {
+            el.style.color = '#475569'; // slate-600
+          }
+        }
+
+        // Border rengi
+        const bc = cs.borderTopColor || cs.borderColor;
+        if (bc && bc !== 'rgba(0, 0, 0, 0)') {
+          const nums = bc.match(/[\d.]+/g)?.map(Number) || [];
+          const [r, g, b] = nums;
+          // emerald border → açık emerald
+          if (g > 150 && r < 100) {
+            el.style.borderColor = '#a7f3d0'; // emerald-200
+          }
+          // Koyu border → slate-200
+          else if (r < 120 && g < 120 && b < 140) {
+            el.style.borderColor = '#e2e8f0'; // slate-200
+          }
+        }
+      };
+
+      // Container ve tüm child'lara uygula
+      convertToLight(container);
+      container.style.backgroundColor = '#ffffff';
+      container.querySelectorAll('*').forEach(child => {
+        if (child instanceof HTMLElement) convertToLight(child);
+      });
+
+      // Alternating row'lara açık tema zebra striping uygula
+      container.querySelectorAll('tr[data-row-index]').forEach(tr => {
+        const row = tr as HTMLElement;
+        const idx = parseInt(row.getAttribute('data-row-index') || '0');
+        if (idx % 2 !== 0) {
+          row.style.backgroundColor = '#f8fafc'; // slate-50
+          // Sticky td'lere de aynı rengi ver
+          row.querySelectorAll('td.sticky').forEach(td => {
+            (td as HTMLElement).style.backgroundColor = '#f8fafc';
+          });
+        }
+      });
+
+      // Tüm td hücrelerine dikey ortalama zorla (html2canvas uyumluluğu)
+      container.querySelectorAll('td').forEach(td => {
+        const el = td as HTMLElement;
+        el.style.verticalAlign = 'middle';
+      });
+
+      // data-rate-val hücrelerine arka plan rengi ekle (PNG'de renkli hücreler)
+      container.querySelectorAll('td[data-rate-val]').forEach(td => {
+        const el = td as HTMLElement;
+        const val = el.getAttribute('data-rate-val');
+        if (!val) return;
+        const rate = parseFloat(val);
+        if (isNaN(rate)) return;
+        if (rate >= 65) el.style.backgroundColor = '#d1fae5'; // emerald-100
+        else if (rate >= 60) el.style.backgroundColor = '#fef9c3'; // yellow-100
+        else el.style.backgroundColor = '#fee2e2'; // red-100
+        // Metin rengini de açık tema karşılığına çevir
+        if (rate >= 65) el.style.color = '#047857'; // emerald-700
+        else if (rate >= 60) el.style.color = '#a16207'; // yellow-700
+        else el.style.color = '#b91c1c'; // red-700
       });
 
       const canvas = await html2canvas(container, {
@@ -313,16 +408,16 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       });
 
       // Stilleri geri al
-      container.className = originalClasses;
-      originalStyles.forEach(({ el, classes }) => {
-        (el as HTMLElement).className = classes;
+      savedStyles.forEach(({ el, origStyle }) => {
+        if (origStyle) el.setAttribute('style', origStyle);
+        else el.removeAttribute('style');
       });
 
-      if (tableWrapper) {
-        tableWrapper.style.overflow = originalOverflow || '';
-      }
-      container.style.width = originalWidth;
-      container.style.minWidth = '';
+      // Layout geri al
+      hideEls.forEach(el => (el as HTMLElement).style.display = '');
+      if (tableWrapper) tableWrapper.style.overflow = savedOverflow;
+      container.style.width = savedWidth;
+      container.style.minWidth = savedMinWidth;
 
       const link = document.createElement('a');
       link.download = `yesil_alan_gunluk_tablo_${sortedDates[0] || 'rapor'}.png`;
@@ -420,33 +515,34 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
   }
 
   return (
-    <div ref={containerRef} className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+    <div ref={containerRef} className="rounded-2xl shadow-lg overflow-hidden"
+         style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
       {/* Başlık */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+      <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-1)' }}>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">
+            <h3 className="text-lg font-bold" style={{ color: 'var(--text-1)' }}>
               ŞANLIURFA İLİ ACİL SERVİS GÜNLÜK YEŞİL ALAN HASTA ORANLARI %
             </h3>
             {formatDateRange && (
-              <p className="text-sm font-medium text-emerald-600 mt-1">
+              <p className="text-sm font-medium text-emerald-400 mt-1">
                 {formatDateRange}
               </p>
             )}
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
               {sortedDates.length} günlük veri • {hospitalRows.length} kurum
               {localSelectedHospitals.length > 0 && ` (${localSelectedHospitals.length} seçili)`}
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap" data-export-hide>
             {/* Kurum Filtresi */}
             <div className="relative">
               <button
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors border ${
                   localSelectedHospitals.length > 0
-                    ? 'text-emerald-600 bg-emerald-100 border-emerald-300 hover:bg-emerald-200'
-                    : 'text-slate-600 bg-slate-100 border-slate-300 hover:bg-slate-200'
+                    ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30 hover:bg-emerald-500/25'
+                    : 'text-slate-300 bg-slate-700/50 border-slate-600 hover:bg-slate-700/70'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -464,20 +560,21 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               </button>
 
               {isFilterDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                  <div className="p-3 border-b border-slate-200 flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-800">Kurum Seçin</span>
+                <div className="absolute right-0 top-full mt-2 w-72 rounded-xl shadow-xl z-50 overflow-hidden"
+                     style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border-light)', backdropFilter: 'blur(12px)' }}>
+                  <div className="p-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-1)' }}>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>Kurum Seçin</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleSelectAll}
-                        className="text-xs text-emerald-600 hover:text-emerald-700"
+                        className="text-xs text-emerald-400 hover:text-emerald-300"
                       >
                         {localSelectedHospitals.length === allHospitals.length ? 'Hiçbirini Seçme' : 'Tümünü Seç'}
                       </button>
                       {localSelectedHospitals.length > 0 && (
                         <button
                           onClick={() => setLocalSelectedHospitals([])}
-                          className="text-xs text-red-500 hover:text-red-600"
+                          className="text-xs text-red-400 hover:text-red-300"
                         >
                           Temizle
                         </button>
@@ -488,15 +585,16 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                     {allHospitals.map(hospital => (
                       <label
                         key={hospital}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 cursor-pointer"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 cursor-pointer"
                       >
                         <input
                           type="checkbox"
                           checked={localSelectedHospitals.includes(hospital)}
                           onChange={() => handleHospitalToggle(hospital)}
-                          className="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                          className="w-4 h-4 rounded border-slate-500 text-emerald-500 focus:ring-emerald-500"
+                          style={{ background: 'var(--surface-3)' }}
                         />
-                        <span className="text-sm text-slate-700 truncate">
+                        <span className="text-sm truncate" style={{ color: 'var(--text-2)' }}>
                           {getShortHospitalName(hospital)}
                         </span>
                       </label>
@@ -507,7 +605,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </div>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -516,7 +615,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </button>
             <button
               onClick={handlePngExport}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+              style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -537,63 +637,86 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       </div>
 
       {/* Tablo */}
-      <div ref={tableRef} className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div ref={tableRef} className="overflow-x-auto" data-table-scroll>
+        <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
           <thead>
-            <tr className="bg-slate-100">
-              <th className="sticky left-0 z-10 bg-slate-100 px-4 py-3 text-left font-semibold text-slate-700 border-b border-slate-200 min-w-[180px] whitespace-nowrap">
+            <tr style={{ background: 'var(--surface-2)' }}>
+              <th className="sticky left-0 z-10 px-4 py-3 text-left font-semibold min-w-[180px] whitespace-nowrap"
+                  style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-1)' }}>
                 Kurum
               </th>
               {sortedDates.map(date => (
                 <th
                   key={date}
-                  className="px-2 py-3 text-center font-semibold text-slate-700 border-b border-slate-200 min-w-[60px]"
+                  className="px-2 py-3 text-center font-semibold min-w-[60px]"
+                  style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-1)' }}
                 >
                   {formatDateHeader(date)}
                 </th>
               ))}
-              <th className="sticky right-0 z-10 bg-slate-100 px-4 py-3 text-center font-semibold text-slate-700 border-b border-slate-200 min-w-[140px]">
+              <th className="sticky right-0 z-10 px-4 py-3 text-center font-semibold min-w-[140px]"
+                  style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-1)' }}>
                 Trend Eğrisi
               </th>
             </tr>
           </thead>
           <tbody>
-            {hospitalRows.map((row, idx) => (
-              <tr
-                key={row.hospitalName}
-                className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}
-              >
-                <td className="sticky left-0 z-10 px-4 py-2 font-medium text-slate-800 border-b border-slate-100 bg-inherit whitespace-nowrap">
-                  {getShortHospitalName(row.hospitalName)}
-                </td>
-                {sortedDates.map(date => {
-                  const rate = row.dailyRates[date];
-                  return (
-                    <td
-                      key={date}
-                      className={`px-2 py-2 text-center border-b border-slate-100 font-medium ${getRateColor(rate)}`}
-                    >
-                      {rate !== null ? `${rate.toFixed(1)}` : '-'}
-                    </td>
-                  );
-                })}
-                <td className="sticky right-0 z-10 px-4 py-2 border-b border-slate-100 bg-inherit">
-                  <div className="flex justify-center">
-                    <Sparkline
-                      values={row.trend}
-                      width={120}
-                      height={28}
-                      color="#10b981"
-                      showDots={true}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {hospitalRows.map((row, idx) => {
+              const isEven = idx % 2 === 0;
+              const rowBg = isEven ? 'transparent' : 'rgba(255, 255, 255, 0.04)';
+              const stickyBg = isEven ? 'var(--surface-1)' : 'rgba(30, 41, 59, 0.85)';
+              return (
+                <tr
+                  key={row.hospitalName}
+                  className="transition-colors hover:bg-white/[0.05]"
+                  style={{ background: rowBg }}
+                  data-row-index={idx}
+                >
+                  <td className="sticky left-0 z-10 px-4 py-2.5 font-medium whitespace-nowrap"
+                      style={{ color: 'var(--text-1)', borderBottom: '1px solid var(--border-1)', background: stickyBg, verticalAlign: 'middle' }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold tabular-nums w-4 text-right flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                        {idx + 1}
+                      </span>
+                      <span data-avg-bar className="w-[3px] rounded-full flex-shrink-0" style={{ backgroundColor: getAvgBarColor(row.trend), height: '16px' }}></span>
+                      <span className="text-xs font-semibold">
+                        {getShortHospitalName(row.hospitalName)}
+                      </span>
+                    </div>
+                  </td>
+                  {sortedDates.map(date => {
+                    const rate = row.dailyRates[date];
+                    return (
+                      <td
+                        key={date}
+                        data-rate-val={rate !== null ? rate.toFixed(1) : ''}
+                        className={`px-2 py-2 text-center font-bold ${getRateColor(rate)}`}
+                        style={{ borderBottom: '1px solid var(--border-1)', verticalAlign: 'middle' }}
+                      >
+                        {rate !== null ? `${rate.toFixed(1)}` : '-'}
+                      </td>
+                    );
+                  })}
+                  <td className="sticky right-0 z-10 px-4 py-2"
+                      style={{ borderBottom: '1px solid var(--border-1)', background: stickyBg, verticalAlign: 'middle' }}>
+                    <div className="flex justify-center">
+                      <Sparkline
+                        values={row.trend}
+                        width={120}
+                        height={28}
+                        color="#10b981"
+                        showDots={true}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {/* İl Geneli Satırı - Sadece showProvinceTotals true ise göster */}
             {showProvinceTotals && (
-              <tr className="bg-emerald-50 font-bold">
-                <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-600 border-t-2 border-emerald-200 bg-emerald-50">
+              <tr style={{ background: 'rgba(52, 211, 153, 0.06)' }} className="font-bold">
+                <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-400"
+                    style={{ borderTop: '2px solid rgba(52, 211, 153, 0.2)', background: 'rgba(52, 211, 153, 0.06)' }}>
                   {provinceTotals.hospitalName}
                 </td>
                 {sortedDates.map(date => {
@@ -601,13 +724,16 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                   return (
                     <td
                       key={date}
-                      className="px-2 py-3 text-center border-t-2 border-emerald-200 text-emerald-600 font-bold"
+                      data-rate-val={rate !== null ? rate.toFixed(1) : ''}
+                      className={`px-2 py-3 text-center font-bold ${getRateColor(rate)}`}
+                      style={{ borderTop: '2px solid rgba(52, 211, 153, 0.2)' }}
                     >
                       {rate !== null ? `${rate.toFixed(1)}` : '-'}
                     </td>
                   );
                 })}
-                <td className="sticky right-0 z-10 px-4 py-3 border-t-2 border-emerald-200 bg-emerald-50">
+                <td className="sticky right-0 z-10 px-4 py-3"
+                    style={{ borderTop: '2px solid rgba(52, 211, 153, 0.2)', background: 'rgba(52, 211, 153, 0.06)' }}>
                   <div className="flex justify-center">
                     <Sparkline
                       values={provinceTotals.trend}
@@ -625,16 +751,16 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       </div>
 
       {/* Renk açıklaması */}
-      <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center gap-4 text-xs text-slate-600">
+      <div className="px-6 py-3 flex items-center gap-4 text-xs" style={{ borderTop: '1px solid var(--border-1)', color: 'var(--text-3)' }}>
         <span className="font-medium">Oran Renkleri:</span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-emerald-200"></span> %65+
+          <span className="w-3 h-3 rounded bg-emerald-500/30"></span> %65+
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-yellow-200"></span> %60-64
+          <span className="w-3 h-3 rounded bg-yellow-500/30"></span> %60-64
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-red-200"></span> %0-59
+          <span className="w-3 h-3 rounded bg-red-500/30"></span> %0-59
         </span>
       </div>
     </div>
