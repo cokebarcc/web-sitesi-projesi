@@ -231,12 +231,12 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
     }
   };
 
-  // Renk hesapla (oran bazlı) - 65+ yeşil, 60-65 sarı, 60 altı kırmızı (beyaz tema)
+  // Renk hesapla (oran bazlı) - 65+ yeşil, 60-65 sarı, 60 altı kırmızı (koyu tema)
   const getRateColor = (rate: number | null): string => {
-    if (rate === null) return 'bg-slate-100 text-slate-400';
-    if (rate >= 65) return 'bg-emerald-100 text-emerald-700';
-    if (rate >= 60) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-red-100 text-red-700';
+    if (rate === null) return 'bg-slate-700/30 text-slate-500';
+    if (rate >= 65) return 'bg-emerald-500/20 text-emerald-400';
+    if (rate >= 60) return 'bg-yellow-500/20 text-yellow-400';
+    return 'bg-red-500/20 text-red-400';
   };
 
   // PNG olarak indir (açık tema ile)
@@ -411,8 +411,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
 
   if (sortedDates.length === 0 || hospitalRows.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-        <div className="text-slate-500 text-sm">
+      <div className="bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700/60 p-8 text-center">
+        <div className="text-slate-400 text-sm">
           Günlük tablo için tarih aralığı seçin
         </div>
       </div>

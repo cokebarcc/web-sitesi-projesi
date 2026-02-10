@@ -58,8 +58,8 @@ const getProgressColor = (rate: number): string => {
 };
 
 const getTextColor = (rate: number): string => {
-  if (rate >= 60) return 'text-emerald-600';
-  return 'text-red-600';
+  if (rate >= 60) return 'text-emerald-400';
+  return 'text-red-400';
 };
 
 // Hastane sıralama - öncelikli hastaneler
@@ -467,48 +467,66 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     try {
       const container = cardsContainerRef.current;
 
-      // Export için geçici olarak açık tema uygula
-      const originalClasses = container.className;
-      container.className = container.className
-        .replace(/bg-slate-800\/50/g, 'bg-white')
-        .replace(/border-slate-700\/60/g, 'border-slate-200')
-        .replace(/border-slate-700/g, 'border-slate-200')
-        .replace(/text-white/g, 'text-slate-800')
-        .replace(/text-slate-400/g, 'text-slate-600')
-        .replace(/text-slate-300/g, 'text-slate-700')
-        .replace(/bg-slate-700\/30/g, 'bg-slate-100');
+      // Export için geçici olarak açık tema uygula (koyu→açık dönüşüm)
+      // Computed style kullanarak doğrudan inline style override
+      const savedStyles: { el: HTMLElement; origStyle: string }[] = [];
 
-      // İç elementlere de açık tema uygula
-      const allElements = container.querySelectorAll('*');
-      const originalStyles: { el: Element; classes: string }[] = [];
+      const convertToLight = (el: HTMLElement) => {
+        savedStyles.push({ el, origStyle: el.getAttribute('style') || '' });
+        const cs = window.getComputedStyle(el);
 
-      allElements.forEach(el => {
-        const htmlEl = el as HTMLElement;
-        // SVG elementleri için className string değil, kontrol et
-        if (typeof htmlEl.className !== 'string') return;
+        // Arka plan rengi
+        const bg = cs.backgroundColor;
+        if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+          const nums = bg.match(/[\d.]+/g)?.map(Number) || [];
+          const [r, g, b] = nums;
+          // Koyu arka planlar (r < 80) → beyaz/açık
+          if (r < 80 && g < 80) {
+            el.style.backgroundColor = '#f8fafc'; // slate-50
+          } else if (r < 120) {
+            el.style.backgroundColor = '#f1f5f9'; // slate-100
+          }
+        }
 
-        originalStyles.push({ el, classes: htmlEl.className });
-        htmlEl.className = htmlEl.className
-          .replace(/bg-slate-800\/50/g, 'bg-white')
-          .replace(/bg-slate-800\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-700\/50/g, 'bg-slate-100')
-          .replace(/bg-slate-700\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-700\/20/g, 'bg-slate-50')
-          .replace(/bg-slate-600\/50/g, 'bg-slate-100')
-          .replace(/bg-slate-600\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-600\/20/g, 'bg-slate-50')
-          .replace(/border-slate-700\/60/g, 'border-slate-200')
-          .replace(/border-slate-700\/50/g, 'border-slate-200')
-          .replace(/border-slate-700/g, 'border-slate-200')
-          .replace(/border-slate-600\/60/g, 'border-slate-200')
-          .replace(/border-slate-600\/50/g, 'border-slate-200')
-          .replace(/border-slate-600/g, 'border-slate-200')
-          .replace(/text-white/g, 'text-slate-800')
-          .replace(/text-slate-400/g, 'text-slate-600')
-          .replace(/text-slate-300/g, 'text-slate-700')
-          .replace(/text-emerald-400/g, 'text-emerald-600')
-          .replace(/bg-emerald-500\/20/g, 'bg-emerald-100')
-          .replace(/bg-emerald-500\/10/g, 'bg-emerald-50');
+        // Metin rengi
+        const color = cs.color;
+        if (color) {
+          const nums = color.match(/[\d.]+/g)?.map(Number) || [];
+          const [r, g, b] = nums;
+          // Beyaz/çok açık metin → koyu
+          if (r > 200 && g > 200 && b > 200) {
+            el.style.color = '#1e293b'; // slate-800
+          }
+          // slate-400 benzeri orta tonlar → daha koyu
+          else if (r > 130 && r < 200 && g > 140 && b > 160) {
+            el.style.color = '#475569'; // slate-600
+          }
+          // Yeşil tonları (emerald-400 ~52,211,153) → daha koyu yeşil
+          else if (g > 180 && r < 100 && b > 100 && b < 200) {
+            el.style.color = '#059669'; // emerald-600
+          }
+          // Kırmızı tonları (red-400 ~248,113,113) → koyu kırmızı
+          else if (r > 200 && g < 130 && b < 130) {
+            el.style.color = '#dc2626'; // red-600
+          }
+        }
+
+        // Border rengi
+        const bc = cs.borderTopColor || cs.borderColor;
+        if (bc && bc !== 'rgba(0, 0, 0, 0)') {
+          const nums = bc.match(/[\d.]+/g)?.map(Number) || [];
+          const [r] = nums;
+          if (r < 120) {
+            el.style.borderColor = '#e2e8f0'; // slate-200
+          }
+        }
+      };
+
+      // Container ve tüm child'lara uygula
+      convertToLight(container);
+      container.style.backgroundColor = '#ffffff';
+      container.querySelectorAll('*').forEach(child => {
+        if (child instanceof HTMLElement) convertToLight(child);
       });
 
       const canvas = await html2canvas(container, {
@@ -518,9 +536,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       });
 
       // Stilleri geri al
-      container.className = originalClasses;
-      originalStyles.forEach(({ el, classes }) => {
-        (el as HTMLElement).className = classes;
+      savedStyles.forEach(({ el, origStyle }) => {
+        if (origStyle) el.setAttribute('style', origStyle);
+        else el.removeAttribute('style');
       });
 
       const link = document.createElement('a');
@@ -555,48 +573,42 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       const container = cardsContainerRef.current;
 
-      // Export için geçici olarak açık tema uygula
-      const originalClasses = container.className;
-      container.className = container.className
-        .replace(/bg-slate-800\/50/g, 'bg-white')
-        .replace(/border-slate-700\/60/g, 'border-slate-200')
-        .replace(/border-slate-700/g, 'border-slate-200')
-        .replace(/text-white/g, 'text-slate-800')
-        .replace(/text-slate-400/g, 'text-slate-600')
-        .replace(/text-slate-300/g, 'text-slate-700')
-        .replace(/bg-slate-700\/30/g, 'bg-slate-100');
+      // Export için geçici olarak açık tema uygula (computed style override)
+      const pdfSavedStyles: { el: HTMLElement; origStyle: string }[] = [];
 
-      // İç elementlere de açık tema uygula
-      const allElements = container.querySelectorAll('*');
-      const originalStyles: { el: Element; classes: string }[] = [];
+      const convertToLightPdf = (el: HTMLElement) => {
+        pdfSavedStyles.push({ el, origStyle: el.getAttribute('style') || '' });
+        const cs = window.getComputedStyle(el);
 
-      allElements.forEach(el => {
-        const htmlEl = el as HTMLElement;
-        // SVG elementleri için className string değil, kontrol et
-        if (typeof htmlEl.className !== 'string') return;
+        const bg = cs.backgroundColor;
+        if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+          const nums = bg.match(/[\d.]+/g)?.map(Number) || [];
+          const [r, g, b] = nums;
+          if (r < 80 && g < 80) el.style.backgroundColor = '#f8fafc';
+          else if (r < 120) el.style.backgroundColor = '#f1f5f9';
+        }
 
-        originalStyles.push({ el, classes: htmlEl.className });
-        htmlEl.className = htmlEl.className
-          .replace(/bg-slate-800\/50/g, 'bg-white')
-          .replace(/bg-slate-800\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-700\/50/g, 'bg-slate-100')
-          .replace(/bg-slate-700\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-700\/20/g, 'bg-slate-50')
-          .replace(/bg-slate-600\/50/g, 'bg-slate-100')
-          .replace(/bg-slate-600\/30/g, 'bg-slate-50')
-          .replace(/bg-slate-600\/20/g, 'bg-slate-50')
-          .replace(/border-slate-700\/60/g, 'border-slate-200')
-          .replace(/border-slate-700\/50/g, 'border-slate-200')
-          .replace(/border-slate-700/g, 'border-slate-200')
-          .replace(/border-slate-600\/60/g, 'border-slate-200')
-          .replace(/border-slate-600\/50/g, 'border-slate-200')
-          .replace(/border-slate-600/g, 'border-slate-200')
-          .replace(/text-white/g, 'text-slate-800')
-          .replace(/text-slate-400/g, 'text-slate-600')
-          .replace(/text-slate-300/g, 'text-slate-700')
-          .replace(/text-emerald-400/g, 'text-emerald-600')
-          .replace(/bg-emerald-500\/20/g, 'bg-emerald-100')
-          .replace(/bg-emerald-500\/10/g, 'bg-emerald-50');
+        const color = cs.color;
+        if (color) {
+          const nums = color.match(/[\d.]+/g)?.map(Number) || [];
+          const [r, g, b] = nums;
+          if (r > 200 && g > 200 && b > 200) el.style.color = '#1e293b';
+          else if (r > 130 && r < 200 && g > 140 && b > 160) el.style.color = '#475569';
+          else if (g > 180 && r < 100 && b > 100 && b < 200) el.style.color = '#059669';
+          else if (r > 200 && g < 130 && b < 130) el.style.color = '#dc2626';
+        }
+
+        const bc = cs.borderTopColor || cs.borderColor;
+        if (bc && bc !== 'rgba(0, 0, 0, 0)') {
+          const nums = bc.match(/[\d.]+/g)?.map(Number) || [];
+          if (nums[0] < 120) el.style.borderColor = '#e2e8f0';
+        }
+      };
+
+      convertToLightPdf(container);
+      container.style.backgroundColor = '#ffffff';
+      container.querySelectorAll('*').forEach(child => {
+        if (child instanceof HTMLElement) convertToLightPdf(child);
       });
 
       // Sayfa 1: Kartlar
@@ -607,9 +619,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       });
 
       // Stilleri geri al
-      container.className = originalClasses;
-      originalStyles.forEach(({ el, classes }) => {
-        (el as HTMLElement).className = classes;
+      pdfSavedStyles.forEach(({ el, origStyle }) => {
+        if (origStyle) el.setAttribute('style', origStyle);
+        else el.removeAttribute('style');
       });
 
       const cardsImgData = cardsCanvas.toDataURL('image/png');
@@ -1050,22 +1062,22 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </button>
           </div>
 
-          <div ref={cardsContainerRef} className="bg-white p-8 rounded-2xl border border-slate-200 shadow-lg">
+          <div ref={cardsContainerRef} className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/60 shadow-lg">
             {/* Header for PNG */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200">
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-700/60">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Acil Servis Yeşil Alan Oranları</h2>
-                  <p className="text-slate-500">Şanlıurfa İl Sağlık Müdürlüğü</p>
+                  <h2 className="text-2xl font-bold text-white">Acil Servis Yeşil Alan Oranları</h2>
+                  <p className="text-slate-400">Şanlıurfa İl Sağlık Müdürlüğü</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-slate-800">{getDateRangeDisplay()}</p>
+                <p className="text-xl font-bold text-white">{getDateRangeDisplay()}</p>
               </div>
             </div>
 
@@ -1114,14 +1126,14 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </div>
 
             {/* Footer with formula */}
-            <div className="mt-8 pt-4 border-t border-slate-200">
-              <div className="bg-slate-100 rounded-xl p-4 text-center">
-                <p className="text-sm text-slate-600 font-medium">
-                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-600">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
+            <div className="mt-8 pt-4 border-t border-slate-700/60">
+              <div className="bg-slate-700/30 rounded-xl p-4 text-center">
+                <p className="text-sm text-slate-400 font-medium">
+                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-400">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
                 </p>
                 {ilGeneli && hasAllHospitalsAccess && (
                   <p className="text-sm text-slate-500 mt-2">
-                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-slate-800">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
+                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-white">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
                   </p>
                 )}
               </div>
@@ -1301,45 +1313,45 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
     return `${day}.${month}`;
   };
 
-  // Oran için renk (beyaz tema)
+  // Oran için renk (koyu tema)
   const getRateColor = (rate: number): string => {
-    if (rate >= 70) return 'bg-emerald-100 text-emerald-700';
-    if (rate >= 60) return 'bg-yellow-100 text-yellow-700';
-    if (rate >= 50) return 'bg-orange-100 text-orange-700';
-    return 'bg-red-100 text-red-700';
+    if (rate >= 70) return 'bg-emerald-500/20 text-emerald-400';
+    if (rate >= 60) return 'bg-yellow-500/20 text-yellow-400';
+    if (rate >= 50) return 'bg-orange-500/20 text-orange-400';
+    return 'bg-red-500/20 text-red-400';
   };
 
   return (
-    <div className={`bg-slate-50 rounded-2xl shadow-sm border border-slate-200 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}`}>
+    <div className={`bg-slate-700/40 rounded-2xl shadow-sm border border-slate-600/50 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-100' : 'bg-slate-200'}`}>
-          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-600' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-500/20' : 'bg-slate-600/50'}`}>
+          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-600' : 'text-slate-800'}`}>{shortName}</h3>
+        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-400' : 'text-white'}`}>{shortName}</h3>
       </div>
 
       {/* Stats */}
       <div className="space-y-2 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-500">Toplam Hasta</span>
-          <span className="font-bold text-slate-800">{data.totalCount.toLocaleString('tr-TR')}</span>
+          <span className="text-sm text-slate-400">Toplam Hasta</span>
+          <span className="font-bold text-white">{data.totalCount.toLocaleString('tr-TR')}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-500">Yeşil Alan</span>
-          <span className="font-bold text-slate-800">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
+          <span className="text-sm text-slate-400">Yeşil Alan</span>
+          <span className="font-bold text-white">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-500">Yeşil Alan Oranı</span>
+          <span className="text-sm text-slate-400">Yeşil Alan Oranı</span>
           <span className={`font-bold text-lg ${textColor}`}>%{data.greenAreaRate.toFixed(1)}</span>
         </div>
-        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-600/50 rounded-full overflow-hidden">
           <div
             className={`h-full ${progressColor} rounded-full transition-all duration-500`}
             style={{ width: `${Math.min(data.greenAreaRate, 100)}%` }}
@@ -1349,10 +1361,10 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
 
       {/* Günlük Detay Accordion */}
       {dailyDetails.length > 1 && (
-        <div className="mt-4 pt-4 border-t border-slate-200">
+        <div className="mt-4 pt-4 border-t border-slate-600/50">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors"
+            className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-slate-200 transition-colors"
           >
             <span className="font-medium flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1374,23 +1386,23 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
             <div className="mt-3 -mx-2 overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-slate-100">
-                    <th className="sticky left-0 bg-slate-100 px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap">Tarih</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Yeşil Alan</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Toplam</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-600 whitespace-nowrap">Oran</th>
+                  <tr className="bg-slate-600/30">
+                    <th className="sticky left-0 bg-slate-600/30 px-2 py-1.5 text-left font-semibold text-slate-300 whitespace-nowrap">Tarih</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Yeşil Alan</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Toplam</th>
+                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Oran</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedDetails.map((detail, idx) => (
-                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-700 whitespace-nowrap">
+                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-slate-700/30' : 'bg-slate-700/10'}>
+                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-300 whitespace-nowrap">
                         {formatDate(detail.date)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
+                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
                         {detail.greenAreaCount.toLocaleString('tr-TR')}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-600 whitespace-nowrap">
+                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
                         {detail.totalCount.toLocaleString('tr-TR')}
                       </td>
                       <td className="px-2 py-1.5 text-right whitespace-nowrap">

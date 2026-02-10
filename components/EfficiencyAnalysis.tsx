@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell, ComposedChart, Line, LabelList } from 'recharts';
 import { DetailedScheduleData, MuayeneMetrics, ScheduleVersion, ProcessedPhysicianSummary } from '../types';
 import { MONTHS, YEARS } from '../constants';
@@ -307,12 +308,13 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   const appointmentRate = useMemo(() => (isPeriodSelected && stats.totalExamsCount > 0) ? (stats.totalMhrsExamsCount / stats.totalExamsCount) * 100 : null, [isPeriodSelected, stats]);
   const avgHoursPerSurgery = useMemo(() => (isPeriodSelected && stats.totalAbcSurgeriesCount > 0) ? stats.totalScheduledSurgeryHours / stats.totalAbcSurgeriesCount : 0, [isPeriodSelected, stats]);
 
-  const handleBarClick = (data: any) => { 
-    if (data && data.doctorName) { 
-      const enrichedDoctor = fullChartData.find(d => normalizeDoctorName(d.doctorName) === normalizeDoctorName(data.doctorName));
-      setSelectedDoctorForDetail(enrichedDoctor || data); 
-      setIsDetailModalOpen(true); 
-    } 
+  const handleBarClick = (data: any) => {
+    const name = data?.doctorName || data?.payload?.doctorName;
+    if (name) {
+      const enrichedDoctor = fullChartData.find(d => normalizeDoctorName(d.doctorName) === normalizeDoctorName(name));
+      setSelectedDoctorForDetail(enrichedDoctor || data?.payload || data);
+      setIsDetailModalOpen(true);
+    }
   };
 
   // === AKSİYON GÜN DAĞILIMI PPTX EXPORT ===
@@ -723,7 +725,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
         </>}
       </div>
 
-      {isDetailModalOpen && (
+      {isDetailModalOpen && createPortal(
         <DoctorDetailModal
           doctor={selectedDoctorForDetail}
           onClose={() => setIsDetailModalOpen(false)}
@@ -735,7 +737,8 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
           periodHospital={selectedHospital}
           muayeneByPeriod={muayeneByPeriod}
           ameliyatByPeriod={ameliyatByPeriod}
-        />
+        />,
+        document.body
       )}
     </div>
   );
@@ -763,11 +766,11 @@ export const CapacityUsageChart = ({ data, onClick }: any) => {
     </div>
     <div className="h-[90%]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={barGap} barCategoryGap="20%">
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={barGap} barCategoryGap="20%" onClick={(state) => { if (state?.activePayload?.[0]?.payload) onClick?.(state.activePayload[0].payload); }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
           <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick onClick={onClick} />} axisLine={false} tickLine={false} height={100} />
           <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
-          <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} content={({ active, payload }) => {
+          <Tooltip wrapperStyle={{ pointerEvents: 'none' }} cursor={{fill: 'rgba(59, 130, 246, 0.1)', pointerEvents: 'none'}} content={({ active, payload }) => {
             if (active && payload && payload.length) {
               const d = payload[0].payload;
               const f = d.capacity > 0 ? (d.totalExam - d.capacity) : null;
@@ -1185,18 +1188,22 @@ const DoctorDetailModal = ({
     return matchingPhys || null;
   }, [changeAnalysisPhysCompare, normName]);
 
-  // Modal açıkken arka plan scrollunu engelle
+  const [canClose, setCanClose] = useState(false);
+
+  // Modal açıkken arka plan scrollunu engelle + backdrop click koruması
   useEffect(() => {
     document.body.style.overflow = 'hidden';
+    const timer = requestAnimationFrame(() => setCanClose(true));
     return () => {
       document.body.style.overflow = '';
+      cancelAnimationFrame(timer);
     };
   }, []);
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 lg:p-8">
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={onClose}></div>
-      <div className="relative w-full max-w-[1200px] max-h-[90vh] bg-[var(--glass-bg)] backdrop-blur-xl rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 border border-[var(--glass-border)]">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={() => canClose && onClose()}></div>
+      <div className="relative z-10 w-full max-w-[1200px] max-h-[90vh] bg-[var(--glass-bg)] backdrop-blur-xl rounded-[48px] shadow-2xl flex flex-col overflow-hidden border border-[var(--glass-border)]">
         <div className="p-10 border-b border-[var(--border-1)] flex justify-between items-start bg-[var(--surface-2)]">
           <div>
             <h3 className="text-3xl font-black uppercase text-[var(--text-1)] tracking-tight">{doctor.doctorName}</h3>
