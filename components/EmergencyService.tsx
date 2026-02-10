@@ -51,14 +51,16 @@ const getShortName = (fullName: string): string => {
   return hospitalShortNames[fullName] || fullName.replace('Şanlıurfa ', '').replace(' Devlet Hastanesi', ' DH');
 };
 
-// Progress bar rengi belirleme - %60 altı kırmızı, %60 ve üzeri yeşil
+// Progress bar rengi belirleme - %65+ yeşil, %60-64 sarı, %60 altı kırmızı
 const getProgressColor = (rate: number): string => {
-  if (rate >= 60) return 'bg-emerald-500';
+  if (rate >= 65) return 'bg-emerald-500';
+  if (rate >= 60) return 'bg-yellow-500';
   return 'bg-red-500';
 };
 
 const getTextColor = (rate: number): string => {
-  if (rate >= 60) return 'text-emerald-400';
+  if (rate >= 65) return 'text-emerald-400';
+  if (rate >= 60) return 'text-yellow-400';
   return 'text-red-400';
 };
 
@@ -480,10 +482,15 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
         if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
           const nums = bg.match(/[\d.]+/g)?.map(Number) || [];
           const [r, g, b] = nums;
+          // Renkli arka planları koru (yeşil progress bar, sarı bar, kırmızı bar vb.)
+          const isColorful = (g > 120 && r < 80) || (r > 180 && g < 100) || (r > 180 && g > 120 && b < 50);
+          if (isColorful) {
+            // Olduğu gibi bırak — progress bar veya renkli element
+          }
           // Koyu arka planlar (r < 80) → beyaz/açık
-          if (r < 80 && g < 80) {
+          else if (r < 80 && g < 80) {
             el.style.backgroundColor = '#f8fafc'; // slate-50
-          } else if (r < 120) {
+          } else if (r < 120 && g < 120) {
             el.style.backgroundColor = '#f1f5f9'; // slate-100
           }
         }
@@ -504,6 +511,10 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           // Yeşil tonları (emerald-400 ~52,211,153) → daha koyu yeşil
           else if (g > 180 && r < 100 && b > 100 && b < 200) {
             el.style.color = '#059669'; // emerald-600
+          }
+          // Sarı tonları (yellow-400 ~250,204,21) → koyu sarı
+          else if (r > 200 && g > 160 && b < 80) {
+            el.style.color = '#ca8a04'; // yellow-600
           }
           // Kırmızı tonları (red-400 ~248,113,113) → koyu kırmızı
           else if (r > 200 && g < 130 && b < 130) {
