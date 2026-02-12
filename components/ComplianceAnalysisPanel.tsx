@@ -14,7 +14,8 @@ import { buildRulesMasterFromFirebase, buildRulesMasterHybridFromFirebase, runFu
 import { FullAuditResult } from '../src/services/ruleExtractor';
 import { getExtractedRulesMetadata } from '../src/services/ai/ruleExtractionAI';
 import type { ExtractedRulesMetadata } from '../src/types/complianceTypes';
-import { runComplianceAnalysis, generateSummary, exportResultsToExcel, IslemSatiriLike, KurumBilgisiLike } from '../src/services/complianceEngine';
+import { exportResultsToExcel, IslemSatiriLike, KurumBilgisiLike } from '../src/services/complianceEngine';
+import type { ComplianceWorkerResponse, SerializedRulesMaster } from '../src/workers/workerProtocol';
 import ComplianceDetailModal from './ComplianceDetailModal';
 
 interface ComplianceAnalysisPanelProps {
@@ -414,16 +415,54 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     setResults([]);
     setSummary(null);
     setCurrentPage(1);
-    const start = Date.now();
     try {
-      const analysisResults = await runComplianceAnalysis(tableData, rulesMaster, kurumBilgisi, (p) => setProgress(p));
+      const { results: analysisResults, summary: analysisSummary } = await new Promise<{
+        results: ComplianceResult[];
+        summary: ComplianceAnalysisSummary;
+      }>((resolve, reject) => {
+        const worker = new Worker(
+          new URL('../src/workers/complianceWorker.ts', import.meta.url),
+          { type: 'module' }
+        );
+
+        worker.onmessage = (e: MessageEvent<ComplianceWorkerResponse>) => {
+          const msg = e.data;
+          switch (msg.type) {
+            case 'ANALYSIS_PROGRESS':
+              setProgress(msg.progress);
+              break;
+            case 'ANALYSIS_SUCCESS':
+              worker.terminate();
+              resolve({ results: msg.results, summary: msg.summary });
+              break;
+            case 'ANALYSIS_ERROR':
+              worker.terminate();
+              reject(new Error(msg.error));
+              break;
+          }
+        };
+
+        worker.onerror = (err) => {
+          worker.terminate();
+          reject(new Error(`Worker hatası: ${err.message}`));
+        };
+
+        const rulesMasterEntries: SerializedRulesMaster = Array.from(rulesMaster.entries());
+        worker.postMessage({
+          type: 'RUN_ANALYSIS',
+          rows: tableData,
+          rulesMasterEntries,
+          kurumBilgisi,
+        });
+      });
+
       setResults(analysisResults);
       (window as any).__COMPLIANCE_RESULTS__ = analysisResults;
       (window as any).__COMPLIANCE_ROWS__ = tableData;
-      setSummary(generateSummary(analysisResults, Date.now() - start));
-    } catch (err) {
+      setSummary(analysisSummary);
+    } catch (err: any) {
       console.error('[COMPLIANCE] Analiz hatası:', err);
-      setProgress({ phase: 'error', current: 0, total: 0, message: `Analiz hatası: ${err}` });
+      setProgress({ phase: 'error', current: 0, total: 0, message: `Analiz hatası: ${err?.message || err}` });
     } finally {
       setIsAnalyzing(false);
     }
