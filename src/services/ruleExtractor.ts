@@ -240,8 +240,17 @@ function extractBransRules(lower: string, rawText: string, rules: ParsedRule[]) 
   // Mode tespiti: dahil mi haric mi?
   function detectBransMode(ctx: string): string | undefined {
     if (/(?:yalnızca|yalnizca|sadece|yalnız)\s/.test(ctx)) return 'sadece';
-    // "hariç" kesin hariç modu
-    if (/(?:hariç|haric)/.test(ctx)) return 'haric';
+    // "hariç" — sadece branş/uzman/hekim bağlamında hariç modu
+    // "acil haller hariç", "kodlu işlem hariç" gibi ifadeler branş hariç tutma DEĞİL
+    const haricMatch = ctx.match(/(?:hariç|haric)/);
+    if (haricMatch) {
+      const haricIdx = ctx.indexOf(haricMatch[0]);
+      const beforeHaric = ctx.substring(Math.max(0, haricIdx - 60), haricIdx).trim();
+      // Gerçek branş hariç tutma: "X uzmanı hariç", "X hekimi hariç", "X branşı hariç"
+      const gercekBransHaric = /(?:uzman[ıi]|hekim[i]?|dal\s+uzman[ıi]?|bran[sş][ıi]?)\s*(?:\)|,)?\s*$/i.test(beforeHaric);
+      if (gercekBransHaric) return 'haric';
+      // "haller hariç", "işlem hariç", "kodlu işlem hariç" → branş hariç değil, dahil moduna dönme
+    }
     // "dışında" sadece branş/uzman/hekim bağlamında hariç modu
     // "yoğun bakım dışındaki" gibi yer/alan ifadeleri hariç modu DEĞİL
     if (/(?:branş|brans|uzman|hekim).{0,20}(?:dışında|disinda)/.test(ctx)) return 'haric';
@@ -470,10 +479,15 @@ function extractBirlikteYapilamazRules(lower: string, rawText: string, rules: Pa
         Math.max(0, match.index - 200),
         Math.min(lower.length, match.index + match[0].length + 200)
       );
-      // Genişletilmiş kod pattern'leri: standart 5-7 haneli kodlar + R/L prefix + noktalı kodlar
-      const codeMatches = context.match(/\b(?:[rl]?\d{5,7}|\d{3}\.\d{3})\b/gi) || [];
+      // Genişletilmiş kod pattern'leri: standart 5-7 haneli kodlar + P/R/L prefix + noktalı kodlar
+      const codeMatches = context.match(/\b(?:[prl]?\d{5,7}|\d{3}\.\d{3})\b/gi) || [];
       const yapilamazKodlari = [...new Set(
-        codeMatches.map(c => c.toUpperCase())
+        codeMatches.map(c => {
+          // P prefix'ini temizle (mevzuatta P610490, veri setinde 610.490)
+          // R prefix'ini KORU (veri setinde R100040 olarak geçer)
+          const upper = c.toUpperCase();
+          return upper.startsWith('P') ? upper.substring(1) : upper;
+        })
       )];
 
       rules.push({
@@ -614,6 +628,12 @@ function extractSiklikRules(lower: string, rawText: string, rules: ParsedRule[])
     // "tamamı bir kez puanlandırılır" → aynı gün 1 kez (NOT: genel "bir kez"'den ÖNCE gelmeli)
     { regex: /tamamı\s+(bir)\s+kez\s+(?:puanlandırılır|puanlandirilir)/gi, periyot: 'gun', limitGroup: 1 },
     { regex: /tamami\s+(bir)\s+kez\s+(?:puanlandırılır|puanlandirilir)/gi, periyot: 'gun', limitGroup: 1 },
+
+    // === HER X SAALTLİK TAKİP İÇİN BİR KEZ ===
+    // "her sekiz (8) saatlik takip için bir kez puanlandırılır" → günde 3 kez (24/8=3)
+    // Bu pattern, generic "bir kez puanlandırılır" den ÖNCE gelmeli!
+    { regex: /her\s+(?:\w+\s+)?(?:\(?\s*(\d+)\s*\)?\s*)saatlik\s+takip\s+için\s+(bir)\s+kez/gi, periyot: 'gun_saat', limitGroup: 1 },
+    { regex: /(\d+)\s*saatlik\s+takip\s+için\s+(bir)\s+kez/gi, periyot: 'gun_saat', limitGroup: 1 },
 
     // === BİR KEZ PUANLANDIRILIR (without ömürde prefix) ===
     // "bir kez puanlandırılır" — genel sıklık limiti

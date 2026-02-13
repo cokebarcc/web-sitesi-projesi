@@ -60,6 +60,21 @@ export interface RuleMasterEntry {
 export type UygunlukDurumu = 'UYGUN' | 'UYGUNSUZ' | 'MANUEL_INCELEME' | 'ESLESEMEDI';
 export type EslesmeGuveni = 'Yüksek' | 'Orta' | 'Düşük';
 
+export interface CakisanIslem {
+  gilKodu: string;
+  gilAdi: string;
+  tarih: string;
+  saat: string;
+  doktor: string;
+  uzmanlik: string;
+  miktar: number;
+  puan: number;
+  tutar: number;
+  hastaTc?: string;
+  adiSoyadi?: string;
+  islemNo?: string;
+}
+
 export interface IhlalDetay {
   ihlal_kodu: string;
   ihlal_aciklamasi: string;
@@ -67,17 +82,20 @@ export interface IhlalDetay {
   referans_kural_metni: string;
   kural_tipi: ParsedRuleType;
   fromSectionHeader?: boolean;   // Bölüm başlığından mı geldi?
+  cakisanIslemler?: CakisanIslem[];  // İhlale neden olan çakışan işlemler
 }
 
 export interface ComplianceResult {
   satirIndex: number;
   uygunluk_durumu: UygunlukDurumu;
   eslesme_guveni: EslesmeGuveni;
+  guvenNedeni?: string;            // Güven derecesinin açıklaması
   ihlaller: IhlalDetay[];
   eslesen_kural?: RuleMasterEntry;
   eslesmeDurumu: 'ESLESTI' | 'ESLESEMEDI';
   puan_farki?: number;
   fiyat_farki?: number;
+  isMuaf?: boolean;                // Kural kontrolünden muaf mı?
 }
 
 // ── Özet İstatistikler ──
@@ -91,6 +109,7 @@ export interface ComplianceAnalysisSummary {
   toplamIhlalSayisi: number;
   ihlalDagilimi: Record<ParsedRuleType, number>;
   analizSuresiMs: number;
+  muafIslemSayisi: number;       // Kural kontrolünden muaf tutulan işlem satırı sayısı
 }
 
 // ── İlerleme Takibi ──

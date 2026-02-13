@@ -9,6 +9,7 @@ import {
   ComplianceResult,
   ComplianceAnalysisSummary,
   IhlalDetay,
+  CakisanIslem,
   UygunlukDurumu,
   EslesmeGuveni,
   AnalysisProgress,
@@ -113,6 +114,21 @@ const BRANS_ALIAS_GROUPS: string[][] = [
   ['çocuk cerrahisi'],
   ['spor hekimliği'],
   ['ağız, diş ve çene cerrahisi', 'ağız diş ve çene cerrahisi', 'diş hekimliği', 'diş hekimi', 'diş', 'ağız diş', 'diş hastalıkları ve tedavisi', 'diş hastalıkları', 'diş protez', 'ağız diş ve çene hastalıkları'],
+  ['immunoloji ve alerji hastalıkları', 'immünoloji ve alerji hastalıkları', 'alerji ve immünoloji', 'allerji ve immünoloji', 'erişkin allerji', 'erişkin alerji', 'çocuk alerji', 'çocuk allerji', 'çocuk immünolojisi ve alerji hastalıkları', 'çocuk immunolojisi', 'çocuk alerjisi', 'çocuk alerjisi ve immünolojisi hastalıkları', 'çocuk alerjisi ve immünolojisi', 'alerji immünoloji', 'allerji immünoloji', 'erişkin/çocuk allerji', 'immünoloji uzman'],
+  ['çocuk endokrinolojisi', 'çocuk endokrinoloji'],
+  ['çocuk nefrolojisi', 'çocuk nefroloji'],
+  ['çocuk hematolojisi', 'çocuk hematoloji'],
+  ['çocuk nörolojisi', 'çocuk nöroloji'],
+  ['çocuk kardiyolojisi', 'çocuk kardiyoloji'],
+  ['çocuk gastroenterolojisi', 'çocuk gastroenteroloji'],
+  ['çocuk romatolojisi', 'çocuk romatoloji'],
+  ['çocuk yoğun bakım', 'çocuk yoğun bakımı'],
+  ['yenidoğan', 'neonatoloji', 'yenidoğan yoğun bakım'],
+  ['çocuk acil'],
+  ['adli tıp'],
+  ['algoloji', 'ağrı tedavisi'],
+  ['çocuk göğüs hastalıkları'],
+  ['sualtı hekimliği', 'hiperbarik tıp'],
 ];
 
 const _bransAliasMap = new Map<string, Set<string>>();
@@ -124,25 +140,53 @@ for (const group of BRANS_ALIAS_GROUPS) {
   }
 }
 
+// Excel'deki branş değerlerinden suffix/prefix temizle
+// "Psikiyatri Uzmanı" → "psikiyatri", "3300-Radyoloji" → "radyoloji",
+// "Radyoloji Ana Bilim Dalı" → "radyoloji", "Çocukacil" → "çocuk acil"
+function normalizeBransName(raw: string): string {
+  let s = turkishLower(raw.trim());
+  // Sayı-prefix temizle: "3300-Radyoloji" → "radyoloji", "5131-Çocuk İmmünolojisi" → "çocuk immünolojisi", "2- Adli Tıp" → "adli tıp"
+  s = s.replace(/^\d{1,5}[-\s]*/, '');
+  // Suffix temizle: "uzmanı", "uzman", "ana bilim dalı", "anabilim dalı", "bölümü"
+  s = s.replace(/\s+(?:uzman[ıi]|uzman|ana\s+bilim\s+dal[ıi]|anabilim\s+dal[ıi]|bölümü|bolumu|servisi|klini[gğ]i)\s*$/i, '');
+  // Noktalı kısaltmaları temizle: "k.b.b." → "kbb", "f.t.r." → "ftr"
+  s = s.replace(/\b([a-zçğıöşü])\.([a-zçğıöşü])\.([a-zçğıöşü])\./gi, '$1$2$3');
+  s = s.replace(/\b([a-zçğıöşü])\.([a-zçğıöşü])\./gi, '$1$2');
+  // Bitişik yazımları ayır: "Çocukacil" → "çocuk acil"
+  s = s.replace(/^(çocuk)(acil|cerrahi|üroloji|endokrinoloji|nöroloji|nefroloji|hematoloji|onkoloji|romatoloji|immünoloji|alerji|gastroenteroloji|kardiyoloji)/i, '$1 $2');
+  return s.trim();
+}
+
 export function branslarEslesiyor(hekim: string, kural: string): boolean {
   const h = turkishLower(hekim.trim());
   const k = turkishLower(kural.trim());
 
   if (h === k) return true;
 
-  const hGroup = _bransAliasMap.get(h);
-  if (hGroup && hGroup.has(k)) return true;
+  // Normalize edilmiş versiyonlarla da dene
+  const hNorm = normalizeBransName(hekim);
+  const kNorm = normalizeBransName(kural);
+
+  if (hNorm === kNorm) return true;
+
+  // Hem orijinal hem normalize ile alias map'ten ara
+  const hGroup = _bransAliasMap.get(h) || _bransAliasMap.get(hNorm);
+  if (hGroup && (hGroup.has(k) || hGroup.has(kNorm))) return true;
 
   function safeIncludes(haystack: string, needle: string): boolean {
     if (!haystack.includes(needle)) return false;
+    const idx = haystack.indexOf(needle);
+    const before = idx > 0 ? haystack[idx - 1] : ' ';
+    const after = idx + needle.length < haystack.length ? haystack[idx + needle.length] : ' ';
+    const isBefore = before === ' ' || before === ',' || before === ';' || before === '(' || before === ')';
+    const isAfter = after === ' ' || after === ',' || after === ';' || after === '(' || after === ')';
+    // Kısa veya tek kelimelik needle'lar word boundary gerektirir
     if (needle.length <= 6 || !needle.includes(' ')) {
-      const idx = haystack.indexOf(needle);
-      const before = idx > 0 ? haystack[idx - 1] : ' ';
-      const after = idx + needle.length < haystack.length ? haystack[idx + needle.length] : ' ';
-      const isBefore = before === ' ' || before === ',' || before === ';' || before === '(' || before === ')';
-      const isAfter = after === ' ' || after === ',' || after === ';' || after === '(' || after === ')';
       if (!isBefore || !isAfter) return false;
     }
+    // Parent-child branş karışmasını önle: "acil tıp" ≠ "çocuk acil tıp"
+    // Needle haystack'ın ortasında başlıyorsa (idx > 0) word boundary kontrol et
+    if (idx > 0 && !isBefore) return false;
     if (needle.length < haystack.length * 0.4) return false;
     return true;
   }
@@ -150,24 +194,24 @@ export function branslarEslesiyor(hekim: string, kural: string): boolean {
   if (hGroup) {
     for (const alias of hGroup) {
       if (!alias.includes(' ') && k.includes(' ')) {
-        if (safeIncludes(alias, k)) return true;
+        if (safeIncludes(alias, k) || safeIncludes(alias, kNorm)) return true;
       } else {
-        if (safeIncludes(alias, k) || safeIncludes(k, alias)) return true;
+        if (safeIncludes(alias, k) || safeIncludes(k, alias) || safeIncludes(alias, kNorm) || safeIncludes(kNorm, alias)) return true;
       }
     }
   }
-  const kGroup = _bransAliasMap.get(k);
+  const kGroup = _bransAliasMap.get(k) || _bransAliasMap.get(kNorm);
   if (kGroup) {
     for (const alias of kGroup) {
       if (!alias.includes(' ') && h.includes(' ')) {
-        if (safeIncludes(alias, h)) return true;
+        if (safeIncludes(alias, h) || safeIncludes(alias, hNorm)) return true;
       } else {
-        if (safeIncludes(alias, h) || safeIncludes(h, alias)) return true;
+        if (safeIncludes(alias, h) || safeIncludes(h, alias) || safeIncludes(alias, hNorm) || safeIncludes(hNorm, alias)) return true;
       }
     }
   }
 
-  if (safeIncludes(h, k) || safeIncludes(k, h)) return true;
+  if (safeIncludes(h, k) || safeIncludes(k, h) || safeIncludes(hNorm, kNorm) || safeIncludes(kNorm, hNorm)) return true;
 
   const stopWords = new Set(['ve', 'ile', 'veya', 'için', 'olan', 'bir']);
   const hTokens = h.split(/[\s,;()]+/).filter(t => t.length > 1 && !stopWords.has(t));
@@ -181,6 +225,26 @@ export function branslarEslesiyor(hekim: string, kural: string): boolean {
   if (matchRatio >= 0.6) return true;
 
   return false;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// YARDIMCI: Çakışan işlem bilgisi oluştur
+// ═══════════════════════════════════════════════════════════════
+function rowToCakisanIslem(r: IslemSatiriLike): CakisanIslem {
+  return {
+    gilKodu: r.gilKodu,
+    gilAdi: r.gilAdi,
+    tarih: r.tarih,
+    saat: r.saat,
+    doktor: r.doktor,
+    uzmanlik: r.uzmanlik,
+    miktar: r.miktar,
+    puan: r.puan,
+    tutar: r.tutar,
+    hastaTc: r.hastaTc,
+    adiSoyadi: r.adiSoyadi,
+    islemNo: r.islemNo,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -202,6 +266,7 @@ export function analyzeRow(
       satirIndex: rowIndex,
       uygunluk_durumu: 'ESLESEMEDI',
       eslesme_guveni: 'Düşük',
+      guvenNedeni: normalizedKodu ? 'GİL kodu kural veritabanında bulunamadı' : 'GİL kodu boş',
       ihlaller: [],
       eslesmeDurumu: 'ESLESEMEDI',
     };
@@ -244,7 +309,29 @@ export function analyzeRow(
 
       case 'BRANS_KISITI': {
         const _rawBranslar = rule.params.branslar as string[];
-        const bransMode = (rule.params.mode as string) || 'dahil';
+        let bransMode = (rule.params.mode as string) || 'dahil';
+
+        // Güvenlik ağı: eski parse'dan kalan yanlış "haric" mode'unu düzelt
+        // "acil haller hariç", "kodlu işlem hariç" gibi ifadelerde mode haric olmamalı
+        if (bransMode === 'haric' && rule.rawText) {
+          const rawLower = turkishLower(rule.rawText);
+          const haricIdx = rawLower.indexOf('hariç');
+          if (haricIdx >= 0) {
+            const beforeHaric = rawLower.substring(Math.max(0, haricIdx - 60), haricIdx).trim();
+            const gercekBransHaric = /(?:uzman[ıi]|hekim[i]?|dal\s+uzman[ıi]?|bran[sş][ıi]?)\s*(?:\)|,)?\s*$/i.test(beforeHaric);
+            if (!gercekBransHaric) {
+              // "hariç" branş bağlamında değil — bu aslında dahil kuralı
+              // rawText'te "tarafından" veya "raporu ile" varsa dahil'e çevir
+              const dahilSignal = /(?:tarafından|raporu\s+ile|uzmanı\s+tarafından|raporlandığında)/i.test(rawLower);
+              if (dahilSignal) {
+                bransMode = 'dahil';
+              } else {
+                // Emin değilsek bu kuralı atla — yanlış pozitiften kaçın
+                break;
+              }
+            }
+          }
+        }
         const bransStopWords = new Set([
           'için', 'icin', 'olan', 'olarak', 'ile', 'bir', 'her', 'bu', 'şu', 'de', 'da',
           'den', 'dan', 'dir', 'dır', 'ise', 'gibi', 'kadar', 'sonra', 'önce', 'once',
@@ -307,16 +394,29 @@ export function analyzeRow(
 
         const yasAltMatch = rawTextLower.match(/(\d+)\s*ya[sş]\s*(alt[ıi]|altında|altındaki)/);
         const yasUstMatch = rawTextLower.match(/(\d+)\s*ya[sş]\s*([uü]st[uü]|üzerinde|üstündeki|ve\s+[uü]zeri)/);
+        // Yaş ifadesi "artırım/%/ek puan" bağlamında ise branş kısıtını atlamak YANLIŞ olur
+        // Örn: "5 yaş altı çocuklarda %100 artırımlı uygulanır" → fiyat artırımı, branş kısıtı değil
+        const yasArtirimPattern = /art[ıi]r[ıi]m|%\s*\d+|ek\s*puan|fazla\s*puan/;
         if (yasAltMatch && row.yasi) {
-          const yasLimit = parseInt(yasAltMatch[1], 10);
-          if (row.yasi >= yasLimit) {
-            break;
+          const yasMatchPos = rawTextLower.indexOf(yasAltMatch[0]);
+          const yasCevre = rawTextLower.substring(Math.max(0, yasMatchPos - 20), yasMatchPos + 60);
+          const isArtirim = yasArtirimPattern.test(yasCevre);
+          if (!isArtirim) {
+            const yasLimit = parseInt(yasAltMatch[1], 10);
+            if (row.yasi >= yasLimit) {
+              break;
+            }
           }
         }
         if (yasUstMatch && row.yasi) {
-          const yasLimit = parseInt(yasUstMatch[1], 10);
-          if (row.yasi < yasLimit) {
-            break;
+          const yasMatchPos = rawTextLower.indexOf(yasUstMatch[0]);
+          const yasCevre = rawTextLower.substring(Math.max(0, yasMatchPos - 20), yasMatchPos + 60);
+          const isArtirim = yasArtirimPattern.test(yasCevre);
+          if (!isArtirim) {
+            const yasLimit = parseInt(yasUstMatch[1], 10);
+            if (row.yasi < yasLimit) {
+              break;
+            }
           }
         }
 
@@ -328,6 +428,10 @@ export function analyzeRow(
             'beyin cerrahisi', 'kalp damar cerrahisi', 'göğüs cerrahisi',
             'kardiyoloji', 'gastroenteroloji', 'dermatoloji', 'endokrinoloji',
             'nefroloji', 'hematoloji', 'onkoloji', 'perinatoloji',
+            'adli tıp', 'ruh sağlığı ve hastalıkları', 'çocuk ve ergen ruh sağlığı',
+            'fiziksel tıp ve rehabilitasyon', 'enfeksiyon hastalıkları',
+            'anesteziyoloji', 'acil tıp', 'aile hekimliği', 'radyoloji',
+            'nükleer tıp', 'romatoloji', 'göğüs hastalıkları',
           ];
           const branslarLower = new Set(branslar.map(b => turkishLower(b)));
           for (const bb of bilinenBranslar) {
@@ -400,8 +504,16 @@ export function analyzeRow(
         const birlikteYapilamazMuafKodlar = new Set(['520020', '520021']);
         if (birlikteYapilamazMuafKodlar.has(normalizedKodu)) break;
 
-        const yasakliKodlar = rule.params.yapilamazKodlari as string[];
+        let yasakliKodlar = rule.params.yapilamazKodlari as string[];
         const birlikteRawLower = turkishLower(rule.rawText || '');
+
+        // Güvenlik ağı: yapilamazKodlari boşsa rawText'ten P-prefix'li kodları çıkar
+        if ((!yasakliKodlar || yasakliKodlar.length === 0) && rule.rawText) {
+          const pCodeMatches = rule.rawText.match(/\b[Pp]\d{5,7}\b/g);
+          if (pCodeMatches && pCodeMatches.length > 0) {
+            yasakliKodlar = pCodeMatches.map(c => c.substring(1)); // P prefix'ini kaldır
+          }
+        }
 
         const tumIslemlerYasak = (!yasakliKodlar || yasakliKodlar.length === 0)
           && /(?:ba[sş]ka\s+(?:bir\s+)?i[sş]lem|di[gğ]er\s+i[sş]lem|tek\s+ba[sş][ıi]na)/i.test(birlikteRawLower);
@@ -421,10 +533,11 @@ export function analyzeRow(
               referans_kural_metni: rule.rawText,
               fromSectionHeader: rule.fromSectionHeader,
               kural_tipi: 'BIRLIKTE_YAPILAMAZ',
+              cakisanIslemler: conflicting.slice(0, 10).map(rowToCakisanIslem),
             });
           }
         } else if (yasakliKodlar && yasakliKodlar.length > 0) {
-          const yasakliNormalized = yasakliKodlar.map(k => k.replace(/\./g, ''));
+          const yasakliNormalized = yasakliKodlar.map(k => k.replace(/\./g, '').replace(/^P/i, ''));
           const birlikteAyniDis = /ayn[ıi]\s*di[sş]/i.test(birlikteRawLower);
 
           const conflicting = sameSessionRows.filter(r => {
@@ -447,6 +560,7 @@ export function analyzeRow(
               referans_kural_metni: rule.rawText,
               fromSectionHeader: rule.fromSectionHeader,
               kural_tipi: 'BIRLIKTE_YAPILAMAZ',
+              cakisanIslemler: conflicting.slice(0, 10).map(rowToCakisanIslem),
             });
           }
         }
@@ -459,9 +573,22 @@ export function analyzeRow(
 
       case 'TANI_KOSULU': {
         const taniRawLower = turkishLower(rule.rawText || '');
+        // Tanıya bağlı sıklık kuralı: "X tanılarında en fazla Y adet faturalandırılır"
+        // Bu tanı zorunluluğu değil, tanıya göre sıklık artışıdır — TANI_KOSULU olarak ihlal edilmemeli
         const hasTaniSiklikIstisna = /tan[ıi]lar[ıi]nda.{0,80}(?:en fazla|adet|kez|kere)\s*(?:faturaland|puan)/i.test(taniRawLower);
-        const hasGenelSiklik = /\d+\s*(?:günde|g[uü]nde|haftada|ayda|y[ıi]lda)\s+(?:bir|1|en fazla)\s+(?:adet|kez|kere)/i.test(taniRawLower);
+        // Sayı veya Türkçe sayı kelimesi + periyot + limit
+        const NUM_WORDS = '(?:\\d+|bir|iki|üç|uc|dört|dort|beş|bes|altı|alti|yedi|sekiz|dokuz|on|yirmi|otuz)';
+        const hasGenelSiklik = new RegExp(
+          `${NUM_WORDS}\\s*(?:günde|g[uü]nde|haftada|ayda|y[ıi]lda)\\s+(?:bir|1|en fazla|${NUM_WORDS})\\s+(?:adet|kez|kere)`,
+          'i'
+        ).test(taniRawLower);
         if (hasTaniSiklikIstisna && hasGenelSiklik) {
+          break;
+        }
+        // Ek kontrol: rawText'te sadece tanıya bağlı sıklık artışı varsa (tanı zorunluluğu yok)
+        // Pattern: "tanılarında/tanılarında... faturalandırılır" + sıklık ifadesi
+        const taniSiklikOnly = /tan[ıi]lar[ıi]nda.{0,120}(?:en fazla|en çok|en cok)\s+(?:\d+|bir|iki|üç|uc|dört|dort|beş|bes)\s+(?:adet|kez|kere)/i.test(taniRawLower);
+        if (taniSiklikOnly) {
           break;
         }
 
@@ -637,18 +764,31 @@ export function analyzeRow(
   }
 
   let guven: EslesmeGuveni = 'Yüksek';
-  if (entry.parsed_rules.length === 0) guven = 'Orta';
-  if (ihlaller.some(i => i.kural_tipi === 'TANI_KOSULU')) guven = 'Orta';
+  let guvenNedeni = 'Kural eşleşti ve kurallar başarıyla çıkarıldı';
+  if (entry.parsed_rules.length === 0) {
+    guven = 'Orta';
+    guvenNedeni = 'Kural eşleşti ancak mevzuat metninden kural çıkarılamadı';
+  }
+  if (ihlaller.some(i => i.kural_tipi === 'TANI_KOSULU')) {
+    guven = 'Orta';
+    guvenNedeni = 'Tanı koşulu ihlali — tanı kodları otomatik doğrulanamıyor';
+  }
+
+  // Muaf kontrol: BIRLIKTE_YAPILAMAZ ve SIKLIK_LIMIT kontrolünden muaf kodlar
+  const muafKodlarSet = new Set(['520020', '520021', '520022', '520023', '520024']);
+  const isMuaf = muafKodlarSet.has(normalizedKodu);
 
   return {
     satirIndex: rowIndex,
     uygunluk_durumu: uygunluk,
     eslesme_guveni: guven,
+    guvenNedeni,
     ihlaller,
     eslesen_kural: entry,
     eslesmeDurumu: 'ESLESTI',
     puan_farki: puanFarki,
     fiyat_farki: fiyatFarki,
+    isMuaf,
   };
 }
 
@@ -734,6 +874,8 @@ export function applySiklikLimitChecks(
           const firstDetay = firstRow
             ? ` (İlk giriş: ${firstRow.tarih} tarihinde ${firstRow.doktor || ''} tarafından girilmiş)`
             : '';
+          // Çakışan: kendisi hariç diğer tüm aynı islemNo satırları
+          const cakisanlar = sorted.filter((_, si) => si !== j).slice(0, 10).map(si => rowToCakisanIslem(rows[si]));
           result.ihlaller.push({
             ihlal_kodu: 'SIKLIK_006',
             ihlal_aciklamasi: `Bu işlem (520046 - Yatan hasta taburculuk değerlendirmesi) aynı işlem numarası (${islemNo}) ile birden fazla faturalandırılamaz. Bu işlem numarasında ${sorted.length} adet bulundu.${firstDetay}`,
@@ -741,6 +883,7 @@ export function applySiklikLimitChecks(
             referans_kural_metni: 'Aynı işlem numarası ile birden fazla 520046 faturalandırılamaz (özel kural).',
             fromSectionHeader: true,
             kural_tipi: 'SIKLIK_LIMIT',
+            cakisanIslemler: cakisanlar,
           });
           if (result.uygunluk_durumu === 'UYGUN') {
             result.uygunluk_durumu = 'UYGUNSUZ';
@@ -765,6 +908,21 @@ export function applySiklikLimitChecks(
 
     const limit = siklikRule.params.limit as number;
     let periyot = siklikRule.params.periyot as string;
+
+    // Güvenlik ağı: "her X saatlik takip için bir kez" kuralları periyot=genel olarak
+    // yanlış parse edilmişse, rawText'ten saat bazlı periyoda düzelt
+    if (periyot === 'genel' && siklikRule.rawText) {
+      const saatTakipMatch = siklikRule.rawText.match(/(?:her\s+)?(?:\w+\s+)?(?:\(?\s*(\d+)\s*\)?\s*)saatlik\s+takip/i);
+      if (saatTakipMatch) {
+        const saatSayisi = parseInt(saatTakipMatch[1], 10);
+        if (saatSayisi > 0) {
+          const dailyLimit = Math.floor(24 / saatSayisi);
+          periyot = 'gun';
+          (siklikRule.params as any).periyot = 'gun';
+          (siklikRule.params as any).limit = dailyLimit > 0 ? dailyLimit : 1;
+        }
+      }
+    }
 
     if (periyot === 'ay_aralik' && siklikRule.rawText) {
       const gunMatch = siklikRule.rawText.match(/(\d+)\s*g[uü]n/i);
@@ -849,6 +1007,7 @@ export function applySiklikLimitChecks(
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
               kural_tipi: 'SIKLIK_LIMIT',
+              cakisanIslemler: prevRow ? [rowToCakisanIslem(prevRow)] : [],
             });
             if (result.uygunluk_durumu === 'UYGUN') {
               result.uygunluk_durumu = 'UYGUNSUZ';
@@ -861,6 +1020,8 @@ export function applySiklikLimitChecks(
 
     for (const [, groupIndices] of periyotGroups) {
       if (groupIndices.length > correctedLimit) {
+        // Limite kadar olan (uygun olan) satırları çakışan olarak göster
+        const cakisanlar = groupIndices.slice(0, correctedLimit).map(idx => rowToCakisanIslem(rows[idx]));
         const refRows = groupIndices.slice(0, correctedLimit).map(idx => {
           const r = rows[idx];
           return r ? `${r.tarih} ${r.doktor || ''} ${r.gilKodu}` : '';
@@ -879,6 +1040,7 @@ export function applySiklikLimitChecks(
               referans_kural_metni: siklikRule.rawText,
               fromSectionHeader: siklikRule.fromSectionHeader,
               kural_tipi: 'SIKLIK_LIMIT',
+              cakisanIslemler: cakisanlar,
             });
             if (result.uygunluk_durumu === 'UYGUN') {
               result.uygunluk_durumu = 'UYGUNSUZ';
@@ -982,7 +1144,10 @@ export function generateSummary(results: ComplianceResult[], elapsedMs?: number)
     GENEL_ACIKLAMA: 0,
   };
 
-  let uygun = 0, uygunsuz = 0, manuel = 0, eslesen = 0, eslesmeyen = 0, toplamIhlal = 0;
+  let uygun = 0, uygunsuz = 0, manuel = 0, eslesen = 0, eslesmeyen = 0, toplamIhlal = 0, muafIslem = 0;
+
+  // Muaf kodlar: Sıklık ve/veya birlikte yapılamaz kontrolünden muaf tutulan işlemler
+  const muafKodlar = new Set(['520020', '520021', '520022', '520023', '520024']);
 
   for (const r of results) {
     if (r.uygunluk_durumu === 'UYGUN') uygun++;
@@ -991,6 +1156,12 @@ export function generateSummary(results: ComplianceResult[], elapsedMs?: number)
     else manuel++;
 
     if (r.eslesmeDurumu === 'ESLESTI') eslesen++;
+
+    // Muaf kontrol: eşleşen kuralın islem_kodu muaf listesinde mi?
+    if (r.eslesen_kural) {
+      const kod = r.eslesen_kural.islem_kodu.replace(/[.\-]/g, '');
+      if (muafKodlar.has(kod)) muafIslem++;
+    }
 
     toplamIhlal += r.ihlaller.length;
     for (const i of r.ihlaller) {
@@ -1008,5 +1179,6 @@ export function generateSummary(results: ComplianceResult[], elapsedMs?: number)
     toplamIhlalSayisi: toplamIhlal,
     ihlalDagilimi,
     analizSuresiMs: elapsedMs || 0,
+    muafIslemSayisi: muafIslem,
   };
 }

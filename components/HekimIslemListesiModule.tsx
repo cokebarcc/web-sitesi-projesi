@@ -215,6 +215,17 @@ export function formatNumber(val: number, decimals = 2): string {
   return val.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+// Filtre bilgisinden benzersiz Firebase subKey oluştur
+function buildSubKey(kurum: string, years: number[], months: number[], brans: string): string {
+  const parts = [
+    kurum ? kurum.substring(0, 30).replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ]/g, '_').replace(/_+/g, '_') : '',
+    years.length > 0 ? years.sort().join('-') : '',
+    months.length > 0 ? months.sort((a, b) => a - b).join('-') : '',
+    brans || ''
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join('__') : 'islemListesi';
+}
+
 // Sayfa boyutu seçenekleri
 const PAGE_SIZES = [50, 100, 250, 500];
 
@@ -246,8 +257,15 @@ const HekimIslemListesiModule: React.FC = () => {
 
   // Firebase kayıtlı dosya state'leri
   const [savedFileInfo, setSavedFileInfo] = useState<FinansalFileMetadata | null>(null);
+  const [allSavedFiles, setAllSavedFiles] = useState<Record<string, FinansalFileMetadata>>({});
   const [firebaseLoading, setFirebaseLoading] = useState(false);
   const [firebaseMessage, setFirebaseMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Mevcut filtrelere göre Firebase subKey
+  const currentSubKey = useMemo(
+    () => buildSubKey(selectedKurum, selectedYears, selectedMonths, selectedBrans),
+    [selectedKurum, selectedYears, selectedMonths, selectedBrans]
+  );
 
   const kurumOptions: DropdownOption[] = KURUM_LISTESI.map(k => ({
     value: k.ad,
@@ -281,62 +299,56 @@ const HekimIslemListesiModule: React.FC = () => {
     }
   }, [firebaseMessage]);
 
-  // Mount'ta sadece Firebase'de kayıtlı dosya var mı kontrol et (indirme)
-  const checkSavedFile = useCallback(async () => {
+  // Mount'ta tüm kayıtlı dosyaları Firebase'den çek
+  const loadAllSavedFiles = useCallback(async () => {
     try {
-      const metadata = await getFinansalFileMetadata('hekimIslem', 'islemListesi');
-      console.log('[HEKİM İŞLEM LİSTESİ] Mount metadata kontrol:', metadata);
-      if (metadata) {
-        setSavedFileInfo(metadata);
-      } else {
-        // Alternatif key'leri kontrol et
-        const { getFinansalModuleFiles } = await import('../src/services/finansalStorage');
-        const allFiles = await getFinansalModuleFiles('hekimIslem');
-        const keys = Object.keys(allFiles);
-        console.log('[HEKİM İŞLEM LİSTESİ] Tüm hekimIslem key\'leri:', keys);
-        if (keys.length > 0) {
-          setSavedFileInfo(allFiles[keys[0]]);
-        }
-      }
+      const { getFinansalModuleFiles } = await import('../src/services/finansalStorage');
+      const allFiles = await getFinansalModuleFiles('hekimIslem');
+      console.log('[HEKİM İŞLEM LİSTESİ] Tüm kayıtlı dosyalar:', Object.keys(allFiles));
+      setAllSavedFiles(allFiles);
     } catch (error) {
-      console.error('[HEKİM İŞLEM LİSTESİ] Firebase metadata kontrol hatası:', error);
+      console.error('[HEKİM İŞLEM LİSTESİ] Firebase dosya listesi hatası:', error);
     }
   }, []);
 
   useEffect(() => {
-    checkSavedFile();
-  }, [checkSavedFile]);
+    loadAllSavedFiles();
+  }, [loadAllSavedFiles]);
+
+  // Filtre değiştiğinde ilgili subKey'e ait kayıtlı dosyayı güncelle
+  useEffect(() => {
+    const matchingFile = allSavedFiles[currentSubKey] || null;
+    // Eğer tam eşleşme yoksa ve filtre boşsa, eski 'islemListesi' key'ine fallback
+    if (!matchingFile && currentSubKey === 'islemListesi') {
+      // Zaten fallback key, eşleşme yok
+      setSavedFileInfo(null);
+    } else if (!matchingFile && Object.keys(allSavedFiles).length > 0 && currentSubKey === 'islemListesi') {
+      // Filtre boş: ilk bulunan dosyayı göster (geriye uyumluluk)
+      const firstKey = Object.keys(allSavedFiles)[0];
+      setSavedFileInfo(allSavedFiles[firstKey]);
+    } else {
+      setSavedFileInfo(matchingFile);
+    }
+  }, [currentSubKey, allSavedFiles]);
 
   // Kayıtlı dosyayı Firebase'den indir ve tabloya yükle
   const handleLoadSavedFile = async () => {
     setFirebaseLoading(true);
     setFirebaseMessage(null);
     try {
-      // savedFileInfo yoksa Firebase'den taze kontrol et
+      // savedFileInfo yoksa Firebase'den taze kontrol et (dinamik subKey ile)
       let fileInfo = savedFileInfo;
       if (!fileInfo) {
-        // Önce spesifik key ile dene
-        const metadata = await getFinansalFileMetadata('hekimIslem', 'islemListesi');
-        console.log('[HEKİM İŞLEM LİSTESİ] Firebase metadata sorgu sonucu:', metadata);
+        const metadata = await getFinansalFileMetadata('hekimIslem', currentSubKey);
+        console.log(`[HEKİM İŞLEM LİSTESİ] Firebase metadata sorgu (${currentSubKey}):`, metadata);
         if (metadata) {
           fileInfo = metadata;
           setSavedFileInfo(metadata);
+          setAllSavedFiles(prev => ({ ...prev, [currentSubKey]: metadata }));
         } else {
-          // Tüm hekimIslem modülünü kontrol et (farklı subKey ile kaydedilmiş olabilir)
-          const { getFinansalModuleFiles } = await import('../src/services/finansalStorage');
-          const allFiles = await getFinansalModuleFiles('hekimIslem');
-          console.log('[HEKİM İŞLEM LİSTESİ] Tüm hekimIslem dosyaları:', allFiles);
-          const keys = Object.keys(allFiles);
-          if (keys.length > 0) {
-            // İlk bulunan dosyayı kullan
-            fileInfo = allFiles[keys[0]];
-            setSavedFileInfo(fileInfo);
-            console.log(`[HEKİM İŞLEM LİSTESİ] Alternatif key ile bulundu: ${keys[0]}`);
-          } else {
-            setFirebaseMessage({ type: 'error', text: 'Kayıtlı dosya bulunamadı. Önce Excel dosyası yükleyiniz.' });
-            setFirebaseLoading(false);
-            return;
-          }
+          setFirebaseMessage({ type: 'error', text: 'Bu filtre için kayıtlı dosya bulunamadı. Önce Excel dosyası yükleyiniz.' });
+          setFirebaseLoading(false);
+          return;
         }
       }
 
@@ -385,14 +397,19 @@ const HekimIslemListesiModule: React.FC = () => {
     if (!savedFileInfo) return;
     setFirebaseLoading(true);
     try {
-      await deleteFinansalFile('hekimIslem', 'islemListesi');
+      await deleteFinansalFile('hekimIslem', currentSubKey);
       setSavedFileInfo(null);
+      setAllSavedFiles(prev => {
+        const updated = { ...prev };
+        delete updated[currentSubKey];
+        return updated;
+      });
       setTableData([]);
       setExtraColumns([]);
       setFileName('');
       setCurrentPage(1);
       setFirebaseMessage({ type: 'success', text: 'Kayıtlı dosya silindi' });
-      console.log('[HEKİM İŞLEM LİSTESİ] Firebase dosya silindi');
+      console.log(`[HEKİM İŞLEM LİSTESİ] Firebase dosya silindi (${currentSubKey})`);
     } catch (error) {
       console.error('[HEKİM İŞLEM LİSTESİ] Firebase silme hatası:', error);
       setFirebaseMessage({ type: 'error', text: 'Dosya silinirken hata oluştu' });
@@ -416,12 +433,15 @@ const HekimIslemListesiModule: React.FC = () => {
       setCurrentPage(1);
       console.log(`[HEKİM İŞLEM LİSTESİ] ${file.name}: ${parseResult.rows.length} satır yüklendi (${parseResult.extraColumns.length} ekstra sütun)`);
 
-      // Firebase'e kaydet (arka planda)
-      const result = await uploadFinansalFile('hekimIslem', 'islemListesi', file);
+      // Firebase'e kaydet (filtre bazlı subKey ile)
+      const subKey = currentSubKey;
+      console.log(`[HEKİM İŞLEM LİSTESİ] Firebase'e kaydediliyor, subKey: ${subKey}`);
+      const result = await uploadFinansalFile('hekimIslem', subKey, file);
       if (result.success && result.metadata) {
         setSavedFileInfo(result.metadata);
+        setAllSavedFiles(prev => ({ ...prev, [subKey]: result.metadata! }));
         setFirebaseMessage({ type: 'success', text: 'Dosya Firebase\'e kaydedildi' });
-        console.log(`[HEKİM İŞLEM LİSTESİ] Firebase'e kaydedildi: ${file.name}`);
+        console.log(`[HEKİM İŞLEM LİSTESİ] Firebase'e kaydedildi: ${file.name} (subKey: ${subKey})`);
       } else {
         setFirebaseMessage({ type: 'error', text: 'Firebase kayıt başarısız: ' + (result.error || '') });
       }
