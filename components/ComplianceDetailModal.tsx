@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComplianceResult, RuleMasterEntry, IhlalDetay } from '../src/types/complianceTypes';
+import { ComplianceResult, RuleMasterEntry, IhlalDetay, CakisanIslem } from '../src/types/complianceTypes';
 import { IslemSatiriLike } from '../src/services/complianceEngine';
 
 interface ComplianceDetailModalProps {
@@ -116,6 +116,9 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                 }`}>
                   {result.eslesme_guveni}
                 </p>
+                {result.guvenNedeni && (
+                  <p className="text-[10px] text-slate-500 mt-1">{result.guvenNedeni}</p>
+                )}
               </div>
               <div className="bg-slate-800/40 rounded-lg px-3 py-2">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kaynak</p>
@@ -211,6 +214,58 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                           )}
                         </div>
                         <p className="text-xs text-slate-400 italic">{'"'}{ihlal.referans_kural_metni}{'"'}</p>
+                      </div>
+                    )}
+                    {/* Çakışan İşlemler */}
+                    {ihlal.cakisanIslemler && ihlal.cakisanIslemler.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-red-500/10">
+                        <p className="text-[10px] font-bold text-orange-400 uppercase tracking-wider mb-2">
+                          {ihlal.kural_tipi === 'BIRLIKTE_YAPILAMAZ' ? 'Çakışan İşlemler' : 'İlgili İşlemler'} ({ihlal.cakisanIslemler.length})
+                        </p>
+                        <div className="space-y-1.5">
+                          {ihlal.cakisanIslemler.map((ci, ciIdx) => (
+                            <div key={ciIdx} className="bg-orange-500/5 border border-orange-500/15 rounded-lg px-3 py-2">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-black text-orange-300 bg-orange-500/10 px-1.5 py-0.5 rounded">
+                                  {ci.gilKodu}
+                                </span>
+                                <span className="text-[11px] text-slate-400 truncate flex-1">
+                                  {ci.gilAdi}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-0.5 text-[11px]">
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Tarih:</span>
+                                  <span className="text-slate-300 font-medium">{ci.tarih}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Saat:</span>
+                                  <span className="text-slate-300 font-medium">{ci.saat || '—'}</span>
+                                </div>
+                                <div className="flex justify-between col-span-2">
+                                  <span className="text-slate-500">Hekim:</span>
+                                  <span className="text-slate-300 font-medium truncate ml-1">{ci.doktor || '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Branş:</span>
+                                  <span className="text-slate-300 font-medium truncate ml-1">{ci.uzmanlik || '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Puan:</span>
+                                  <span className="text-slate-300 font-mono font-medium">{formatNumber(ci.puan)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Tutar:</span>
+                                  <span className="text-slate-300 font-mono font-medium">{formatNumber(ci.tutar)} ₺</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-slate-500">Miktar:</span>
+                                  <span className="text-slate-300 font-mono font-medium">{ci.miktar}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

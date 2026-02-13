@@ -287,6 +287,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
   const [filterDurum, setFilterDurum] = useState<UygunlukDurumu | 'TUMU'>('TUMU');
   const [filterEsleme, setFilterEsleme] = useState<'TUMU' | 'ESLESTI' | 'ESLESEMEDI'>('TUMU');
   const [filterKuralTipi, setFilterKuralTipi] = useState<ParsedRuleType | 'TUMU'>('TUMU');
+  const [filterMuaf, setFilterMuaf] = useState<'TUMU' | 'MUAF' | 'MUAF_DEGIL'>('TUMU');
   const [searchTerm, setSearchTerm] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -661,6 +662,8 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     if (filterDurum !== 'TUMU') filtered = filtered.filter(r => r.uygunluk_durumu === filterDurum);
     if (filterEsleme !== 'TUMU') filtered = filtered.filter(r => r.eslesmeDurumu === filterEsleme);
     if (filterKuralTipi !== 'TUMU') filtered = filtered.filter(r => r.ihlaller.some(i => i.kural_tipi === filterKuralTipi));
+    if (filterMuaf === 'MUAF') filtered = filtered.filter(r => r.isMuaf === true);
+    else if (filterMuaf === 'MUAF_DEGIL') filtered = filtered.filter(r => r.isMuaf !== true);
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(r => {
@@ -698,7 +701,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
       });
     }
     return filtered;
-  }, [results, filterDurum, filterEsleme, filterKuralTipi, searchTerm, tableData, columnFilters, sortColumn, sortDirection]);
+  }, [results, filterDurum, filterEsleme, filterKuralTipi, filterMuaf, searchTerm, tableData, columnFilters, sortColumn, sortDirection]);
 
   const totalPages = Math.ceil(filteredResults.length / pageSize);
   const paginatedResults = useMemo(() => {
@@ -877,13 +880,14 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
       {/* Özet Dashboard */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           <SummaryCard label="Toplam Analiz" value={formatNumber(summary.toplamAnaliz)} color="text-white" />
           <SummaryCard label="Uygun" value={formatNumber(summary.uygunSayisi)} color="text-emerald-400" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunSayisi / summary.toplamAnaliz * 100) : 0}`} />
           <SummaryCard label="Uygunsuz" value={formatNumber(summary.uygunsuzSayisi)} color="text-red-400" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunsuzSayisi / summary.toplamAnaliz * 100) : 0}`} />
           <SummaryCard label="Manuel İnceleme" value={formatNumber(summary.manuelIncelemeSayisi)} color="text-amber-400" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.manuelIncelemeSayisi / summary.toplamAnaliz * 100) : 0}`} />
           <SummaryCard label="Eşleşen" value={formatNumber(summary.eslesenSayisi)} color="text-blue-400" />
           <SummaryCard label="Eşleşmeyen" value={formatNumber(summary.eslesemeyenSayisi)} color="text-slate-400" />
+          <SummaryCard label="Muaf İşlem" value={formatNumber(summary.muafIslemSayisi)} color="text-violet-400" />
         </div>
       )}
 
@@ -1037,6 +1041,14 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <option value="DIS_TEDAVI">Diş</option>
             </select>
           </div>
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-bold text-slate-500 uppercase">Muaf:</label>
+            <select value={filterMuaf} onChange={e => { setFilterMuaf(e.target.value as any); setCurrentPage(1); }} className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+              <option value="TUMU">Tümü</option>
+              <option value="MUAF">Muaf</option>
+              <option value="MUAF_DEGIL">Muaf Değil</option>
+            </select>
+          </div>
           <div className="flex items-center gap-2 flex-1 min-w-[200px]">
             <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input type="text" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} placeholder="GİL kodu, doktor, hasta..." className="flex-1 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50 placeholder-slate-600" />
@@ -1123,7 +1135,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                       <td className="px-3 py-1.5 text-xs text-slate-500 truncate max-w-[140px]">{row.uzmanlik}</td>
                       <td className="px-3 py-1.5 text-xs text-center">{result.ihlaller.length > 0 ? <span className="text-red-400 font-bold">{result.ihlaller.length}</span> : <span className="text-slate-600">0</span>}</td>
                       <td className="px-3 py-1.5 text-[10px] text-slate-500 font-bold">{result.eslesen_kural?.kaynak || '—'}</td>
-                      <td className="px-3 py-1.5"><span className={`text-[10px] font-bold ${result.eslesme_guveni === 'Yüksek' ? 'text-emerald-400' : result.eslesme_guveni === 'Orta' ? 'text-amber-400' : 'text-red-400'}`}>{result.eslesme_guveni}</span></td>
+                      <td className="px-3 py-1.5" title={result.guvenNedeni || ''}><span className={`text-[10px] font-bold ${result.eslesme_guveni === 'Yüksek' ? 'text-emerald-400' : result.eslesme_guveni === 'Orta' ? 'text-amber-400' : 'text-red-400'}`}>{result.eslesme_guveni}</span></td>
                       <td className="px-3 py-1.5 text-xs text-slate-500 truncate max-w-[250px]">
                         {result.ihlaller.length > 0
                           ? result.ihlaller.map(i => `[${i.ihlal_kodu}] ${i.ihlal_aciklamasi}`).join(' | ').substring(0, 120) + (result.ihlaller.map(i => i.ihlal_aciklamasi).join('').length > 120 ? '...' : '')
