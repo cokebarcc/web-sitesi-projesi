@@ -94,7 +94,12 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                hasModuleAccess('changeAnalysis') ||
                hasModuleAccess('efficiencyAnalysis');
       case 'financial':
-        return hasModuleAccess('serviceAnalysis');
+        return hasModuleAccess('serviceAnalysis') ||
+               hasModuleAccess('etikKurul') ||
+               hasModuleAccess('hekimIslemListesi') ||
+               hasModuleAccess('ekListeTanimlama') ||
+               hasModuleAccess('sutMevzuati') ||
+               hasModuleAccess('gil');
       case 'preparation':
         return hasModuleAccess('analysisModule') ||
                hasModuleAccess('performancePlanning') ||
