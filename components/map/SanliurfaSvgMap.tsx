@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { SVG_PATHS, SVG_CONFIG, DISTRICTS, INSTITUTION_STYLES } from '../../src/data/sanliurfaDistricts';
 import type { InstitutionMarker } from '../../src/data/sanliurfaDistricts';
 
@@ -24,7 +24,85 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
 }) => {
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
   const [hoveredMarker, setHoveredMarker] = useState<InstitutionMarker | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const isDark = theme === 'dark';
+
+  // Zoom & Pan state
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: SVG_CONFIG.width, h: SVG_CONFIG.height });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStart = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
+
+  const getSvgScale = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return { sx: 1, sy: 1 };
+    const rect = el.getBoundingClientRect();
+    return { sx: viewBox.w / rect.width, sy: viewBox.h / rect.height };
+  }, [viewBox]);
+
+  // Mouse wheel zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const { sx, sy } = getSvgScale();
+
+    // Mouse pozisyonu SVG koordinatlarında
+    const mx = viewBox.x + (e.clientX - rect.left) * sx;
+    const my = viewBox.y + (e.clientY - rect.top) * sy;
+
+    const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+    const newW = Math.min(Math.max(viewBox.w * factor, 100), SVG_CONFIG.width);
+    const newH = Math.min(Math.max(viewBox.h * factor, 62.5), SVG_CONFIG.height);
+
+    // Zoom merkezi mouse pozisyonunda tut
+    const newX = mx - (mx - viewBox.x) * (newW / viewBox.w);
+    const newY = my - (my - viewBox.y) * (newH / viewBox.h);
+
+    setViewBox({ x: newX, y: newY, w: newW, h: newH });
+  }, [viewBox, getSvgScale]);
+
+  // Pan - mouse down
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsPanning(true);
+    panStart.current = { x: e.clientX, y: e.clientY, vx: viewBox.x, vy: viewBox.y };
+  }, [viewBox]);
+
+  // Pan - mouse move
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    // Tooltip pozisyonunu güncelle
+    if (hoveredMarker) {
+      setTooltipPos({ x: e.clientX, y: e.clientY });
+    }
+
+    if (!isPanning || !panStart.current) return;
+    const { sx, sy } = getSvgScale();
+    const dx = (e.clientX - panStart.current.x) * sx;
+    const dy = (e.clientY - panStart.current.y) * sy;
+    setViewBox(prev => ({ ...prev, x: panStart.current!.vx - dx, y: panStart.current!.vy - dy }));
+  }, [isPanning, getSvgScale, hoveredMarker]);
+
+  // Pan - mouse up
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+    panStart.current = null;
+  }, []);
+
+  // Global mouseup listener
+  useEffect(() => {
+    const handler = () => { setIsPanning(false); panStart.current = null; };
+    window.addEventListener('mouseup', handler);
+    return () => window.removeEventListener('mouseup', handler);
+  }, []);
+
+  // Reset zoom
+  const handleResetZoom = useCallback(() => {
+    setViewBox({ x: 0, y: 0, w: SVG_CONFIG.width, h: SVG_CONFIG.height });
+  }, []);
+
+  const isZoomed = viewBox.w < SVG_CONFIG.width - 1 || viewBox.h < SVG_CONFIG.height - 1;
 
   const getPathStyle = (districtName: string) => {
     const isSelected = districtName === selectedDistrict;
@@ -81,11 +159,22 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-center justify-center relative"
+      style={{ overflow: 'hidden' }}
+    >
       <svg
-        viewBox={SVG_CONFIG.viewBox}
+        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
         className="w-full h-full"
-        style={{ filter: isDark ? 'drop-shadow(0 4px 24px rgba(0,0,0,0.4))' : 'drop-shadow(0 4px 24px rgba(0,0,0,0.1))' }}
+        style={{
+          filter: isDark ? 'drop-shadow(0 4px 24px rgba(0,0,0,0.4))' : 'drop-shadow(0 4px 24px rgba(0,0,0,0.1))',
+          cursor: isPanning ? 'grabbing' : 'grab',
+        }}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
       >
         <defs>
           <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -110,13 +199,13 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
               strokeWidth={style.strokeWidth}
               strokeLinejoin="round"
               style={{
-                cursor: 'pointer',
+                cursor: isPanning ? 'grabbing' : 'pointer',
                 transition: 'all 0.3s ease',
                 filter: style.filter,
               }}
               onMouseEnter={() => setHoveredDistrict(name)}
               onMouseLeave={() => setHoveredDistrict(null)}
-              onClick={() => onDistrictClick(name)}
+              onClick={() => !isPanning && onDistrictClick(name)}
             />
           );
         })}
@@ -157,8 +246,13 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
             <g
               key={marker.id}
               style={{ cursor: 'pointer' }}
-              onMouseEnter={(e) => { e.stopPropagation(); setHoveredMarker(marker); setHoveredDistrict(null); }}
-              onMouseLeave={() => setHoveredMarker(null)}
+              onMouseEnter={(e) => {
+                e.stopPropagation();
+                setHoveredMarker(marker);
+                setHoveredDistrict(null);
+                setTooltipPos({ x: e.clientX, y: e.clientY });
+              }}
+              onMouseLeave={() => { setHoveredMarker(null); setTooltipPos(null); }}
             >
               {/* Görünmez büyük hit area */}
               <circle cx={x} cy={y} r={r + 6} fill="transparent" />
@@ -191,42 +285,38 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
             </g>
           );
         })}
-
-        {/* Tooltip — hover edilen pin bilgisi */}
-        {hoveredMarker && (() => {
-          const { x, y } = latLngToSvg(hoveredMarker.lat, hoveredMarker.lng);
-          const tooltipW = Math.max(hoveredMarker.name.length * 6.5, 80);
-          const tooltipH = 24;
-          const tx = Math.min(Math.max(x - tooltipW / 2, 4), SVG_CONFIG.width - tooltipW - 4);
-          const ty = y - 22;
-          return (
-            <g style={{ pointerEvents: 'none' }}>
-              <rect
-                x={tx}
-                y={ty - tooltipH / 2}
-                width={tooltipW}
-                height={tooltipH}
-                rx={4}
-                fill={isDark ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.95)'}
-                stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}
-                strokeWidth={0.8}
-              />
-              <text
-                x={tx + tooltipW / 2}
-                y={ty}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill={isDark ? '#e2e8f0' : '#1e293b'}
-                fontSize="9"
-                fontWeight={600}
-                fontFamily="Inter, sans-serif"
-              >
-                {hoveredMarker.name}
-              </text>
-            </g>
-          );
-        })()}
       </svg>
+
+      {/* HTML Tooltip — pin bilgisi */}
+      {hoveredMarker && tooltipPos && (
+        <div
+          className={`fixed z-[9999] px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-lg pointer-events-none whitespace-nowrap ${
+            isDark
+              ? 'bg-slate-800/95 text-slate-100 border border-white/10'
+              : 'bg-white/95 text-slate-800 border border-slate-200'
+          }`}
+          style={{
+            left: tooltipPos.x + 12,
+            top: tooltipPos.y - 28,
+          }}
+        >
+          {hoveredMarker.name}
+        </div>
+      )}
+
+      {/* Zoom reset butonu */}
+      {isZoomed && (
+        <button
+          onClick={handleResetZoom}
+          className={`absolute bottom-3 right-3 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+            isDark
+              ? 'bg-white/10 hover:bg-white/15 text-slate-300 border border-white/10'
+              : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm'
+          }`}
+        >
+          Sıfırla
+        </button>
+      )}
     </div>
   );
 };
