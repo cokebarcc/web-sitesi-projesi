@@ -347,9 +347,9 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
                         : isStart || isEnd
                           ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                           : isSelected
-                            ? 'bg-emerald-500/20 text-emerald-400'
+                            ? 'bg-emerald-500/20 status-success'
                             : isInHoverRange
-                              ? 'bg-emerald-500/10 text-emerald-400'
+                              ? 'bg-emerald-500/10 status-success'
                               : isToday
                                 ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
                                 : ''
@@ -390,7 +390,7 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
             <div className="mt-4 pt-3 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-2)' }}>
               <div className="text-xs" style={{ color: 'var(--text-3)' }}>
                 {value.start && value.end ? (
-                  <span className="text-emerald-400 font-medium">{getSelectedDayCount()} gün seçili</span>
+                  <span className="status-success font-medium">{getSelectedDayCount()} gün seçili</span>
                 ) : value.start ? (
                   <span>Bitiş tarihi seçin</span>
                 ) : (

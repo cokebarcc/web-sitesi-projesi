@@ -298,14 +298,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               {/* Error Message */}
               {error && (
                 <div className="rounded-xl p-4" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                  <p className="text-sm text-red-400">{error}</p>
+                  <p className="text-sm status-danger">{error}</p>
                 </div>
               )}
 
               {/* Success Message */}
               {success && (
                 <div className="rounded-xl p-4" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                  <p className="text-sm text-emerald-400">{success}</p>
+                  <p className="text-sm status-success">{success}</p>
                 </div>
               )}
 
@@ -380,7 +380,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </p>
             <div className="flex items-center justify-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-emerald-500 text-xs font-medium">Sistem Aktif</span>
+              <span className="status-success text-xs font-medium">Sistem Aktif</span>
             </div>
           </div>
         </div>
@@ -438,13 +438,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
               {error && (
                 <div className="rounded-xl p-4" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                  <p className="text-sm text-red-400">{error}</p>
+                  <p className="text-sm status-danger">{error}</p>
                 </div>
               )}
 
               {success && (
                 <div className="rounded-xl p-4" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                  <p className="text-sm text-emerald-400">{success}</p>
+                  <p className="text-sm status-success">{success}</p>
                 </div>
               )}
 

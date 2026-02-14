@@ -32,6 +32,19 @@ service cloud.firestore {
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Oturum yönetimi koleksiyonu
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // Oturum geçmişi logları
+    match /sessionLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+    }
+
     // Varsayılan - diğer koleksiyonlar
     match /{document=**} {
       allow read, write: if isAuthenticated();

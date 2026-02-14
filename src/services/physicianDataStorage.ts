@@ -261,7 +261,7 @@ export async function getPhysicianDataFiles(
     querySnapshot.forEach((doc) => {
       files.push({
         id: doc.id,
-        ...doc.data()
+        ...(doc.data() as Record<string, any>)
       } as PhysicianDataFile);
     });
 

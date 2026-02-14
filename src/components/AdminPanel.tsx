@@ -8,9 +8,10 @@ import './AdminPanel.css';
 
 interface AdminPanelProps {
   currentUserEmail: string;
+  onNavigate?: (view: string) => void;
 }
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate }) => {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -325,6 +326,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail }) => {
           <button className="btn-add-user" onClick={() => setShowAddModal(true)}>
             + Yeni Kullanıcı Ekle
           </button>
+          {onNavigate && (
+            <button
+              className="btn-add-user"
+              onClick={() => onNavigate('session-management')}
+              style={{ background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', boxShadow: '0 4px 6px rgba(6, 182, 212, 0.25)' }}
+            >
+              Oturum Yönetimi
+            </button>
+          )}
           <button
             className="btn-delete"
             onClick={handleClearPhysicianData}

@@ -6,6 +6,7 @@ import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
 import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
 import GreenAreaDailyRateTable, { GreenAreaDailyRateTableRef } from './GreenAreaDailyRateTable';
 import { HOSPITALS } from '../constants';
+import EmptyState from './common/EmptyState';
 
 // Günlük tablo için veri yapısı
 interface DailyData {
@@ -830,7 +831,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-emerald-400">Yeşil Alan Oranları</h1>
+          <h1 className="text-2xl font-bold status-success">Yeşil Alan Oranları</h1>
           <p style={{ color: 'var(--text-3)' }} className="mt-1">Acil servise başvuran hastaların yeşil alan oranları</p>
         </div>
       </div>
@@ -1020,8 +1021,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
         {/* Hastane seçimi uyarısı */}
         {allowedHospitals.length > 0 && selectedHospitals.length === 0 && (
-          <div className="mt-4 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
-            <p className="text-sm text-amber-400 flex items-center gap-2">
+          <div className="mt-4 p-3 bg-status-warning border border-amber-500/50 rounded-xl">
+            <p className="text-sm status-warning flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -1033,20 +1034,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       {/* No Data Message */}
       {!data && (
-        <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-12">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h2 style={{ color: 'var(--text-1)' }} className="text-xl font-semibold mb-2">Veri Yüklenmedi</h2>
-            <p style={{ color: 'var(--text-3)' }} className="max-w-md">
-              Yukarıdan tarih seçip "Uygula" butonuna tıklayarak mevcut veriyi yükleyebilir
-              veya yeni bir Excel dosyası yükleyebilirsiniz.
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon="data"
+          title="Veri Yüklenmedi"
+          description='Yukarıdan tarih seçip "Uygula" butonuna tıklayarak mevcut veriyi yükleyebilir veya yeni bir Excel dosyası yükleyebilirsiniz.'
+        />
       )}
 
       {/* Cards Container */}
@@ -1058,6 +1050,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               onClick={handleDownloadPng}
               style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)', color: 'var(--text-2)' }}
               className="px-4 py-2.5 border rounded-xl font-semibold text-sm hover:opacity-80 transition-all flex items-center gap-2"
+              aria-label="PNG olarak dışa aktar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1067,6 +1060,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             <button
               onClick={handleDownloadPdf}
               className="px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center gap-2"
+              aria-label="PDF olarak indir"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -1079,8 +1073,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             {/* Header for PNG */}
             <div style={{ borderColor: 'var(--border-2)' }} className="flex items-center justify-between mb-8 pb-4 border-b">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-status-success rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 status-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
@@ -1142,7 +1136,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             <div style={{ borderColor: 'var(--border-2)' }} className="mt-8 pt-4 border-t">
               <div style={{ background: 'var(--surface-3)' }} className="rounded-xl p-4 text-center">
                 <p style={{ color: 'var(--text-3)' }} className="text-sm font-medium">
-                  Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-400">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
+                  Yeşil Alan Oranı Hesaplama Formülü: <span className="status-success">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
                 </p>
                 {ilGeneli && hasAllHospitalsAccess && (
                   <p style={{ color: 'var(--text-muted)' }} className="text-sm mt-2">
@@ -1157,19 +1151,10 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       )}
 
       {/* Bağımsız Günlük Oran Tablosu Bölümü */}
-      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6 mt-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-bold">
-              Günlük Yeşil Alan Oranları Tablosu
-            </h3>
-            <p style={{ color: 'var(--text-3)' }} className="text-sm">
-              (Ana filtreden bağımsız çalışır)
-            </p>
-          </div>
-
-          {/* Tablo Filtreleri */}
-          <div style={{ background: 'var(--surface-3)' }} className="flex flex-wrap items-end gap-4 p-4 rounded-xl">
+      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-4 mt-6">
+        <div className="flex flex-col gap-3">
+          {/* Kompakt Filtre Paneli (başlık kaldırıldı — sticky çakışma önlenir) */}
+          <div style={{ background: 'var(--surface-3)' }} className="flex flex-wrap items-end gap-3 p-3 rounded-xl">
             {/* Hastane Seçimi - En başta */}
             {allowedHospitals.length > 0 && (
               <MultiSelectDropdown
@@ -1264,8 +1249,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
           {/* Hastane seçimi uyarısı */}
           {allowedHospitals.length > 0 && tableSelectedHospitals.length === 0 && (
-            <div className="mt-2 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
-              <p className="text-sm text-amber-400 flex items-center gap-2">
+            <div className="mt-2 p-3 bg-status-warning border border-amber-500/50 rounded-xl">
+              <p className="text-sm status-warning flex items-center gap-2">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
@@ -1339,12 +1324,12 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
     <div style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }} className={`rounded-2xl shadow-sm border p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-500/20' : ''}`} style={!isIlGeneli ? { background: 'var(--surface-3)' } : undefined}>
-          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-400' : ''}`} style={!isIlGeneli ? { color: 'var(--text-3)' } : undefined} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-status-success' : ''}`} style={!isIlGeneli ? { background: 'var(--surface-3)' } : undefined}>
+          <svg className={`w-5 h-5 ${isIlGeneli ? 'status-success' : ''}`} style={!isIlGeneli ? { color: 'var(--text-3)' } : undefined} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-400' : ''}`} style={!isIlGeneli ? { color: 'var(--text-1)' } : undefined}>{shortName}</h3>
+        <h3 className={`font-bold ${isIlGeneli ? 'status-success' : ''}`} style={!isIlGeneli ? { color: 'var(--text-1)' } : undefined}>{shortName}</h3>
       </div>
 
       {/* Stats */}
@@ -1400,9 +1385,9 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
           {isExpanded && (
             <div className="mt-3 -mx-2 overflow-x-auto">
               <table className="w-full text-xs">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr style={{ background: 'var(--surface-3)' }}>
-                    <th style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }} className="sticky left-0 px-2 py-1.5 text-left font-semibold whitespace-nowrap">Tarih</th>
+                    <th style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }} className="sticky left-0 z-20 px-2 py-1.5 text-left font-semibold whitespace-nowrap">Tarih</th>
                     <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Yeşil Alan</th>
                     <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Toplam</th>
                     <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Oran</th>

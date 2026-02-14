@@ -57,7 +57,7 @@ export type ComparisonOperator =
  */
 export interface ScoringRule {
   /** Koşul açıklaması (görüntüleme için): ">=75", "70<=x<75", "<=GO" */
-  condition: string;
+  condition?: string;
   /** Alt sınır (dahil) */
   minValue?: number;
   /** Üst sınır (hariç, between için) */
@@ -77,7 +77,7 @@ export interface ScoringRule {
 /**
  * Birim türleri
  */
-export type UnitType = 'percentage' | 'count' | 'ratio' | 'days' | 'person' | 'score' | 'custom';
+export type UnitType = 'percentage' | 'count' | 'ratio' | 'days' | 'minutes' | 'person' | 'score' | 'custom';
 
 /**
  * Veri kaynağı türleri
@@ -90,14 +90,27 @@ export type DataSource =
   | 'GÖREN'
   | 'DEN-İZ'
   | 'e-Nabız'
+  | 'e-Nabız, ASOS'
+  | 'e-Nabız, EKOBS'
   | 'e-Nabız, MHRS'
+  | 'e-Nabız, MKYS'
+  | 'e-Nabız, TSİM'
+  | 'e-NABIZ'
   | 'e-Rapor'
+  | 'e-RAPOR'
+  | 'e-RAPOR, EKOBS'
   | 'ÇKYS'
   | 'EKİP'
+  | 'EKOBS, EKİP/ÇKYS'
   | 'TÜİK'
   | 'HBYS'
   | 'HYP'
   | 'ASOS'
+  | 'MKYS'
+  | 'MKYS, TDMS'
+  | 'SGK'
+  | 'TDMS'
+  | 'Teleradyoloji'
   | 'DHSDS Yazılımı'
   | 'Manuel';
 

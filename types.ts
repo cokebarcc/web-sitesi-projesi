@@ -216,7 +216,9 @@ export type ViewType =
   | 'ai-cetvel-planlama'     // AI Cetvel Planlama modülü (MHRS)
   | 'pdf-viewer'             // PDF Yükle ve Oku
   | 'comparison-wizard'      // Veri Karşılaştırma Wizard'ı
-  | 'admin';
+  | 'goren-manuel'           // GÖREN - Manuel Hesaplama
+  | 'admin'
+  | 'session-management';   // Oturum Yönetimi (admin alt modülü)
 
 // Aktif Talep (Active Demand) Types
 export interface BranchDemand {

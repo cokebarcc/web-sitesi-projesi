@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import {
   RadarChart,
   PolarGrid,
@@ -782,8 +783,8 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
         </span>
       </div>
 
-      {/* Kategori Detay Modal */}
-      {selectedCategory && (
+      {/* Kategori Detay Modal - Portal ile document.body'ye render edilir */}
+      {selectedCategory && ReactDOM.createPortal(
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedCategory(null)}
@@ -963,7 +964,8 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

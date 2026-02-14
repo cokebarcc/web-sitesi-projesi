@@ -294,15 +294,15 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       const bPhys = base.physicians[key];
       const uPhys = upd.physicians[key];
 
-      const name = uPhys?.name || bPhys?.name || uPhys?.physicianName || bPhys?.physicianName || "Bilinmiyor";
+      const name = uPhys?.name || bPhys?.name || (uPhys as any)?.physicianName || (bPhys as any)?.physicianName || "Bilinmiyor";
       const branch = uPhys?.branch || bPhys?.branch || "Bilinmiyor";
 
       const baseline_capacity: number = bPhys?.totalCapacity || 0;
       const updated_capacity: number = uPhys?.totalCapacity || 0;
       const capacity_delta: number = updated_capacity - baseline_capacity;
 
-      const baseline_action_days = bPhys?.actionDays || bPhys?.sessionsByAction || {};
-      const updated_action_days = uPhys?.actionDays || uPhys?.sessionsByAction || {};
+      const baseline_action_days = bPhys?.actionDays || (bPhys as any)?.sessionsByAction || {};
+      const updated_action_days = uPhys?.actionDays || (uPhys as any)?.sessionsByAction || {};
       const all_actions = Array.from(new Set([...Object.keys(baseline_action_days), ...Object.keys(updated_action_days)]));
 
       const action_deltas: Record<string, number> = {};
@@ -394,6 +394,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
     if (!comparison) return;
     try {
       const pptx = new pptxgen();
+      const shapes = (pptx as any).shapes;
       pptx.layout = 'LAYOUT_WIDE';
       pptx.title = 'Degisim Analizi Raporu';
       pptx.author = 'MEDIS';
@@ -423,12 +424,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       s1.background = { color: c.dark };
 
       // Sag ust dekoratif ince serit
-      s1.addShape(pptx.shapes.RECTANGLE, { x: 8, y: 0, w: 5.33, h: 0.15, fill: { color: c.primary } });
+      s1.addShape(shapes.RECTANGLE, { x: 8, y: 0, w: 5.33, h: 0.15, fill: { color: c.primary } });
       // Orta dekoratif cizgi
-      s1.addShape(pptx.shapes.RECTANGLE, { x: 1, y: 3.6, w: 4, h: 0.06, fill: { color: c.primary } });
+      s1.addShape(shapes.RECTANGLE, { x: 1, y: 3.6, w: 4, h: 0.06, fill: { color: c.primary } });
 
       // Ust etiket
-      s1.addText('MHRS', { x: 1, y: 1.2, w: 11, h: 0.6, fontSize: 16, fontFace: 'Arial', bold: true, color: c.primary, letterSpacing: 8 });
+      s1.addText('MHRS', { x: 1, y: 1.2, w: 11, h: 0.6, fontSize: 16, fontFace: 'Arial', bold: true, color: c.primary, charSpacing: 8 });
 
       // Ana baslik
       s1.addText('KAPASiTE DEGiSiM', { x: 1, y: 1.9, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
@@ -442,7 +443,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       const s2 = pptx.addSlide();
       s2.background = { color: c.bg };
       s2.addText('ÖZET DASHBOARD', { x: 0.5, y: 0.3, w: 12, h: 0.5, fontSize: 20, fontFace: 'Arial', bold: true, color: c.text });
-      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
+      s2.addShape(shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
 
       // KPI kutuları
       const kpiY = 1.5;
@@ -450,23 +451,23 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       const kpiW = 3.8;
 
       // Başlangıç Kapasitesi
-      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
+      s2.addShape(shapes.RECTANGLE, { x: 0.5, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
       s2.addText('BASLANGIÇ KAPASITESI', { x: 0.5, y: kpiY + 0.4, w: kpiW, h: 0.4, fontSize: 9, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'center' });
       s2.addText(Number(comparison.totalBaseCap).toLocaleString('tr-TR'), { x: 0.5, y: kpiY + 0.9, w: kpiW, h: 0.8, fontSize: 36, fontFace: 'Arial', bold: true, color: c.text, align: 'center' });
 
       // Net Fark
-      s2.addShape(pptx.shapes.RECTANGLE, { x: 4.8, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
+      s2.addShape(shapes.RECTANGLE, { x: 4.8, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
       s2.addText('NET FARK', { x: 4.8, y: kpiY + 0.4, w: kpiW, h: 0.4, fontSize: 9, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'center' });
       s2.addText(`${deltaSign}${totalDelta.toLocaleString('tr-TR')}`, { x: 4.8, y: kpiY + 0.9, w: kpiW, h: 0.8, fontSize: 36, fontFace: 'Arial', bold: true, color: deltaColor, align: 'center' });
       s2.addText(`%${pctChange}`, { x: 4.8, y: kpiY + 1.7, w: kpiW, h: 0.4, fontSize: 14, fontFace: 'Arial', bold: true, color: deltaColor, align: 'center' });
 
       // Güncel Kapasite
-      s2.addShape(pptx.shapes.RECTANGLE, { x: 9.1, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
+      s2.addShape(shapes.RECTANGLE, { x: 9.1, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
       s2.addText('GUNCEL KAPASITE', { x: 9.1, y: kpiY + 0.4, w: kpiW, h: 0.4, fontSize: 9, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'center' });
       s2.addText(Number(comparison.totalUpdCap).toLocaleString('tr-TR'), { x: 9.1, y: kpiY + 0.9, w: kpiW, h: 0.8, fontSize: 36, fontFace: 'Arial', bold: true, color: c.text, align: 'center' });
 
       // Hekim değişim sayısı
-      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 4.5, w: 12.33, h: 1.2, fill: { color: c.primaryLight }, line: { color: c.border, pt: 1 } });
+      s2.addShape(shapes.RECTANGLE, { x: 0.5, y: 4.5, w: 12.33, h: 1.2, fill: { color: c.primaryLight }, line: { color: c.border, pt: 1 } });
       s2.addText([
         { text: `${comparison.phys_compare.length}`, options: { fontSize: 24, bold: true, color: c.primary, fontFace: 'Arial' } },
         { text: ' hekimde değişim tespit edildi', options: { fontSize: 14, color: c.text, fontFace: 'Arial' } },
@@ -476,7 +477,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       const s3 = pptx.addSlide();
       s3.background = { color: c.bg };
       s3.addText('BRANŞ BAZLI KAPASİTE DEĞİŞİMİ', { x: 0.5, y: 0.3, w: 12, h: 0.5, fontSize: 20, fontFace: 'Arial', bold: true, color: c.text });
-      s3.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
+      s3.addShape(shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
       s3.addText('TOP 5', { x: 10.5, y: 0.3, w: 2.5, h: 0.5, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
 
       const branchHeader: pptxgen.TableRow = [
@@ -501,7 +502,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       const s4 = pptx.addSlide();
       s4.background = { color: c.bg };
       s4.addText('EN BÜYÜK HEKİM DRIVERLARI', { x: 0.5, y: 0.3, w: 12, h: 0.5, fontSize: 20, fontFace: 'Arial', bold: true, color: c.text });
-      s4.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.danger } });
+      s4.addShape(shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.danger } });
       s4.addText('TOP 5', { x: 9, y: 0.3, w: 4, h: 0.5, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
 
       const driverHeader: pptxgen.TableRow = [
@@ -532,7 +533,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
         const sN = pptx.addSlide();
         sN.background = { color: c.bg };
         sN.addText('HEKİM BAZLI DEĞİŞİM DETAYLARI', { x: 0.5, y: 0.2, w: 9, h: 0.45, fontSize: 18, fontFace: 'Arial', bold: true, color: c.text });
-        sN.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.primary } });
+        sN.addShape(shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.primary } });
         if (pageCount > 1) {
           sN.addText(`Sayfa ${page + 1}/${pageCount}`, { x: 10, y: 0.2, w: 2.8, h: 0.45, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
         }
@@ -683,7 +684,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             </div>
             <div className="text-center relative z-10">
               {/* Fix: Ensured number type for subtraction using Number() for robustness. */}
-              <div className={`px-10 py-6 rounded-[32px] border-2 ${(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
+              <div className={`px-10 py-6 rounded-[32px] border-2 ${(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 status-success' : 'bg-rose-500/10 border-rose-500/30 status-danger'}`}>
                 <p className="font-black text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--text-3)' }}>NET FARK</p>
                 <h3 className="text-5xl font-black tracking-tighter" style={{ color: 'inherit' }}>
                   {(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) > 0 ? '+' : ''}{(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)).toLocaleString('tr-TR')}
@@ -712,7 +713,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0" style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-1)' }}>{idx + 1}</div>
                       <div className="flex-1 min-w-0"><p className="text-[11px] font-bold uppercase text-[var(--text-1)] leading-tight break-words">{br.name}</p></div>
                       <div className="text-right shrink-0">
-                        <p className={`text-[12px] font-black leading-none ${br.delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{br.delta > 0 ? '+' : ''}{br.delta.toLocaleString('tr-TR')}</p>
+                        <p className={`text-[12px] font-black leading-none ${br.delta >= 0 ? 'status-success' : 'status-danger'}`}>{br.delta > 0 ? '+' : ''}{br.delta.toLocaleString('tr-TR')}</p>
                         <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase leading-none">{formatPct(br.pct)}</p>
                       </div>
                     </div>
@@ -788,7 +789,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                           <td className="px-10 py-6 text-center text-xs font-bold text-[var(--text-muted)]">{p.baseline_capacity}</td>
                           <td className="px-10 py-6 text-center text-xs font-black text-[var(--text-1)]">{p.updated_capacity}</td>
                           <td className="px-10 py-6 text-center">
-                            <span className={`px-4 py-1.5 rounded-full font-black text-[11px] border ${p.capacity_delta >= 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
+                            <span className={`px-4 py-1.5 rounded-full font-black text-[11px] border ${p.capacity_delta >= 0 ? 'bg-emerald-500/20 status-success border-emerald-500/30' : 'bg-rose-500/20 status-danger border-rose-500/30'}`}>
                               {p.capacity_delta > 0 ? '+' : ''}{p.capacity_delta}
                             </span>
                           </td>
@@ -797,7 +798,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                               {sortedDeltas.length > 0 ? (
                                 <>
                                   {displayedDeltas.map(([act, d]) => (
-                                    <span key={act} className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${Number(d) > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30'}`}>
+                                    <span key={act} className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${Number(d) > 0 ? 'bg-emerald-500/20 status-success border-emerald-500/30' : 'bg-rose-500/20 status-danger border-rose-500/30'}`}>
                                       {act} {Number(d) > 0 ? '+' : ''}{d.toString().replace('.', ',')}
                                     </span>
                                   ))}
@@ -842,7 +843,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                             <td className="py-3 text-[11px] font-black text-[var(--text-muted)] text-center">{oldD.toString().replace('.', ',')} G</td>
                                             <td className="py-3 text-[11px] font-black text-[var(--text-1)] text-center">{newD.toString().replace('.', ',')} G</td>
                                             <td className="py-3 text-center">
-                                              <span className={`text-[11px] font-black ${diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-[var(--text-muted)]'}`}>
+                                              <span className={`text-[11px] font-black ${diff > 0 ? 'status-success' : diff < 0 ? 'status-danger' : 'text-[var(--text-muted)]'}`}>
                                                 {diff > 0 ? '+' : ''}{diff.toString().replace('.', ',')} G
                                               </span>
                                             </td>
@@ -857,7 +858,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                     <p className="text-[10px] font-black uppercase mb-4 tracking-widest" style={{ color: 'var(--text-3)' }}>BAŞLANGIÇ OTURUMLARI ({baselineLabel})</p>
                                     <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-2xl" style={{ border: '1px solid var(--border-2)' }}>
                                       <table className="w-full text-[10px] text-left">
-                                        <thead className="sticky top-0" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
+                                        <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
                                         <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
                                           {p.bPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:opacity-80" style={{ borderColor: 'var(--border-2)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>
@@ -865,10 +866,10 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                     </div>
                                   </div>
                                   <div className="p-8 rounded-[32px] shadow-sm" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
-                                    <p className="text-[10px] font-black text-rose-400 uppercase mb-4 tracking-widest">GÜNCEL OTURUMLAR ({updatedLabel})</p>
+                                    <p className="text-[10px] font-black status-danger uppercase mb-4 tracking-widest">GÜNCEL OTURUMLAR ({updatedLabel})</p>
                                     <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-2xl" style={{ border: '1px solid var(--border-2)' }}>
                                       <table className="w-full text-[10px] text-left">
-                                        <thead className="sticky top-0" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
+                                        <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
                                         <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
                                           {p.uPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:opacity-80" style={{ borderColor: 'var(--border-2)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>

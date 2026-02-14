@@ -13,6 +13,7 @@ import React, { useState, useMemo } from 'react';
 import {
   InstitutionType,
   ParameterValues,
+  IndicatorDefinition,
   IndicatorResult,
   CalculationSummary
 } from './types/goren.types';
@@ -47,8 +48,8 @@ export const GorenManuelHesaplama: React.FC = () => {
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
   const [parameterValues, setParameterValues] = useState<Record<string, ParameterValues>>({});
-  const [results, setResults] = useState<IndicatorResult[]>([]);
-  const [summary, setSummary] = useState<CalculationSummary | null>(null);
+  const [results, setResults] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
@@ -90,23 +91,23 @@ export const GorenManuelHesaplama: React.FC = () => {
 
     try {
       // Tamamlanmış göstergeleri hesapla
-      const calculatedResults: IndicatorResult[] = [];
+      const calculatedResults: any[] = [];
       let totalAchieved = 0;
       let totalMax = 0;
       let completed = 0;
       let missing = 0;
 
-      definitions.forEach(def => {
+      definitions.forEach((def: any) => {
         const values = parameterValues[def.code] || {};
-        const requiredParams = def.parameters.filter(p => p.required);
+        const requiredParams = def.parameters.filter((p: any) => p.required);
         const allRequiredFilled = requiredParams.every(
-          p => values[p.key] !== null && values[p.key] !== undefined
+          (p: any) => values[p.key] !== null && values[p.key] !== undefined
         );
 
         if (allRequiredFilled) {
           // Hesapla
-          const achieved = def.calculate(values);
-          const max = def.maxScore;
+          const achieved = typeof def.calculate === 'function' ? def.calculate(values) : 0;
+          const max = def.maxScore ?? def.maxPoints ?? 0;
           const percentage = max > 0 ? (achieved / max) * 100 : 0;
 
           calculatedResults.push({
@@ -117,7 +118,7 @@ export const GorenManuelHesaplama: React.FC = () => {
             max,
             percentage,
             parameters: values,
-            status: achieved >= max ? 'achieved' : achieved > 0 ? 'partial' : 'not_achieved'
+            status: (achieved >= max ? 'achieved' : achieved > 0 ? 'partial' : 'not_achieved') as any
           });
 
           totalAchieved += achieved;
@@ -138,9 +139,9 @@ export const GorenManuelHesaplama: React.FC = () => {
         overallPercentage,
         completedIndicators: completed,
         missingIndicators: missing,
-        achievedCount: calculatedResults.filter(r => r.status === 'achieved').length,
-        partialCount: calculatedResults.filter(r => r.status === 'partial').length,
-        notAchievedCount: calculatedResults.filter(r => r.status === 'not_achieved').length
+        achievedCount: calculatedResults.filter((r: any) => r.status === 'achieved').length,
+        partialCount: calculatedResults.filter((r: any) => r.status === 'partial').length,
+        notAchievedCount: calculatedResults.filter((r: any) => r.status === 'not_achieved').length
       });
 
       setNotification({
@@ -272,9 +273,10 @@ export const GorenManuelHesaplama: React.FC = () => {
       {/* Sonuç Tablosu */}
       {results.length > 0 && (
         <GorenIndicatorTable
-          results={results}
-          onRowClick={(result) => {
-            console.log('Gösterge detayı:', result);
+          results={results as any}
+          definitions={definitions as any}
+          onRowClick={(code: string) => {
+            console.log('Gösterge detayı:', code);
           }}
         />
       )}

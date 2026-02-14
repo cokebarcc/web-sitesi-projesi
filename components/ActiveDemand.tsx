@@ -18,6 +18,7 @@ import MultiSelectDropdown, { DropdownOption } from './MultiSelectDropdown';
 import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
 import SingleDatePicker from './SingleDatePicker';
 import { HOSPITALS } from '../constants';
+import EmptyState from './common/EmptyState';
 
 interface ActiveDemandProps {
   selectedHospital: string;
@@ -467,6 +468,8 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
     try {
       const pptx = new pptxgen();
+      const shapes = (pptx as any).shapes;
+      const charts = (pptx as any).charts;
 
       // Sunum ayarları
       pptx.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5"
@@ -511,25 +514,25 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       slide1.background = { color: 'ffffff' }; // Beyaz arka plan
 
       // Sol tarafta dikey turuncu şerit
-      slide1.addShape(pptx.shapes.RECTANGLE, {
+      slide1.addShape(shapes.RECTANGLE, {
         x: 0, y: 0, w: 0.35, h: 7.5,
         fill: { color: 'ea580c' }
       });
 
       // Üst kısımda ince gri çizgi
-      slide1.addShape(pptx.shapes.RECTANGLE, {
+      slide1.addShape(shapes.RECTANGLE, {
         x: 0.35, y: 0, w: 13, h: 0.08,
         fill: { color: 'e2e8f0' }
       });
 
       // Alt kısımda ince gri çizgi
-      slide1.addShape(pptx.shapes.RECTANGLE, {
+      slide1.addShape(shapes.RECTANGLE, {
         x: 0.35, y: 7.42, w: 13, h: 0.08,
         fill: { color: 'e2e8f0' }
       });
 
       // Sağ tarafta istatistik kutusu arka planı
-      slide1.addShape(pptx.shapes.RECTANGLE, {
+      slide1.addShape(shapes.RECTANGLE, {
         x: 8.5, y: 1.5, w: 4.5, h: 3.5,
         fill: { color: 'fff7ed' }, // Çok açık turuncu
         line: { color: 'fed7aa', pt: 1 }
@@ -580,7 +583,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       });
 
       // Tarih bilgisi - Alt kısımda
-      slide1.addShape(pptx.shapes.RECTANGLE, {
+      slide1.addShape(shapes.RECTANGLE, {
         x: 1.2, y: 6.1, w: 2.5, h: 0.04,
         fill: { color: 'ea580c' }
       });
@@ -622,11 +625,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       slide2.background = { color: colors.background };
 
       // Üst banner
-      slide2.addShape(pptx.shapes.RECTANGLE, {
+      slide2.addShape(shapes.RECTANGLE, {
         x: 0, y: 0, w: 13.33, h: 0.7,
         fill: { color: '1e3a5f' }
       });
-      slide2.addShape(pptx.shapes.RECTANGLE, {
+      slide2.addShape(shapes.RECTANGLE, {
         x: 0, y: 0.7, w: 13.33, h: 0.06,
         fill: { color: 'ea580c' }
       });
@@ -653,7 +656,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
       // ===== ÜST KISIM: KPI Kartları (küçük) =====
       // İl Toplam Talep - Sol üst
-      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+      slide2.addShape(shapes.ROUNDED_RECTANGLE, {
         x: 0.3, y: 1.0, w: 6.3, h: 1.1,
         fill: { color: colors.cardBg },
         line: { color: colors.primary, pt: 2 }
@@ -669,7 +672,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
       // En Yüksek Talep - Sağ üst
       const topBranch = summary.branchTotals.length > 0 ? summary.branchTotals[0] : null;
-      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+      slide2.addShape(shapes.ROUNDED_RECTANGLE, {
         x: 6.8, y: 1.0, w: 6.3, h: 1.1,
         fill: { color: colors.cardBg },
         line: { color: colors.secondary, pt: 2 }
@@ -688,7 +691,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       });
 
       // ===== ALT SOL: Hastane Bazlı Talep Dağılımı (Donut) =====
-      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+      slide2.addShape(shapes.ROUNDED_RECTANGLE, {
         x: 0.3, y: 2.3, w: 6.3, h: 5.0,
         fill: { color: colors.cardBg }
       });
@@ -709,7 +712,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       }];
 
       // Donut grafik - boyut küçültüldü
-      slide2.addChart(pptx.charts.DOUGHNUT, pieChartData, {
+      slide2.addChart(charts.DOUGHNUT, pieChartData, {
         x: 0.4, y: 2.9, w: 3.2, h: 3.2,
         showLegend: false,
         holeSize: 55,
@@ -724,7 +727,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
         const colorList = [webColors.green, webColors.red, webColors.orange, webColors.yellow, webColors.violet, webColors.blue, webColors.pink];
 
         // Renk kutusu
-        slide2.addShape(pptx.shapes.RECTANGLE, {
+        slide2.addShape(shapes.RECTANGLE, {
           x: 3.7, y: yPos + 0.05, w: 0.2, h: 0.2,
           fill: { color: colorList[idx] || webColors.teal }
         });
@@ -743,7 +746,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       });
 
       // ===== ALT SAĞ: Branş Bazlı Talep Dağılımı (Bar Chart) =====
-      slide2.addShape(pptx.shapes.ROUNDED_RECTANGLE, {
+      slide2.addShape(shapes.ROUNDED_RECTANGLE, {
         x: 6.8, y: 2.3, w: 6.3, h: 5.0,
         fill: { color: colors.cardBg }
       });
@@ -766,7 +769,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
         values: reversedBranches.map(b => b.demandCount)
       }];
 
-      slide2.addChart(pptx.charts.BAR, barChartData, {
+      slide2.addChart(charts.BAR, barChartData, {
         x: 6.9, y: 2.8, w: 6, h: 4.3,
         showLegend: false,
         barDir: 'bar',
@@ -788,11 +791,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       slide3.background = { color: colors.background };
 
       // Üst banner
-      slide3.addShape(pptx.shapes.RECTANGLE, {
+      slide3.addShape(shapes.RECTANGLE, {
         x: 0, y: 0, w: 13.33, h: 0.7,
         fill: { color: '1e3a5f' }
       });
-      slide3.addShape(pptx.shapes.RECTANGLE, {
+      slide3.addShape(shapes.RECTANGLE, {
         x: 0, y: 0.7, w: 13.33, h: 0.06,
         fill: { color: 'ea580c' }
       });
@@ -852,11 +855,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       slide4.background = { color: colors.background };
 
       // Üst banner
-      slide4.addShape(pptx.shapes.RECTANGLE, {
+      slide4.addShape(shapes.RECTANGLE, {
         x: 0, y: 0, w: 13.33, h: 0.7,
         fill: { color: '1e3a5f' }
       });
-      slide4.addShape(pptx.shapes.RECTANGLE, {
+      slide4.addShape(shapes.RECTANGLE, {
         x: 0, y: 0.7, w: 13.33, h: 0.06,
         fill: { color: 'ea580c' }
       });
@@ -910,11 +913,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
         detailSlide.background = { color: colors.background };
 
         // Üst banner
-        detailSlide.addShape(pptx.shapes.RECTANGLE, {
+        detailSlide.addShape(shapes.RECTANGLE, {
           x: 0, y: 0, w: 13.33, h: 0.7,
           fill: { color: '1e3a5f' }
         });
-        detailSlide.addShape(pptx.shapes.RECTANGLE, {
+        detailSlide.addShape(shapes.RECTANGLE, {
           x: 0, y: 0.7, w: 13.33, h: 0.06,
           fill: { color: 'ea580c' }
         });
@@ -932,7 +935,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           const cardWidth = 4;
 
           // Hastane kartı başlığı - turuncu yerine koyu mavi border
-          detailSlide.addShape(pptx.shapes.RECTANGLE, {
+          detailSlide.addShape(shapes.RECTANGLE, {
             x: xPos, y: 0.95, w: cardWidth, h: 0.7,
             fill: { color: colors.cardBg },
             line: { color: '1e3a5f', pt: 1, dashType: 'solid' }
@@ -1102,7 +1105,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-orange-400">Aktif Talep Analizi</h1>
+          <h1 className="text-2xl font-bold status-highlight">Aktif Talep Analizi</h1>
           <p style={{ color: 'var(--text-3)' }} className="mt-1">Hastanelerin branş bazlı aktif talep verileri</p>
         </div>
         {summary && (
@@ -1172,10 +1175,10 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                           setUploadHospitalDropdownOpen(false);
                         }}
                         style={uploadHospitalId !== opt.value ? { color: 'var(--text-2)' } : undefined}
-                        className={`w-full px-3 py-2.5 text-left text-sm hover:opacity-80 transition-colors flex items-center gap-2 ${uploadHospitalId === opt.value ? 'bg-orange-500/20 text-orange-400' : ''}`}
+                        className={`w-full px-3 py-2.5 text-left text-sm hover:opacity-80 transition-colors flex items-center gap-2 ${uploadHospitalId === opt.value ? 'bg-orange-500/20 status-highlight' : ''}`}
                       >
                         {uploadHospitalId === opt.value && (
-                          <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 status-highlight flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -1368,7 +1371,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
         {/* Hastane seçimi uyarısı */}
         {allowedHospitals.length > 0 && selectedHospitals.length === 0 && (
           <div className="mt-4 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
-            <p className="text-sm text-amber-400 flex items-center gap-2">
+            <p className="text-sm status-warning flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -1380,20 +1383,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
       {/* Veri Yok Mesajı */}
       {!summary && (
-        <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-12">
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h2 style={{ color: 'var(--text-1)' }} className="text-xl font-semibold mb-2">Veri Yüklenmedi</h2>
-            <p style={{ color: 'var(--text-3)' }} className="max-w-md">
-              Yukarıdan tarih seçip "Uygula" butonuna tıklayarak mevcut veriyi yükleyebilir
-              veya yeni bir Excel dosyası yükleyebilirsiniz.
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          icon="data"
+          title="Veri Yüklenmedi"
+          description='Yukarıdan tarih seçip "Uygula" butonuna tıklayarak mevcut veriyi yükleyebilir veya yeni bir Excel dosyası yükleyebilirsiniz.'
+        />
       )}
 
       {/* Veri Gösterimi */}
@@ -1423,14 +1417,14 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-orange-300">
+                  <p className="text-sm font-medium status-highlight">
                     {summary.totalHospitals === 1
                       ? getShortName(summary.hospitalSummaries[0]?.hospitalName || '')
                       : hasAllHospitalsAccess
                         ? 'İl Toplam Talep'
                         : 'Seçili Toplam Talep'}
                   </p>
-                  <p className="text-3xl font-bold text-orange-400">{summary.totalProvinceDemand.toLocaleString('tr-TR')}</p>
+                  <p className="text-3xl font-bold status-highlight">{summary.totalProvinceDemand.toLocaleString('tr-TR')}</p>
                 </div>
               </div>
             </div>
@@ -1455,8 +1449,8 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-purple-300">En Yüksek Talep</p>
-                  <p className="text-lg font-bold text-purple-400">
+                  <p className="text-sm font-medium status-accent">En Yüksek Talep</p>
+                  <p className="text-lg font-bold status-accent">
                     {summary.branchTotals[0]?.branchName || '-'}
                   </p>
                   <p style={{ color: 'var(--text-3)' }} className="text-sm">
@@ -1541,7 +1535,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                                 <div className="w-3 h-3 rounded" style={{ backgroundColor: color }} />
                                 <p className="font-semibold" style={{ color: 'var(--text-1)' }}>{hospitalName}</p>
                               </div>
-                              <p className="text-orange-400 font-bold mb-2">
+                              <p className="status-highlight font-bold mb-2">
                                 {totalDemand.toLocaleString('tr-TR')} talep
                               </p>
                               {topBranches.length > 0 && (
@@ -1633,7 +1627,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                             <p className="font-semibold mb-2 border-b pb-2" style={{ color: 'var(--text-1)', borderColor: 'var(--border-2)' }}>
                               {branchName}
                             </p>
-                            <p className="text-orange-400 font-bold mb-3">
+                            <p className="status-highlight font-bold mb-3">
                               Toplam: {totalDemand.toLocaleString('tr-TR')} talep
                             </p>
                             <p className="text-xs mb-1" style={{ color: 'var(--text-3)' }}>Hastane Dağılımı:</p>
@@ -1680,12 +1674,12 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-orange-300">
+                      <p className="text-sm font-medium status-highlight">
                         {summary.totalHospitals === 1
                           ? getShortName(summary.hospitalSummaries[0]?.hospitalName || '') + ' TOPLAM'
                           : 'İL GENELİ TOPLAM'}
                       </p>
-                      <p className="text-2xl font-bold text-orange-400">{summary.totalProvinceDemand.toLocaleString('tr-TR')} Talep</p>
+                      <p className="text-2xl font-bold status-highlight">{summary.totalProvinceDemand.toLocaleString('tr-TR')} Talep</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -1727,7 +1721,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   <div className="px-4 py-3 border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
                     <div className="flex items-center justify-between">
                       <h4 className="font-semibold" style={{ color: 'var(--text-1)' }}>{getShortName(hospital.hospitalName)}</h4>
-                      <span className="text-lg font-bold text-orange-400">{hospital.totalDemand.toLocaleString('tr-TR')}</span>
+                      <span className="text-lg font-bold status-highlight">{hospital.totalDemand.toLocaleString('tr-TR')}</span>
                     </div>
                   </div>
 

@@ -527,6 +527,55 @@ code {
   }
 }
 
+/* ===== SEMANTIC STATUS COLORS ===== */
+/* Text status colors - Dark mode defaults */
+.status-success { color: #6ee7b7; }
+.status-danger { color: #fca5a5; }
+.status-warning { color: #fde68a; }
+.status-info { color: #93c5fd; }
+.status-accent { color: #c4b5fd; }
+.status-highlight { color: #fdba74; }
+.status-muted { color: var(--text-3); }
+
+/* Background status colors - Dark mode defaults */
+.bg-status-success { background: rgba(16, 185, 129, 0.15); }
+.bg-status-danger { background: rgba(239, 68, 68, 0.15); }
+.bg-status-warning { background: rgba(245, 158, 11, 0.15); }
+.bg-status-info { background: rgba(59, 130, 246, 0.15); }
+.bg-status-accent { background: rgba(139, 92, 246, 0.15); }
+.bg-status-highlight { background: rgba(249, 115, 22, 0.15); }
+
+/* Border status colors */
+.border-status-success { border-color: rgba(16, 185, 129, 0.3); }
+.border-status-danger { border-color: rgba(239, 68, 68, 0.3); }
+.border-status-warning { border-color: rgba(245, 158, 11, 0.3); }
+.border-status-info { border-color: rgba(59, 130, 246, 0.3); }
+.border-status-accent { border-color: rgba(139, 92, 246, 0.3); }
+.border-status-highlight { border-color: rgba(249, 115, 22, 0.3); }
+
+/* Light mode overrides */
+[data-theme="light"] .status-success { color: #047857; }
+[data-theme="light"] .status-danger { color: #dc2626; }
+[data-theme="light"] .status-warning { color: #d97706; }
+[data-theme="light"] .status-info { color: #2563eb; }
+[data-theme="light"] .status-accent { color: #7c3aed; }
+[data-theme="light"] .status-highlight { color: #ea580c; }
+[data-theme="light"] .status-muted { color: var(--text-3); }
+
+[data-theme="light"] .bg-status-success { background: rgba(16, 185, 129, 0.1); }
+[data-theme="light"] .bg-status-danger { background: rgba(239, 68, 68, 0.1); }
+[data-theme="light"] .bg-status-warning { background: rgba(245, 158, 11, 0.1); }
+[data-theme="light"] .bg-status-info { background: rgba(59, 130, 246, 0.1); }
+[data-theme="light"] .bg-status-accent { background: rgba(139, 92, 246, 0.1); }
+[data-theme="light"] .bg-status-highlight { background: rgba(249, 115, 22, 0.1); }
+
+[data-theme="light"] .border-status-success { border-color: rgba(16, 185, 129, 0.25); }
+[data-theme="light"] .border-status-danger { border-color: rgba(239, 68, 68, 0.25); }
+[data-theme="light"] .border-status-warning { border-color: rgba(245, 158, 11, 0.25); }
+[data-theme="light"] .border-status-info { border-color: rgba(59, 130, 246, 0.25); }
+[data-theme="light"] .border-status-accent { border-color: rgba(139, 92, 246, 0.25); }
+[data-theme="light"] .border-status-highlight { border-color: rgba(249, 115, 22, 0.25); }
+
 /* Aksiyon Gün Dağılımı - Legend animasyonu */
 @keyframes actionDaysPulseLegend {
   0%, 100% { opacity: 0.5; }
