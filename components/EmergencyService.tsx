@@ -897,37 +897,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       )}
 
       {/* Filtreler */}
-      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="sticky-filter-panel rounded-2xl shadow-sm border p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold">Veri Filtreleme</h3>
-          <div className="flex items-center gap-3">
-            {getMatchingDates().length > 0 && (
-              <span className="text-sm text-emerald-400 font-medium bg-emerald-500/20 px-3 py-1 rounded-full">
-                {getMatchingDates().length} tarih seçili
-              </span>
-            )}
-            {(selectedYears.length > 0 || selectedMonths.length > 0 || dateRange.start) && (
-              <button
-                onClick={() => {
-                  setSelectedYears([]);
-                  setSelectedMonths([]);
-                  setActiveMonth(null);
-                  setDateRange({ start: null, end: null });
-                }}
-                style={{ color: 'var(--text-3)' }}
-                className="text-sm hover:opacity-70 font-medium flex items-center gap-1"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Tümünü Temizle
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Multi-Select Dropdowns */}
-        <div className="flex flex-wrap gap-4 items-end">
+      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="sticky-filter-panel rounded-2xl shadow-sm border p-4">
+        {/* Filtreler + Durum bilgisi tek satırda */}
+        <div className="flex flex-wrap gap-3 items-end">
           {/* Hastane Seçimi - En başta */}
           {allowedHospitals.length > 0 && (
             <MultiSelectDropdown
@@ -1018,6 +990,32 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               </>
             )}
           </button>
+
+          {/* Durum bilgisi + Temizle — sağ tarafa */}
+          <div className="flex items-center gap-2 ml-auto">
+            {getMatchingDates().length > 0 && (
+              <span className="text-xs multiselect-tag px-2 py-1 rounded-full">
+                {getMatchingDates().length} tarih seçili
+              </span>
+            )}
+            {(selectedYears.length > 0 || selectedMonths.length > 0 || dateRange.start) && (
+              <button
+                onClick={() => {
+                  setSelectedYears([]);
+                  setSelectedMonths([]);
+                  setActiveMonth(null);
+                  setDateRange({ start: null, end: null });
+                }}
+                style={{ color: 'var(--text-3)' }}
+                className="text-xs hover:opacity-70 font-medium flex items-center gap-1"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Tümünü Temizle
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Hastane seçimi uyarısı */}
