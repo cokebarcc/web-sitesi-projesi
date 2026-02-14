@@ -33,6 +33,8 @@ interface ChangeAnalysisProps {
   setUpdatedLabel: (label: string) => void;
   // Admin check
   isAdmin: boolean;
+  // Upload permission
+  canUpload?: boolean;
   // Loaded full versions (global state - persists across module changes)
   loadedFullVersions: Record<string, ScheduleVersion>;
   setLoadedFullVersions: React.Dispatch<React.SetStateAction<Record<string, ScheduleVersion>>>;
@@ -56,6 +58,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   updatedLabel,
   setUpdatedLabel,
   isAdmin,
+  canUpload = false,
   loadedFullVersions,
   setLoadedFullVersions,
   onPhysCompareUpdate
@@ -641,7 +644,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             </div>
 
             {/* Sürüm Yükleme Butonları */}
-            {isAdmin && (
+            {canUpload && (
               <>
                 <label htmlFor="oldVersionUpload" className="px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer active:scale-95 flex items-center gap-2 transition-all hover:opacity-80" style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-1)' }}>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>

@@ -236,7 +236,11 @@ const parsers: Record<string, (ab: ArrayBuffer, fn: string) => ExcelData | null>
   ek2a: parseEk2a, ek2a2: parseEk2a2, ek2b: parseEk2b, ek2c: parseEk2c, ek2cd: parseEk2cd
 };
 
-const EkListeTanimlama: React.FC = () => {
+interface EkListeTanimlamaProps {
+  canUpload?: boolean;
+}
+
+const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }) => {
   const [ek2aData, setEk2aData] = useState<ExcelData | null>(null);
   const [ek2a2Data, setEk2a2Data] = useState<ExcelData | null>(null);
   const [ek2bData, setEk2bData] = useState<ExcelData | null>(null);
@@ -365,7 +369,7 @@ const EkListeTanimlama: React.FC = () => {
       </div>
 
       {/* Excel Yükleme Butonları */}
-      {showUploadButtons && (
+      {canUpload && showUploadButtons && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
           {!ek2aData && (
             <label className={`backdrop-blur-xl rounded-2xl border p-6 cursor-pointer hover:border-emerald-500/50 transition-all group ${loadingId === 'ek2a' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
@@ -472,7 +476,7 @@ const EkListeTanimlama: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-500/20">{ek2aData.rows.length} kayıt</span>
-                <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a')} /></label>
+                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a')} /></label>}
                 <button onClick={() => handleClear('ek2a')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </div>
@@ -502,7 +506,7 @@ const EkListeTanimlama: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-500/20">{ek2a2Data.rows.length} kayıt</span>
-                <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a2')} /></label>
+                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a2')} /></label>}
                 <button onClick={() => handleClear('ek2a2')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </div>
@@ -532,7 +536,7 @@ const EkListeTanimlama: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="bg-amber-500/10 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-500/20">{ek2bData.rows.length} kayıt</span>
-                <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2b')} /></label>
+                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2b')} /></label>}
                 <button onClick={() => handleClear('ek2b')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </div>
@@ -565,7 +569,7 @@ const EkListeTanimlama: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="bg-purple-500/10 text-purple-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-500/20">{ek2cData.rows.length} kayıt</span>
-                <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2c')} /></label>
+                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2c')} /></label>}
                 <button onClick={() => handleClear('ek2c')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </div>
@@ -598,7 +602,7 @@ const EkListeTanimlama: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-500/20">{ek2cdData.rows.length} kayıt</span>
-                <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2cd')} /></label>
+                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2cd')} /></label>}
                 <button onClick={() => handleClear('ek2cd')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </div>

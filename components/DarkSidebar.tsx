@@ -208,7 +208,6 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
 
   const supportItems = [
     { id: 'ai-chatbot', label: 'AI Sohbet', icon: <ChatIcon />, view: 'ai-chatbot', hasAccess: hasModuleAccess('aiChatbot') },
-    { id: 'goren', label: 'GÖREN Başarı', icon: <PresentationIcon />, view: 'goren', hasAccess: hasModuleAccess('gorenBashekimlik') }
   ];
 
   const isViewActive = (view: string) => currentView === view;

@@ -96,7 +96,11 @@ export function parseGilExcel(arrayBuffer: ArrayBuffer, fileName: string): GilEx
   }
 }
 
-const GilModule: React.FC = () => {
+interface GilModuleProps {
+  canUpload?: boolean;
+}
+
+const GilModule: React.FC<GilModuleProps> = ({ canUpload = false }) => {
   const [data, setData] = useState<GilExcelData | null>(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -196,24 +200,30 @@ const GilModule: React.FC = () => {
       {/* Yükleme veya Tablo */}
       {!data ? (
         <div className="space-y-4">
-          <label className={`backdrop-blur-xl rounded-2xl p-12 cursor-pointer hover:border-lime-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
-            <div className="w-16 h-16 bg-lime-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
-              {loading ? (
-                <div className="w-8 h-8 border-2 border-lime-400/30 border-t-lime-400 rounded-full animate-spin"></div>
-              ) : (
-                <svg className="w-8 h-8 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-              )}
+          {canUpload ? (
+            <label className={`backdrop-blur-xl rounded-2xl p-12 cursor-pointer hover:border-lime-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+              <div className="w-16 h-16 bg-lime-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
+                {loading ? (
+                  <div className="w-8 h-8 border-2 border-lime-400/30 border-t-lime-400 rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-8 h-8 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                )}
+              </div>
+              <h3 className="text-lg font-semibold group-hover:text-lime-300 transition-colors mb-1" style={{ color: 'var(--text-1)' }}>
+                {loading ? 'Dosya İşleniyor...' : 'GİL Excel Dosyasını Yükleyin'}
+              </h3>
+              <p className="text-sm text-center max-w-md" style={{ color: 'var(--text-3)' }}>
+                .xlsx formatında Genel Tıbbi İşlemler Listesi dosyasını yükleyin.
+              </p>
+              <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
+            </label>
+          ) : (
+            <div className="backdrop-blur-xl rounded-2xl p-12 flex flex-col items-center justify-center" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+              <p className="text-sm" style={{ color: 'var(--text-3)' }}>GİL verisi yüklenmemiş. Veri yükleme yetkiniz bulunmamaktadır.</p>
             </div>
-            <h3 className="text-lg font-semibold group-hover:text-lime-300 transition-colors mb-1" style={{ color: 'var(--text-1)' }}>
-              {loading ? 'Dosya İşleniyor...' : 'GİL Excel Dosyasını Yükleyin'}
-            </h3>
-            <p className="text-sm text-center max-w-md" style={{ color: 'var(--text-3)' }}>
-              .xlsx formatında Genel Tıbbi İşlemler Listesi dosyasını yükleyin.
-            </p>
-            <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
-          </label>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -234,10 +244,12 @@ const GilModule: React.FC = () => {
               <span className="bg-lime-500/10 text-lime-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-lime-500/20">
                 {data.rows.length} kayıt
               </span>
-              <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors" style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}>
-                Değiştir
-                <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
-              </label>
+              {canUpload && (
+                <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors" style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}>
+                  Değiştir
+                  <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
+                </label>
+              )}
               <button onClick={handleClear} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">
                 Temizle
               </button>

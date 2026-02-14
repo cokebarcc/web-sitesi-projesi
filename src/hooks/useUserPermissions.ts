@@ -13,7 +13,12 @@ const NO_PERMISSIONS: UserPermissions = {
     efficiencyAnalysis: false,
     serviceAnalysis: false,
     aiChatbot: false,
-    gorenBashekimlik: false,
+    gorenIlsm: false,
+    gorenIlcesm: false,
+    gorenBh: false,
+    gorenAdsh: false,
+    gorenAsh: false,
+    gorenManuel: false,
     analysisModule: false,
     schedulePlanning: false,
     performancePlanning: false,
@@ -31,6 +36,14 @@ const NO_PERMISSIONS: UserPermissions = {
     physicianData: false,
     emergencyService: false,
     activeDemand: false,
+    changeAnalysis: false,
+    gil: false,
+    ekListeTanimlama: false,
+    gorenIlsm: false,
+    gorenIlcesm: false,
+    gorenBh: false,
+    gorenAdsh: false,
+    gorenAsh: false,
   },
 };
 
@@ -63,7 +76,12 @@ export const useUserPermissions = (userEmail: string | null) => {
                 efficiencyAnalysis: true,
                 serviceAnalysis: true,
                 aiChatbot: true,
-                gorenBashekimlik: true,
+                gorenIlsm: true,
+                gorenIlcesm: true,
+                gorenBh: true,
+                gorenAdsh: true,
+                gorenAsh: true,
+                gorenManuel: true,
                 analysisModule: true,
                 schedulePlanning: true,
                 performancePlanning: true,
@@ -81,6 +99,14 @@ export const useUserPermissions = (userEmail: string | null) => {
                 physicianData: true,
                 emergencyService: true,
                 activeDemand: true,
+                changeAnalysis: true,
+                gil: true,
+                ekListeTanimlama: true,
+                gorenIlsm: true,
+                gorenIlcesm: true,
+                gorenBh: true,
+                gorenAdsh: true,
+                gorenAsh: true,
               },
             },
             createdAt: new Date().toISOString(),
@@ -96,8 +122,35 @@ export const useUserPermissions = (userEmail: string | null) => {
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data() as AppUser;
-          console.log('✅ Kullanıcı izinleri yüklendi:', userData);
+          const rawData = querySnapshot.docs[0].data() as AppUser;
+          console.log('✅ Kullanıcı izinleri yüklendi:', rawData);
+
+          // Sanitize: only keep known module/upload keys, drop stale ones
+          const cleanModules = { ...NO_PERMISSIONS.modules };
+          if (rawData.permissions?.modules) {
+            for (const key of Object.keys(NO_PERMISSIONS.modules) as (keyof typeof NO_PERMISSIONS.modules)[]) {
+              if (key in rawData.permissions.modules) {
+                cleanModules[key] = rawData.permissions.modules[key];
+              }
+            }
+          }
+          const cleanUpload = { ...NO_PERMISSIONS.canUpload };
+          if (rawData.permissions?.canUpload) {
+            for (const key of Object.keys(NO_PERMISSIONS.canUpload!) as (keyof NonNullable<typeof NO_PERMISSIONS.canUpload>)[]) {
+              if (key in rawData.permissions.canUpload) {
+                cleanUpload[key] = rawData.permissions.canUpload[key];
+              }
+            }
+          }
+
+          const userData: AppUser = {
+            ...rawData,
+            permissions: {
+              allowedHospitals: rawData.permissions?.allowedHospitals || [],
+              modules: cleanModules,
+              canUpload: cleanUpload,
+            },
+          };
           setUserPermissions(userData);
         } else {
           // Kullanıcı kaydı yoksa - HİÇBİR modüle erişim yok

@@ -19,7 +19,7 @@ import {
 } from './types';
 import { MOCK_DATA, DEPARTMENTS, HOSPITALS, YEARS, HOSPITAL_DEPARTMENTS, MONTHS } from './constants';
 import LoginPage from './components/LoginPage';
-import AdminPanel from './src/components/AdminPanel';
+import AdminPanel from './src/components/admin/AdminPanel';
 import FilterPanel from './components/common/FilterPanel';
 
 import ChatBot from './components/ChatBot';
@@ -1048,6 +1048,7 @@ const App: React.FC = () => {
                   updatedLabel={selectedUpdatedLabel}
                   setUpdatedLabel={(label) => setUpdatedLabels(prev => ({ ...prev, [view]: label }))}
                   isAdmin={isAdmin}
+                  canUpload={canUploadData('changeAnalysis')}
                   loadedFullVersions={changeAnalysisLoadedVersions}
                   setLoadedFullVersions={setChangeAnalysisLoadedVersions}
                   onPhysCompareUpdate={setChangeAnalysisPhysCompare}
@@ -1074,13 +1075,13 @@ const App: React.FC = () => {
               return <HekimIslemListesiModule />;
 
             case 'ek-liste-tanimlama':
-              return <EkListeTanimlama />;
+              return <EkListeTanimlama canUpload={canUploadData('ekListeTanimlama')} />;
 
             case 'sut-mevzuati':
               return <SutMevzuati />;
 
             case 'gil':
-              return <GilModule />;
+              return <GilModule canUpload={canUploadData('gil')} />;
 
             case 'ai-chatbot':
               return (
@@ -1166,7 +1167,7 @@ const App: React.FC = () => {
                 <GorenModule
                   moduleType="ILSM"
                   userEmail={user?.email || ''}
-                  canUpload={true}
+                  canUpload={canUploadData('gorenIlsm')}
                   isAdmin={isAdmin}
                 />
               );
@@ -1175,7 +1176,7 @@ const App: React.FC = () => {
                 <GorenModule
                   moduleType="ILCESM"
                   userEmail={user?.email || ''}
-                  canUpload={true}
+                  canUpload={canUploadData('gorenIlcesm')}
                   isAdmin={isAdmin}
                 />
               );
@@ -1184,7 +1185,7 @@ const App: React.FC = () => {
                 <GorenModule
                   moduleType="BH"
                   userEmail={user?.email || ''}
-                  canUpload={true}
+                  canUpload={canUploadData('gorenBh')}
                   isAdmin={isAdmin}
                 />
               );
@@ -1193,7 +1194,7 @@ const App: React.FC = () => {
                 <GorenModule
                   moduleType="ADSH"
                   userEmail={user?.email || ''}
-                  canUpload={true}
+                  canUpload={canUploadData('gorenAdsh')}
                   isAdmin={isAdmin}
                 />
               );
@@ -1202,7 +1203,7 @@ const App: React.FC = () => {
                 <GorenModule
                   moduleType="ASH"
                   userEmail={user?.email || ''}
-                  canUpload={true}
+                  canUpload={canUploadData('gorenAsh')}
                   isAdmin={isAdmin}
                 />
               );

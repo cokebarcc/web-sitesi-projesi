@@ -101,7 +101,6 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
                hasModuleAccess('presentation');
       case 'support':
         return hasModuleAccess('aiChatbot') ||
-               hasModuleAccess('gorenBashekimlik') ||
                (userPermissions.role as string) === 'admin'; // Admin paneli için
       case 'emergency':
         return hasModuleAccess('emergencyService');
