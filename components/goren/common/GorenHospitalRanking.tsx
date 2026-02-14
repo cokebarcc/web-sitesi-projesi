@@ -97,10 +97,10 @@ const RankBadge: React.FC<{ rank: number; size?: number }> = ({ rank, size = 48 
 /* ========== HELPER FUNCTIONS ========== */
 
 const getColor = (rate: number) => {
-  if (rate >= 80) return { text: 'text-emerald-400', bg: 'bg-emerald-500', gradient: 'from-emerald-500 to-emerald-400' };
-  if (rate >= 60) return { text: 'text-amber-400', bg: 'bg-amber-500', gradient: 'from-amber-500 to-yellow-400' };
-  if (rate >= 40) return { text: 'text-orange-400', bg: 'bg-orange-500', gradient: 'from-orange-500 to-orange-400' };
-  return { text: 'text-rose-400', bg: 'bg-rose-500', gradient: 'from-rose-500 to-rose-400' };
+  if (rate >= 80) return { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500', gradient: 'from-emerald-500 to-emerald-400' };
+  if (rate >= 60) return { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500', gradient: 'from-amber-500 to-yellow-400' };
+  if (rate >= 40) return { text: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500', gradient: 'from-orange-500 to-orange-400' };
+  return { text: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-500', gradient: 'from-rose-500 to-rose-400' };
 };
 
 /* ========== PODYUM ========== */
@@ -137,10 +137,7 @@ const VariantPodium: React.FC<{
                 style={{ animationDelay: `${i * 150}ms` }}
               >
                 {/* Kart */}
-                <div className={`w-full rounded-2xl border border-white/10 p-4 text-center backdrop-blur-sm mb-0
-                  bg-gradient-to-b from-white/[0.06] to-white/[0.02]
-                  ${isCurrent ? 'ring-2 ring-indigo-400/60 rank-pulse' : ''}
-                  hover:from-white/[0.08] hover:to-white/[0.04] transition-all duration-300`}
+                <div className={`g-podium-card w-full mb-0 ${isCurrent ? 'g-podium-card--active rank-pulse' : ''}`}
                 >
                   {/* Rank Badge */}
                   <div className="flex justify-center mb-2">
@@ -148,7 +145,7 @@ const VariantPodium: React.FC<{
                   </div>
 
                   {/* Kurum Adı */}
-                  <p className={`${actualRank === 1 ? 'text-base' : 'text-sm'} font-bold text-[var(--text-1)] truncate mb-2`}>
+                  <p className={`${actualRank === 1 ? 'text-base' : 'text-sm'} font-bold truncate mb-2`} style={{ color: 'var(--g-text)' }}>
                     {entry.institutionName}
                   </p>
 
@@ -160,15 +157,15 @@ const VariantPodium: React.FC<{
                   </div>
 
                   {/* Mini progress */}
-                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-2">
+                  <div className="g-progress w-full mb-2">
                     <div
                       className={`h-full rounded-full bg-gradient-to-r ${color.gradient} rank-bar-grow`}
                       style={{ width: `${Math.min(entry.achievementRate, 100)}%`, animationDelay: `${400 + i * 100}ms` }}
                     />
                   </div>
 
-                  <p className="text-xs text-[var(--text-3)]">
-                    <span className="font-bold text-[var(--text-2)]">{entry.totalGP}</span> / {maxGP}
+                  <p className="g-text-small">
+                    <span className="font-bold" style={{ color: 'var(--g-text)' }}>{entry.totalGP}</span> / {maxGP}
                   </p>
 
                 </div>
@@ -195,35 +192,32 @@ const VariantPodium: React.FC<{
           return (
             <div
               key={entry.institutionId}
-              className={`rank-slide-in flex items-center gap-4 px-5 py-3 rounded-2xl transition-all
-                ${isCurrent
-                  ? 'bg-indigo-500/12 border border-indigo-500/25'
-                  : 'bg-white/[0.02] border border-transparent hover:bg-white/[0.05]'}`}
+              className={`g-rank-row rank-slide-in ${isCurrent ? 'g-rank-row--active' : ''}`}
               style={{ animationDelay: `${(index + 3) * 80}ms` }}
             >
-              <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center">
-                <span className="text-base font-bold text-[var(--text-3)]">{rank}</span>
+              <div className="flex items-center justify-center" style={{ width: '36px', height: '36px', borderRadius: 'var(--g-radius-md)', background: 'var(--g-surface-muted)', border: '1px solid var(--g-border)' }}>
+                <span className="text-base font-bold" style={{ color: 'var(--g-text-secondary)' }}>{rank}</span>
               </div>
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <span className={`text-base font-semibold truncate ${isCurrent ? 'text-indigo-200' : 'text-[var(--text-1)]'}`}>
+                <span className="text-base font-semibold truncate" style={{ color: isCurrent ? 'var(--g-accent-text)' : 'var(--g-text)' }}>
                   {entry.institutionName}
                 </span>
               </div>
-              <span className="text-base font-bold text-[var(--text-1)] hidden sm:inline">{entry.totalGP}<span className="text-sm text-[var(--text-muted)]"> / {maxGP}</span></span>
+              <span className="g-num text-base font-bold hidden sm:inline" style={{ color: 'var(--g-text)' }}>{entry.totalGP}<span className="text-sm" style={{ color: 'var(--g-text-muted)' }}> / {maxGP}</span></span>
               <div className="w-36 sm:w-44 flex items-center gap-3">
-                <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full bg-gradient-to-r ${color.gradient} rank-bar-grow`}
+                <div className="g-progress flex-1">
+                  <div className={`g-progress-bar bg-gradient-to-r ${color.gradient} rank-bar-grow`}
                     style={{ width: `${Math.min(entry.achievementRate, 100)}%`, animationDelay: `${(index + 3) * 80 + 200}ms` }}
                   />
                 </div>
-                <span className={`text-base font-bold w-14 text-right ${color.text}`}>%{entry.achievementRate.toFixed(0)}</span>
+                <span className={`g-num text-base font-bold w-14 text-right ${color.text}`}>%{entry.achievementRate.toFixed(0)}</span>
               </div>
             </div>
           );
         })}
         {noData.map(entry => (
-          <div key={entry.institutionId} className="flex items-center gap-4 px-5 py-2.5 rounded-2xl opacity-40">
-            <div className="w-9 h-9 rounded-xl bg-white/[0.02] flex items-center justify-center">
+          <div key={entry.institutionId} className="flex items-center gap-4 px-5 py-2.5 rounded-2xl opacity-50 dark:opacity-40">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/[0.02] flex items-center justify-center">
               <span className="text-base text-[var(--text-muted)]">-</span>
             </div>
             <span className="flex-1 text-base text-[var(--text-muted)]">{entry.institutionName}</span>
@@ -580,10 +574,10 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-8 mb-6">
+      <div className="g-section-card" style={{ padding: 'var(--g-space-8)', marginBottom: 'var(--g-space-6)' }}>
         <div className="flex items-center justify-center gap-3 py-8">
-          <div className="animate-spin w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full" />
-          <span className="text-base text-indigo-300 font-medium">Kurum sıralaması yükleniyor...</span>
+          <div className="animate-spin w-6 h-6 border-2 border-t-transparent rounded-full" style={{ borderColor: 'var(--g-accent)', borderTopColor: 'transparent' }} />
+          <span className="g-text-body" style={{ color: 'var(--g-accent)' }}>Kurum sıralaması yükleniyor...</span>
         </div>
       </div>
     );
@@ -594,21 +588,21 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
   return (
     <>
       <AnimationStyles />
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] mb-6 overflow-hidden">
+      <div className="g-section-card" style={{ marginBottom: 'var(--g-space-6)' }}>
         {/* Baslik */}
-        <div className="px-8 py-5 flex items-center justify-between">
+        <div className="flex items-center justify-between" style={{ padding: 'var(--g-space-5) var(--g-space-8)' }}>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="flex items-center gap-4 hover:opacity-80 transition-opacity"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/30 to-purple-500/30 border border-indigo-400/30 flex items-center justify-center shadow-lg shadow-indigo-500/10">
-              <svg className="w-6 h-6 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center justify-center" style={{ width: '48px', height: '48px', borderRadius: 'var(--g-radius-lg)', background: 'var(--g-accent-muted)', border: '1px solid var(--g-accent)' }}>
+              <svg className="w-6 h-6" style={{ color: 'var(--g-accent)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-[var(--text-1)] tracking-tight">{moduleLabel} Başarı Sıralaması</h3>
-              <p className="text-sm text-indigo-300/70 mt-0.5">
+              <h3 className="g-title-section">{moduleLabel} Başarı Sıralaması</h3>
+              <p className="g-text-small" style={{ color: 'var(--g-accent-text)', marginTop: '2px', fontWeight: 500 }}>
                 {MONTHS[month - 1]} {year} &middot; {moduleLabel} &middot; {hospitalsWithData}/{rankings.length} kurum
               </p>
             </div>
@@ -620,7 +614,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
               <button
                 onClick={handleExportPng}
                 disabled={isExporting}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-sm text-[var(--text-2)] hover:text-[var(--text-1)] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="g-btn g-btn-secondary"
                 title="PNG olarak indir"
               >
                 {isExporting ? (
@@ -636,9 +630,10 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
 
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className={`w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`}
+              className={`g-btn g-btn-ghost transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`}
+              style={{ width: '32px', height: '32px', padding: 0, borderRadius: 'var(--g-radius-md)' }}
             >
-              <svg className="w-5 h-5 text-[var(--text-3)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5" style={{ color: 'var(--g-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -647,13 +642,13 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
 
         {/* Icerik */}
         {!isCollapsed && (
-          <div className="px-8 pb-8">
+          <div style={{ padding: '0 var(--g-space-8) var(--g-space-8)' }}>
             {hospitalsWithData === 0 ? (
               <div className="text-center py-12">
-                <svg className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--g-text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <p className="text-lg text-[var(--text-muted)] font-medium">Bu dönem için henüz kurum verisi yüklenmemiş.</p>
+                <p className="g-text-body" style={{ fontSize: '16px', color: 'var(--g-text-muted)' }}>Bu dönem için henüz kurum verisi yüklenmemiş.</p>
               </div>
             ) : (
               <VariantPodium withData={withData} noData={noData} maxGP={maxGP} currentInstitutionId={currentInstitutionId} />

@@ -52,7 +52,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   showYearFilter = false
 }) => {
   return (
-    <div className="p-6 rounded-[32px] shadow-sm mb-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
+    <div className="sticky-filter-panel p-6 rounded-[32px] shadow-sm mb-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
       <div className="flex flex-wrap gap-4 items-end">
         {/* Hastane Dropdown */}
         {showHospitalFilter && (

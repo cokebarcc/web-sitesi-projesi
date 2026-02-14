@@ -1208,7 +1208,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`flex min-h-screen relative font-['Inter'] transition-colors duration-500 ${
+    <div className={`flex h-screen relative font-['Inter'] transition-colors duration-500 ${
       theme === 'dark'
         ? 'text-slate-200 bg-gradient-to-br from-[#0f1729] via-[#131d33] to-[#0f1729]'
         : 'text-slate-800 bg-gradient-to-br from-[#f0f4f8] via-[#e8eef5] to-[#f0f4f8]'
@@ -1398,9 +1398,14 @@ const App: React.FC = () => {
 
       {/* Main Content - Sidebar için padding-left eklendi */}
       <main className="flex-1 min-w-0 overflow-y-auto w-full custom-scrollbar ml-[88px]">
-        <div className="w-full px-8 py-6">
-          {/* Üst Bar - Breadcrumb solda, Logo sağda */}
-          <header className="mb-6 flex justify-between items-center no-print">
+        {/* Sticky Breadcrumb Header */}
+        <header
+          className="sticky top-0 z-[200] px-8 pt-5 pb-3 flex justify-between items-center no-print backdrop-blur-xl border-b transition-colors duration-500"
+          style={{
+            background: 'var(--sticky-bg)',
+            borderColor: 'var(--sticky-border)'
+          }}
+        >
             {/* Breadcrumb Navigasyon */}
             {view !== 'welcome' && (() => {
               const viewMeta: Record<string, { group?: string; label: string; groupView?: string }> = {
@@ -1502,7 +1507,10 @@ const App: React.FC = () => {
               </div>
             </div>
             </div>
-          </header>
+        </header>
+
+        {/* Content Area */}
+        <div className="w-full px-8 pb-6 pt-4">
           <section key={view} className="view-transition">{renderView()}</section>
         </div>
       </main>

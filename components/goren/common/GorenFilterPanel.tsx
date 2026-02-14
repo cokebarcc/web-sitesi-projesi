@@ -113,9 +113,9 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
   };
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-5 relative z-[100]">
-      {/* Filtre Satırı */}
-      <div className="flex flex-wrap gap-3 items-end">
+    <div className="g-filter-panel sticky-filter-panel">
+      {/* Tek Satır: Filtreler + Butonlar + Excel Yükle */}
+      <div className="flex flex-wrap gap-2 items-end">
         {/* Kurum Türü */}
         {showInstitutionTypeFilter && (
           <MultiSelectDropdown
@@ -192,7 +192,8 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
         <button
           onClick={onApply}
           disabled={isLoading || !filterState.institutionId}
-          className="px-5 py-2 h-[38px] bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+          className="g-btn g-btn-primary"
+          style={{ height: '38px', background: 'var(--g-success)', borderColor: 'var(--g-success)' }}
         >
           {isLoading ? (
             <>
@@ -215,7 +216,8 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
         {/* Şablon İndir */}
         <button
           onClick={onDownloadTemplate}
-          className="px-4 py-2 h-[38px] bg-[var(--surface-2)] text-[var(--text-2)] rounded-lg font-medium text-sm hover:bg-[var(--surface-3)] transition-all flex items-center gap-2 border border-[var(--border-1)]"
+          className="g-btn g-btn-secondary"
+          style={{ height: '38px' }}
           title="Veri giriş şablonu indir"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -228,7 +230,8 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
         {hasData && (
           <button
             onClick={onExport}
-            className="px-4 py-2 h-[38px] bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-500 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20"
+            className="g-btn"
+            style={{ height: '38px', background: 'var(--g-info)', color: '#fff', borderColor: 'var(--g-info)' }}
             title="Sonuçları Excel olarak indir"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -238,36 +241,34 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
           </button>
         )}
 
+        {/* Ayırıcı çizgi */}
+        {canUpload && filterState.institutionId && (
+          <div style={{ width: '1px', height: '28px', background: 'var(--g-border)', margin: '0 4px', alignSelf: 'center' }}></div>
+        )}
+
+        {/* Excel Dosyası Yükle — aynı satırda */}
+        {canUpload && filterState.institutionId && (
+          <label className="g-btn g-btn-secondary cursor-pointer" style={{ height: '38px', color: 'var(--g-accent-text)', borderColor: 'var(--g-accent)' }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            Excel Yükle
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </label>
+        )}
+
         {/* Sağ taraf - Gösterge bilgisi */}
         <div className="flex items-center gap-2 ml-auto">
-          <span className="text-xs text-emerald-400 font-medium bg-emerald-500/20 px-2 py-1 rounded-full border border-emerald-500/30">
+          <span className="g-badge" style={{ background: 'var(--g-success-light)', color: 'var(--g-success-text)', border: '1px solid var(--g-success)', padding: '4px 12px', fontWeight: 700 }}>
             {INSTITUTION_TYPE_LABELS[filterState.institutionType]} • {indicatorCount} Gösterge
           </span>
         </div>
       </div>
-
-      {/* Dosya Yükleme Alanı */}
-      {canUpload && filterState.institutionId && (
-        <div className="mt-4 pt-4 border-t border-[var(--glass-border)]">
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg cursor-pointer transition-all border border-indigo-500/30">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              Excel Dosyası Yükle
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
-            <span className="text-xs text-[var(--text-muted)]">
-              Şablon formatında Excel dosyası yükleyerek verileri otomatik doldurun
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

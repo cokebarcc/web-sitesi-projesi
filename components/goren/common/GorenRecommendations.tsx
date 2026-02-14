@@ -20,10 +20,10 @@ interface GorenRecommendationsProps {
 
 // Öncelik renkleri
 const PRIORITY_COLORS: Record<string, { bg: string; text: string; border: string; badge: string }> = {
-  critical: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30', badge: 'bg-rose-500/20 text-rose-300' },
-  high: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30', badge: 'bg-orange-500/20 text-orange-300' },
-  medium: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30', badge: 'bg-amber-500/20 text-amber-300' },
-  low: { bg: 'bg-gray-500/10', text: 'text-gray-400', border: 'border-gray-500/30', badge: 'bg-gray-500/20 text-gray-300' }
+  critical: { bg: 'bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-500/20 dark:to-pink-500/15', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-400 dark:border-rose-500/40', badge: 'bg-rose-200 dark:bg-rose-500/30 text-rose-800 dark:text-rose-200' },
+  high: { bg: 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-500/20 dark:to-amber-500/15', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-400 dark:border-orange-500/40', badge: 'bg-orange-200 dark:bg-orange-500/30 text-orange-800 dark:text-orange-200' },
+  medium: { bg: 'bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-500/20 dark:to-yellow-500/15', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-400 dark:border-amber-500/40', badge: 'bg-amber-200 dark:bg-amber-500/30 text-amber-800 dark:text-amber-200' },
+  low: { bg: 'bg-gradient-to-br from-gray-100 to-slate-100 dark:from-gray-500/20 dark:to-slate-500/15', text: 'text-gray-700 dark:text-gray-300', border: 'border-gray-400 dark:border-gray-500/40', badge: 'bg-gray-200 dark:bg-gray-500/30 text-gray-800 dark:text-gray-200' }
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -86,32 +86,28 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
     : recommendationsSummary.recommendations.slice(0, 10);
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] overflow-hidden">
+    <div className="g-section-card">
       {/* A) Başlık + Tahmini Puan Rozeti */}
-      <div className="px-6 py-5 border-b border-[var(--glass-border)] flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ padding: 'var(--g-space-5) var(--g-space-6)', borderBottom: '1px solid var(--g-border)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-center justify-center" style={{ width: '40px', height: '40px', borderRadius: 'var(--g-radius-md)', background: 'var(--g-warning-muted)', border: '1px solid var(--g-warning)' }}>
+            <svg className="w-5 h-5" style={{ color: 'var(--g-warning)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-[var(--text-1)]">Puan İyileştirme Önerileri</h3>
-            <p className="text-xs text-[var(--text-muted)]">{recommendationsSummary.recommendations.length} göstergede iyileştirme potansiyeli</p>
+            <h3 className="g-title-section">Puan İyileştirme Önerileri</h3>
+            <p className="g-text-small" style={{ color: 'var(--g-text-muted)' }}>{recommendationsSummary.recommendations.length} göstergede iyileştirme potansiyeli</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {recommendationsSummary.easyTargetGain > 0 && (
-            <div className="px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30">
-              <span className="text-sm font-semibold text-emerald-400">
-                Kolay hedeflerle: {recommendationsSummary.easyTargetTotalGP} puan
-              </span>
+            <div className="g-badge" style={{ background: 'var(--g-success-light)', color: 'var(--g-success-text)', border: '1px solid var(--g-success)', padding: '6px 16px', fontSize: '13px' }}>
+              <span className="font-bold">Kolay hedeflerle: {recommendationsSummary.easyTargetTotalGP} puan</span>
             </div>
           )}
-          <div className="px-3 py-2 rounded-xl bg-white/5 border border-[var(--glass-border)]">
-            <span className="text-xs text-[var(--text-muted)]">
-              Tüm potansiyel: {recommendationsSummary.estimatedTotalGP}
-            </span>
+          <div className="g-badge" style={{ background: 'var(--g-surface-muted)', color: 'var(--g-text-tertiary)', border: '1px solid var(--g-border)', padding: '6px 12px' }}>
+            Tüm potansiyel: {recommendationsSummary.estimatedTotalGP}
           </div>
         </div>
       </div>
@@ -195,13 +191,13 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
         {recommendationsSummary.easyTargets.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 Kolay Ulaşılabilir Hedefler
               </h4>
-              <span className="text-xs text-emerald-400/70 bg-emerald-500/10 px-2 py-1 rounded-lg">
+              <span className="text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-200 dark:bg-emerald-500/25 px-2.5 py-1 rounded-lg font-semibold border border-emerald-300 dark:border-emerald-500/30">
                 Toplam +{recommendationsSummary.easyTargetGain} puan
               </span>
             </div>
@@ -209,21 +205,21 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
               {recommendationsSummary.easyTargets.slice(0, 6).map(et => (
                 <div
                   key={et.indicatorCode}
-                  className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 hover:border-emerald-500/40 transition-colors"
+                  className="p-4 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-emerald-500/15 dark:to-teal-500/10 border-2 border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-500 dark:hover:border-emerald-500/50 transition-all shadow-md shadow-emerald-500/10 dark:shadow-emerald-500/5 hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <span className="text-xs font-mono text-emerald-400/70">{indicatorPrefix}-{et.sira}</span>
-                    <span className="text-sm font-bold text-emerald-400">+{et.pointsGainable}p</span>
+                    <span className="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70">{indicatorPrefix}-{et.sira}</span>
+                    <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">+{et.pointsGainable}p</span>
                   </div>
                   <p className="text-sm font-medium text-[var(--text-1)] mb-2 line-clamp-2">{et.indicatorName}</p>
                   <div className="text-xs text-[var(--text-muted)]">
-                    <span className="text-rose-400">{formatGD(et.currentGD)}</span>
+                    <span className="text-rose-600 dark:text-rose-400">{formatGD(et.currentGD)}</span>
                     <span className="mx-1">&rarr;</span>
-                    <span className="text-emerald-400">{formatGD(et.targetGD)}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{formatGD(et.targetGD)}</span>
                   </div>
-                  <p className="text-xs text-emerald-400/80 mt-1">{et.nextTierCondition}</p>
+                  <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">{et.nextTierCondition}</p>
                   {et.actionHint && (
-                    <p className="text-xs text-cyan-400 mt-1.5 flex items-center gap-1">
+                    <p className="text-xs text-cyan-700 dark:text-cyan-400 mt-1.5 flex items-center gap-1">
                       <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -251,7 +247,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
                   {/* Ana satır */}
                   <button
                     onClick={() => toggleRow(rec.indicatorCode)}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left"
                   >
                     {/* Öncelik rozeti */}
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${colors.badge}`}>
@@ -268,7 +264,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
                     <div className="hidden md:flex items-center gap-1 text-xs shrink-0">
                       <span className="text-[var(--text-muted)]">{formatGD(rec.currentGD)}</span>
                       <span className="text-[var(--text-muted)]">&rarr;</span>
-                      <span className="text-emerald-400 font-medium">{formatGD(rec.targetGD)}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">{formatGD(rec.targetGD)}</span>
                     </div>
 
                     {/* Potansiyel puan */}
@@ -289,7 +285,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
 
                   {/* Genişletilmiş detay */}
                   {isExpanded && (
-                    <div className="px-4 py-3 border-t border-[var(--glass-border)] bg-white/[0.02] space-y-2">
+                    <div className="px-4 py-3 border-t border-[var(--glass-border)] bg-slate-100/80 dark:bg-white/[0.04] space-y-2">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div>
                           <span className="text-[var(--text-muted)]">Kategori</span>
@@ -301,7 +297,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
                         </div>
                         <div>
                           <span className="text-[var(--text-muted)]">Hedef GP</span>
-                          <p className="font-medium text-emerald-400">{rec.targetGP} / {rec.maxPoints}</p>
+                          <p className="font-medium text-emerald-600 dark:text-emerald-400">{rec.targetGP} / {rec.maxPoints}</p>
                         </div>
                         <div>
                           <span className="text-[var(--text-muted)]">Yön</span>
@@ -314,10 +310,10 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
                         <p className="text-xs text-[var(--text-muted)] mb-1">Puanlama Kuralı:</p>
                         <p className="text-xs font-mono text-[var(--text-1)]">{rec.ruleDescription}</p>
                       </div>
-                      <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
-                        <p className="text-xs text-emerald-400 font-medium">{rec.nextTierCondition}</p>
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-100 to-teal-50 dark:from-emerald-500/15 dark:to-teal-500/10 border border-emerald-300 dark:border-emerald-500/30">
+                        <p className="text-xs text-emerald-800 dark:text-emerald-300 font-semibold">{rec.nextTierCondition}</p>
                         {rec.actionHint && (
-                          <p className="text-xs text-cyan-400 mt-1.5 flex items-center gap-1">
+                          <p className="text-xs text-cyan-700 dark:text-cyan-400 mt-1.5 flex items-center gap-1">
                             <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
@@ -336,7 +332,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
           {recommendationsSummary.recommendations.length > 10 && (
             <button
               onClick={() => setShowAll(!showAll)}
-              className="w-full py-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="w-full py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
             >
               {showAll
                 ? 'Daha az göster'
@@ -357,18 +353,20 @@ const MiniCard: React.FC<{
   subtitle: string;
   color: 'amber' | 'rose' | 'orange' | 'emerald';
 }> = ({ title, value, subtitle, color }) => {
-  const colorMap = {
-    amber: 'from-amber-500/10 to-amber-500/5 border-amber-500/20 text-amber-400',
-    rose: 'from-rose-500/10 to-rose-500/5 border-rose-500/20 text-rose-400',
-    orange: 'from-orange-500/10 to-orange-500/5 border-orange-500/20 text-orange-400',
-    emerald: 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/20 text-emerald-400'
+  const colorTokens = {
+    amber: { accent: 'var(--g-warning)', bg: 'var(--g-warning-light)', text: 'var(--g-warning-text)' },
+    rose: { accent: 'var(--g-danger)', bg: 'var(--g-danger-light)', text: 'var(--g-danger-text)' },
+    orange: { accent: '#ea580c', bg: 'var(--g-warning-light)', text: 'var(--g-warning-text)' },
+    emerald: { accent: 'var(--g-success)', bg: 'var(--g-success-light)', text: 'var(--g-success-text)' }
   };
 
+  const ct = colorTokens[color];
+
   return (
-    <div className={`p-4 rounded-2xl bg-gradient-to-br border ${colorMap[color]}`}>
-      <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70 mb-1">{title}</p>
-      <p className="text-2xl font-black">{value}</p>
-      <p className="text-[10px] opacity-50">{subtitle}</p>
+    <div className={`g-stat-card g-stat-card--${color}`} style={{ color: ct.text }}>
+      <p className="g-text-meta" style={{ marginBottom: '4px', opacity: 0.8, color: ct.text }}>{title}</p>
+      <p className="g-num" style={{ fontSize: '24px', fontWeight: 900 }}>{value}</p>
+      <p className="g-text-small" style={{ opacity: 0.6, color: ct.text }}>{subtitle}</p>
     </div>
   );
 };
