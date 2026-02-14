@@ -59,6 +59,7 @@ interface SanliurfaLeafletMapProps {
   selectedMarkerId?: string | null;
   onMapClick?: (lat: number, lng: number) => void;
   onMarkerClick?: (marker: InstitutionMarker) => void;
+  mapExpanded?: boolean;
 }
 
 // İl sınırları dışını karartmak için inverse mask oluştur
@@ -130,6 +131,7 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
   selectedMarkerId,
   onMapClick,
   onMarkerClick,
+  mapExpanded,
 }) => {
   const geojsonRef = useRef<LeafletGeoJSON | null>(null);
   const zoomRef = useRef<number>(9);
@@ -308,6 +310,7 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
       <MapResizeHandler
         isPanelOpen={isPanelOpen}
         selectedCenter={selectedCenter}
+        mapExpanded={mapExpanded}
       />
     </MapContainer>
   );
