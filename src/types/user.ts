@@ -17,6 +17,11 @@ export interface UserPermissions {
     presentation: boolean;
     emergencyService: boolean;
     activeDemand: boolean;
+    etikKurul: boolean;
+    hekimIslemListesi: boolean;
+    ekListeTanimlama: boolean;
+    sutMevzuati: boolean;
+    gil: boolean;
   };
 
   // Hangi modüllere veri yükleyebilir
@@ -56,6 +61,11 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
     presentation: true,
     emergencyService: true,
     activeDemand: true,
+    etikKurul: true,
+    hekimIslemListesi: true,
+    ekListeTanimlama: true,
+    sutMevzuati: true,
+    gil: true,
   },
   canUpload: {
     detailedSchedule: false,
