@@ -76,7 +76,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ onBack }) => {
         {onBack && (
           <button
             onClick={onBack}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-slate-400 hover:text-white"
+            className="p-2 rounded-lg hover:opacity-80 transition-colors"
+            style={{ color: 'var(--text-3)' }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -84,8 +85,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ onBack }) => {
           </button>
         )}
         <div>
-          <h1 className="text-xl font-bold text-white">PDF Yükle ve Oku</h1>
-          <p className="text-sm text-slate-400">PDF dosyasını yükleyin, metin içeriği otomatik olarak çıkarılacaktır</p>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)' }}>PDF Yükle ve Oku</h1>
+          <p className="text-sm" style={{ color: 'var(--text-3)' }}>PDF dosyasını yükleyin, metin içeriği otomatik olarak çıkarılacaktır</p>
         </div>
       </div>
 
@@ -93,14 +94,15 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ onBack }) => {
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        className="border-2 border-dashed border-slate-600 hover:border-blue-500 rounded-xl p-8 text-center transition-colors cursor-pointer mb-6"
+        className="border-2 border-dashed hover:border-blue-500 rounded-xl p-8 text-center transition-colors cursor-pointer mb-6"
+        style={{ borderColor: 'var(--border-2)' }}
         onClick={() => document.getElementById('pdf-file-input')?.click()}
       >
-        <svg className="w-12 h-12 mx-auto mb-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
-        <p className="text-white font-medium mb-1">PDF dosyasını sürükleyin veya tıklayın</p>
-        <p className="text-xs text-slate-500">Sadece .pdf dosyaları kabul edilir</p>
+        <p className="font-medium mb-1" style={{ color: 'var(--text-1)' }}>PDF dosyasını sürükleyin veya tıklayın</p>
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Sadece .pdf dosyaları kabul edilir</p>
         <input
           id="pdf-file-input"
           type="file"
@@ -130,17 +132,18 @@ const PdfViewer: React.FC<PdfViewerProps> = ({ onBack }) => {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <span className="text-white font-medium">{fileName}</span>
-              <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">{pageCount} sayfa</span>
+              <span className="font-medium" style={{ color: 'var(--text-1)' }}>{fileName}</span>
+              <span className="text-xs px-2 py-1 rounded" style={{ color: 'var(--text-muted)', background: 'var(--surface-3)' }}>{pageCount} sayfa</span>
             </div>
             <button
               onClick={() => navigator.clipboard.writeText(pdfText)}
-              className="text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
+              style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }}
             >
               Metni Kopyala
             </button>
           </div>
-          <pre className="bg-[#0a0f1a] border border-slate-700 rounded-xl p-4 text-xs text-slate-300 overflow-auto max-h-[70vh] whitespace-pre-wrap leading-relaxed font-mono">
+          <pre className="border rounded-xl p-4 text-xs overflow-auto max-h-[70vh] whitespace-pre-wrap leading-relaxed font-mono" style={{ background: 'var(--bg-app)', borderColor: 'var(--border-2)', color: 'var(--text-2)' }}>
             {pdfText}
           </pre>
         </div>

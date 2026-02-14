@@ -831,29 +831,30 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-emerald-400">Yeşil Alan Oranları</h1>
-          <p className="text-slate-400 mt-1">Acil servise başvuran hastaların yeşil alan oranları</p>
+          <p style={{ color: 'var(--text-3)' }} className="mt-1">Acil servise başvuran hastaların yeşil alan oranları</p>
         </div>
       </div>
 
       {/* Veri Yükleme Bölümü - Sadece yükleme izni varsa göster */}
       {canUpload && (
-        <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Veri Yükleme</h3>
+        <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6">
+          <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold mb-4">Veri Yükleme</h3>
           <div className="flex flex-wrap gap-4 items-end">
             {/* Yükleme için Tarih Picker */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-400">Yükleme Tarihi</label>
+              <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Yükleme Tarihi</label>
               <input
                 type="date"
                 value={uploadDate}
                 onChange={(e) => setUploadDate(e.target.value)}
-                className="px-4 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
+                className="px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
               />
             </div>
 
             {/* Upload Button */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-slate-400">Excel Dosyası</label>
+              <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Excel Dosyası</label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -887,8 +888,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           </div>
 
           {/* Excel format info */}
-          <div className="mt-4 p-4 bg-slate-700/30 rounded-xl">
-            <p className="text-xs text-slate-400">
+          <div style={{ background: 'var(--surface-3)' }} className="mt-4 p-4 rounded-xl">
+            <p style={{ color: 'var(--text-3)' }} className="text-xs">
               <span className="font-semibold">Excel Formatı:</span> Kurum Adı | Yeşil Alan Muayene Sayısı | Toplam Muayene Sayısı
             </p>
           </div>
@@ -896,9 +897,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       )}
 
       {/* Filtreler */}
-      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6">
+      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-white">Veri Filtreleme</h3>
+          <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold">Veri Filtreleme</h3>
           <div className="flex items-center gap-3">
             {getMatchingDates().length > 0 && (
               <span className="text-sm text-emerald-400 font-medium bg-emerald-500/20 px-3 py-1 rounded-full">
@@ -913,7 +914,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   setActiveMonth(null);
                   setDateRange({ start: null, end: null });
                 }}
-                className="text-sm text-slate-400 hover:text-slate-200 font-medium flex items-center gap-1"
+                style={{ color: 'var(--text-3)' }}
+                className="text-sm hover:opacity-70 font-medium flex items-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -967,11 +969,12 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           {/* Aktif Ay Seçimi (birden fazla ay seçiliyse göster) */}
           {selectedMonths.length > 1 && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-slate-400">Takvim Ayı</label>
+              <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Takvim Ayı</label>
               <select
                 value={activeMonth || ''}
                 onChange={(e) => handleActiveMonthChange([Number(e.target.value)])}
-                className="px-3 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
+                style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
+                className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
               >
                 {selectedMonths.map(month => (
                   <option key={month} value={month}>{MONTH_NAMES[month]}</option>
@@ -1032,15 +1035,15 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       {/* No Data Message */}
       {!data && (
-        <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-12">
+        <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-12">
           <div className="flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
               <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Veri Yüklenmedi</h2>
-            <p className="text-slate-400 max-w-md">
+            <h2 style={{ color: 'var(--text-1)' }} className="text-xl font-semibold mb-2">Veri Yüklenmedi</h2>
+            <p style={{ color: 'var(--text-3)' }} className="max-w-md">
               Yukarıdan tarih seçip "Uygula" butonuna tıklayarak mevcut veriyi yükleyebilir
               veya yeni bir Excel dosyası yükleyebilirsiniz.
             </p>
@@ -1055,7 +1058,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           <div className="flex justify-end gap-2">
             <button
               onClick={handleDownloadPng}
-              className="px-4 py-2.5 bg-slate-700/50 text-slate-200 border border-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-700 transition-all flex items-center gap-2"
+              style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)', color: 'var(--text-2)' }}
+              className="px-4 py-2.5 border rounded-xl font-semibold text-sm hover:opacity-80 transition-all flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1073,9 +1077,9 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </button>
           </div>
 
-          <div ref={cardsContainerRef} className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/60 shadow-lg">
+          <div ref={cardsContainerRef} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="p-8 rounded-2xl border shadow-lg">
             {/* Header for PNG */}
-            <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-700/60">
+            <div style={{ borderColor: 'var(--border-2)' }} className="flex items-center justify-between mb-8 pb-4 border-b">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
                   <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1083,12 +1087,12 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Acil Servis Yeşil Alan Oranları</h2>
-                  <p className="text-slate-400">Şanlıurfa İl Sağlık Müdürlüğü</p>
+                  <h2 style={{ color: 'var(--text-1)' }} className="text-2xl font-bold">Acil Servis Yeşil Alan Oranları</h2>
+                  <p style={{ color: 'var(--text-3)' }}>Şanlıurfa İl Sağlık Müdürlüğü</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-white">{getDateRangeDisplay()}</p>
+                <p style={{ color: 'var(--text-1)' }} className="text-xl font-bold">{getDateRangeDisplay()}</p>
               </div>
             </div>
 
@@ -1137,14 +1141,14 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </div>
 
             {/* Footer with formula */}
-            <div className="mt-8 pt-4 border-t border-slate-700/60">
-              <div className="bg-slate-700/30 rounded-xl p-4 text-center">
-                <p className="text-sm text-slate-400 font-medium">
+            <div style={{ borderColor: 'var(--border-2)' }} className="mt-8 pt-4 border-t">
+              <div style={{ background: 'var(--surface-3)' }} className="rounded-xl p-4 text-center">
+                <p style={{ color: 'var(--text-3)' }} className="text-sm font-medium">
                   Yeşil Alan Oranı Hesaplama Formülü: <span className="text-emerald-400">Yeşil Alan Hasta Sayısı / Acil Servise Başvuran Toplam Hasta Sayısı X 100</span>
                 </p>
                 {ilGeneli && hasAllHospitalsAccess && (
-                  <p className="text-sm text-slate-500 mt-2">
-                    Yeşil Alan Oranı Hesaplama Formülü: <span className="font-semibold text-white">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
+                  <p style={{ color: 'var(--text-muted)' }} className="text-sm mt-2">
+                    Yeşil Alan Oranı Hesaplama Formülü: <span style={{ color: 'var(--text-1)' }} className="font-semibold">{ilGeneli.greenAreaCount.toLocaleString('tr-TR')} / {ilGeneli.totalCount.toLocaleString('tr-TR')} x 100 = %{ilGeneli.greenAreaRate.toFixed(1)}</span>
                   </p>
                 )}
               </div>
@@ -1155,19 +1159,19 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       )}
 
       {/* Bağımsız Günlük Oran Tablosu Bölümü */}
-      <div className="bg-slate-800/50 rounded-2xl shadow-sm border border-slate-700/60 p-6 mt-6">
+      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6 mt-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-white">
+            <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-bold">
               Günlük Yeşil Alan Oranları Tablosu
             </h3>
-            <p className="text-sm text-slate-400">
+            <p style={{ color: 'var(--text-3)' }} className="text-sm">
               (Ana filtreden bağımsız çalışır)
             </p>
           </div>
 
           {/* Tablo Filtreleri */}
-          <div className="flex flex-wrap items-end gap-4 p-4 bg-slate-700/30 rounded-xl">
+          <div style={{ background: 'var(--surface-3)' }} className="flex flex-wrap items-end gap-4 p-4 rounded-xl">
             {/* Hastane Seçimi - En başta */}
             {allowedHospitals.length > 0 && (
               <MultiSelectDropdown
@@ -1209,11 +1213,12 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             {/* Aktif Ay Seçimi */}
             {tableSelectedMonths.length > 1 && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-400">Takvim Ayı</label>
+                <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Takvim Ayı</label>
                 <select
                   value={tableActiveMonth || ''}
                   onChange={(e) => setTableActiveMonth(Number(e.target.value))}
-                  className="px-3 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
+                  style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
+                  className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
                 >
                   {tableSelectedMonths.map(month => (
                     <option key={month} value={month}>{MONTH_NAMES[month]}</option>
@@ -1285,7 +1290,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           </div>
         ) : (
           <div className="mt-4 p-8 text-center">
-            <div className="text-slate-400">
+            <div style={{ color: 'var(--text-3)' }}>
               Tablo için tarih aralığı seçin ve "Uygula" butonuna tıklayın
             </div>
           </div>
@@ -1333,36 +1338,36 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
   };
 
   return (
-    <div className={`bg-slate-700/40 rounded-2xl shadow-sm border border-slate-600/50 p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}`}>
+    <div style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }} className={`rounded-2xl shadow-sm border p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}`}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-500/20' : 'bg-slate-600/50'}`}>
-          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-emerald-500/20' : ''}`} style={!isIlGeneli ? { background: 'var(--surface-3)' } : undefined}>
+          <svg className={`w-5 h-5 ${isIlGeneli ? 'text-emerald-400' : ''}`} style={!isIlGeneli ? { color: 'var(--text-3)' } : undefined} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-400' : 'text-white'}`}>{shortName}</h3>
+        <h3 className={`font-bold ${isIlGeneli ? 'text-emerald-400' : ''}`} style={!isIlGeneli ? { color: 'var(--text-1)' } : undefined}>{shortName}</h3>
       </div>
 
       {/* Stats */}
       <div className="space-y-2 mb-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">Toplam Hasta</span>
-          <span className="font-bold text-white">{data.totalCount.toLocaleString('tr-TR')}</span>
+          <span style={{ color: 'var(--text-3)' }} className="text-sm">Toplam Hasta</span>
+          <span style={{ color: 'var(--text-1)' }} className="font-bold">{data.totalCount.toLocaleString('tr-TR')}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">Yeşil Alan</span>
-          <span className="font-bold text-white">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
+          <span style={{ color: 'var(--text-3)' }} className="text-sm">Yeşil Alan</span>
+          <span style={{ color: 'var(--text-1)' }} className="font-bold">{data.greenAreaCount.toLocaleString('tr-TR')}</span>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-slate-400">Yeşil Alan Oranı</span>
+          <span style={{ color: 'var(--text-3)' }} className="text-sm">Yeşil Alan Oranı</span>
           <span className={`font-bold text-lg ${textColor}`}>%{data.greenAreaRate.toFixed(1)}</span>
         </div>
-        <div className="h-2 bg-slate-600/50 rounded-full overflow-hidden">
+        <div style={{ background: 'var(--surface-3)' }} className="h-2 rounded-full overflow-hidden">
           <div
             className={`h-full ${progressColor} rounded-full transition-all duration-500`}
             style={{ width: `${Math.min(data.greenAreaRate, 100)}%` }}
@@ -1372,10 +1377,11 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
 
       {/* Günlük Detay Accordion */}
       {dailyDetails.length > 1 && (
-        <div className="mt-4 pt-4 border-t border-slate-600/50">
+        <div style={{ borderColor: 'var(--border-2)' }} className="mt-4 pt-4 border-t">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-slate-200 transition-colors"
+            style={{ color: 'var(--text-3)' }}
+            className="w-full flex items-center justify-between text-sm hover:opacity-70 transition-colors"
           >
             <span className="font-medium flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1397,23 +1403,23 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
             <div className="mt-3 -mx-2 overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-slate-600/30">
-                    <th className="sticky left-0 bg-slate-600/30 px-2 py-1.5 text-left font-semibold text-slate-300 whitespace-nowrap">Tarih</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Yeşil Alan</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Toplam</th>
-                    <th className="px-2 py-1.5 text-right font-semibold text-slate-300 whitespace-nowrap">Oran</th>
+                  <tr style={{ background: 'var(--surface-3)' }}>
+                    <th style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }} className="sticky left-0 px-2 py-1.5 text-left font-semibold whitespace-nowrap">Tarih</th>
+                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Yeşil Alan</th>
+                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Toplam</th>
+                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Oran</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedDetails.map((detail, idx) => (
-                    <tr key={detail.date} className={idx % 2 === 0 ? 'bg-slate-700/30' : 'bg-slate-700/10'}>
-                      <td className="sticky left-0 bg-inherit px-2 py-1.5 font-medium text-slate-300 whitespace-nowrap">
+                    <tr key={detail.date} style={{ background: idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'transparent' }}>
+                      <td style={{ color: 'var(--text-2)' }} className="sticky left-0 bg-inherit px-2 py-1.5 font-medium whitespace-nowrap">
                         {formatDate(detail.date)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
+                      <td style={{ color: 'var(--text-3)' }} className="px-2 py-1.5 text-right whitespace-nowrap">
                         {detail.greenAreaCount.toLocaleString('tr-TR')}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-slate-400 whitespace-nowrap">
+                      <td style={{ color: 'var(--text-3)' }} className="px-2 py-1.5 text-right whitespace-nowrap">
                         {detail.totalCount.toLocaleString('tr-TR')}
                       </td>
                       <td className="px-2 py-1.5 text-right whitespace-nowrap">

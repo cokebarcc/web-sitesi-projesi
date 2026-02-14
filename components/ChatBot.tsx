@@ -168,7 +168,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
 
   return (
     <div className="max-w-5xl mx-auto h-[calc(100vh-250px)] flex flex-col animate-in fade-in duration-700">
-      <div className="bg-white p-8 rounded-t-[48px] border-x border-t border-slate-100 shadow-sm flex items-center justify-between">
+      <div className="bg-white p-8 rounded-t-[48px] border-x border-t shadow-sm flex items-center justify-between" style={{ borderColor: 'var(--border-2)' }}>
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,8 +176,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">AI Danışman Paneli</h2>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Organizasyon ve Performans Analizi</p>
+            <h2 className="text-xl font-black tracking-tight" style={{ color: 'var(--text-1)' }}>AI Danışman Paneli</h2>
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Organizasyon ve Performans Analizi</p>
           </div>
         </div>
         <div className="hidden md:flex items-center gap-4">
@@ -186,8 +186,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
               hasApiKey
                 ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                : ''
             }`}
+            style={!hasApiKey ? { background: 'var(--surface-3)', color: 'var(--text-3)' } : undefined}
             title="Ses Ayarları"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,8 +199,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
             </span>
           </button>
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${appointmentData.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <div className={`w-2 h-2 rounded-full ${appointmentData.length > 0 ? 'bg-emerald-500 animate-pulse' : ''}`} style={appointmentData.length === 0 ? { background: 'var(--border-2)' } : undefined}></div>
+            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>
               {appointmentData.length > 0 ? `${appointmentData.length} Kayıt Bağlı` : 'Veri Yok'}
             </span>
           </div>
@@ -208,7 +209,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
 
       <div
         ref={scrollRef}
-        className="flex-1 bg-white border-x border-slate-100 overflow-y-auto p-8 custom-scrollbar space-y-6"
+        className="flex-1 bg-white border-x overflow-y-auto p-8 custom-scrollbar space-y-6"
+        style={{ borderColor: 'var(--border-2)' }}
       >
         {messages.map((msg, idx) => (
           <div
@@ -216,15 +218,18 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}
           >
             <div className={`max-w-[80%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`p-6 rounded-[32px] shadow-sm text-sm leading-relaxed ${
-                msg.role === 'user'
-                ? 'bg-indigo-600 text-white rounded-br-none shadow-indigo-100'
-                : 'bg-slate-50 text-slate-700 rounded-bl-none border border-slate-100'
-              }`}>
+              <div
+                className={`p-6 rounded-[32px] shadow-sm text-sm leading-relaxed ${
+                  msg.role === 'user'
+                  ? 'bg-indigo-600 text-white rounded-br-none shadow-indigo-100'
+                  : 'rounded-bl-none border'
+                }`}
+                style={msg.role !== 'user' ? { background: 'var(--surface-3)', color: 'var(--text-2)', borderColor: 'var(--border-2)' } : undefined}
+              >
                 {msg.text}
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                <span className="text-[9px] font-bold uppercase tracking-tighter" style={{ color: 'var(--text-3)' }}>
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
                 {msg.role === 'model' && (
@@ -233,8 +238,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
                     className={`p-1.5 rounded-lg transition-all ${
                       isSpeaking && speakingMessageIndex === idx
                         ? 'bg-indigo-100 text-indigo-600'
-                        : 'hover:bg-slate-100 text-slate-400 hover:text-slate-600'
+                        : ''
                     }`}
+                    style={!(isSpeaking && speakingMessageIndex === idx) ? { color: 'var(--text-3)' } : undefined}
                     title={isSpeaking && speakingMessageIndex === idx ? 'Durdur' : 'Seslendir'}
                   >
                     {isSpeaking && speakingMessageIndex === idx ? (
@@ -255,22 +261,23 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
         ))}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-slate-50 p-6 rounded-[32px] rounded-bl-none border border-slate-100">
+            <div className="p-6 rounded-[32px] rounded-bl-none border" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
               <div className="flex gap-1.5">
-                <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce delay-100"></div>
-                <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce delay-200"></div>
+                <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: 'var(--border-2)' }}></div>
+                <div className="w-2 h-2 rounded-full animate-bounce delay-100" style={{ background: 'var(--border-2)' }}></div>
+                <div className="w-2 h-2 rounded-full animate-bounce delay-200" style={{ background: 'var(--border-2)' }}></div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      <div className="bg-white p-8 rounded-b-[48px] border-x border-b border-slate-100 shadow-xl">
+      <div className="bg-white p-8 rounded-b-[48px] border-x border-b shadow-xl" style={{ borderColor: 'var(--border-2)' }}>
         <form onSubmit={handleSend} className="relative flex items-center gap-4">
           <input
             type="text"
-            className="flex-1 bg-slate-50 border border-slate-100 rounded-[28px] px-8 py-5 text-sm font-medium focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400"
+            className="flex-1 border rounded-[28px] px-8 py-5 text-sm font-medium focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
+            style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)', color: 'var(--text-1)' }}
             placeholder="Örn: 'Üroloji branşında hangi hekimler var?' veya 'En verimli cerrah kim?'"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -285,7 +292,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
             </svg>
           </button>
         </form>
-        <p className="text-[10px] text-center text-slate-300 mt-4 font-bold uppercase tracking-[0.2em]">Yapay zeka tüm yanıtlarını cetvellerdeki gerçek verilere dayandırır.</p>
+        <p className="text-[10px] text-center mt-4 font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-2)' }}>Yapay zeka tüm yanıtlarını cetvellerdeki gerçek verilere dayandırır.</p>
       </div>
 
       {/* API Key Modal */}
@@ -299,25 +306,26 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-900">Doğal Ses Ayarları</h3>
-                <p className="text-sm text-slate-500">ElevenLabs API anahtarı gerekli</p>
+                <h3 className="text-xl font-black" style={{ color: 'var(--text-1)' }}>Doğal Ses Ayarları</h3>
+                <p className="text-sm" style={{ color: 'var(--text-3)' }}>ElevenLabs API anahtarı gerekli</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">API Anahtarı</label>
+                <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>API Anahtarı</label>
                 <input
                   type="password"
                   value={apiKeyInput}
                   onChange={(e) => setApiKeyInput(e.target.value)}
                   placeholder="sk_..."
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition-all"
+                  style={{ borderColor: 'var(--border-2)' }}
                 />
               </div>
 
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-xs text-slate-600 leading-relaxed">
+              <div className="rounded-xl p-4" style={{ background: 'var(--surface-3)' }}>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-2)' }}>
                   <strong>ElevenLabs</strong> ücretsiz hesap ile aylık 10.000 karakter seslendirme hakkı sunar.
                   <a
                     href="https://elevenlabs.io"
@@ -331,11 +339,12 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">Ses Seçimi</label>
+                <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: 'var(--text-2)' }}>Ses Seçimi</label>
                 <select
                   value={selectedVoice}
                   onChange={(e) => setSelectedVoice(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition-all bg-white"
+                  className="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition-all bg-white"
+                  style={{ borderColor: 'var(--border-2)' }}
                 >
                   <option value={TURKISH_VOICES.ARIA}>Aria (Multilingual Kadın - Önerilen)</option>
                   <option value={TURKISH_VOICES.ROGER}>Roger (Multilingual Erkek)</option>
@@ -351,7 +360,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ appointmentData, hbysData }) => {
                   setShowApiKeyModal(false);
                   setApiKeyInput('');
                 }}
-                className="flex-1 px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
+                className="flex-1 px-6 py-3 rounded-xl border font-bold transition-all"
+                style={{ borderColor: 'var(--border-2)', color: 'var(--text-2)' }}
               >
                 İptal
               </button>

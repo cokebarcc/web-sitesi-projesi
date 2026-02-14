@@ -164,8 +164,8 @@ const GilModule: React.FC = () => {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">GİL</h1>
-              <p className="text-sm text-slate-400">Veriler yükleniyor...</p>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>GİL</h1>
+              <p className="text-sm" style={{ color: 'var(--text-3)' }}>Veriler yükleniyor...</p>
             </div>
           </div>
         </div>
@@ -187,8 +187,8 @@ const GilModule: React.FC = () => {
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">GİL</h1>
-            <p className="text-sm text-slate-400">Genel Tıbbi İşlemler Listesi</p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>GİL</h1>
+            <p className="text-sm" style={{ color: 'var(--text-3)' }}>Genel Tıbbi İşlemler Listesi</p>
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ const GilModule: React.FC = () => {
       {/* Yükleme veya Tablo */}
       {!data ? (
         <div className="space-y-4">
-          <label className={`bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-12 cursor-pointer hover:border-lime-500/50 hover:bg-slate-800/60 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+          <label className={`backdrop-blur-xl rounded-2xl p-12 cursor-pointer hover:border-lime-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
             <div className="w-16 h-16 bg-lime-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
               {loading ? (
                 <div className="w-8 h-8 border-2 border-lime-400/30 border-t-lime-400 rounded-full animate-spin"></div>
@@ -206,10 +206,10 @@ const GilModule: React.FC = () => {
                 </svg>
               )}
             </div>
-            <h3 className="text-lg font-semibold text-white group-hover:text-lime-300 transition-colors mb-1">
+            <h3 className="text-lg font-semibold group-hover:text-lime-300 transition-colors mb-1" style={{ color: 'var(--text-1)' }}>
               {loading ? 'Dosya İşleniyor...' : 'GİL Excel Dosyasını Yükleyin'}
             </h3>
-            <p className="text-sm text-slate-400 text-center max-w-md">
+            <p className="text-sm text-center max-w-md" style={{ color: 'var(--text-3)' }}>
               .xlsx formatında Genel Tıbbi İşlemler Listesi dosyasını yükleyin.
             </p>
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
@@ -218,7 +218,7 @@ const GilModule: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {/* Üst Bar */}
-          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="backdrop-blur-xl rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-lime-500/10 rounded-lg flex items-center justify-center">
                 <svg className="w-4 h-4 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,15 +226,15 @@ const GilModule: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">GENEL TIBBİ İŞLEMLER LİSTESİ</h3>
-                <p className="text-xs text-slate-500">{data.fileName}</p>
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>GENEL TIBBİ İŞLEMLER LİSTESİ</h3>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{data.fileName}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <span className="bg-lime-500/10 text-lime-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-lime-500/20">
                 {data.rows.length} kayıt
               </span>
-              <label className="bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-700 transition-colors border border-slate-600/30">
+              <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors" style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}>
                 Değiştir
                 <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
               </label>
@@ -245,27 +245,27 @@ const GilModule: React.FC = () => {
           </div>
 
           {/* Tablo */}
-          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 overflow-hidden">
+          <div className="backdrop-blur-xl rounded-2xl overflow-hidden" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-slate-800 border-b border-slate-700/50">
-                    <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-700/30 w-12">#</th>
+                  <tr style={{ background: 'var(--surface-3)', borderBottom: '1px solid var(--border-2)' }}>
+                    <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>
                     {data.headers.map((header, i) => (
-                      <th key={i} className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider border-r border-slate-700/30 whitespace-nowrap">
+                      <th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>
                         {header}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/30">
+                <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
                   {data.rows.map((row, rowIdx) => {
                     const isHeaderRow = String(row[0] || '').trim() === '' && String(row[3] || '').trim() === '';
                     return (
-                      <tr key={rowIdx} className={isHeaderRow ? 'bg-slate-800/70' : 'hover:bg-slate-800/50 transition-colors'}>
-                        <td className="px-4 py-2.5 text-xs text-slate-500 font-mono border-r border-slate-700/20">{rowIdx + 1}</td>
+                      <tr key={rowIdx} className={isHeaderRow ? '' : 'transition-colors'} style={isHeaderRow ? { background: 'var(--surface-3)' } : {}} onMouseEnter={e => { if (!isHeaderRow) e.currentTarget.style.background = 'var(--surface-2)'; }} onMouseLeave={e => { if (!isHeaderRow) e.currentTarget.style.background = ''; }}>
+                        <td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{rowIdx + 1}</td>
                         {data.headers.map((_, colIdx) => (
-                          <td key={colIdx} className={`px-4 py-2.5 text-xs border-r border-slate-700/20 ${isHeaderRow ? 'text-lime-300 font-bold' : 'text-slate-300'}`}>
+                          <td key={colIdx} className={`px-4 py-2.5 text-xs ${isHeaderRow ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--border-2)', color: isHeaderRow ? 'var(--accent-lime)' : 'var(--text-2)' }}>
                             {row[colIdx] !== null && row[colIdx] !== undefined ? String(row[colIdx]) : ''}
                           </td>
                         ))}

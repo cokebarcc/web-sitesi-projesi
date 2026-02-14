@@ -148,7 +148,7 @@ const VariantPodium: React.FC<{
                   </div>
 
                   {/* Kurum Adı */}
-                  <p className={`${actualRank === 1 ? 'text-base' : 'text-sm'} font-bold text-white truncate mb-2`}>
+                  <p className={`${actualRank === 1 ? 'text-base' : 'text-sm'} font-bold text-[var(--text-1)] truncate mb-2`}>
                     {entry.institutionName}
                   </p>
 
@@ -167,8 +167,8 @@ const VariantPodium: React.FC<{
                     />
                   </div>
 
-                  <p className="text-xs text-slate-400">
-                    <span className="font-bold text-slate-300">{entry.totalGP}</span> / {maxGP}
+                  <p className="text-xs text-[var(--text-3)]">
+                    <span className="font-bold text-[var(--text-2)]">{entry.totalGP}</span> / {maxGP}
                   </p>
 
                 </div>
@@ -202,14 +202,14 @@ const VariantPodium: React.FC<{
               style={{ animationDelay: `${(index + 3) * 80}ms` }}
             >
               <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center">
-                <span className="text-base font-bold text-slate-400">{rank}</span>
+                <span className="text-base font-bold text-[var(--text-3)]">{rank}</span>
               </div>
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <span className={`text-base font-semibold truncate ${isCurrent ? 'text-indigo-200' : 'text-white'}`}>
+                <span className={`text-base font-semibold truncate ${isCurrent ? 'text-indigo-200' : 'text-[var(--text-1)]'}`}>
                   {entry.institutionName}
                 </span>
               </div>
-              <span className="text-base font-bold text-white hidden sm:inline">{entry.totalGP}<span className="text-sm text-slate-500"> / {maxGP}</span></span>
+              <span className="text-base font-bold text-[var(--text-1)] hidden sm:inline">{entry.totalGP}<span className="text-sm text-[var(--text-muted)]"> / {maxGP}</span></span>
               <div className="w-36 sm:w-44 flex items-center gap-3">
                 <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full bg-gradient-to-r ${color.gradient} rank-bar-grow`}
@@ -224,10 +224,10 @@ const VariantPodium: React.FC<{
         {noData.map(entry => (
           <div key={entry.institutionId} className="flex items-center gap-4 px-5 py-2.5 rounded-2xl opacity-40">
             <div className="w-9 h-9 rounded-xl bg-white/[0.02] flex items-center justify-center">
-              <span className="text-base text-slate-600">-</span>
+              <span className="text-base text-[var(--text-muted)]">-</span>
             </div>
-            <span className="flex-1 text-base text-slate-600">{entry.institutionName}</span>
-            <span className="text-sm text-slate-600 italic">Veri yok</span>
+            <span className="flex-1 text-base text-[var(--text-muted)]">{entry.institutionName}</span>
+            <span className="text-sm text-[var(--text-muted)] italic">Veri yok</span>
           </div>
         ))}
       </div>
@@ -580,7 +580,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-slate-900/80 via-indigo-950/40 to-slate-900/80 backdrop-blur-xl rounded-3xl border border-indigo-500/20 p-8 mb-6">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-8 mb-6">
         <div className="flex items-center justify-center gap-3 py-8">
           <div className="animate-spin w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full" />
           <span className="text-base text-indigo-300 font-medium">Kurum sıralaması yükleniyor...</span>
@@ -594,7 +594,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
   return (
     <>
       <AnimationStyles />
-      <div className="bg-gradient-to-br from-slate-900/80 via-indigo-950/40 to-slate-900/80 backdrop-blur-xl rounded-3xl border border-indigo-500/20 mb-6 overflow-hidden">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] mb-6 overflow-hidden">
         {/* Baslik */}
         <div className="px-8 py-5 flex items-center justify-between">
           <button
@@ -607,7 +607,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
               </svg>
             </div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-white tracking-tight">{moduleLabel} Başarı Sıralaması</h3>
+              <h3 className="text-lg font-bold text-[var(--text-1)] tracking-tight">{moduleLabel} Başarı Sıralaması</h3>
               <p className="text-sm text-indigo-300/70 mt-0.5">
                 {MONTHS[month - 1]} {year} &middot; {moduleLabel} &middot; {hospitalsWithData}/{rankings.length} kurum
               </p>
@@ -620,11 +620,11 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
               <button
                 onClick={handleExportPng}
                 disabled={isExporting}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-sm text-slate-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-sm text-[var(--text-2)] hover:text-[var(--text-1)] disabled:opacity-50 disabled:cursor-not-allowed"
                 title="PNG olarak indir"
               >
                 {isExporting ? (
-                  <div className="animate-spin w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full" />
+                  <div className="animate-spin w-4 h-4 border-2 border-[var(--text-3)] border-t-transparent rounded-full" />
                 ) : (
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -638,7 +638,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
               onClick={() => setIsCollapsed(!isCollapsed)}
               className={`w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`}
             >
-              <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-[var(--text-3)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -650,10 +650,10 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
           <div className="px-8 pb-8">
             {hospitalsWithData === 0 ? (
               <div className="text-center py-12">
-                <svg className="w-16 h-16 text-slate-700 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <p className="text-lg text-slate-500 font-medium">Bu dönem için henüz kurum verisi yüklenmemiş.</p>
+                <p className="text-lg text-[var(--text-muted)] font-medium">Bu dönem için henüz kurum verisi yüklenmemiş.</p>
               </div>
             ) : (
               <VariantPodium withData={withData} noData={noData} maxGP={maxGP} currentInstitutionId={currentInstitutionId} />

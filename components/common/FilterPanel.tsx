@@ -52,18 +52,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   showYearFilter = false
 }) => {
   return (
-    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 mb-6">
+    <div className="p-6 rounded-[32px] shadow-sm mb-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
       <div className="flex flex-wrap gap-4 items-end">
         {/* Hastane Dropdown */}
         {showHospitalFilter && (
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            <label className="text-[10px] font-black text-[var(--text-3)] uppercase tracking-[0.2em]">
               HASTANE
             </label>
             <select
               value={selectedHospital}
               onChange={(e) => onHospitalChange(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black min-w-[240px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              className="rounded-2xl px-6 py-4 text-sm font-black min-w-[240px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
             >
               {allowedHospitals.map(h => (
                 <option key={h} value={h}>{h}</option>
@@ -75,14 +76,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Branş Dropdown */}
         {showBranchFilter && onBranchChange && (
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            <label className="text-[10px] font-black text-[var(--text-3)] uppercase tracking-[0.2em]">
               BRANŞ
             </label>
             <div className="flex gap-2">
               <select
                 value={selectedBranch || ''}
                 onChange={(e) => onBranchChange(e.target.value || null)}
-                className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black min-w-[200px] outline-none focus:ring-2 ring-blue-500 transition-all"
+                className="rounded-2xl px-6 py-4 text-sm font-black min-w-[200px] outline-none focus:ring-2 ring-blue-500 transition-all"
+                style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
               >
                 <option value="">Tüm Branşlar</option>
                 {branchOptions.map(b => (
@@ -107,13 +109,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Ay Dropdown */}
         {showMonthFilter && selectedMonth !== undefined && onMonthChange && (
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            <label className="text-[10px] font-black text-[var(--text-3)] uppercase tracking-[0.2em]">
               AY
             </label>
             <select
               value={selectedMonth}
               onChange={(e) => onMonthChange(e.target.value)}
-              className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black min-w-[140px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              className="rounded-2xl px-6 py-4 text-sm font-black min-w-[140px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
             >
               {MONTHS.map(m => (
                 <option key={m} value={m}>{m}</option>
@@ -125,13 +128,14 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         {/* Yıl Dropdown */}
         {showYearFilter && selectedYear !== undefined && onYearChange && (
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            <label className="text-[10px] font-black text-[var(--text-3)] uppercase tracking-[0.2em]">
               YIL
             </label>
             <select
               value={selectedYear}
               onChange={(e) => onYearChange(Number(e.target.value))}
-              className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 text-sm font-black min-w-[120px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              className="rounded-2xl px-6 py-4 text-sm font-black min-w-[120px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
             >
               {YEARS.map(y => (
                 <option key={y} value={y}>{y}</option>

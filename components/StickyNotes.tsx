@@ -14,7 +14,6 @@ interface StickyNotesProps {
   isOpen: boolean;
   onClose: () => void;
   userEmail: string;
-  theme?: 'dark' | 'light';
 }
 
 const NOTE_COLORS = [
@@ -29,13 +28,12 @@ const getColorClasses = (color: string) => {
   return NOTE_COLORS.find(c => c.value === color) || NOTE_COLORS[0];
 };
 
-const StickyNotes: React.FC<StickyNotesProps> = ({ isOpen, onClose, userEmail, theme = 'dark' }) => {
+const StickyNotes: React.FC<StickyNotesProps> = ({ isOpen, onClose, userEmail }) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
   const [selectedColor, setSelectedColor] = useState('amber');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
-  const isDark = theme === 'dark';
 
   // Load notes from Firestore
   useEffect(() => {
@@ -135,35 +133,29 @@ const StickyNotes: React.FC<StickyNotesProps> = ({ isOpen, onClose, userEmail, t
   return (
     <div className="fixed bottom-6 right-6 z-[400] w-80 max-h-[520px] flex flex-col animate-in slide-in-from-bottom-4">
       {/* Panel */}
-      <div className={`rounded-2xl overflow-hidden flex flex-col max-h-[520px] ${
-        isDark
-          ? 'bg-[#131d33]/95 border border-[#2d4163]/40 shadow-2xl shadow-black/30'
-          : 'bg-white/95 border border-slate-200/60 shadow-2xl shadow-black/10'
-      } backdrop-blur-xl`}>
+      <div
+        className="rounded-2xl overflow-hidden flex flex-col max-h-[520px] border shadow-2xl backdrop-blur-xl"
+        style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}
+      >
 
         {/* Header */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b ${
-          isDark ? 'border-[#2d4163]/30' : 'border-slate-200/60'
-        }`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-2)' }}>
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
               <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
               <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
             </svg>
-            <h3 className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <h3 className="font-semibold text-sm" style={{ color: 'var(--text-1)' }}>
               Hızlı Notlar
             </h3>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-              isDark ? 'bg-slate-700/50 text-slate-400' : 'bg-slate-100 text-slate-500'
-            }`}>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>
               {notes.length}
             </span>
           </div>
           <button
             onClick={onClose}
-            className={`p-1 rounded-lg transition-colors ${
-              isDark ? 'hover:bg-slate-700/50 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
-            }`}
+            className="p-1 rounded-lg transition-colors hover:opacity-80"
+            style={{ color: 'var(--text-3)' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -172,7 +164,7 @@ const StickyNotes: React.FC<StickyNotesProps> = ({ isOpen, onClose, userEmail, t
         </div>
 
         {/* New Note Input */}
-        <div className={`px-4 py-3 border-b ${isDark ? 'border-[#2d4163]/20' : 'border-slate-100'}`}>
+        <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-1)' }}>
           <div className="flex gap-2 mb-2">
             <textarea
               value={newNoteText}
@@ -185,11 +177,8 @@ const StickyNotes: React.FC<StickyNotesProps> = ({ isOpen, onClose, userEmail, t
               }}
               placeholder="Not ekle... (Enter ile kaydet)"
               rows={2}
-              className={`flex-1 text-sm rounded-xl px-3 py-2 outline-none resize-none transition-colors ${
-                isDark
-                  ? 'bg-[#0f1729]/60 text-white placeholder-[#556a85] border border-[#2d4163]/30 focus:border-[#5b9cff]/40'
-                  : 'bg-slate-50 text-slate-800 placeholder-slate-400 border border-slate-200 focus:border-blue-300'
-              }`}
+              className="flex-1 text-sm rounded-xl px-3 py-2 outline-none resize-none transition-colors border focus:border-blue-400/40"
+              style={{ background: 'var(--bg-app)', color: 'var(--text-1)', borderColor: 'var(--border-2)' }}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -201,9 +190,10 @@ const StickyNotes: React.FC<StickyNotesProps> = ({ isOpen, onClose, userEmail, t
                   onClick={() => setSelectedColor(color.value)}
                   className={`w-5 h-5 rounded-full ${color.bg} border-2 transition-all ${
                     selectedColor === color.value
-                      ? `${color.border} scale-110 ring-2 ring-offset-1 ${isDark ? 'ring-offset-[#131d33]' : 'ring-offset-white'} ring-${color.value === 'amber' ? 'amber' : color.value === 'blue' ? 'blue' : color.value === 'green' ? 'emerald' : color.value === 'purple' ? 'purple' : 'pink'}-300`
+                      ? `${color.border} scale-110 ring-2 ring-offset-1 ring-${color.value === 'amber' ? 'amber' : color.value === 'blue' ? 'blue' : color.value === 'green' ? 'emerald' : color.value === 'purple' ? 'purple' : 'pink'}-300`
                       : 'border-transparent hover:scale-105'
                   }`}
+                  style={selectedColor === color.value ? { '--tw-ring-offset-color': 'var(--surface-1)' } as React.CSSProperties : undefined}
                   title={color.name}
                 />
               ))}
@@ -221,7 +211,7 @@ const StickyNotes: React.FC<StickyNotesProps> = ({ isOpen, onClose, userEmail, t
         {/* Notes List */}
         <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar" style={{ maxHeight: '320px' }}>
           {notes.length === 0 ? (
-            <div className={`text-center py-8 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
               <svg className="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>

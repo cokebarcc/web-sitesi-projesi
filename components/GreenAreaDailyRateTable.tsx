@@ -243,7 +243,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
 
   // Renk hesapla (oran bazlı) - site: sadece metin rengi, arka plan yok
   const getRateColor = (rate: number | null): string => {
-    if (rate === null) return 'text-slate-500';
+    if (rate === null) return 'text-[var(--text-muted)]';
     if (rate >= 65) return 'text-emerald-400';
     if (rate >= 60) return 'text-yellow-400';
     return 'text-red-400';
@@ -506,8 +506,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
 
   if (sortedDates.length === 0 || hospitalRows.length === 0) {
     return (
-      <div className="bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700/60 p-8 text-center">
-        <div className="text-slate-400 text-sm">
+      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-lg border p-8 text-center">
+        <div style={{ color: 'var(--text-3)' }} className="text-sm">
           Günlük tablo için tarih aralığı seçin
         </div>
       </div>
@@ -542,8 +542,9 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors border ${
                   localSelectedHospitals.length > 0
                     ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30 hover:bg-emerald-500/25'
-                    : 'text-slate-300 bg-slate-700/50 border-slate-600 hover:bg-slate-700/70'
+                    : ''
                 }`}
+                style={localSelectedHospitals.length === 0 ? { color: 'var(--text-2)', background: 'var(--surface-3)', borderColor: 'var(--border-2)' } : undefined}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -591,7 +592,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                           type="checkbox"
                           checked={localSelectedHospitals.includes(hospital)}
                           onChange={() => handleHospitalToggle(hospital)}
-                          className="w-4 h-4 rounded border-slate-500 text-emerald-500 focus:ring-emerald-500"
+                          className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500" style={{ borderColor: 'var(--border-2)' }}
                           style={{ background: 'var(--surface-3)' }}
                         />
                         <span className="text-sm truncate" style={{ color: 'var(--text-2)' }}>
@@ -663,12 +664,14 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
           <tbody>
             {hospitalRows.map((row, idx) => {
               const isEven = idx % 2 === 0;
-              const rowBg = isEven ? 'transparent' : 'rgba(255, 255, 255, 0.04)';
-              const stickyBg = isEven ? 'var(--surface-1)' : 'rgba(30, 41, 59, 0.85)';
+              const rowBg = isEven ? 'transparent' : 'var(--table-row-alt-bg)';
+              const stickyBg = isEven ? 'var(--surface-1)' : 'var(--surface-3)';
               return (
                 <tr
                   key={row.hospitalName}
-                  className="transition-colors hover:bg-white/[0.05]"
+                  className="transition-colors"
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--table-row-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = rowBg}
                   style={{ background: rowBg }}
                   data-row-index={idx}
                 >

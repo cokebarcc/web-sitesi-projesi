@@ -1394,7 +1394,6 @@ const App: React.FC = () => {
         isOpen={isStickyNotesOpen}
         onClose={() => setIsStickyNotesOpen(false)}
         userEmail={user?.email || ''}
-        theme={theme}
       />
 
       {/* Main Content - Sidebar için padding-left eklendi */}

@@ -100,9 +100,9 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
     if (active && payload && payload.length) {
       const dataPoint = payload[0]?.payload;
       return (
-        <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 shadow-xl max-w-xs">
-          <p className="text-white font-bold text-sm mb-1">#{dataPoint?.sira}</p>
-          <p className="text-slate-300 text-xs mb-3">{dataPoint?.fullName}</p>
+        <div className="backdrop-blur-xl rounded-xl border p-4 shadow-xl max-w-xs" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+          <p className="text-[var(--text-1)] font-bold text-sm mb-1">#{dataPoint?.sira}</p>
+          <p className="text-[var(--text-2)] text-xs mb-3">{dataPoint?.fullName}</p>
           <div className="space-y-2">
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex items-center justify-between gap-4">
@@ -111,16 +111,16 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-slate-400 text-xs">{entry.name}:</span>
+                  <span className="text-[var(--text-3)] text-xs">{entry.name}:</span>
                 </div>
-                <span className="text-white font-bold text-sm">
+                <span className="text-[var(--text-1)] font-bold text-sm">
                   {entry.value !== null ? entry.value.toFixed(1) : '-'}
                 </span>
               </div>
             ))}
           </div>
           {dataPoint?.donemIci !== null && dataPoint?.trRolOrtalama !== null && (
-            <div className="mt-3 pt-2 border-t border-slate-700/50">
+            <div className="mt-3 pt-2 border-t border-[var(--border-2)]">
               <div className="flex items-center gap-1 text-xs">
                 {dataPoint.isAboveAverage ? (
                   <>
@@ -166,7 +166,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
       {/* Başlık */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-bold text-white">Gösterge Karşılaştırması</h3>
+          <h3 className="text-lg font-bold text-[var(--text-1)]">Gösterge Karşılaştırması</h3>
           <p className="text-xs text-[var(--text-muted)] mt-1">
             Dönem İçi vs TR Rol Ortalaması ({displayData.length}/{chartData.length} gösterge)
           </p>
@@ -176,7 +176,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
         {chartData.length > 15 && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="px-4 py-2 rounded-xl text-xs font-medium transition-all bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+            className="px-4 py-2 rounded-xl text-xs font-medium transition-all bg-[var(--surface-2)] text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]"
           >
             {showAll ? `İlk 15'i Göster` : `Tümünü Göster (${chartData.length})`}
           </button>
@@ -216,7 +216,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               formatter={(value: string) => (
-                <span className="text-slate-300 text-xs">{value}</span>
+                <span className="text-[var(--text-2)] text-xs">{value}</span>
               )}
             />
 
@@ -249,7 +249,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
       </div>
 
       {/* Alt bilgi - Renk açıklaması */}
-      <div className="mt-4 pt-4 border-t border-slate-700/30 flex items-center justify-between text-xs text-[var(--text-muted)]">
+      <div className="mt-4 pt-4 border-t border-[var(--border-2)] flex items-center justify-between text-xs text-[var(--text-muted)]">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-emerald-500" />

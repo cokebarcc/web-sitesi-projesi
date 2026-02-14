@@ -81,11 +81,11 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+      <div className="bg-white p-8 rounded-3xl shadow-sm border" style={{ borderColor: 'var(--border-2)' }}>
         <div className="flex justify-between items-start mb-8">
            <div>
-              <h2 className="text-2xl font-black text-slate-900 mb-2">Hekim Performans Veri Girişi</h2>
-              <p className="text-slate-500 font-medium">Lütfen hekimin fiilî çalışma verilerini giriniz.</p>
+              <h2 className="text-2xl font-black mb-2" style={{ color: 'var(--text-1)' }}>Hekim Performans Veri Girişi</h2>
+              <p className="font-medium" style={{ color: 'var(--text-muted)' }}>Lütfen hekimin fiilî çalışma verilerini giriniz.</p>
            </div>
            <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-xl border border-blue-100 text-xs font-black uppercase">
               {selectedHospital}
@@ -94,22 +94,22 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
 
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Temel Bilgiler */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl" style={{ background: 'var(--surface-3)' }}>
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Hekim Ad Soyad</label>
+              <label className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Hekim Ad Soyad</label>
               <input 
                 required
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
                 placeholder="Örn: Dr. Mehmet Öz"
                 value={formData.doctorName}
                 onChange={e => setFormData({...formData, doctorName: e.target.value})}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Branş</label>
+              <label className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Branş</label>
               <select 
                 required
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
                 value={formData.specialty}
                 onChange={e => setFormData({...formData, specialty: e.target.value})}
               >
@@ -119,10 +119,10 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
             </div>
             {/* Added Month Selection */}
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Ay</label>
+              <label className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Ay</label>
               <select 
                 required
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
                 value={formData.month}
                 onChange={e => setFormData({...formData, month: e.target.value})}
               >
@@ -131,10 +131,10 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
             </div>
             {/* Added Year Selection */}
             <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Yıl</label>
+              <label className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Yıl</label>
               <select 
                 required
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition"
+                className="w-full border rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-blue-100 outline-none transition" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
                 value={formData.year}
                 onChange={e => setFormData({...formData, year: Number(e.target.value)})}
               >
@@ -152,16 +152,16 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Poliklinik Gün Sayısı</label>
-                  <input type="number" className="w-full border border-slate-200 rounded-lg p-2.5 text-sm" value={formData.pDays} onChange={e => setFormData({...formData, pDays: Number(e.target.value)})} />
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Poliklinik Gün Sayısı</label>
+                  <input type="number" className="w-full border rounded-lg p-2.5 text-sm" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} value={formData.pDays} onChange={e => setFormData({...formData, pDays: Number(e.target.value)})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">MHRS Kapasite Sayısı</label>
-                  <input type="number" className="w-full border border-slate-200 rounded-lg p-2.5 text-sm" value={formData.pMhrs} onChange={e => setFormData({...formData, pMhrs: Number(e.target.value)})} />
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>MHRS Kapasite Sayısı</label>
+                  <input type="number" className="w-full border rounded-lg p-2.5 text-sm" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} value={formData.pMhrs} onChange={e => setFormData({...formData, pMhrs: Number(e.target.value)})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Toplam Muayene Sayısı</label>
-                  <input type="number" className="w-full border border-slate-200 rounded-lg p-2.5 text-sm" value={formData.pExams} onChange={e => setFormData({...formData, pExams: Number(e.target.value)})} />
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Toplam Muayene Sayısı</label>
+                  <input type="number" className="w-full border rounded-lg p-2.5 text-sm" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} value={formData.pExams} onChange={e => setFormData({...formData, pExams: Number(e.target.value)})} />
                 </div>
               </div>
             </div>
@@ -174,12 +174,12 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Ameliyat Gün Sayısı</label>
-                  <input type="number" className="w-full border border-slate-200 rounded-lg p-2.5 text-sm" value={formData.sDays} onChange={e => setFormData({...formData, sDays: Number(e.target.value)})} />
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Ameliyat Gün Sayısı</label>
+                  <input type="number" className="w-full border rounded-lg p-2.5 text-sm" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} value={formData.sDays} onChange={e => setFormData({...formData, sDays: Number(e.target.value)})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Yapılan Ameliyat Sayısı</label>
-                  <input type="number" className="w-full border border-slate-200 rounded-lg p-2.5 text-sm" value={formData.sTotal} onChange={e => setFormData({...formData, sTotal: Number(e.target.value)})} />
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Yapılan Ameliyat Sayısı</label>
+                  <input type="number" className="w-full border rounded-lg p-2.5 text-sm" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} value={formData.sTotal} onChange={e => setFormData({...formData, sTotal: Number(e.target.value)})} />
                 </div>
               </div>
             </div>
@@ -192,13 +192,14 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Diğer Aksiyon Gün Sayısı</label>
-                  <input type="number" className="w-full border border-slate-200 rounded-lg p-2.5 text-sm" value={formData.otherDays} onChange={e => setFormData({...formData, otherDays: Number(e.target.value)})} />
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Diğer Aksiyon Gün Sayısı</label>
+                  <input type="number" className="w-full border rounded-lg p-2.5 text-sm" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} value={formData.otherDays} onChange={e => setFormData({...formData, otherDays: Number(e.target.value)})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">Ek Kısıtlar / Notlar</label>
+                  <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Ek Kısıtlar / Notlar</label>
                   <textarea 
-                    className="w-full border border-slate-200 rounded-lg p-2.5 text-sm h-24 resize-none" 
+                    className="w-full border rounded-lg p-2.5 text-sm h-24 resize-none"
+                    style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
                     placeholder="Tek hekim branşı, cihaz arızası vb..."
                     value={formData.constraints}
                     onChange={e => setFormData({...formData, constraints: e.target.value})}
@@ -211,7 +212,8 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
           <div className="flex justify-end pt-6">
             <button 
               type="submit"
-              className="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black hover:bg-slate-800 transition shadow-xl shadow-slate-900/20 active:scale-95"
+              className="text-white px-12 py-4 rounded-2xl font-black transition shadow-xl active:scale-95 hover:opacity-90"
+              style={{ background: 'var(--bg-app)', boxShadow: '0 20px 25px -5px color-mix(in srgb, var(--bg-app) 20%, transparent)' }}
             >
               Hekim Verisini Kaydet
             </button>

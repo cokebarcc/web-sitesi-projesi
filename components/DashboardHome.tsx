@@ -38,7 +38,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
       onClick={onClick}
       disabled={disabled}
       className={`group relative min-h-[280px] rounded-[48px] p-10 text-left transition-all
-        ${disabled ? 'bg-slate-100 cursor-not-allowed opacity-50' : `${colorMap[color]} shadow-xl hover:scale-105`}`}
+        ${disabled ? 'cursor-not-allowed opacity-50' : `${colorMap[color]} shadow-xl hover:scale-105`}`}
+      style={disabled ? { backgroundColor: 'var(--surface-2)' } : undefined}
     >
       <div className="relative z-10 h-full flex flex-col justify-between">
         <div>
@@ -113,10 +114,10 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
     <div className="p-8">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tight mb-4">
+        <h1 className="text-5xl font-black uppercase tracking-tight mb-4" style={{ color: 'var(--text-1)' }}>
           Dashboard
         </h1>
-        <p className="text-lg text-slate-500 font-medium">
+        <p className="text-lg font-medium" style={{ color: 'var(--text-3)' }}>
           Analiz modüllerinizi seçin ve verilerinizi inceleyin
         </p>
       </div>
@@ -205,11 +206,11 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="mt-12 pt-8 border-t border-slate-200 text-center">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+      <div className="mt-12 pt-8 border-t text-center" style={{ borderColor: 'var(--border-2)' }}>
+        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>
           T.C. Sağlık Bakanlığı • Şanlıurfa İl Sağlık Müdürlüğü
         </p>
-        <p className="text-xs text-slate-300 mt-2">
+        <p className="text-xs mt-2" style={{ color: 'var(--text-2)' }}>
           MHRS Analiz ve Raporlama Sistemi
         </p>
       </div>

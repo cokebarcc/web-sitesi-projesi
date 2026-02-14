@@ -496,19 +496,19 @@ const HekimIslemListesiModule: React.FC = () => {
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Hekim İşlem Listesi</h1>
-            <p className="text-sm text-slate-400">Hekim işlem listesi modülü</p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>Hekim İşlem Listesi</h1>
+            <p className="text-sm" style={{ color: 'var(--text-3)' }}>Hekim işlem listesi modülü</p>
           </div>
         </div>
       </div>
 
       {/* Veri Yükleme Filtre Paneli */}
-      <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-5 mb-6 relative z-[100]">
+      <div className="backdrop-blur-xl rounded-2xl border p-5 mb-6 relative z-[100]" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
         <div className="flex items-center gap-2 mb-4">
           <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Veri Yükleme</span>
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>Veri Yükleme</span>
         </div>
 
         <div className="flex flex-wrap gap-3 items-end">
@@ -628,7 +628,10 @@ const HekimIslemListesiModule: React.FC = () => {
             {hasSelection && (
               <button
                 onClick={handleClear}
-                className="text-xs text-slate-500 hover:text-slate-300 font-medium flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-slate-700/50 transition-all"
+                className="text-xs font-medium flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -679,14 +682,17 @@ const HekimIslemListesiModule: React.FC = () => {
 
       {/* Tab Navigasyonu */}
       {tableData.length > 0 && (
-        <div className="flex gap-1 mb-4 bg-[#12121a]/80 rounded-xl border border-slate-700/30 p-1 inline-flex">
+        <div className="flex gap-1 mb-4 rounded-xl border p-1 inline-flex" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
           <button
             onClick={() => setActiveTab('liste')}
             className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === 'liste'
                 ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : ''
             }`}
+            style={activeTab !== 'liste' ? { color: 'var(--text-3)' } : undefined}
+            onMouseEnter={e => { if (activeTab !== 'liste') { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+            onMouseLeave={e => { if (activeTab !== 'liste') { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -698,8 +704,11 @@ const HekimIslemListesiModule: React.FC = () => {
             className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === 'analiz'
                 ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : ''
             }`}
+            style={activeTab !== 'analiz' ? { color: 'var(--text-3)' } : undefined}
+            onMouseEnter={e => { if (activeTab !== 'analiz') { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+            onMouseLeave={e => { if (activeTab !== 'analiz') { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -711,7 +720,7 @@ const HekimIslemListesiModule: React.FC = () => {
 
       {/* İçerik Alanı */}
       {tableData.length === 0 ? (
-        <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-12 text-center">
+        <div className="backdrop-blur-xl rounded-2xl border p-12 text-center" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
           {savedFileInfo ? (
             <>
               <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -719,11 +728,11 @@ const HekimIslemListesiModule: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-200 mb-2">Kayıtlı Dosya Mevcut</h3>
-              <p className="text-slate-400 text-sm max-w-md mx-auto mb-1">
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-2)' }}>Kayıtlı Dosya Mevcut</h3>
+              <p className="text-sm max-w-md mx-auto mb-1" style={{ color: 'var(--text-3)' }}>
                 {savedFileInfo.fileName}
               </p>
-              <p className="text-slate-500 text-xs mb-5">
+              <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>
                 {(savedFileInfo.fileSize / 1024 / 1024).toFixed(1)} MB - {new Date(savedFileInfo.uploadedAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })}
               </p>
               <button
@@ -756,8 +765,8 @@ const HekimIslemListesiModule: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-200 mb-2">Veri Bekleniyor</h3>
-              <p className="text-slate-400 text-sm max-w-md mx-auto">
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-2)' }}>Veri Bekleniyor</h3>
+              <p className="text-sm max-w-md mx-auto" style={{ color: 'var(--text-3)' }}>
                 Hekim İşlem Listesi verilerini görüntülemek için Excel dosyası yükleyiniz.
               </p>
             </>
@@ -774,54 +783,55 @@ const HekimIslemListesiModule: React.FC = () => {
           {/* Özet Kartları */}
           {summary && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-              <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-xl border border-slate-700/30 p-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Toplam Satır</p>
-                <p className="text-lg font-black text-white">{summary.toplamSatir.toLocaleString('tr-TR')}</p>
+              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Satır</p>
+                <p className="text-lg font-black" style={{ color: 'var(--text-1)' }}>{summary.toplamSatir.toLocaleString('tr-TR')}</p>
               </div>
-              <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-xl border border-slate-700/30 p-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Hekim Sayısı</p>
+              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Hekim Sayısı</p>
                 <p className="text-lg font-black text-emerald-400">{summary.hekimSayisi}</p>
               </div>
-              <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-xl border border-slate-700/30 p-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Hasta Sayısı</p>
+              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Hasta Sayısı</p>
                 <p className="text-lg font-black text-blue-400">{summary.hastaSayisi.toLocaleString('tr-TR')}</p>
               </div>
-              <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-xl border border-slate-700/30 p-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Toplam Miktar</p>
+              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Miktar</p>
                 <p className="text-lg font-black text-cyan-400">{summary.toplamMiktar.toLocaleString('tr-TR')}</p>
               </div>
-              <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-xl border border-slate-700/30 p-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Toplam Puan</p>
+              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Puan</p>
                 <p className="text-lg font-black text-purple-400">{formatNumber(summary.toplamPuan)}</p>
               </div>
-              <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-xl border border-slate-700/30 p-3">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Toplam Tutar</p>
+              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Tutar</p>
                 <p className="text-lg font-black text-amber-400">{formatNumber(summary.toplamTutar)} ₺</p>
               </div>
             </div>
           )}
 
           {/* Tablo Üst Bar */}
-          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-t-2xl border border-b-0 border-slate-700/30 px-5 py-3 flex items-center justify-between">
+          <div className="backdrop-blur-xl rounded-t-2xl border border-b-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span className="text-sm font-semibold text-slate-300">{fileName}</span>
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-2)' }}>{fileName}</span>
               </div>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {tableData.length.toLocaleString('tr-TR')} kayıt
               </span>
             </div>
             <div className="flex items-center gap-3">
               {/* Sayfa boyutu */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Göster:</span>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Göster:</span>
                 <select
                   value={pageSize}
                   onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                  className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                  className="text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
                 >
                   {PAGE_SIZES.map(s => (
                     <option key={s} value={s}>{s}</option>
@@ -843,19 +853,20 @@ const HekimIslemListesiModule: React.FC = () => {
           {/* Tablo */}
           <div
             ref={tableRef}
-            className="bg-[#0a0a14] border border-slate-700/30 overflow-auto max-h-[600px] custom-scrollbar"
+            className="border overflow-auto max-h-[600px] custom-scrollbar"
+            style={{ background: 'var(--bg-app)', borderColor: 'var(--border-2)' }}
           >
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
-                <tr className="bg-[#1a1a2e] border-b border-slate-700/50">
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap border-r border-slate-700/20 w-[40px]">#</th>
+                <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border-2)' }}>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap w-[40px]" style={{ borderRight: '1px solid var(--border-2)' }}>#</th>
                   {tableColumns.map(col => (
                     <th
                       key={col.key}
-                      className={`px-3 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap border-r border-slate-700/20 ${
+                      className={`px-3 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap ${
                         col.align === 'right' ? 'text-right' : 'text-left'
                       }`}
-                      style={{ minWidth: col.minW }}
+                      style={{ minWidth: col.minW, borderRight: '1px solid var(--border-2)' }}
                     >
                       {col.label}
                     </th>
@@ -868,20 +879,22 @@ const HekimIslemListesiModule: React.FC = () => {
                   return (
                     <tr
                       key={idx}
-                      className={`border-b border-slate-800/30 hover:bg-slate-700/20 transition-colors ${
-                        idx % 2 === 0 ? 'bg-[#0d0d1a]' : 'bg-[#0a0a14]'
-                      }`}
+                      className="transition-colors"
+                      style={{ background: idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'var(--bg-app)', borderBottom: '1px solid var(--border-2)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--table-row-hover)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'var(--bg-app)'; }}
                     >
-                      <td className="px-3 py-1.5 text-xs text-slate-600 font-mono border-r border-slate-800/20">{globalIdx}</td>
+                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{globalIdx}</td>
                       {tableColumns.map(col => {
                         const val = row[col.key];
                         const isNumeric = col.align === 'right';
                         return (
                           <td
                             key={col.key}
-                            className={`px-3 py-1.5 text-xs whitespace-nowrap border-r border-slate-800/20 ${
-                              isNumeric ? 'text-right font-mono text-slate-300' : 'text-slate-400'
+                            className={`px-3 py-1.5 text-xs whitespace-nowrap ${
+                              isNumeric ? 'text-right font-mono' : ''
                             }`}
+                            style={{ borderRight: '1px solid var(--border-2)', color: isNumeric ? 'var(--text-2)' : 'var(--text-3)' }}
                           >
                             {isNumeric && typeof val === 'number' ? formatNumber(val) : String(val || '')}
                           </td>
@@ -896,22 +909,28 @@ const HekimIslemListesiModule: React.FC = () => {
 
           {/* Sayfalama */}
           {totalPages > 1 && (
-            <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-slate-700/30 px-5 py-3 flex items-center justify-between">
-              <p className="text-xs text-slate-500">
+            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {((currentPage - 1) * pageSize + 1).toLocaleString('tr-TR')} - {Math.min(currentPage * pageSize, tableData.length).toLocaleString('tr-TR')} / {tableData.length.toLocaleString('tr-TR')} kayıt
               </p>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => goToPage(1)}
                   disabled={currentPage === 1}
-                  className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  style={{ color: 'var(--text-3)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
                 >
                   ««
                 </button>
                 <button
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  style={{ color: 'var(--text-3)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
                 >
                   «
                 </button>
@@ -935,8 +954,11 @@ const HekimIslemListesiModule: React.FC = () => {
                       className={`px-2.5 py-1 text-xs rounded transition-all ${
                         currentPage === page
                           ? 'bg-amber-600 text-white font-bold'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                          : ''
                       }`}
+                      style={currentPage !== page ? { color: 'var(--text-3)' } : undefined}
+                      onMouseEnter={e => { if (currentPage !== page) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                      onMouseLeave={e => { if (currentPage !== page) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
                     >
                       {page}
                     </button>
@@ -946,14 +968,20 @@ const HekimIslemListesiModule: React.FC = () => {
                 <button
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  style={{ color: 'var(--text-3)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
                 >
                   »
                 </button>
                 <button
                   onClick={() => goToPage(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  style={{ color: 'var(--text-3)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
                 >
                   »»
                 </button>
@@ -963,7 +991,7 @@ const HekimIslemListesiModule: React.FC = () => {
 
           {/* Sayfalama yoksa alt border */}
           {totalPages <= 1 && (
-            <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-slate-700/30 h-2" />
+            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 h-2" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} />
           )}
         </>
       )}
@@ -975,17 +1003,17 @@ const HekimIslemListesiModule: React.FC = () => {
           height: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: #0a0a14;
+          background: var(--bg-app);
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #334155;
+          background: var(--border-2);
           border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #475569;
+          background: var(--text-muted);
         }
         .custom-scrollbar::-webkit-scrollbar-corner {
-          background: #0a0a14;
+          background: var(--bg-app);
         }
       `}</style>
     </div>

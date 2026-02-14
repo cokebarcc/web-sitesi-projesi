@@ -27,6 +27,7 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
   placeholder = 'Tarih seçiniz...'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Başlangıç görünümü - seçili tarih veya bugün
@@ -160,7 +161,7 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
 
   return (
     <div className="flex flex-col gap-1.5" ref={containerRef}>
-      <label className="text-sm font-medium text-slate-400">{label}</label>
+      <label className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>{label}</label>
       <div className="relative">
         {/* Trigger Button */}
         <button
@@ -172,18 +173,26 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
             w-full min-w-[200px] px-3 py-2.5 text-left rounded-xl border transition-all
             flex items-center justify-between gap-2
             ${disabled
-              ? 'bg-slate-700/30 border-slate-600 cursor-not-allowed opacity-60'
-              : isOpen
-                ? 'bg-slate-700/50 border-orange-500 ring-2 ring-orange-500/20'
-                : 'bg-slate-700/50 border-slate-600 hover:border-slate-500'
+              ? 'cursor-not-allowed opacity-60'
+              : ''
             }
           `}
+          style={{
+            background: disabled ? 'var(--surface-3)' : 'var(--surface-2)',
+            borderColor: isOpen ? 'var(--color-orange-500, #f97316)' : 'var(--border-2)',
+            ...(isOpen ? { boxShadow: '0 0 0 2px rgba(249, 115, 22, 0.2)' } : {})
+          }}
+          onMouseEnter={() => !disabled && !isOpen && setHoveredBtn('trigger')}
+          onMouseLeave={() => setHoveredBtn(null)}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className={`text-sm truncate ${value ? 'text-white font-medium' : 'text-slate-400'}`}>
+            <span
+              className={`text-sm truncate ${value ? 'font-medium' : ''}`}
+              style={{ color: value ? 'var(--text-1)' : 'var(--text-3)' }}
+            >
               {getDisplayText()}
             </span>
           </div>
@@ -194,15 +203,19 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
                 e.stopPropagation();
                 clearSelection();
               }}
-              className="p-0.5 hover:bg-slate-600 rounded transition-colors"
+              className="p-0.5 rounded transition-colors"
+              style={{ background: hoveredBtn === 'clear' ? 'var(--surface-hover)' : 'transparent' }}
+              onMouseEnter={() => setHoveredBtn('clear')}
+              onMouseLeave={() => setHoveredBtn(null)}
             >
-              <svg className="w-4 h-4 text-slate-400 hover:text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
           <svg
-            className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+            style={{ color: 'var(--text-3)' }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -213,27 +226,36 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
 
         {/* Calendar Popover */}
         {isOpen && (
-          <div className="absolute left-0 top-full z-50 mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-xl p-4 min-w-[300px]">
+          <div
+            className="absolute left-0 top-full z-50 mt-1 rounded-xl shadow-xl p-4 min-w-[300px]"
+            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}
+          >
             {/* Header - Ay/Yıl Navigasyonu */}
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={() => changeMonth(-1)}
-                className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ background: hoveredBtn === 'prev' ? 'var(--surface-hover)' : 'transparent' }}
+                onMouseEnter={() => setHoveredBtn('prev')}
+                onMouseLeave={() => setHoveredBtn(null)}
               >
-                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <div className="font-semibold text-white">
+              <div className="font-semibold" style={{ color: 'var(--text-1)' }}>
                 {MONTH_NAMES[viewMonth]} {viewYear}
               </div>
               <button
                 type="button"
                 onClick={() => changeMonth(1)}
-                className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ background: hoveredBtn === 'next' ? 'var(--surface-hover)' : 'transparent' }}
+                onMouseEnter={() => setHoveredBtn('next')}
+                onMouseLeave={() => setHoveredBtn(null)}
               >
-                <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -242,7 +264,7 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
             {/* Gün İsimleri */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {DAY_NAMES.map(day => (
-                <div key={day} className="text-center text-xs font-medium text-slate-500 py-1">
+                <div key={day} className="text-center text-xs font-medium py-1" style={{ color: 'var(--text-3)' }}>
                   {day}
                 </div>
               ))}
@@ -258,6 +280,7 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
                 const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const isSelected = value === dateStr;
                 const isToday = dateStr === todayStr;
+                const dayKey = `day-${day}`;
 
                 return (
                   <button
@@ -268,11 +291,24 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
                       h-9 w-full rounded-lg text-sm font-medium transition-all relative
                       ${isSelected
                         ? 'bg-orange-500 text-white hover:bg-orange-600'
-                        : isToday
-                          ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
-                          : 'text-slate-300 hover:bg-slate-700'
+                        : ''
                       }
                     `}
+                    style={
+                      isSelected
+                        ? {}
+                        : isToday
+                          ? {
+                              background: hoveredBtn === dayKey ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.2)',
+                              color: 'rgb(96,165,250)'
+                            }
+                          : {
+                              color: 'var(--text-2)',
+                              background: hoveredBtn === dayKey ? 'var(--surface-hover)' : 'transparent'
+                            }
+                    }
+                    onMouseEnter={() => !isSelected && setHoveredBtn(dayKey)}
+                    onMouseLeave={() => setHoveredBtn(null)}
                   >
                     {day}
                     {isToday && !isSelected && (
@@ -284,7 +320,7 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="mt-4 pt-3 border-t border-slate-700 flex items-center justify-between">
+            <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: '1px solid var(--border-2)' }}>
               <button
                 type="button"
                 onClick={goToToday}
@@ -299,7 +335,10 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
                     clearSelection();
                     setIsOpen(false);
                   }}
-                  className="text-xs text-slate-400 hover:text-slate-200 font-medium"
+                  className="text-xs font-medium"
+                  style={{ color: hoveredBtn === 'temizle' ? 'var(--text-2)' : 'var(--text-3)' }}
+                  onMouseEnter={() => setHoveredBtn('temizle')}
+                  onMouseLeave={() => setHoveredBtn(null)}
                 >
                   Temizle
                 </button>

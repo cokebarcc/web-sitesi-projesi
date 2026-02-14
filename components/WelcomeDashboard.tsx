@@ -321,18 +321,21 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
 
           {/* Personalized Welcome */}
           <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-tight">
-            <span className={`bg-gradient-to-r bg-clip-text text-transparent ${
-              isDark
-                ? 'from-white via-[#a8b8d0] to-[#5b9cff]'
-                : 'from-slate-800 via-slate-600 to-[#3b82f6]'
-            }`}>
+            <span
+              className={`bg-gradient-to-r bg-clip-text text-transparent ${
+                isDark
+                  ? 'from-white via-[#a8b8d0] to-[#5b9cff]'
+                  : ''
+              }`}
+              style={!isDark ? { backgroundImage: 'linear-gradient(to right, var(--text-1), var(--text-2), #3b82f6)' } : undefined}
+            >
               {greeting}
             </span>
             {userName && (
-              <span className={isDark ? 'text-[#556a85]' : 'text-slate-400'}>, {userName}</span>
+              <span className={isDark ? 'text-[#556a85]' : ''} style={!isDark ? { color: 'var(--text-3)' } : undefined}>, {userName}</span>
             )}
           </h1>
-          <p className={`text-sm mb-1 ${isDark ? 'text-[#7b8fad]' : 'text-slate-500'}`}>{summaryText}</p>
+          <p className={`text-sm mb-1 ${isDark ? 'text-[#7b8fad]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>{summaryText}</p>
           {selectedHospital && (
             <p className="text-[#3d5170] text-xs">
               Seçili Hastane: <span className="text-[#5b9cff]">{selectedHospital}</span>
@@ -353,10 +356,10 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
                     {card.icon}
                   </div>
                 </div>
-                <div className={`text-3xl font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                <div className="text-3xl font-bold mb-1" style={{ color: 'var(--text-1)' }}>
                   {formatNumber(card.value)}{card.suffix || ''}
                 </div>
-                <div className={`text-xs font-medium ${isDark ? 'text-[#7b8fad]' : 'text-slate-500'}`}>{card.label}</div>
+                <div className={`text-xs font-medium ${isDark ? 'text-[#7b8fad]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>{card.label}</div>
               </div>
             ))}
           </div>
@@ -374,9 +377,9 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
                 <svg className="w-5 h-5 text-[#5b9cff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className={`text-sm font-medium ${isDark ? 'text-[#a8b8d0]' : 'text-slate-600'}`}>Henüz veri yüklenmedi</span>
+                <span className={`text-sm font-medium ${isDark ? 'text-[#a8b8d0]' : ''}`} style={!isDark ? { color: 'var(--text-2)' } : undefined}>Henüz veri yüklenmedi</span>
               </div>
-              <p className={`text-xs ${isDark ? 'text-[#556a85]' : 'text-slate-400'}`}>
+              <p className={`text-xs ${isDark ? 'text-[#556a85]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
                 Analiz yapabilmek için önce bir hastane seçip veri yükleyin
               </p>
             </div>
@@ -405,7 +408,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
               {/* Content */}
               <div className="relative z-10 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <div className={`transition-colors duration-300 ${isDark ? 'text-[#a8b8d0] group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800'}`}>
+                  <div className="transition-colors duration-300 module-card-icon" style={{ color: 'var(--text-2)' }}>
                     {card.icon}
                   </div>
                   {card.badge && (
@@ -415,10 +418,10 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
                   )}
                 </div>
                 <div>
-                  <h3 className={`font-semibold text-base mb-0.5 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                  <h3 className="font-semibold text-base mb-0.5" style={{ color: 'var(--text-1)' }}>
                     {card.title}
                   </h3>
-                  <p className={`text-xs leading-relaxed transition-colors line-clamp-2 ${isDark ? 'text-[#556a85] group-hover:text-[#7b8fad]' : 'text-slate-400 group-hover:text-slate-600'}`}>
+                  <p className="text-xs leading-relaxed transition-colors line-clamp-2 module-card-subtitle" style={{ color: 'var(--text-3)' }}>
                     {card.subtitle}
                   </p>
                 </div>
@@ -435,12 +438,15 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-[#5b9cff]/15 via-[#38bdf8]/10 to-[#5b9cff]/15 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            <div className={`relative flex items-center backdrop-blur-xl rounded-2xl border transition-all duration-300 ${
-              isDark
-                ? 'bg-[#131d33]/80 border-[#2d4163]/40 group-hover:border-[#5b9cff]/30'
-                : 'bg-white/80 border-slate-200/60 group-hover:border-blue-300/50 shadow-sm'
-            }`}>
-              <div className={`pl-5 ${isDark ? 'text-[#556a85]' : 'text-slate-400'}`}>
+            <div
+              className={`relative flex items-center backdrop-blur-xl rounded-2xl border transition-all duration-300 ${
+                isDark
+                  ? 'bg-[#131d33]/80 border-[#2d4163]/40 group-hover:border-[#5b9cff]/30'
+                  : 'bg-white/80 group-hover:border-blue-300/50 shadow-sm'
+              }`}
+              style={!isDark ? { borderColor: 'var(--border-2)' } : undefined}
+            >
+              <div className={`pl-5 ${isDark ? 'text-[#556a85]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -451,7 +457,8 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
                 value={commandInput}
                 onChange={(e) => setCommandInput(e.target.value)}
                 placeholder="Ne yapmak istiyorsunuz? (Örn: 'Ocak ayı yeşil alan oranlarını getir')"
-                className={`flex-1 bg-transparent px-4 py-4 outline-none text-sm ${isDark ? 'text-[#e8edf5] placeholder-[#556a85]' : 'text-slate-800 placeholder-slate-400'}`}
+                className={`flex-1 bg-transparent px-4 py-4 outline-none text-sm command-input ${isDark ? 'text-[#e8edf5] placeholder-[#556a85]' : ''}`}
+                style={!isDark ? { color: 'var(--text-1)' } : undefined}
               />
 
               <button
@@ -466,18 +473,18 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           </div>
 
           <div className="flex items-center justify-center gap-4 mt-3">
-            <p className={`text-xs ${isDark ? 'text-[#3d5170]' : 'text-slate-400'}`}>
+            <p className={`text-xs ${isDark ? 'text-[#3d5170]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
               AI asistanı kullanarak hızlıca işlem yapabilirsiniz
             </p>
-            <span className={`text-xs ${isDark ? 'text-[#2d4163]' : 'text-slate-300'}`}>|</span>
-            <p className={`text-xs ${isDark ? 'text-[#3d5170]' : 'text-slate-400'}`}>
-              <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-[#1e2d48]/60 border border-[#2d4163]/50 text-[#556a85]' : 'bg-slate-100 border border-slate-200 text-slate-500'}`}>Ctrl+K</kbd> ile hızlı arama
+            <span className={`text-xs ${isDark ? 'text-[#2d4163]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>|</span>
+            <p className={`text-xs ${isDark ? 'text-[#3d5170]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
+              <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-[#1e2d48]/60 border border-[#2d4163]/50 text-[#556a85]' : ''}`} style={!isDark ? { background: 'var(--surface-2)', border: '1px solid var(--border-2)', color: 'var(--text-3)' } : undefined}>Ctrl+K</kbd> ile hızlı arama
             </p>
           </div>
         </form>
 
         {/* System Status Bar */}
-        <div className={`flex flex-wrap items-center justify-center gap-6 text-xs ${isDark ? 'text-[#556a85]' : 'text-slate-400'}`}>
+        <div className={`flex flex-wrap items-center justify-center gap-6 text-xs ${isDark ? 'text-[#556a85]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <span>Sistem Aktif</span>
@@ -539,6 +546,18 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+
+        .group:hover .module-card-icon {
+          color: var(--text-1) !important;
+        }
+
+        .group:hover .module-card-subtitle {
+          color: var(--text-2) !important;
+        }
+
+        .command-input::placeholder {
+          color: var(--text-3);
         }
       `}</style>
     </div>

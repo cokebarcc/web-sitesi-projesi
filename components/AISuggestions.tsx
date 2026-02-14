@@ -38,9 +38,9 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
 
   if (data.length === 0 && hbysData.length === 0) {
     return (
-      <div className="bg-white p-20 rounded-[40px] border-2 border-dashed border-slate-200 text-center">
-        <h3 className="text-2xl font-black text-slate-800 tracking-tight">AI Stratejik Analiz</h3>
-        <p className="text-slate-500 mt-2 max-w-sm mx-auto">Verimlilik ve kapasite analizi için lütfen Cetvel (Plan) ve HBYS (Gerçekleşen) verilerini yükleyiniz.</p>
+      <div className="p-20 rounded-[40px] border-2 border-dashed text-center" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+        <h3 className="text-2xl font-black tracking-tight" style={{ color: 'var(--text-1)' }}>AI Stratejik Analiz</h3>
+        <p className="mt-2 max-w-sm mx-auto" style={{ color: 'var(--text-muted)' }}>Verimlilik ve kapasite analizi için lütfen Cetvel (Plan) ve HBYS (Gerçekleşen) verilerini yükleyiniz.</p>
       </div>
     );
   }
@@ -53,8 +53,8 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
           <div className="w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
         </div>
         <div className="text-center">
-          <p className="text-slate-900 font-black text-lg uppercase tracking-tighter">AI Çapraz Veri Analizi Yapılıyor...</p>
-          <p className="text-slate-500 text-sm font-medium">Ameliyat Verimliliği, Kapasite Boşlukları ve Plan Hataları sorgulanıyor.</p>
+          <p className="font-black text-lg uppercase tracking-tighter" style={{ color: 'var(--text-1)' }}>AI Çapraz Veri Analizi Yapılıyor...</p>
+          <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Ameliyat Verimliliği, Kapasite Boşlukları ve Plan Hataları sorgulanıyor.</p>
         </div>
       </div>
     );
@@ -63,18 +63,18 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
   return (
     <div className="space-y-12 animate-in fade-in duration-700 pb-20">
       {/* Yönetici Özeti Bölümü */}
-      <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl relative overflow-hidden group">
+      <div className="bg-white p-10 rounded-[48px] border shadow-xl relative overflow-hidden group" style={{ borderColor: 'var(--border-2)' }}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full -mr-32 -mt-32 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 relative z-10 gap-6">
           <div className="flex items-center gap-5">
-            <div className="bg-slate-900 p-4 rounded-3xl shadow-xl">
+            <div className="p-4 rounded-3xl shadow-xl" style={{ background: 'var(--bg-app)' }}>
               <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Stratejik Performans Raporu</h2>
+              <h2 className="text-3xl font-black tracking-tight" style={{ color: 'var(--text-1)' }}>Stratejik Performans Raporu</h2>
               <p className="text-emerald-600 text-xs font-black uppercase tracking-[0.2em] mt-1">Cetvel vs. Gerçekleşen Çapraz Analiz</p>
             </div>
           </div>
@@ -88,28 +88,28 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
-          <div className="lg:col-span-8 bg-slate-50/50 p-8 rounded-[32px] border border-slate-100">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-4">Yönetici Özeti ve Kritik Tespitler</h3>
-            <div className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:font-medium prose-p:leading-relaxed">
+          <div className="lg:col-span-8 p-8 rounded-[32px] border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+            <h3 className="text-[10px] font-black uppercase tracking-widest mb-6 border-b pb-4" style={{ color: 'var(--text-3)' }}>Yönetici Özeti ve Kritik Tespitler</h3>
+            <div className="prose max-w-none prose-p:font-medium prose-p:leading-relaxed" style={{ color: 'var(--text-2)' }}>
               {report ? report.split('\n').map((line, lineIdx) => (
                 <div key={lineIdx} className={`flex gap-3 mb-4 last:mb-0 ${line.includes('!') || line.toLowerCase().includes('kritik') ? 'bg-rose-50/50 p-3 rounded-xl border border-rose-100' : ''}`}>
                   {line && line.trim() && <span className="text-emerald-500 mt-1 shrink-0">●</span>}
                   <p className="text-sm md:text-base">{line.replace(/^\*+/, '').trim()}</p>
                 </div>
               )) : (
-                <p className="text-slate-400 italic">Analiz raporu henüz oluşturulmadı.</p>
+                <p className="italic" style={{ color: 'var(--text-3)' }}>Analiz raporu henüz oluşturulmadı.</p>
               )}
             </div>
           </div>
           
           <div className="lg:col-span-4 space-y-4">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Analiz Kapsamı</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: 'var(--text-3)' }}>Analiz Kapsamı</h3>
             <AnalysisTag label="Verimlilik (80-60-40)" active={true} />
             <AnalysisTag label="Kapasite Boşluk Analizi" active={true} />
             <AnalysisTag label="Plan Dışı Cerrahi Potansiyel" active={true} />
             <AnalysisTag label="Kaynak Optimizasyonu" active={true} />
             
-            <div className="mt-8 p-6 bg-slate-900 rounded-[32px] text-white">
+            <div className="mt-8 p-6 rounded-[32px]" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
               <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">AI NOTU</p>
               <p className="text-xs font-medium italic leading-relaxed">"Analiz sonuçları, cetvel planlarındaki aksiyonların HBYS'deki çıktıları ile doğrudan kıyaslanması sonucu üretilmiştir."</p>
             </div>
@@ -125,8 +125,8 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
             <div key={idx} className={`bg-white p-8 rounded-[40px] shadow-xl border-2 transition-all hover:scale-[1.02] group ${
               cat.includes('verimlilik') ? 'border-amber-50 hover:border-amber-200' :
               cat.includes('kapasite') ? 'border-rose-50 hover:border-rose-200' :
-              cat.includes('cerrahi') ? 'border-emerald-50 hover:border-emerald-200' : 'border-slate-50'
-            }`}>
+              cat.includes('cerrahi') ? 'border-emerald-50 hover:border-emerald-200' : ''
+            }`} style={!cat.includes('verimlilik') && !cat.includes('kapasite') && !cat.includes('cerrahi') ? { borderColor: 'var(--border-2)' } : undefined}>
               <div className="flex justify-between items-start mb-6">
                 <div className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${
                   sug.priority === 'High' ? 'bg-rose-600 text-white shadow-lg shadow-rose-200' : 
@@ -134,11 +134,11 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
                 }`}>
                   {sug.priority} ÖNCELİK
                 </div>
-                <span className="text-slate-300 text-[10px] font-black uppercase tracking-[0.2em]">{sug.category}</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-2)' }}>{sug.category}</span>
               </div>
-              <h4 className="text-xl font-black text-slate-900 mb-4 tracking-tight group-hover:text-blue-600 transition-colors">{sug.title}</h4>
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                 <p className="text-slate-600 text-sm leading-relaxed font-bold">{sug.description}</p>
+              <h4 className="text-xl font-black mb-4 tracking-tight group-hover:text-blue-600 transition-colors" style={{ color: 'var(--text-1)' }}>{sug.title}</h4>
+              <div className="p-5 rounded-2xl border" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
+                 <p className="text-sm leading-relaxed font-bold" style={{ color: 'var(--text-2)' }}>{sug.description}</p>
               </div>
               <div className="mt-6 flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest cursor-pointer hover:gap-3 transition-all">
                 DETAYLI ANALİZİ GÖR 
@@ -153,8 +153,11 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
 };
 
 const AnalysisTag = ({ label, active }: { label: string; active: boolean }) => (
-  <div className={`flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all ${active ? 'bg-white border-emerald-100 text-emerald-700 shadow-sm' : 'bg-slate-50 border-slate-100 text-slate-400 opacity-50'}`}>
-    <div className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></div>
+  <div
+    className={`flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all ${active ? 'border-emerald-100 text-emerald-700 shadow-sm' : 'opacity-50'}`}
+    style={active ? { background: 'var(--surface-1)' } : { background: 'var(--surface-3)', borderColor: 'var(--border-2)', color: 'var(--text-3)' }}
+  >
+    <div className={`w-2 h-2 rounded-full ${active ? 'bg-emerald-500 animate-pulse' : ''}`} style={!active ? { background: 'var(--border-2)' } : undefined}></div>
     <span className="text-[11px] font-black uppercase tracking-tight">{label}</span>
   </div>
 );
