@@ -2,6 +2,7 @@ import React from 'react';
 import { AppUser, ADMIN_EMAIL } from '../../types/user';
 import { countActiveModules, MODULE_TOTAL, getAvatarColor, getInitials } from './adminConstants';
 import { HOSPITALS } from '../../../constants';
+import { getKurumDisplayText } from '../../constants/kurumConstants';
 
 interface AdminUserRowProps {
   user: AppUser;
@@ -61,6 +62,19 @@ const AdminUserRow: React.FC<AdminUserRowProps> = ({ user, onEdit, onDelete, onR
         <span className={`a-hospital-badge ${isAllHospitals ? 'a-hospital-badge--all' : 'a-hospital-badge--limited'}`}>
           {isAllHospitals ? 'Tumu' : `${hospitalCount}/${HOSPITALS.length}`}
         </span>
+      </td>
+
+      {/* Kurum */}
+      <td>
+        {user.kurum ? (
+          <span className="a-kurum-badge a-kurum-badge--assigned" title={getKurumDisplayText(user.kurum)}>
+            {getKurumDisplayText(user.kurum)}
+          </span>
+        ) : (
+          <span className="a-kurum-badge a-kurum-badge--unassigned">
+            Belirtilmemis
+          </span>
+        )}
       </td>
 
       {/* Actions */}

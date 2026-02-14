@@ -46,12 +46,39 @@ export interface UserPermissions {
   };
 }
 
+// ============ KURUM TANIMLARI ============
+
+export type KurumCategory =
+  | 'IL_SAGLIK_MUDURLUGU'
+  | 'KAMU_HASTANELERI'
+  | 'ILCE_SAGLIK_MUDURLUGU'
+  | 'ADSH'
+  | 'OZEL_UNIVERSITE'
+  | 'ACIL_SAGLIK_HIZMETLERI';
+
+export interface KurumInfo {
+  category: KurumCategory;
+  name?: string;
+}
+
+export const KURUM_CATEGORY_LABELS: Record<KurumCategory, string> = {
+  IL_SAGLIK_MUDURLUGU: 'İl Sağlık Müdürlüğü',
+  KAMU_HASTANELERI: 'Kamu Hastaneleri',
+  ILCE_SAGLIK_MUDURLUGU: 'İlçe Sağlık Müdürlükleri',
+  ADSH: 'Ağız ve Diş Sağlığı Hastaneleri',
+  OZEL_UNIVERSITE: 'Özel ve Üniversite Hastaneleri',
+  ACIL_SAGLIK_HIZMETLERI: 'Acil Sağlık Hizmetleri',
+};
+
+// ============ KULLANICI ============
+
 export interface AppUser {
   uid: string;
   email: string;
   displayName: string;
   role: 'admin' | 'user';
   permissions: UserPermissions;
+  kurum?: KurumInfo;
   createdAt: string;
   createdBy: string;
 }

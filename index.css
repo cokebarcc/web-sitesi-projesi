@@ -178,6 +178,72 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* ========== Map Dashboard Styles ========== */
+
+/* Leaflet container */
+.leaflet-container {
+  z-index: 1;
+  width: 100% !important;
+  height: 100% !important;
+  font-family: 'Inter', sans-serif;
+}
+
+/* District labels on Leaflet map (satellite) */
+.district-leaflet-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  color: #ffffff;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.95),
+    0 0 8px rgba(0, 0, 0, 0.8),
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 0 14px rgba(0, 0, 0, 0.6);
+  transition: color 0.3s ease, font-size 0.3s ease, font-weight 0.3s ease, text-shadow 0.3s ease;
+}
+
+.district-leaflet-label.dark,
+.district-leaflet-label.light {
+  color: #ffffff;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.95),
+    0 0 8px rgba(0, 0, 0, 0.8),
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 0 14px rgba(0, 0, 0, 0.6);
+}
+
+/* Institution marker pins */
+.institution-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+.institution-tooltip {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  white-space: nowrap !important;
+}
+.institution-tooltip::before {
+  border-top-color: rgba(15, 23, 42, 0.92) !important;
+}
+
+/* Smooth transition for map panel */
+.duration-400 {
+  transition-duration: 400ms;
+}
+
 /* Scrollbar Styles - Dark Navy */
 ::-webkit-scrollbar {
   width: 8px;

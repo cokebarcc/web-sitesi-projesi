@@ -232,5 +232,6 @@ export const useUserPermissions = (userEmail: string | null) => {
     hasHospitalAccess,
     canUploadData,
     isAdmin,
+    kurum: userPermissions?.kurum || null,
   };
 };

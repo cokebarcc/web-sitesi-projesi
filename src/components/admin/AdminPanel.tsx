@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth, db } from '../../../firebase';
-import { AppUser, UserPermissions, DEFAULT_PERMISSIONS, ADMIN_EMAIL } from '../../types/user';
+import { AppUser, UserPermissions, DEFAULT_PERMISSIONS, ADMIN_EMAIL, KurumCategory } from '../../types/user';
+import AdminKurumSelector from './AdminKurumSelector';
 import AdminKPICards from './AdminKPICards';
 import AdminUserTable from './AdminUserTable';
 import AdminSlidePanel from './AdminSlidePanel';
@@ -32,6 +33,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
   const [displayName, setDisplayName] = useState('');
   const [selectedHospitals, setSelectedHospitals] = useState<string[]>([]);
   const [permissions, setPermissions] = useState<UserPermissions>(DEFAULT_PERMISSIONS);
+  const [kurumCategory, setKurumCategory] = useState<KurumCategory | ''>('');
+  const [kurumName, setKurumName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Notification & Confirm
@@ -111,6 +114,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
     setDisplayName('');
     setSelectedHospitals([]);
     setPermissions(DEFAULT_PERMISSIONS);
+    setKurumCategory('');
+    setKurumName('');
     setActiveTab('info');
   };
 
@@ -126,6 +131,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
       modules: { ...DEFAULT_PERMISSIONS.modules, ...user.permissions.modules },
       canUpload: { ...DEFAULT_PERMISSIONS.canUpload, ...user.permissions.canUpload },
     });
+    setKurumCategory(user.kurum?.category || '');
+    setKurumName(user.kurum?.name || '');
     setActiveTab('info');
     setShowSlidePanel(true);
   };
@@ -161,6 +168,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
           ...permissions,
           allowedHospitals: selectedHospitals,
         },
+        ...(kurumCategory ? {
+          kurum: {
+            category: kurumCategory as KurumCategory,
+            ...(kurumName ? { name: kurumName } : {}),
+          },
+        } : {}),
         createdAt: new Date().toISOString(),
         createdBy: currentUserEmail,
       };
@@ -194,6 +207,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
                   ...permissions,
                   allowedHospitals: selectedHospitals,
                 },
+                ...(kurumCategory ? {
+                  kurum: {
+                    category: kurumCategory as KurumCategory,
+                    ...(kurumName ? { name: kurumName } : {}),
+                  },
+                } : {}),
                 createdAt: new Date().toISOString(),
                 createdBy: currentUserEmail,
               };
@@ -260,6 +279,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
         displayName: displayName,
         role: editingUser.role,
         permissions: cleanPermissions,
+        ...(kurumCategory ? {
+          kurum: {
+            category: kurumCategory as KurumCategory,
+            ...(kurumName ? { name: kurumName } : {}),
+          },
+        } : {}),
         createdAt: editingUser.createdAt,
         createdBy: editingUser.createdBy,
       };
@@ -511,6 +536,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
                     placeholder="Kullanici adi"
                   />
                 </div>
+
+                <AdminKurumSelector
+                  category={kurumCategory}
+                  name={kurumName}
+                  onCategoryChange={(cat) => {
+                    setKurumCategory(cat);
+                    setKurumName('');
+                  }}
+                  onNameChange={setKurumName}
+                />
               </form>
             )}
 

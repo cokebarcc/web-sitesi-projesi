@@ -471,6 +471,47 @@
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
+/* Kurum Badge */
+.admin-module .a-kurum-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--a-radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-module .a-kurum-badge--assigned {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.admin-module .a-kurum-badge--unassigned {
+  background: rgba(100, 116, 139, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+/* Form Select */
+.admin-module .a-form-select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.admin-module .a-form-select option {
+  background: var(--surface-1, #1a1a2e);
+  color: inherit;
+}
+
 /* Action Buttons */
 .admin-module .a-actions {
   display: flex;
@@ -1283,6 +1324,22 @@
   background: rgba(245, 158, 11, 0.08);
   color: #d97706;
   border-color: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="light"] .admin-module .a-kurum-badge--assigned {
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+  border-color: rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="light"] .admin-module .a-kurum-badge--unassigned {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+  border-color: rgba(100, 116, 139, 0.15);
+}
+
+[data-theme="light"] .admin-module .a-form-select option {
+  background: #fff;
 }
 
 [data-theme="light"] .admin-module .a-hospital-chip {

@@ -41,6 +41,7 @@ import DashboardHome from './components/DashboardHome';
 import DashboardCategory from './components/DashboardCategory';
 import EmergencyService from './components/EmergencyService';
 import WelcomeDashboard from './components/WelcomeDashboard';
+import MapDashboard from './components/map/MapDashboard';
 import FloatingSidebar from './components/FloatingSidebar';
 import CommandPalette from './components/CommandPalette';
 import SchedulePlanning from './components/SchedulePlanning';
@@ -1296,10 +1297,14 @@ const App: React.FC = () => {
     return <LoginPage onLoginSuccess={() => setAuthLoading(false)} />;
   }
 
-  // Welcome ekranı için özel tam ekran layout
+  // Welcome ekranı — Şanlıurfa İlçe Haritası
   if (view === 'welcome') {
     return (
-      <div className="min-h-screen font-['Inter']">
+      <div className={`flex h-screen font-['Inter'] ${
+        theme === 'dark'
+          ? 'text-slate-200 bg-gradient-to-br from-[#0f1729] via-[#131d33] to-[#0f1729]'
+          : 'text-slate-800 bg-gradient-to-br from-[#f0f4f8] via-[#e8eef5] to-[#f0f4f8]'
+      }`}>
         <CommandPalette
           isOpen={isCommandPaletteOpen}
           onClose={() => setIsCommandPaletteOpen(false)}
@@ -1328,22 +1333,22 @@ const App: React.FC = () => {
             <span className="text-sm font-semibold">{toast.message}</span>
           </div>
         )}
-        <WelcomeDashboard
-          userName={userPermissions?.displayName || user?.email?.split('@')[0]}
-          userEmail={user?.email || ''}
+        <FloatingSidebar
+          currentView={view}
           onNavigate={(v) => setView(v as ViewType)}
+          userEmail={user?.email || ''}
           onLogout={handleLogout}
           isAdmin={isAdmin}
           hasModuleAccess={hasModuleAccess}
-          detailedScheduleData={detailedScheduleData}
-          muayeneByPeriod={muayeneByPeriod}
-          ameliyatByPeriod={ameliyatByPeriod}
-          scheduleVersions={scheduleVersions}
-          selectedHospital={selectedHospital}
-          isDataLoaded={isDataLoaded}
           theme={theme}
           onToggleTheme={toggleTheme}
         />
+        <div className="flex-1 ml-[72px]">
+          <MapDashboard
+            theme={theme}
+            userName={userPermissions?.displayName || user?.email?.split('@')[0]}
+          />
+        </div>
       </div>
     );
   }

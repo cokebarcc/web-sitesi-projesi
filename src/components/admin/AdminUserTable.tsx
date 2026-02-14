@@ -72,6 +72,7 @@ const AdminUserTable: React.FC<AdminUserTableProps> = ({
                 <th>ROL</th>
                 <th>IZINLER</th>
                 <th>HASTANE</th>
+                <th>KURUM</th>
                 <th style={{ textAlign: 'right' }}>ISLEMLER</th>
               </tr>
             </thead>
