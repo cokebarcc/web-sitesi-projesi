@@ -5,9 +5,10 @@ import { PROVINCE_BOUNDS } from '../../src/data/sanliurfaDistricts';
 interface MapResizeHandlerProps {
   isPanelOpen: boolean;
   selectedCenter?: [number, number];
+  mapExpanded?: boolean;
 }
 
-const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ isPanelOpen, selectedCenter }) => {
+const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ isPanelOpen, selectedCenter, mapExpanded }) => {
   const map = useMap();
 
   // İlk yüklemede invalidateSize çağır
@@ -18,6 +19,15 @@ const MapResizeHandler: React.FC<MapResizeHandlerProps> = ({ isPanelOpen, select
     }, 100);
     return () => clearTimeout(timer);
   }, [map]);
+
+  // Expanded mod değiştiğinde haritayı yeniden boyutlandır
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize({ animate: false });
+      map.fitBounds(PROVINCE_BOUNDS, { padding: mapExpanded ? [10, 10] : [-20, -80] });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [mapExpanded, map]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

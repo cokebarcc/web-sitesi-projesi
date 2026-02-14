@@ -213,19 +213,19 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
       </>)}
 
       {/* Ana Icerik: Harita + Sag Panel */}
-      <div className={`flex gap-4 ${mapExpanded ? 'fixed inset-0 z-[9999] p-0' : ''}`} style={mapExpanded ? { height: '100vh' } : { height: 'calc(100vh - 195px)', minHeight: '500px' }}>
+      <div className={mapExpanded ? 'fixed inset-0 z-[9999]' : 'flex gap-4'} style={mapExpanded ? { width: '100vw', height: '100vh' } : { height: 'calc(100vh - 195px)', minHeight: '500px' }}>
         {/* Harita Karti */}
         <div
           className={[
             'overflow-hidden flex flex-col',
-            mapExpanded ? '' : 'rounded-2xl border',
+            mapExpanded ? 'w-full h-full' : 'rounded-2xl border',
             !mapExpanded && isDark ? 'border-white/[0.06]' : '',
             !mapExpanded && !isDark ? 'border-slate-200' : '',
             editMode && !mapExpanded ? (isDark ? 'ring-1 ring-amber-500/30' : 'ring-1 ring-amber-300') : '',
           ].join(' ')}
           style={{
-            backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
-            ...(mapExpanded ? { flex: '1 1 100%', maxWidth: '100%' } : { flex: '0 0 60%', maxWidth: '60%' }),
+            backgroundColor: isDark ? (mapExpanded ? '#0a0f1a' : 'rgba(255,255,255,0.02)') : '#ffffff',
+            ...(mapExpanded ? {} : { flex: '0 0 60%', maxWidth: '60%' }),
           }}
         >
           {/* Harita Kart Basligi — expanded modda floating */}
@@ -300,6 +300,7 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
                 selectedMarkerId={selectedMarkerId}
                 onMapClick={handleMapClick}
                 onMarkerClick={handleMarkerClick}
+                mapExpanded={mapExpanded}
               />
             )}
 
