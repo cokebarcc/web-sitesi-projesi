@@ -20,6 +20,11 @@ const NO_PERMISSIONS: UserPermissions = {
     presentation: false,
     emergencyService: false,
     activeDemand: false,
+    etikKurul: false,
+    hekimIslemListesi: false,
+    ekListeTanimlama: false,
+    sutMevzuati: false,
+    gil: false,
   },
   canUpload: {
     detailedSchedule: false,
@@ -65,6 +70,11 @@ export const useUserPermissions = (userEmail: string | null) => {
                 presentation: true,
                 emergencyService: true,
                 activeDemand: true,
+                etikKurul: true,
+                hekimIslemListesi: true,
+                ekListeTanimlama: true,
+                sutMevzuati: true,
+                gil: true,
               },
               canUpload: {
                 detailedSchedule: true,

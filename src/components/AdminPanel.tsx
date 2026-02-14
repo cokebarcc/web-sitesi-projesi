@@ -330,7 +330,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
             <button
               className="btn-add-user"
               onClick={() => onNavigate('session-management')}
-              style={{ background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', boxShadow: '0 4px 6px rgba(6, 182, 212, 0.25)' }}
+              style={{ background: '#06b6d4' }}
             >
               Oturum Yönetimi
             </button>
@@ -338,7 +338,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
           <button
             className="btn-delete"
             onClick={handleClearPhysicianData}
-            style={{ backgroundColor: '#dc2626', color: 'white' }}
+            style={{ backgroundColor: '#dc2626' }}
           >
             🗑️ Hekim Verilerini Temizle
           </button>
@@ -389,6 +389,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
                     {user.permissions.modules.presentation && <span className="perm-badge">Sunum</span>}
                     {user.permissions.modules.emergencyService && <span className="perm-badge">Acil</span>}
                     {user.permissions.modules.activeDemand && <span className="perm-badge">Aktif Talep</span>}
+                    {user.permissions.modules.etikKurul && <span className="perm-badge">Etik Kurul</span>}
+                    {user.permissions.modules.hekimIslemListesi && <span className="perm-badge">Hekim İşlem</span>}
+                    {user.permissions.modules.ekListeTanimlama && <span className="perm-badge">Ek Liste</span>}
+                    {user.permissions.modules.sutMevzuati && <span className="perm-badge">SUT</span>}
+                    {user.permissions.modules.gil && <span className="perm-badge">GİL</span>}
                     {user.permissions.canUpload?.detailedSchedule && <span className="upload-badge">📤 Cetvel Yükle</span>}
                     {user.permissions.canUpload?.physicianData && <span className="upload-badge">📤 Hekim Yükle</span>}
                     {user.permissions.canUpload?.emergencyService && <span className="upload-badge">📤 Acil Yükle</span>}
@@ -630,12 +635,67 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ currentUserEmail, onNavigate })
                     />
                     Aktif Talep
                   </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.modules.etikKurul}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        modules: { ...permissions.modules, etikKurul: e.target.checked }
+                      })}
+                    />
+                    Etik Kurul
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.modules.hekimIslemListesi}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        modules: { ...permissions.modules, hekimIslemListesi: e.target.checked }
+                      })}
+                    />
+                    Hekim İşlem Listesi
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.modules.ekListeTanimlama}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        modules: { ...permissions.modules, ekListeTanimlama: e.target.checked }
+                      })}
+                    />
+                    Ek Liste Tanımlama
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.modules.sutMevzuati}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        modules: { ...permissions.modules, sutMevzuati: e.target.checked }
+                      })}
+                    />
+                    SUT Mevzuatı
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={permissions.modules.gil}
+                      onChange={(e) => setPermissions({
+                        ...permissions,
+                        modules: { ...permissions.modules, gil: e.target.checked }
+                      })}
+                    />
+                    GİL
+                  </label>
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Veri Yükleme İzinleri:</label>
-                <small style={{ display: 'block', marginBottom: '8px', color: '#666' }}>
+                <small style={{ display: 'block', marginBottom: '8px' }}>
                   Seçili modüllere veri yükleyebilir (Excel/dosya yükleme)
                 </small>
                 <div className="checkbox-group upload-permissions">
