@@ -157,9 +157,11 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
             <g
               key={marker.id}
               style={{ cursor: 'pointer' }}
-              onMouseEnter={() => setHoveredMarker(marker)}
+              onMouseEnter={(e) => { e.stopPropagation(); setHoveredMarker(marker); setHoveredDistrict(null); }}
               onMouseLeave={() => setHoveredMarker(null)}
             >
+              {/* Görünmez büyük hit area */}
+              <circle cx={x} cy={y} r={r + 6} fill="transparent" />
               {/* Pin gölgesi */}
               <circle cx={x} cy={y + 1} r={r + 1} fill="rgba(0,0,0,0.3)" />
               {/* Pin dairesi */}
@@ -170,7 +172,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
                 fill={style.bg}
                 stroke="#fff"
                 strokeWidth={isHovered ? 2 : 1.5}
-                style={{ transition: 'r 0.15s ease, stroke-width 0.15s ease' }}
+                style={{ transition: 'all 0.15s ease' }}
               />
               {/* Pin etiketi */}
               <text
