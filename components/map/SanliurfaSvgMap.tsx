@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SVG_PATHS, SVG_CONFIG, DISTRICTS, INSTITUTION_STYLES, PROVINCE_BOUNDS } from '../../src/data/sanliurfaDistricts';
+import { SVG_PATHS, SVG_CONFIG, DISTRICTS, INSTITUTION_STYLES } from '../../src/data/sanliurfaDistricts';
 import type { InstitutionMarker } from '../../src/data/sanliurfaDistricts';
 
 interface SanliurfaSvgMapProps {
@@ -9,11 +9,10 @@ interface SanliurfaSvgMapProps {
   markers?: InstitutionMarker[];
 }
 
-// Lat/Lng → SVG koordinat dönüşümü
+// Lat/Lng → SVG koordinat dönüşümü (GeoJSON polygon verilerinden türetilmiş katsayılar)
 function latLngToSvg(lat: number, lng: number): { x: number; y: number } {
-  const [[minLat, minLng], [maxLat, maxLng]] = PROVINCE_BOUNDS;
-  const x = ((lng - minLng) / (maxLng - minLng)) * SVG_CONFIG.width;
-  const y = ((maxLat - lat) / (maxLat - minLat)) * SVG_CONFIG.height;
+  const x = 316.2240 * lng - 11944.3842;
+  const y = -340.3930 * lat + 12961.9022;
   return { x, y };
 }
 
@@ -24,6 +23,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
   markers = [],
 }) => {
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
+  const [hoveredMarker, setHoveredMarker] = useState<InstitutionMarker | null>(null);
   const isDark = theme === 'dark';
 
   const getPathStyle = (districtName: string) => {
@@ -152,12 +152,26 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
           const { x, y } = latLngToSvg(marker.lat, marker.lng);
           const style = INSTITUTION_STYLES[marker.type];
           const r = style.size * 0.3;
+          const isHovered = hoveredMarker?.id === marker.id;
           return (
-            <g key={marker.id} style={{ pointerEvents: 'none' }}>
+            <g
+              key={marker.id}
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={() => setHoveredMarker(marker)}
+              onMouseLeave={() => setHoveredMarker(null)}
+            >
               {/* Pin gölgesi */}
               <circle cx={x} cy={y + 1} r={r + 1} fill="rgba(0,0,0,0.3)" />
               {/* Pin dairesi */}
-              <circle cx={x} cy={y} r={r} fill={style.bg} stroke="#fff" strokeWidth={1.5} />
+              <circle
+                cx={x}
+                cy={y}
+                r={isHovered ? r + 2 : r}
+                fill={style.bg}
+                stroke="#fff"
+                strokeWidth={isHovered ? 2 : 1.5}
+                style={{ transition: 'r 0.15s ease, stroke-width 0.15s ease' }}
+              />
               {/* Pin etiketi */}
               <text
                 x={x}
@@ -168,12 +182,48 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
                 fontSize={r * 1.1}
                 fontWeight={700}
                 fontFamily="Inter, sans-serif"
+                style={{ pointerEvents: 'none' }}
               >
                 {style.label}
               </text>
             </g>
           );
         })}
+
+        {/* Tooltip — hover edilen pin bilgisi */}
+        {hoveredMarker && (() => {
+          const { x, y } = latLngToSvg(hoveredMarker.lat, hoveredMarker.lng);
+          const tooltipW = Math.max(hoveredMarker.name.length * 6.5, 80);
+          const tooltipH = 24;
+          const tx = Math.min(Math.max(x - tooltipW / 2, 4), SVG_CONFIG.width - tooltipW - 4);
+          const ty = y - 22;
+          return (
+            <g style={{ pointerEvents: 'none' }}>
+              <rect
+                x={tx}
+                y={ty - tooltipH / 2}
+                width={tooltipW}
+                height={tooltipH}
+                rx={4}
+                fill={isDark ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.95)'}
+                stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)'}
+                strokeWidth={0.8}
+              />
+              <text
+                x={tx + tooltipW / 2}
+                y={ty}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill={isDark ? '#e2e8f0' : '#1e293b'}
+                fontSize="9"
+                fontWeight={600}
+                fontFamily="Inter, sans-serif"
+              >
+                {hoveredMarker.name}
+              </text>
+            </g>
+          );
+        })()}
       </svg>
     </div>
   );

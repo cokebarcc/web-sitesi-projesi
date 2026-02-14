@@ -280,7 +280,7 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
                           : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
-                    Gerçek Harita
+                    Uydu
                   </button>
                 </div>
                 {/* Büyütme butonu — sadece satellite modda */}
