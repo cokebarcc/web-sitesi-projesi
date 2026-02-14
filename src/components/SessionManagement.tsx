@@ -51,7 +51,7 @@ const SessionManagement: React.FC<SessionManagementProps> = ({ currentUserEmail 
   };
 
   const handleCleanup = async () => {
-    if (!window.confirm('2 dakikadan fazla heartbeat almayan tüm eski oturumları temizlemek istediğinize emin misiniz?')) return;
+    if (!window.confirm('Tüm çevrimdışı oturumları temizlemek istediğinize emin misiniz?')) return;
     setCleaning(true);
     try {
       const count = await cleanupStaleSessions();
@@ -270,7 +270,6 @@ const SessionManagement: React.FC<SessionManagementProps> = ({ currentUserEmail 
                 <tbody>
                   {filteredSessions.map((session) => {
                     const isCurrent = session.sessionId === currentSessionId;
-                    const isOnline = session.status === 'online';
 
                     return (
                       <tr
@@ -284,9 +283,26 @@ const SessionManagement: React.FC<SessionManagementProps> = ({ currentUserEmail 
                           <div className="flex items-center gap-2">
                             <div
                               className="w-2.5 h-2.5 rounded-full"
-                              style={{ background: isOnline ? '#34d399' : '#fbbf24' }}
-                              title={isOnline ? 'Aktif' : 'Pasif (heartbeat gecikmiş)'}
+                              style={{
+                                background: session.status === 'online' ? '#34d399'
+                                  : session.status === 'idle' ? '#fbbf24'
+                                  : '#ef4444'
+                              }}
+                              title={
+                                session.status === 'online' ? 'Aktif'
+                                : session.status === 'idle' ? 'Pasif (heartbeat gecikmiş)'
+                                : 'Çevrimdışı'
+                              }
                             />
+                            <span className="text-[10px] font-semibold uppercase" style={{
+                              color: session.status === 'online' ? '#34d399'
+                                : session.status === 'idle' ? '#fbbf24'
+                                : '#ef4444'
+                            }}>
+                              {session.status === 'online' ? 'Aktif'
+                                : session.status === 'idle' ? 'Pasif'
+                                : 'Çevrimdışı'}
+                            </span>
                             {isCurrent && (
                               <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">
                                 Bu oturum
@@ -322,7 +338,11 @@ const SessionManagement: React.FC<SessionManagementProps> = ({ currentUserEmail 
                         </td>
 
                         <td className="px-4 py-3">
-                          <div className={`text-sm ${isOnline ? 'status-success' : 'status-warning'}`}>
+                          <div className={`text-sm ${
+                            session.status === 'online' ? 'status-success'
+                            : session.status === 'idle' ? 'status-warning'
+                            : ''
+                          }`} style={session.status === 'offline' ? { color: '#ef4444' } : undefined}>
                             {getTimeDiff(session.lastActivity)}
                           </div>
                         </td>
@@ -475,8 +495,8 @@ const SessionManagement: React.FC<SessionManagementProps> = ({ currentUserEmail 
           <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
         </svg>
         <span>
-          Oturumlar her 30 saniyede bir güncellenir. Yeşil nokta aktif, sarı nokta 2 dakikadan fazla heartbeat almayan oturumları gösterir.
-          Oturum kapatıldığında veya sekme kapatıldığında geçmiş sekmesine kaydedilir.
+          Oturumlar her 30 saniyede bir güncellenir. Yeşil = aktif, sarı = pasif (2-10 dk), kırmızı = çevrimdışı (10 dk+).
+          Çevrimdışı oturumlar listede kalır ve admin tarafından kapatılabilir. "Eski Oturumları Temizle" sadece çevrimdışı oturumları kaldırır.
         </span>
       </div>
     </div>
