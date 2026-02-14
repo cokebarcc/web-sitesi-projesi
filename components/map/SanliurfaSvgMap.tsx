@@ -103,6 +103,8 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
   }, []);
 
   const isZoomed = viewBox.w < SVG_CONFIG.width - 1 || viewBox.h < SVG_CONFIG.height - 1;
+  // Zoom ölçeği — pinler ve label'lar sabit boyutta kalsın
+  const zoomScale = viewBox.w / SVG_CONFIG.width;
 
   const getPathStyle = (districtName: string) => {
     const isSelected = districtName === selectedDistrict;
@@ -115,7 +117,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
         fill: baseColor,
         fillOpacity: 0.5,
         stroke: baseColor,
-        strokeWidth: 2.5,
+        strokeWidth: 2.5 * zoomScale,
         filter: 'url(#glow)',
       };
     }
@@ -124,7 +126,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
         fill: baseColor,
         fillOpacity: 0.35,
         stroke: baseColor,
-        strokeWidth: 2,
+        strokeWidth: 2 * zoomScale,
         filter: 'url(#glow)',
       };
     }
@@ -132,7 +134,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
       fill: isDark ? '#1e293b' : '#e2e8f0',
       fillOpacity: isDark ? 0.7 : 0.6,
       stroke: isDark ? '#334155' : '#94a3b8',
-      strokeWidth: 1.2,
+      strokeWidth: 1.2 * zoomScale,
       filter: 'none',
     };
   };
@@ -145,14 +147,14 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
     if (isSelected || isHovered) {
       return {
         fill: district?.color || '#fff',
-        fontSize: isSelected ? '13px' : '12px',
+        fontSize: `${(isSelected ? 13 : 12) * zoomScale}px`,
         fontWeight: 700 as const,
         opacity: 1,
       };
     }
     return {
       fill: isDark ? '#cbd5e1' : '#334155',
-      fontSize: '11px',
+      fontSize: `${11 * zoomScale}px`,
       fontWeight: 600 as const,
       opacity: 0.9,
     };
@@ -178,7 +180,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
       >
         <defs>
           <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <feGaussianBlur stdDeviation={3 * zoomScale} result="coloredBlur" />
             <feMerge>
               <feMergeNode in="coloredBlur" />
               <feMergeNode in="SourceGraphic" />
@@ -240,7 +242,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
         {markers.map((marker) => {
           const { x, y } = latLngToSvg(marker.lat, marker.lng);
           const style = INSTITUTION_STYLES[marker.type];
-          const r = style.size * 0.3;
+          const r = style.size * 0.3 * zoomScale;
           const isHovered = hoveredMarker?.id === marker.id;
           return (
             <g
@@ -255,17 +257,17 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
               onMouseLeave={() => { setHoveredMarker(null); setTooltipPos(null); }}
             >
               {/* Görünmez büyük hit area */}
-              <circle cx={x} cy={y} r={r + 6} fill="transparent" />
+              <circle cx={x} cy={y} r={r + 6 * zoomScale} fill="transparent" />
               {/* Pin gölgesi */}
-              <circle cx={x} cy={y + 1} r={r + 1} fill="rgba(0,0,0,0.3)" />
+              <circle cx={x} cy={y + 1 * zoomScale} r={r + 1 * zoomScale} fill="rgba(0,0,0,0.3)" />
               {/* Pin dairesi */}
               <circle
                 cx={x}
                 cy={y}
-                r={isHovered ? r + 2 : r}
+                r={isHovered ? r + 2 * zoomScale : r}
                 fill={style.bg}
                 stroke="#fff"
-                strokeWidth={isHovered ? 2 : 1.5}
+                strokeWidth={(isHovered ? 2 : 1.5) * zoomScale}
                 style={{ transition: 'all 0.15s ease' }}
               />
               {/* Pin etiketi */}
