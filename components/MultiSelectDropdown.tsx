@@ -247,13 +247,14 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         {/* Dropdown Menu */}
         {isOpen && (
           <div
-            className="absolute z-[9999] mt-1 min-w-full w-max max-w-[480px] bg-[#0f172a] border border-[var(--glass-border-light)] rounded-xl shadow-2xl overflow-hidden"
+            className="absolute z-[9999] mt-1 min-w-full w-max max-w-[480px] border border-[var(--glass-border-light)] rounded-xl shadow-2xl overflow-hidden"
+            style={{ background: 'var(--bg-app)' }}
             role="listbox"
             aria-multiselectable="true"
           >
             {/* Search Input */}
             {showSearch && options.length > 5 && (
-              <div className="p-2 border-b border-slate-700/50 bg-[#0f172a]">
+              <div className="p-2" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--bg-app)' }}>
                 <div className="relative">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -268,7 +269,8 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     }}
                     onKeyDown={handleKeyDown}
                     placeholder="Ara..."
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-[#1e293b] border border-slate-600/50 rounded-lg text-[var(--text-1)] placeholder-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50"
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg text-[var(--text-1)] placeholder-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50"
+                    style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)' }}
                   />
                 </div>
               </div>
@@ -276,7 +278,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
             {/* Select All / Clear All - Sadece çoklu seçimde göster */}
             {!singleSelect && filteredOptions.length > 0 && (
-              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50 bg-[#1e293b]">
+              <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
                 <button
                   type="button"
                   onClick={selectAll}
@@ -299,10 +301,11 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
             {/* Options List */}
             <div
               ref={listRef}
-              className="max-h-[240px] overflow-y-auto bg-[#0f172a]"
+              className="max-h-[240px] overflow-y-auto"
+              style={{ background: 'var(--bg-app)' }}
             >
               {filteredOptions.length === 0 ? (
-                <div className="px-3 py-4 text-sm text-[var(--text-muted)] text-center bg-[#0f172a]">
+                <div className="px-3 py-4 text-sm text-[var(--text-muted)] text-center" style={{ background: 'var(--bg-app)' }}>
                   {emptyMessage}
                 </div>
               ) : (
@@ -317,10 +320,17 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                       onClick={() => toggleOption(option.value)}
                       className={`
                         w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors
-                        ${isSelected ? 'bg-emerald-600/30 text-emerald-300' : 'text-[var(--text-2)] bg-[#0f172a]'}
-                        ${isFocused ? 'bg-slate-700/50' : ''}
-                        ${!isSelected && !isFocused ? 'hover:bg-slate-700/50' : ''}
+                        ${isSelected ? 'text-emerald-300' : 'text-[var(--text-2)]'}
                       `}
+                      style={{
+                        background: isSelected
+                          ? 'rgba(16, 185, 129, 0.2)'
+                          : isFocused
+                            ? 'var(--surface-hover)'
+                            : 'var(--bg-app)'
+                      }}
+                      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = isFocused ? 'var(--surface-hover)' : 'var(--bg-app)'; }}
                       role="option"
                       aria-selected={isSelected}
                     >

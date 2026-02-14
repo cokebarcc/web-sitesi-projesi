@@ -38,6 +38,10 @@
   --accent-warning: #fbbf24;
   --accent-danger: #f87171;
   --accent-info: #38bdf8;
+  --accent-lime: #a3e635;
+  --accent-amber: #fbbf24;
+  --accent-purple: #c084fc;
+  --accent-rose: #fb7185;
 
   /* Table Specific */
   --table-header-bg: rgba(19, 29, 51, 0.9);
@@ -91,6 +95,10 @@
 
   --accent-primary: #3b82f6;
   --accent-primary-hover: #2563eb;
+  --accent-lime: #4d7c0f;
+  --accent-amber: #b45309;
+  --accent-purple: #7e22ce;
+  --accent-rose: #be123c;
 
   --table-header-bg: rgba(241, 245, 249, 0.95);
   --table-row-bg: transparent;

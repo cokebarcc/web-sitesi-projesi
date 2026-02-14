@@ -890,11 +890,11 @@ export const ActionDaysChart = ({ data, hasPrevData }: { data: { action: string;
             if (active && payload && payload.length) {
               const d = payload[0].payload;
               const metrics: any[] = [{ label: 'Bu Ay', val: `${formatMetric(d.days)} gün`, color: 'text-indigo-400' }];
-              if (d.prevDays !== null) metrics.push({ label: 'Önceki Ay', val: `${formatMetric(d.prevDays)} gün`, color: 'text-slate-400' });
+              if (d.prevDays !== null) metrics.push({ label: 'Önceki Ay', val: `${formatMetric(d.prevDays)} gün`, color: 'text-[var(--text-3)]' });
               return <TooltipCard name={d.action} branch="" metrics={metrics}
                 footerLabel={d.delta !== null ? "Değişim" : "Toplam"}
                 footer={d.delta !== null ? `${d.delta > 0 ? '+' : ''}${formatMetric(d.delta)} gün (${d.deltaPct !== null ? `${d.deltaPct > 0 ? '+' : ''}${(d.deltaPct * 100).toFixed(0)}%` : '—'})` : `${formatMetric(d.days)} gün`}
-                footerColor={d.delta !== null ? (d.delta > 0 ? 'text-emerald-400' : d.delta < 0 ? 'text-rose-400' : 'text-slate-400') : 'text-indigo-400'} />;
+                footerColor={d.delta !== null ? (d.delta > 0 ? 'text-emerald-400' : d.delta < 0 ? 'text-rose-400' : 'text-[var(--text-3)]') : 'text-indigo-400'} />;
             }
             return null;
           }} />

@@ -42,19 +42,19 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-[#12121a] border border-slate-700/40 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col mx-4">
+      <div className="relative border rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col mx-4" style={{ background: 'var(--bg-app)', borderColor: 'var(--border-2)' }}>
         {/* Header */}
-        <div className={`px-6 py-4 border-b border-slate-700/30 flex items-center justify-between ${status.bg}`}>
+        <div className={`px-6 py-4 border-b flex items-center justify-between ${status.bg}`} style={{ borderColor: 'var(--border-2)' }}>
           <div className="flex items-center gap-3">
             <span className={`px-3 py-1 rounded-lg text-xs font-black ${status.color} ${status.bg} border ${status.border}`}>
               {status.label}
             </span>
             <div>
-              <h3 className="text-white font-bold text-lg">{row.gilKodu}</h3>
-              <p className="text-slate-400 text-sm">{row.gilAdi}</p>
+              <h3 className="font-bold text-lg" style={{ color: 'var(--text-1)' }}>{row.gilKodu}</h3>
+              <p className="text-sm" style={{ color: 'var(--text-3)' }}>{row.gilAdi}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors p-1">
+          <button onClick={onClose} className="transition-colors p-1" style={{ color: 'var(--text-muted)' }} onMouseEnter={e => e.currentTarget.style.color = 'var(--text-1)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -66,7 +66,7 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
 
           {/* İşlem Bilgileri */}
           <section>
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
               İşlem Bilgileri
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -88,9 +88,9 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                   .filter(([key]) => !['tarih','saat','uzmanlik','doktor','drTipi','gilKodu','gilAdi','miktar','puan','toplamPuan','fiyat','tutar','hastaTc','adiSoyadi','islemNo','disNumarasi'].includes(key))
                   .map(([key, value]) => ({ label: key, value: String(value ?? '') })),
               ].map(item => (
-                <div key={item.label} className="bg-slate-800/40 rounded-lg px-3 py-2">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.label}</p>
-                  <p className="text-sm text-slate-200 font-medium mt-0.5">{item.value || '—'}</p>
+                <div key={item.label} className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{item.label}</p>
+                  <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--text-2)' }}>{item.value || '—'}</p>
                 </div>
               ))}
             </div>
@@ -98,18 +98,18 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
 
           {/* Eşleşme & Güven */}
           <section>
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
               Eşleşme Bilgileri
             </h4>
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-slate-800/40 rounded-lg px-3 py-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Eşleşme</p>
+              <div className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Eşleşme</p>
                 <p className={`text-sm font-bold mt-0.5 ${result.eslesmeDurumu === 'ESLESTI' ? 'text-emerald-400' : 'text-red-400'}`}>
                   {result.eslesmeDurumu === 'ESLESTI' ? 'Eşleşti' : 'Eşleşemedi'}
                 </p>
               </div>
-              <div className="bg-slate-800/40 rounded-lg px-3 py-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Güven</p>
+              <div className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Güven</p>
                 <p className={`text-sm font-bold mt-0.5 ${
                   result.eslesme_guveni === 'Yüksek' ? 'text-emerald-400' :
                   result.eslesme_guveni === 'Orta' ? 'text-amber-400' : 'text-red-400'
@@ -117,12 +117,12 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                   {result.eslesme_guveni}
                 </p>
                 {result.guvenNedeni && (
-                  <p className="text-[10px] text-slate-500 mt-1">{result.guvenNedeni}</p>
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>{result.guvenNedeni}</p>
                 )}
               </div>
-              <div className="bg-slate-800/40 rounded-lg px-3 py-2">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kaynak</p>
-                <p className="text-sm text-slate-200 font-bold mt-0.5">
+              <div className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Kaynak</p>
+                <p className="text-sm font-bold mt-0.5" style={{ color: 'var(--text-2)' }}>
                   {kural?.kaynak || '—'}
                 </p>
               </div>
@@ -132,28 +132,28 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
           {/* Puan Karşılaştırması */}
           {kural && kural.islem_puani > 0 && (
             <section>
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
                 Puan Karşılaştırması
               </h4>
               {(() => {
                 const gilPuan = kural.gil_puani ?? kural.islem_puani;
                 const puanFark = row.puan - gilPuan;
                 return (
-                  <div className="bg-slate-800/40 rounded-lg px-4 py-3">
+                  <div className="rounded-lg px-4 py-3" style={{ background: 'var(--surface-2)' }}>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase">Puan</span>
+                      <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Puan</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Hastane Hekim Puanı:</span>
-                      <span className="text-white font-mono font-bold">{formatNumber(row.puan)}</span>
+                      <span style={{ color: 'var(--text-3)' }}>Hastane Hekim Puanı:</span>
+                      <span className="font-mono font-bold" style={{ color: 'var(--text-1)' }}>{formatNumber(row.puan)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">GİL Puanı:</span>
-                      <span className="text-slate-300 font-mono">{formatNumber(gilPuan)}</span>
+                      <span style={{ color: 'var(--text-3)' }}>GİL Puanı:</span>
+                      <span className="font-mono" style={{ color: 'var(--text-2)' }}>{formatNumber(gilPuan)}</span>
                     </div>
                     {puanFark !== 0 && (
-                      <div className="flex justify-between text-sm mt-1 pt-1 border-t border-slate-700/30">
-                        <span className="text-slate-400">Fark:</span>
+                      <div className="flex justify-between text-sm mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-2)' }}>
+                        <span style={{ color: 'var(--text-3)' }}>Fark:</span>
                         <span className={`font-mono font-bold ${puanFark > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
                           {puanFark > 0 ? '+' : ''}{formatNumber(puanFark)}
                         </span>
@@ -168,7 +168,7 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
           {/* İhlaller */}
           {result.ihlaller.length > 0 && (
             <section>
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
                 İhlaller ({result.ihlaller.length})
               </h4>
               <div className="space-y-2">
@@ -178,11 +178,11 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                       <span className="text-[10px] font-black text-red-400 bg-red-500/10 px-2 py-0.5 rounded">
                         {ihlal.ihlal_kodu}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-500">
+                      <span className="text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>
                         {kuralTipiLabels[ihlal.kural_tipi] || ihlal.kural_tipi}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-300">{ihlal.ihlal_aciklamasi}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-2)' }}>{ihlal.ihlal_aciklamasi}</p>
                     {/* AI ile çıkarılan kural bilgisi */}
                     {(() => {
                       const matchingRule = kural?.parsed_rules.find(r => r.type === ihlal.kural_tipi);
@@ -193,7 +193,7 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                             <p className="text-[11px] text-blue-300/70">{matchingRule.aiExplanation}</p>
                           )}
                           {matchingRule.confidence != null && (
-                            <span className="text-[9px] text-slate-500 shrink-0 ml-auto">%{Math.round(matchingRule.confidence * 100)}</span>
+                            <span className="text-[9px] shrink-0 ml-auto" style={{ color: 'var(--text-muted)' }}>%{Math.round(matchingRule.confidence * 100)}</span>
                           )}
                         </div>
                       ) : null;
@@ -201,19 +201,19 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                     {ihlal.referans_kural_metni && (
                       <div className="mt-2 pt-2 border-t border-red-500/10">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase">Referans Kural Metni</p>
+                          <p className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Referans Kural Metni</p>
                           {ihlal.kaynak && (
                             <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
                               {ihlal.kaynak}
                             </span>
                           )}
                           {ihlal.fromSectionHeader && (
-                            <span className="text-[9px] font-medium text-slate-500 bg-slate-500/10 border border-slate-500/20 px-1.5 py-0.5 rounded">
+                            <span className="text-[9px] font-medium border px-1.5 py-0.5 rounded" style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
                               Bölüm Başlığı
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400 italic">{'"'}{ihlal.referans_kural_metni}{'"'}</p>
+                        <p className="text-xs italic" style={{ color: 'var(--text-3)' }}>{'"'}{ihlal.referans_kural_metni}{'"'}</p>
                       </div>
                     )}
                     {/* Çakışan İşlemler */}
@@ -229,38 +229,38 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                                 <span className="text-[10px] font-black text-orange-300 bg-orange-500/10 px-1.5 py-0.5 rounded">
                                   {ci.gilKodu}
                                 </span>
-                                <span className="text-[11px] text-slate-400 truncate flex-1">
+                                <span className="text-[11px] truncate flex-1" style={{ color: 'var(--text-3)' }}>
                                   {ci.gilAdi}
                                 </span>
                               </div>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-0.5 text-[11px]">
                                 <div className="flex justify-between">
-                                  <span className="text-slate-500">Tarih:</span>
-                                  <span className="text-slate-300 font-medium">{ci.tarih}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>Tarih:</span>
+                                  <span className="font-medium" style={{ color: 'var(--text-2)' }}>{ci.tarih}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-slate-500">Saat:</span>
-                                  <span className="text-slate-300 font-medium">{ci.saat || '—'}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>Saat:</span>
+                                  <span className="font-medium" style={{ color: 'var(--text-2)' }}>{ci.saat || '—'}</span>
                                 </div>
                                 <div className="flex justify-between col-span-2">
-                                  <span className="text-slate-500">Hekim:</span>
-                                  <span className="text-slate-300 font-medium truncate ml-1">{ci.doktor || '—'}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>Hekim:</span>
+                                  <span className="font-medium truncate ml-1" style={{ color: 'var(--text-2)' }}>{ci.doktor || '—'}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-slate-500">Branş:</span>
-                                  <span className="text-slate-300 font-medium truncate ml-1">{ci.uzmanlik || '—'}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>Branş:</span>
+                                  <span className="font-medium truncate ml-1" style={{ color: 'var(--text-2)' }}>{ci.uzmanlik || '—'}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-slate-500">Puan:</span>
-                                  <span className="text-slate-300 font-mono font-medium">{formatNumber(ci.puan)}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>Puan:</span>
+                                  <span className="font-mono font-medium" style={{ color: 'var(--text-2)' }}>{formatNumber(ci.puan)}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-slate-500">Tutar:</span>
-                                  <span className="text-slate-300 font-mono font-medium">{formatNumber(ci.tutar)} ₺</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>Tutar:</span>
+                                  <span className="font-mono font-medium" style={{ color: 'var(--text-2)' }}>{formatNumber(ci.tutar)} ₺</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-slate-500">Miktar:</span>
-                                  <span className="text-slate-300 font-mono font-medium">{ci.miktar}</span>
+                                  <span style={{ color: 'var(--text-muted)' }}>Miktar:</span>
+                                  <span className="font-mono font-medium" style={{ color: 'var(--text-2)' }}>{ci.miktar}</span>
                                 </div>
                               </div>
                             </div>
@@ -277,7 +277,7 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
           {/* Bölüm Başlığı (Miras) */}
           {kural?.section_header && (
             <section>
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
                 Bölüm Başlığı Kuralı
               </h4>
               <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-3">
@@ -289,21 +289,24 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
           {/* Mevzuat Açıklaması */}
           {kural?.aciklama_raw && (
             <section>
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
                 Mevzuat Açıklaması (Ham Metin)
               </h4>
-              <div className="bg-slate-800/40 rounded-xl px-4 py-3">
-                <p className="text-xs text-slate-400 leading-relaxed whitespace-pre-wrap">{kural.aciklama_raw}</p>
+              <div className="rounded-xl px-4 py-3" style={{ background: 'var(--surface-2)' }}>
+                <p className="text-xs leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text-3)' }}>{kural.aciklama_raw}</p>
               </div>
             </section>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-slate-700/30 flex justify-end">
+        <div className="px-6 py-3 border-t flex justify-end" style={{ borderColor: 'var(--border-2)' }}>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all"
+            className="px-4 py-2 text-sm font-semibold rounded-lg transition-all"
+            style={{ color: 'var(--text-3)' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
           >
             Kapat
           </button>

@@ -560,9 +560,10 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   };
 
   const PngButton = ({ onClick, label = "PNG", className = "" }: { onClick: () => void, label?: string, className?: string }) => (
-    <button 
+    <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`no-print flex items-center gap-1.5 bg-white/95 hover:bg-white text-slate-700 px-3.5 py-2 rounded-xl text-[10px] font-black border-2 border-slate-200 shadow-md transition-all active:scale-95 ${className}`}
+      className={`no-print flex items-center gap-1.5 bg-white/95 hover:bg-white px-3.5 py-2 rounded-xl text-[10px] font-black border-2 shadow-md transition-all active:scale-95 ${className}`}
+      style={{ color: 'var(--text-2)', borderColor: 'var(--border-2)' }}
       title="Görsel Olarak İndir"
     >
       <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -582,19 +583,19 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         <div className="bg-white p-8 rounded-[40px] shadow-sm border-2 border-indigo-100 mb-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3 uppercase leading-normal">
+              <h2 className="text-3xl font-black tracking-tight flex items-center gap-3 uppercase leading-normal" style={{ color: 'var(--text-1)' }}>
                 <span className="w-2.5 h-10 bg-indigo-600 rounded-full"></span>
                 KONSOLİDE ANALİZ PANELİ
               </h2>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-1" style={{ color: 'var(--text-3)' }}>
                 GÖRSELLEŞTİRME • AI PLANLAMA • GEÇMİŞ DÖNEM KIYASLAMA
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100 no-print">
-               <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="px-4 py-2.5 rounded-xl text-[10px] font-black bg-white border border-slate-200 outline-none uppercase cursor-pointer">
+            <div className="flex items-center gap-2 p-1.5 rounded-2xl border no-print" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
+               <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="px-4 py-2.5 rounded-xl text-[10px] font-black border outline-none uppercase cursor-pointer" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
                  {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                </select>
-               <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="px-4 py-2.5 rounded-xl text-[10px] font-black bg-slate-900 text-white outline-none cursor-pointer">
+               <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="px-4 py-2.5 rounded-xl text-[10px] font-black outline-none cursor-pointer" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                </select>
             </div>
@@ -611,17 +612,17 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
 
       {/* 2. SEKSİYON: DASHBOARD GRAFİKLERİ */}
       <div className="grid grid-cols-1 gap-12">
-        <div ref={chart1Ref} className="relative bg-white p-12 rounded-[48px] shadow-sm border border-slate-100 flex flex-col h-[700px] group/chart1">
+        <div ref={chart1Ref} className="relative bg-white p-12 rounded-[48px] shadow-sm border flex flex-col h-[700px] group/chart1" style={{ borderColor: 'var(--border-2)' }}>
           <PngButton 
             onClick={() => downloadAsPng(chart1Ref, 'Kapasite_Kullanim_Analizi')} 
             className="absolute top-8 right-8 opacity-0 group-hover/chart1:opacity-100 z-20" 
           />
           <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4">
-            <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic underline decoration-indigo-500 decoration-4 underline-offset-8 leading-relaxed">Kapasite Kullanım Analizi</h4>
+            <h4 className="text-xl font-black uppercase tracking-tighter italic underline decoration-indigo-500 decoration-4 underline-offset-8 leading-relaxed" style={{ color: 'var(--text-1)' }}>Kapasite Kullanım Analizi</h4>
             <div className="flex gap-6 items-center flex-wrap justify-center">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-[#e11d48] rounded-full"></div><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">KAPASİTE ALTI</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-[#f59e0b] rounded-full"></div><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NORMAL</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-[#059669] rounded-full"></div><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">KAPASİTE ÜSTÜ</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-[#e11d48] rounded-full"></div><span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>KAPASİTE ALTI</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-[#f59e0b] rounded-full"></div><span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>NORMAL</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-[#059669] rounded-full"></div><span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>KAPASİTE ÜSTÜ</span></div>
             </div>
           </div>
           <div className="flex-1">
@@ -636,20 +637,20 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-white p-6 rounded-[32px] shadow-2xl border border-slate-100 min-w-[200px]">
-                          <p className="font-black text-slate-900 text-sm mb-1 uppercase leading-normal">{label}</p>
+                        <div className="bg-white p-6 rounded-[32px] shadow-2xl border min-w-[200px]" style={{ borderColor: 'var(--border-2)' }}>
+                          <p className="font-black text-sm mb-1 uppercase leading-normal" style={{ color: 'var(--text-1)' }}>{label}</p>
                           <p className="text-[10px] font-black text-indigo-600 uppercase mb-4 tracking-widest leading-normal">{data.specialty}</p>
-                          <div className="space-y-2 border-t border-slate-50 pt-4">
+                          <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--border-2)' }}>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">Planlanan:</span>
-                              <span className="text-xs font-black text-slate-700">{data.PlanMuayene}</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Planlanan:</span>
+                              <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.PlanMuayene}</span>
                             </div>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">Gerçekleşen:</span>
-                              <span className="text-xs font-black text-slate-700">{data.GercekMuayene}</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Gerçekleşen:</span>
+                              <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.GercekMuayene}</span>
                             </div>
-                            <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
-                              <span className="text-[10px] font-black text-slate-400 uppercase">Verim:</span>
+                            <div className="mt-2 pt-2 border-t flex justify-between items-center" style={{ borderColor: 'var(--border-2)' }}>
+                              <span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-3)' }}>Verim:</span>
                               <span className={`text-sm font-black ${data.UsageRate >= 1.2 ? 'text-emerald-600' : data.UsageRate < 1.0 ? 'text-rose-600' : 'text-amber-600'}`}>
                                 %{data.UsageRatePercent}
                               </span>
@@ -673,19 +674,19 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
           </div>
         </div>
 
-        <div ref={chart2Ref} className="relative bg-white p-12 rounded-[48px] shadow-sm border border-emerald-50 h-[750px] flex flex-col group/chart2">
+        <div ref={chart2Ref} className="relative bg-white p-12 rounded-[48px] shadow-sm border h-[750px] flex flex-col group/chart2" style={{ borderColor: 'var(--border-2)' }}>
           <PngButton 
             onClick={() => downloadAsPng(chart2Ref, 'Cerrahi_Verimlilik_Matrisi')} 
             className="absolute top-8 right-8 opacity-0 group-hover/chart2:opacity-100 z-20" 
           />
           <div className="flex flex-col sm:flex-row justify-between items-start mb-10 gap-4">
             <div>
-              <h4 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic underline decoration-emerald-500 decoration-4 underline-offset-8 leading-relaxed">Cerrahi Verimlilik Matrisi</h4>
-              <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">KURUM ORTALAMASI: {hospitalSurgeryAverage.toFixed(1)} VAKA/GÜN</p>
+              <h4 className="text-xl font-black uppercase tracking-tighter italic underline decoration-emerald-500 decoration-4 underline-offset-8 leading-relaxed" style={{ color: 'var(--text-1)' }}>Cerrahi Verimlilik Matrisi</h4>
+              <p className="text-[10px] font-bold mt-2 uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>KURUM ORTALAMASI: {hospitalSurgeryAverage.toFixed(1)} VAKA/GÜN</p>
             </div>
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#3b82f6] rounded"></div><span className="text-[10px] font-black uppercase text-slate-400">PLAN DIŞI GİRİŞ</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#ef4444] rounded"></div><span className="text-[10px] font-black uppercase text-slate-400">ORTALAMA ALTI</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#3b82f6] rounded"></div><span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-3)' }}>PLAN DIŞI GİRİŞ</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#ef4444] rounded"></div><span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-3)' }}>ORTALAMA ALTI</span></div>
             </div>
           </div>
           <div className="flex-1">
@@ -701,20 +702,20 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-white p-6 rounded-[32px] shadow-2xl border border-slate-100 min-w-[200px]">
-                          <p className="font-black text-slate-900 text-sm mb-1 uppercase leading-normal">{label}</p>
+                        <div className="bg-white p-6 rounded-[32px] shadow-2xl border min-w-[200px]" style={{ borderColor: 'var(--border-2)' }}>
+                          <p className="font-black text-sm mb-1 uppercase leading-normal" style={{ color: 'var(--text-1)' }}>{label}</p>
                           <p className="text-[10px] font-black text-emerald-600 uppercase mb-4 tracking-widest leading-normal">{data.specialty}</p>
-                          <div className="space-y-2 border-t border-slate-50 pt-4">
+                          <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--border-2)' }}>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">Planlanan Gün:</span>
-                              <span className="text-xs font-black text-slate-700">{data.PlanSurgeryDays} G</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Planlanan Gün:</span>
+                              <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.PlanSurgeryDays} G</span>
                             </div>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase">Vaka Sayısı:</span>
-                              <span className="text-xs font-black text-slate-700">{data.ActualSurgeryABC}</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Vaka Sayısı:</span>
+                              <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.ActualSurgeryABC}</span>
                             </div>
-                            <div className="mt-2 pt-2 border-t border-slate-50 flex justify-between items-center">
-                              <span className="text-[10px] font-black text-slate-400 uppercase">Günlük Ort:</span>
+                            <div className="mt-2 pt-2 border-t flex justify-between items-center" style={{ borderColor: 'var(--border-2)' }}>
+                              <span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-3)' }}>Günlük Ort:</span>
                               <span className={`text-sm font-black ${data.SurgeryEfficiency < hospitalSurgeryAverage ? 'text-rose-600' : 'text-emerald-600'}`}>
                                 {data.SurgeryEfficiency}
                               </span>
@@ -747,15 +748,15 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
 
       {/* 3. SEKSİYON: AI PLANLAMA ÖZET DEĞİŞİM TABLOSU */}
       {changedProposals.length > 0 && (
-        <div ref={aiPlanningTableRef} className="relative bg-white rounded-[48px] shadow-xl border border-slate-100 overflow-hidden animate-in slide-in-from-bottom-8 group/planning">
+        <div ref={aiPlanningTableRef} className="relative bg-white rounded-[48px] shadow-xl border overflow-hidden animate-in slide-in-from-bottom-8 group/planning" style={{ borderColor: 'var(--border-2)' }}>
             <PngButton 
               onClick={() => downloadAsPng(aiPlanningTableRef, 'AI_Planlama_Ozet_Tablo')} 
               className="absolute top-10 right-48 z-20 opacity-0 group-hover/planning:opacity-100" 
             />
-            <div className="p-10 border-b border-slate-50 bg-slate-900 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="p-10 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6" style={{ background: 'var(--bg-app)', borderColor: 'var(--border-2)' }}>
               <div>
-                <h4 className="text-2xl font-black text-white uppercase tracking-tight leading-normal">AI Planlama: Özet Değişim Tablosu</h4>
-                <p className="text-slate-400 text-xs mt-1 font-bold uppercase tracking-widest">Planlama Modülü Tarafından Önerilen Net Değişimler</p>
+                <h4 className="text-2xl font-black uppercase tracking-tight leading-normal" style={{ color: 'var(--text-1)' }}>AI Planlama: Özet Değişim Tablosu</h4>
+                <p className="text-xs mt-1 font-bold uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Planlama Modülü Tarafından Önerilen Net Değişimler</p>
               </div>
               <div className="flex flex-wrap items-center gap-4">
                  <button onClick={handleDownloadPlanningExcel} className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-black text-[10px] shadow-lg hover:bg-emerald-700 transition-all active:scale-95 uppercase tracking-widest whitespace-nowrap">
@@ -769,20 +770,20 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left table-auto">
-                <thead className="bg-slate-50 border-b border-slate-100">
+                <thead className="border-b" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
                   <tr>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Hekim Adı</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Branş</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Poliklinik Farkı</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Ameliyat Farkı</th>
-                    <th className="px-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Analiz Özeti</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Hekim Adı</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Branş</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-3)' }}>Poliklinik Farkı</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-3)' }}>Ameliyat Farkı</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Analiz Özeti</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y" style={{ borderColor: 'var(--border-2)' }}>
                   {changedProposals.map((prop, idx) => (
                     <tr key={idx} className="hover:bg-indigo-50/20 transition-colors">
-                      <td className="px-10 py-6"><p className="font-black text-slate-900 uppercase text-sm leading-normal">{prop.doctorName}</p></td>
-                      <td className="px-10 py-6"><p className="text-[10px] font-bold text-slate-500 uppercase leading-normal">{prop.specialty}</p></td>
+                      <td className="px-10 py-6"><p className="font-black uppercase text-sm leading-normal" style={{ color: 'var(--text-1)' }}>{prop.doctorName}</p></td>
+                      <td className="px-10 py-6"><p className="text-[10px] font-bold uppercase leading-normal" style={{ color: 'var(--text-muted)' }}>{prop.specialty}</p></td>
                       <td className="px-10 py-6 text-center">
                         <span className={`px-4 py-2 rounded-xl text-[10px] font-black border tracking-wider uppercase ${prop.polyDiff! > 0 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200'}`}>
                           {prop.polyDiff! > 0 ? '+' : ''}{prop.polyDiff} Gün
@@ -793,7 +794,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                           {prop.surgDiff! > 0 ? '+' : ''}{prop.surgDiff} Gün
                         </span>
                       </td>
-                      <td className="px-10 py-6 min-w-[300px]"><p className="text-[10px] font-bold text-slate-400 italic leading-snug">{prop.decSummary}</p></td>
+                      <td className="px-10 py-6 min-w-[300px]"><p className="text-[10px] font-bold italic leading-snug" style={{ color: 'var(--text-3)' }}>{prop.decSummary}</p></td>
                     </tr>
                   ))}
                 </tbody>
@@ -805,7 +806,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       {/* 4. SEKSİYON: GEÇMİŞ DÖNEM DEĞİŞİMLERİ */}
       <div className="space-y-12">
         <div className="px-4 py-2 border-l-8 border-[#e11d48] flex justify-between items-center">
-            <h3 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
+            <h3 className="text-4xl font-black tracking-tighter uppercase italic leading-none" style={{ color: 'var(--text-1)' }}>
               GEÇMİŞ DÖNEM ANALİZ MERKEZİ
             </h3>
         </div>
@@ -813,7 +814,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         {pastAnalysis ? (
           <div className="space-y-12">
             {/* Özet Siyah Bar */}
-            <div ref={hospitalSummaryRef} className="relative group/hsummary bg-[#0f172a] text-white p-16 rounded-[64px] shadow-2xl overflow-hidden flex flex-col md:flex-row justify-between items-center gap-12 border border-slate-800">
+            <div ref={hospitalSummaryRef} className="relative group/hsummary bg-[#0f172a] text-white p-16 rounded-[64px] shadow-2xl overflow-hidden flex flex-col md:flex-row justify-between items-center gap-12 border" style={{ borderColor: 'var(--border-2)' }}>
               <PngButton 
                 onClick={() => downloadAsPng(hospitalSummaryRef, 'Hastane_Kapasite_Ozet_Bar')} 
                 className="absolute top-8 right-8 opacity-0 group-hover/hsummary:opacity-100 z-20" 
@@ -823,12 +824,12 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 <p className="text-indigo-400 font-black text-[11px] uppercase tracking-[0.4em] mb-6">HASTANE GENEL KAPASİTE DEĞİŞİMİ</p>
                 <div className="flex items-center justify-center md:justify-start gap-8">
                    <h3 className="text-7xl font-black tracking-tighter leading-none">{pastAnalysis.capacity.initial.toLocaleString('tr-TR')}</h3>
-                   <svg className="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                   <svg className="w-12 h-12" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                    <h3 className="text-7xl font-black tracking-tighter leading-none">{pastAnalysis.capacity.final.toLocaleString('tr-TR')}</h3>
                 </div>
               </div>
               <div className={`relative z-10 px-12 py-8 rounded-[40px] border-4 text-center min-w-[300px] ${pastAnalysis.capacity.diff >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-[#e11d48]/10 border-[#e11d48]/30 shadow-[0_0_50px_rgba(225,29,72,0.1)]'}`}>
-                <p className="text-[11px] font-black uppercase tracking-widest mb-2 text-slate-400">NET FARK</p>
+                <p className="text-[11px] font-black uppercase tracking-widest mb-2" style={{ color: 'var(--text-3)' }}>NET FARK</p>
                 <p className={`text-6xl font-black leading-none ${pastAnalysis.capacity.diff >= 0 ? 'text-emerald-400' : 'text-[#e11d48]'}`}>
                   {pastAnalysis.capacity.diff.toLocaleString('tr-TR')}
                 </p>
@@ -838,7 +839,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             {/* Branş Kartları Grid */}
             <div className="space-y-6 relative group/branchgrid">
                 <div className="flex justify-between items-center px-4">
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight flex items-center gap-3 leading-normal">
+                  <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-3 leading-normal" style={{ color: 'var(--text-1)' }}>
                       <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
                       Branş Bazlı Kapasite Değişimleri (Sadece Kayıp Portföyü)
                   </h3>
@@ -846,19 +847,19 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 </div>
                 <div ref={branchGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 bg-[#F8FAFC] p-4">
                 {pastAnalysis.branchResults.map((br, idx) => (
-                    <div key={idx} className="bg-white p-12 pt-14 rounded-[48px] shadow-sm border border-slate-100 transition-all duration-500 hover:shadow-2xl relative overflow-hidden group">
+                    <div key={idx} className="bg-white p-12 pt-14 rounded-[48px] shadow-sm border transition-all duration-500 hover:shadow-2xl relative overflow-hidden group" style={{ borderColor: 'var(--border-2)' }}>
                     <div className="flex justify-between items-start mb-8">
-                        <h4 className="text-sm font-black text-slate-900 uppercase tracking-tighter line-clamp-1 pr-12 leading-relaxed">{br.name}</h4>
+                        <h4 className="text-sm font-black uppercase tracking-tighter line-clamp-1 pr-12 leading-relaxed" style={{ color: 'var(--text-1)' }}>{br.name}</h4>
                         <span className={`absolute top-8 right-8 text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg ${br.capacity.diff >= 0 ? 'bg-emerald-600 shadow-emerald-200' : 'bg-[#e11d48] shadow-rose-200'}`}>
                           {br.capacity.diff > 0 ? '+' : ''}{br.capacity.diff}
                         </span>
                     </div>
                     <div className="space-y-4">
-                        <div className="flex justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest leading-normal">
+                        <div className="flex justify-between text-[11px] font-black uppercase tracking-widest leading-normal" style={{ color: 'var(--text-3)' }}>
                             <span>NET KAPASİTE DEĞİŞİMİ</span>
                             <span className={br.capacity.diff >= 0 ? 'text-emerald-600' : 'text-[#e11d48]'}>%{Math.round((br.capacity.final / (br.capacity.initial || 1)) * 100 - 100)}</span>
                         </div>
-                        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-50">
+                        <div className="w-full h-2.5 rounded-full overflow-hidden border" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
                             <div className={`h-full transition-all duration-1000 ${br.capacity.diff >= 0 ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#e11d48] to-[#fb7185]'}`} 
                                 style={{ width: `${Math.min(100, (br.capacity.final / (br.capacity.initial || 1)) * 100)}%` }}></div>
                         </div>
@@ -871,7 +872,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             {/* Kayıp Analiz Kartları */}
             <div className="space-y-10 mt-16">
               <div className="flex justify-between items-center px-4">
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter italic flex items-center gap-4 leading-normal">
+                <h3 className="text-2xl font-black uppercase tracking-tighter italic flex items-center gap-4 leading-normal" style={{ color: 'var(--text-1)' }}>
                   <div className="w-2 h-8 bg-[#e11d48] rounded-full"></div>
                   KAYIP ANALİZ KARTLARI
                 </h3>
@@ -892,39 +893,39 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                       onClick={() => downloadElementByIdAsPng(`doc-card-${idx}`, `Hekim_Karti_${normalizeStr(doc.doctorName)}`)} 
                       className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 border-white/20 bg-black/40 text-white hover:bg-black/60" 
                     />
-                    <div className="bg-slate-900 p-6 flex justify-between items-center">
+                    <div className="p-6 flex justify-between items-center" style={{ background: 'var(--bg-app)' }}>
                       <div className="truncate pr-4">
-                        <h4 className="text-[12px] font-black text-white uppercase truncate leading-normal">{doc.doctorName}</h4>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate mt-1 leading-normal">{doc.branchName}</p>
+                        <h4 className="text-[12px] font-black uppercase truncate leading-normal" style={{ color: 'var(--text-1)' }}>{doc.doctorName}</h4>
+                        <p className="text-[9px] font-bold uppercase tracking-tighter truncate mt-1 leading-normal" style={{ color: 'var(--text-3)' }}>{doc.branchName}</p>
                       </div>
                       <span className="bg-[#e11d48] text-white text-[9px] font-black px-2 py-1 rounded-lg uppercase whitespace-nowrap shadow-lg">Kayıp</span>
                     </div>
                     <div className="p-8 space-y-6 flex-1">
                       <div className="flex justify-between items-end">
                         <div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase mb-1 leading-normal">Düşüş Oranı</p>
+                          <p className="text-[10px] font-black uppercase mb-1 leading-normal" style={{ color: 'var(--text-3)' }}>Düşüş Oranı</p>
                           <p className="text-2xl font-black text-[#e11d48] leading-none">%{Math.round((doc.capacity.final / (doc.capacity.initial || 1)) * 100 - 100)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-black text-slate-400 uppercase mb-1 leading-normal">Net Kayıp</p>
-                          <p className="text-xl font-black text-slate-900 leading-none">{doc.capacity.diff}</p>
+                          <p className="text-[10px] font-black uppercase mb-1 leading-normal" style={{ color: 'var(--text-3)' }}>Net Kayıp</p>
+                          <p className="text-xl font-black leading-none" style={{ color: 'var(--text-1)' }}>{doc.capacity.diff}</p>
                         </div>
                       </div>
                       <div className="space-y-3">
-                        <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase leading-normal">
+                        <div className="flex justify-between text-[10px] font-black uppercase leading-normal" style={{ color: 'var(--text-3)' }}>
                           <span>Seyir</span>
                           <span>{doc.capacity.initial} → {doc.capacity.final}</span>
                         </div>
-                        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-50">
+                        <div className="w-full h-2.5 rounded-full overflow-hidden border" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
                           <div className="bg-[#0f172a] h-full rounded-full transition-all duration-1000" style={{ width: `${(doc.capacity.final / doc.capacity.initial) * 100}%` }}></div>
                         </div>
                       </div>
-                      <div className="pt-4 border-t border-slate-50">
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest leading-normal">Aksiyon Bazlı Farklar</p>
+                      <div className="pt-4 border-t" style={{ borderColor: 'var(--border-2)' }}>
+                        <p className="text-[10px] font-black uppercase mb-3 tracking-widest leading-normal" style={{ color: 'var(--text-3)' }}>Aksiyon Bazlı Farklar</p>
                         <div className="space-y-2">
                           {Object.entries(doc.actions).filter(([_, m]: any) => m.diff !== 0).map(([act, m]: any, actIdx) => (
                             <div key={actIdx} className="flex justify-between items-center text-[11px] font-bold leading-normal">
-                              <span className="text-slate-500 uppercase truncate pr-2 leading-normal">{act}</span>
+                              <span className="uppercase truncate pr-2 leading-normal" style={{ color: 'var(--text-muted)' }}>{act}</span>
                               <span className={`font-black whitespace-nowrap px-2 py-0.5 rounded leading-normal ${m.diff < 0 ? 'text-[#e11d48] bg-rose-50' : 'text-emerald-600 bg-emerald-50'}`}>{m.diff > 0 ? '+' : ''}{m.diff}G</span>
                             </div>
                           ))}
@@ -939,8 +940,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             {/* Konsolide Liste Tablosu */}
             <div className="space-y-8 mt-16 group/ctable relative">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-4">
-                 <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic flex items-center gap-4 leading-normal">
-                   <div className="w-2 h-10 bg-slate-900 rounded-full"></div>
+                 <h3 className="text-3xl font-black uppercase tracking-tighter italic flex items-center gap-4 leading-normal" style={{ color: 'var(--text-1)' }}>
+                   <div className="w-2 h-10 rounded-full" style={{ background: 'var(--text-1)' }}></div>
                    Konsolide Değişim Listesi
                  </h3>
                  <div className="flex flex-wrap gap-4">
@@ -950,41 +951,41 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       EXCEL OLARAK İNDİR
                    </button>
-                   <button onClick={handleDownloadPdfGlobal} disabled={isExporting} className="bg-slate-900 text-white px-10 py-5 rounded-[24px] font-black text-xs shadow-2xl hover:bg-slate-800 transition-all disabled:opacity-50 uppercase tracking-widest">
+                   <button onClick={handleDownloadPdfGlobal} disabled={isExporting} className="text-white px-10 py-5 rounded-[24px] font-black text-xs shadow-2xl transition-all disabled:opacity-50 uppercase tracking-widest" style={{ background: 'var(--bg-app)' }}>
                      {isExporting ? 'HAZIRLANIYOR...' : 'TABLOYU PDF İNDİR'}
                    </button>
                  </div>
               </div>
-              <div ref={consolidatedTableRef} className="bg-white rounded-[56px] shadow-2xl border border-slate-100 overflow-hidden">
+              <div ref={consolidatedTableRef} className="bg-white rounded-[56px] shadow-2xl border overflow-hidden" style={{ borderColor: 'var(--border-2)' }}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left table-auto">
-                    <thead className="bg-slate-50 border-b border-slate-100">
+                    <thead className="border-b" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
                       <tr>
-                        <th className="px-12 py-8 text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] leading-normal">Hekim Adı</th>
-                        <th className="px-12 py-8 text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] leading-normal">Branş</th>
-                        <th className="px-10 py-8 text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] text-center leading-normal">Eski Kap</th>
-                        <th className="px-10 py-8 text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] text-center leading-normal">Yeni Kap</th>
-                        <th className="px-10 py-8 text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] text-center leading-normal">Fark</th>
-                        <th className="px-12 py-8 text-[12px] font-black text-slate-400 uppercase tracking-[0.2em] leading-normal">Aksiyon Değişimleri</th>
+                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-3)' }}>Hekim Adı</th>
+                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-3)' }}>Branş</th>
+                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-3)' }}>Eski Kap</th>
+                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-3)' }}>Yeni Kap</th>
+                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-3)' }}>Fark</th>
+                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-3)' }}>Aksiyon Değişimleri</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
+                    <tbody className="divide-y" style={{ borderColor: 'var(--border-2)' }}>
                       {allDroppedDoctorsTableData.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-12 py-8 font-black text-slate-900 uppercase text-sm leading-normal">{row.name}</td>
-                          <td className="px-12 py-8 text-[11px] font-bold text-slate-500 uppercase leading-normal">{row.branch}</td>
-                          <td className="px-10 py-8 text-center text-xs font-bold text-slate-400 leading-normal">{row.initial}</td>
-                          <td className="px-10 py-8 text-center text-xs font-black text-slate-700 leading-normal">{row.final}</td>
+                        <tr key={idx} className="transition-colors" style={{ cursor: 'default' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--table-row-hover)'} onMouseLeave={(e) => e.currentTarget.style.background = ''}>
+                          <td className="px-12 py-8 font-black uppercase text-sm leading-normal" style={{ color: 'var(--text-1)' }}>{row.name}</td>
+                          <td className="px-12 py-8 text-[11px] font-bold uppercase leading-normal" style={{ color: 'var(--text-muted)' }}>{row.branch}</td>
+                          <td className="px-10 py-8 text-center text-xs font-bold leading-normal" style={{ color: 'var(--text-3)' }}>{row.initial}</td>
+                          <td className="px-10 py-8 text-center text-xs font-black leading-normal" style={{ color: 'var(--text-2)' }}>{row.final}</td>
                           <td className="px-10 py-8 text-center leading-normal"><span className="bg-rose-100 text-[#e11d48] px-5 py-2 rounded-2xl font-black text-[11px] border border-rose-200 leading-normal">{row.diff}</span></td>
                           <td className="px-12 py-8 min-w-[300px] leading-normal"><p className="text-[11px] font-bold text-indigo-600 italic leading-snug">{row.actions || 'Kapasite düşüşü aksiyon değişikliği ile açıklanmıyor.'}</p></td>
                         </tr>
                       ))}
-                      <tr className="bg-slate-900 text-white font-black">
+                      <tr className="font-black" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
                         <td className="px-12 py-10 text-[13px] uppercase tracking-[0.3em] leading-normal" colSpan={2}>GENEL ANALİZ TOPLAMI (TÜM KAYIPLAR)</td>
                         <td className="px-10 py-10 text-center text-base leading-normal">{tableTotals.initial.toLocaleString('tr-TR')}</td>
                         <td className="px-10 py-10 text-center text-base leading-normal">{tableTotals.final.toLocaleString('tr-TR')}</td>
                         <td className="px-10 py-10 text-center leading-normal"><span className="bg-[#e11d48] text-white px-8 py-3 rounded-2xl text-sm border border-rose-400 shadow-2xl leading-normal">{tableTotals.diff.toLocaleString('tr-TR')}</span></td>
-                        <td className="px-12 py-10 text-[10px] text-slate-400 italic leading-normal">Kayıp yaşayanların toplam kümülatif verisidir.</td>
+                        <td className="px-12 py-10 text-[10px] italic leading-normal" style={{ color: 'var(--text-3)' }}>Kayıp yaşayanların toplam kümülatif verisidir.</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1012,7 +1013,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                      <span className="tracking-tight uppercase">STRATEJİK AI ANALİZİ BAŞLAT</span>
                    </div>
                  </button>
-                 <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em]">TÜM MODÜL VERİLERİNİ İNCELEYEREK YÖNETİCİ RAPORU OLUŞTURUR</p>
+                 <p className="font-bold uppercase text-[10px] tracking-[0.3em]" style={{ color: 'var(--text-3)' }}>TÜM MODÜL VERİLERİNİ İNCELEYEREK YÖNETİCİ RAPORU OLUŞTURUR</p>
                </div>
 
                {aiReport && (
@@ -1026,13 +1027,13 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                       <div className="flex items-center gap-6 mb-12">
                         <div className="w-20 h-20 bg-indigo-600 rounded-[32px] flex items-center justify-center font-black text-3xl text-white shadow-2xl shadow-indigo-200">AI</div>
                         <div>
-                          <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-normal">STRATEJİK YÖNETİCİ ANALİZ RAPORU</h3>
+                          <h3 className="text-3xl font-black tracking-tighter uppercase leading-normal" style={{ color: 'var(--text-1)' }}>STRATEJİK YÖNETİCİ ANALİZ RAPORU</h3>
                           <p className="text-indigo-600 font-bold text-xs uppercase tracking-widest mt-1">VERİ ODAKLI KURUMSAL KARAR DESTEK SİSTEMİ</p>
                         </div>
                       </div>
-                      <div className="prose prose-indigo max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-li:font-bold prose-headings:font-black">
+                      <div className="prose prose-indigo max-w-none prose-p:leading-relaxed prose-li:font-bold prose-headings:font-black" style={{ '--tw-prose-body': 'var(--text-2)' } as React.CSSProperties}>
                         {aiReport.split('\n').map((line, lineIdx) => (
-                           <p key={lineIdx} className="mb-4 text-lg font-medium text-slate-700 leading-normal">
+                           <p key={lineIdx} className="mb-4 text-lg font-medium leading-normal" style={{ color: 'var(--text-2)' }}>
                              {line.startsWith('-') || line.startsWith('*') ? (
                                <span className="flex gap-4">
                                  <span className="text-indigo-500 mt-1.5 shrink-0">●</span>
@@ -1042,7 +1043,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                            </p>
                         ))}
                       </div>
-                      <div className="mt-12 pt-10 border-t border-slate-100 flex justify-end items-center gap-4 no-print">
+                      <div className="mt-12 pt-10 border-t flex justify-end items-center gap-4 no-print" style={{ borderColor: 'var(--border-2)' }}>
                          <button 
                            onClick={handleDownloadPptx}
                            disabled={isExportingPptx}
@@ -1055,7 +1056,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                            )}
                            SUNUM OLARAK İNDİR (.PPTX)
                          </button>
-                         <button onClick={() => window.print()} className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all">RAPORU YAZDIR</button>
+                         <button onClick={() => window.print()} className="text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all" style={{ background: 'var(--bg-app)' }}>RAPORU YAZDIR</button>
                       </div>
                     </div>
                  </div>
@@ -1063,13 +1064,13 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-white p-32 rounded-[64px] border-2 border-dashed border-slate-200 text-center flex flex-col items-center gap-10">
-             <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 shadow-inner">
+          <div className="bg-white p-32 rounded-[64px] border-2 border-dashed text-center flex flex-col items-center gap-10" style={{ borderColor: 'var(--border-2)' }}>
+             <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-inner" style={{ background: 'var(--surface-3)', color: 'var(--text-muted)' }}>
                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
              </div>
              <div>
-               <h4 className="text-2xl font-black text-slate-400 uppercase tracking-[0.3em] leading-normal">Karşılaştırmalı Veri Bekleniyor</h4>
-               <p className="text-slate-400 font-medium max-w-xl mx-auto mt-4 italic leading-relaxed text-sm">Analiz yapmak için lütfen "Geçmiş Dönem Değişimleri" sekmesinden ilk ve son cetvelleri yükleyiniz. Veriler buraya otomatik yansıyacaktır.</p>
+               <h4 className="text-2xl font-black uppercase tracking-[0.3em] leading-normal" style={{ color: 'var(--text-3)' }}>Karşılaştırmalı Veri Bekleniyor</h4>
+               <p className="font-medium max-w-xl mx-auto mt-4 italic leading-relaxed text-sm" style={{ color: 'var(--text-3)' }}>Analiz yapmak için lütfen "Geçmiş Dönem Değişimleri" sekmesinden ilk ve son cetvelleri yükleyiniz. Veriler buraya otomatik yansıyacaktır.</p>
              </div>
           </div>
         )}
@@ -1084,15 +1085,15 @@ const StatCard = ({ title, value, color, subtitle }: any) => {
     if (c === 'amber') return 'text-amber-600';
     if (c === 'purple') return 'text-purple-600';
     if (c === 'emerald') return 'text-emerald-600';
-    return 'text-slate-900';
+    return '';
   };
   return (
-    <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-xl transition-all group">
+    <div className="bg-white p-10 rounded-[40px] shadow-sm border flex flex-col justify-between hover:shadow-xl transition-all group" style={{ borderColor: 'var(--border-2)' }}>
       <div>
-        <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] mb-2 group-hover:text-slate-600 transition-colors leading-normal">{title}</p>
-        <h3 className={`text-4xl font-black tracking-tighter leading-none ${getLabelColor(color)}`}>{value.toLocaleString('tr-TR')}</h3>
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-2 transition-colors leading-normal" style={{ color: 'var(--text-3)' }}>{title}</p>
+        <h3 className={`text-4xl font-black tracking-tighter leading-none ${getLabelColor(color)}`} style={!getLabelColor(color) ? { color: 'var(--text-1)' } : undefined}>{value.toLocaleString('tr-TR')}</h3>
       </div>
-      <p className="text-[11px] font-bold text-slate-400 mt-6 border-t pt-4 uppercase tracking-tight italic leading-normal">{subtitle}</p>
+      <p className="text-[11px] font-bold mt-6 border-t pt-4 uppercase tracking-tight italic leading-normal" style={{ color: 'var(--text-3)', borderColor: 'var(--border-2)' }}>{subtitle}</p>
     </div>
   );
 };

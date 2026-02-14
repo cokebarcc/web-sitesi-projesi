@@ -45,17 +45,18 @@ const AppendixModal: React.FC<{
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl max-h-[80vh] bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-3xl max-h-[80vh] rounded-2xl shadow-2xl overflow-hidden"
+        style={{ background: 'var(--surface-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border-2)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Başlık */}
-        <div className="sticky top-0 flex items-center justify-between px-6 py-4 bg-slate-800 border-b border-slate-700">
-          <h3 className="text-lg font-bold text-white">{appendix.title}</h3>
+        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+          <h3 className="text-lg font-bold" style={{ color: 'var(--text-1)' }}>{appendix.title}</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-[var(--surface-3)] transition-colors"
           >
-            <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" style={{ color: 'var(--text-3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -63,7 +64,7 @@ const AppendixModal: React.FC<{
 
         {/* İçerik */}
         <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
-          <pre className="text-slate-300 text-sm whitespace-pre-wrap break-all font-mono leading-relaxed">
+          <pre className="text-sm whitespace-pre-wrap break-all font-mono leading-relaxed" style={{ color: 'var(--text-2)' }}>
             {appendix.content}
           </pre>
         </div>
@@ -288,7 +289,8 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                       <td className="px-3 py-3 text-center border-r border-[var(--glass-border)]">
                         <div className="flex items-center justify-center gap-1">
                           <svg
-                            className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                            style={{ color: 'var(--text-3)' }}
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -334,7 +336,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                         {(() => {
                           const donemIciVal = typeof row.donemIci === 'number' ? row.donemIci : parseFloat(String(row.donemIci));
                           const trRolVal = typeof row.trRolOrtalama === 'number' ? row.trRolOrtalama : parseFloat(String(row.trRolOrtalama));
-                          if (isNaN(donemIciVal) || isNaN(trRolVal)) return <span className="text-base text-slate-500">-</span>;
+                          if (isNaN(donemIciVal) || isNaN(trRolVal)) return <span className="text-base" style={{ color: 'var(--text-muted)' }}>-</span>;
                           const fark = donemIciVal - trRolVal;
                           return (
                             <span className="text-base text-[var(--text-1)]">
@@ -357,47 +359,47 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
 
                     {/* Genişletilmiş Detay Satırı */}
                     {isExpanded && indicatorDetail && (
-                      <tr className="bg-slate-800/50">
+                      <tr style={{ background: 'var(--surface-2)' }}>
                         <td colSpan={10} className="p-0">
                           <div className="p-6 border-l-4 border-indigo-500">
                             {/* Başlık */}
                             <div className="flex items-start justify-between mb-6">
                               <div>
-                                <h4 className="text-lg font-bold text-white flex items-center gap-2">
+                                <h4 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-1)' }}>
                                   <span className="text-indigo-400">{indicatorDetail.code}</span>
                                   <span>—</span>
                                   <span>{indicatorDetail.name}</span>
                                 </h4>
-                                <div className="flex items-center gap-4 mt-2 text-sm text-slate-400">
-                                  <span>Birim: <span className="text-slate-300">{indicatorDetail.unit}</span></span>
+                                <div className="flex items-center gap-4 mt-2 text-sm" style={{ color: 'var(--text-3)' }}>
+                                  <span>Birim: <span style={{ color: 'var(--text-2)' }}>{indicatorDetail.unit}</span></span>
                                   <span>•</span>
-                                  <span>Kaynak: <span className="text-slate-300">{indicatorDetail.source}</span></span>
+                                  <span>Kaynak: <span style={{ color: 'var(--text-2)' }}>{indicatorDetail.source}</span></span>
                                   <span>•</span>
                                   <span>HBYS Hesaplayabilir: <span className={indicatorDetail.hbysCalculable ? 'text-emerald-400' : 'text-rose-400'}>{indicatorDetail.hbysCalculable ? 'Evet' : 'Hayır'}</span></span>
                                   <span>•</span>
                                   <span>Maksimum Puan: <span className="text-amber-400 font-bold">{indicatorDetail.maxPoints}</span></span>
                                 </div>
                               </div>
-                              <span className="text-xs text-slate-500">Kabul Tarihi: {indicatorDetail.acceptedDate}</span>
+                              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Kabul Tarihi: {indicatorDetail.acceptedDate}</span>
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                               {/* Parametreler */}
                               <div className="space-y-4">
                                 {indicatorDetail.parameters.map((param, pIdx) => (
-                                  <div key={pIdx} className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+                                  <div key={pIdx} className="rounded-xl p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
                                     <div className="flex items-center gap-2 mb-2">
                                       <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400 font-bold text-lg">
                                         {param.key}
                                       </span>
-                                      <span className="text-white font-semibold">{param.name}</span>
+                                      <span className="font-semibold" style={{ color: 'var(--text-1)' }}>{param.name}</span>
                                     </div>
-                                    <p className="text-slate-400 text-sm mb-2">
-                                      <span className="text-slate-500">Tanım: </span>
+                                    <p className="text-sm mb-2" style={{ color: 'var(--text-3)' }}>
+                                      <span style={{ color: 'var(--text-muted)' }}>Tanım: </span>
                                       {param.description}
                                     </p>
-                                    <p className="text-slate-400 text-sm">
-                                      <span className="text-slate-500">Hesaplama: </span>
+                                    <p className="text-sm" style={{ color: 'var(--text-3)' }}>
+                                      <span style={{ color: 'var(--text-muted)' }}>Hesaplama: </span>
                                       {param.calculation}
                                     </p>
                                   </div>
@@ -411,7 +413,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                                     </svg>
                                     Gösterge Değeri (GD)
                                   </h5>
-                                  <p className="text-white font-mono text-lg bg-slate-900/50 rounded-lg px-4 py-2 inline-block">
+                                  <p className="font-mono text-lg rounded-lg px-4 py-2 inline-block" style={{ color: 'var(--text-1)', background: 'var(--surface-1)' }}>
                                     {indicatorDetail.gdFormula}
                                   </p>
                                   {indicatorDetail.gdDescription && (
@@ -435,9 +437,10 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                                     {indicatorDetail.scoringRules.map((rule, rIdx) => (
                                       <div
                                         key={rIdx}
-                                        className="flex items-center justify-between bg-slate-900/50 rounded-lg px-4 py-2"
+                                        className="flex items-center justify-between rounded-lg px-4 py-2"
+                                        style={{ background: 'var(--surface-1)' }}
                                       >
-                                        <span className="text-slate-300 text-sm font-mono">{rule.condition}</span>
+                                        <span className="text-sm font-mono" style={{ color: 'var(--text-2)' }}>{rule.condition}</span>
                                         <span className={`font-bold text-lg px-3 py-1 rounded ${
                                           rule.points === indicatorDetail.maxPoints
                                             ? 'bg-emerald-500/20 text-emerald-400'
@@ -454,14 +457,14 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
 
                                 {/* Notlar */}
                                 {indicatorDetail.notes && (
-                                  <div className="mt-4 bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
-                                    <h5 className="text-slate-400 font-semibold mb-2 flex items-center gap-2">
+                                  <div className="mt-4 rounded-xl p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+                                    <h5 className="font-semibold mb-2 flex items-center gap-2" style={{ color: 'var(--text-3)' }}>
                                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
                                       Not
                                     </h5>
-                                    <p className="text-slate-400 text-sm">{indicatorDetail.notes}</p>
+                                    <p className="text-sm" style={{ color: 'var(--text-3)' }}>{indicatorDetail.notes}</p>
                                   </div>
                                 )}
 
@@ -521,39 +524,39 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
 
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                                     {/* Mevcut Durum */}
-                                    <div className="bg-slate-900/50 rounded-lg p-3">
-                                      <span className="text-xs text-slate-500 block mb-1">Mevcut Puan</span>
-                                      <span className="text-lg font-bold text-white">{rec.currentGP} <span className="text-sm text-slate-400">/ {rec.maxPoints}</span></span>
+                                    <div className="rounded-lg p-3" style={{ background: 'var(--surface-1)' }}>
+                                      <span className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Mevcut Puan</span>
+                                      <span className="text-lg font-bold" style={{ color: 'var(--text-1)' }}>{rec.currentGP} <span className="text-sm" style={{ color: 'var(--text-3)' }}>/ {rec.maxPoints}</span></span>
                                     </div>
                                     {/* Kazanılacak Puan */}
-                                    <div className="bg-slate-900/50 rounded-lg p-3">
-                                      <span className="text-xs text-slate-500 block mb-1">Kazanılacak Puan</span>
+                                    <div className="rounded-lg p-3" style={{ background: 'var(--surface-1)' }}>
+                                      <span className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Kazanılacak Puan</span>
                                       <span className={`text-lg font-bold ${pStyle.text}`}>+{rec.pointsGainable}</span>
                                     </div>
                                     {/* Hedef Puan */}
-                                    <div className="bg-slate-900/50 rounded-lg p-3">
-                                      <span className="text-xs text-slate-500 block mb-1">Hedef Puan</span>
-                                      <span className="text-lg font-bold text-emerald-400">{rec.targetGP} <span className="text-sm text-slate-400">/ {rec.maxPoints}</span></span>
+                                    <div className="rounded-lg p-3" style={{ background: 'var(--surface-1)' }}>
+                                      <span className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Hedef Puan</span>
+                                      <span className="text-lg font-bold text-emerald-400">{rec.targetGP} <span className="text-sm" style={{ color: 'var(--text-3)' }}>/ {rec.maxPoints}</span></span>
                                     </div>
                                   </div>
 
                                   {/* GD Bilgileri */}
                                   {rec.currentGD !== null && rec.targetGD !== null && (
-                                    <div className="bg-slate-900/50 rounded-lg p-3 mb-3 flex items-center gap-3">
-                                      <span className="text-sm text-slate-400">GD:</span>
-                                      <span className="text-sm font-mono text-white">{rec.currentGD.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</span>
-                                      <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <div className="rounded-lg p-3 mb-3 flex items-center gap-3" style={{ background: 'var(--surface-1)' }}>
+                                      <span className="text-sm" style={{ color: 'var(--text-3)' }}>GD:</span>
+                                      <span className="text-sm font-mono" style={{ color: 'var(--text-1)' }}>{rec.currentGD.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</span>
+                                      <svg className="w-4 h-4" style={{ color: 'var(--text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                       </svg>
                                       <span className={`text-sm font-mono font-bold ${pStyle.text}`}>{rec.targetGD.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}</span>
-                                      <span className="text-xs text-slate-500 ml-1">(fark: {Math.abs(rec.gdGap!).toLocaleString('tr-TR', { maximumFractionDigits: 2 })})</span>
+                                      <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>(fark: {Math.abs(rec.gdGap!).toLocaleString('tr-TR', { maximumFractionDigits: 2 })})</span>
                                     </div>
                                   )}
 
                                   {/* Koşul */}
-                                  <div className="bg-slate-900/50 rounded-lg p-3 mb-3">
-                                    <span className="text-xs text-slate-500 block mb-1">Bir Sonraki Kademe</span>
-                                    <span className="text-sm font-medium text-white">{rec.nextTierCondition}</span>
+                                  <div className="rounded-lg p-3 mb-3" style={{ background: 'var(--surface-1)' }}>
+                                    <span className="text-xs block mb-1" style={{ color: 'var(--text-muted)' }}>Bir Sonraki Kademe</span>
+                                    <span className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>{rec.nextTierCondition}</span>
                                   </div>
 
                                   {/* Aksiyon Önerisi */}

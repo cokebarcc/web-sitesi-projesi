@@ -182,26 +182,32 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   const isSortDesc = sortColumn === col.key && sortDirection === 'desc';
 
   return ReactDOM.createPortal(
-    <div ref={dropdownRef} style={style}
-      className="bg-[#1e1e36] border border-slate-600/60 rounded-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
+    <div ref={dropdownRef} style={{ ...style, background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}
+      className="border rounded-xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
     >
       {/* Sıralama */}
       <div className="px-3 pt-3 pb-1 flex gap-1">
         <button
           onClick={() => onSort(isSortAsc ? null : 'asc')}
-          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isSortAsc ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/30'}`}
+          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${isSortAsc ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'border-transparent'}`}
+          style={!isSortAsc ? { color: 'var(--text-3)' } : undefined}
+          onMouseEnter={e => { if (!isSortAsc) { e.currentTarget.style.background = 'var(--input-bg)'; e.currentTarget.style.color = 'var(--text-1)'; }}}
+          onMouseLeave={e => { if (!isSortAsc) { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-3)'; }}}
         >
           <span>▲</span> {col.type === 'number' ? 'Küçük→Büyük' : 'A→Z'}
         </button>
         <button
           onClick={() => onSort(isSortDesc ? null : 'desc')}
-          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all ${isSortDesc ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/30'}`}
+          className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${isSortDesc ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'border-transparent'}`}
+          style={!isSortDesc ? { color: 'var(--text-3)' } : undefined}
+          onMouseEnter={e => { if (!isSortDesc) { e.currentTarget.style.background = 'var(--input-bg)'; e.currentTarget.style.color = 'var(--text-1)'; }}}
+          onMouseLeave={e => { if (!isSortDesc) { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-3)'; }}}
         >
           <span>▼</span> {col.type === 'number' ? 'Büyük→Küçük' : 'Z→A'}
         </button>
       </div>
 
-      <div className="border-t border-slate-700/40 mx-2" />
+      <div className="border-t mx-2" style={{ borderColor: 'var(--border-2)' }} />
 
       {/* Arama */}
       <div className="px-3 py-2">
@@ -210,20 +216,21 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
           type="text" value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={`${col.label} ara...`}
-          className="w-full bg-slate-800/80 border border-slate-600/50 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder-slate-600"
+          className="w-full border text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+          style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
         />
       </div>
 
       {/* Tümünü Seç / Kaldır */}
       <div className="px-3 pb-1 flex items-center gap-2">
-        <button onClick={selectAll} className={`text-[10px] font-bold transition-colors ${allChecked ? 'text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}>
+        <button onClick={selectAll} className={`text-[10px] font-bold transition-colors ${allChecked ? 'text-cyan-400' : 'hover:text-cyan-400'}`} style={!allChecked ? { color: 'var(--text-muted)' } : undefined}>
           Tümünü Seç
         </button>
-        <span className="text-slate-700">|</span>
-        <button onClick={deselectAll} className={`text-[10px] font-bold transition-colors ${noneChecked ? 'text-red-400' : 'text-slate-500 hover:text-red-400'}`}>
+        <span style={{ color: 'var(--border-2)' }}>|</span>
+        <button onClick={deselectAll} className={`text-[10px] font-bold transition-colors ${noneChecked ? 'text-red-400' : 'hover:text-red-400'}`} style={!noneChecked ? { color: 'var(--text-muted)' } : undefined}>
           Tümünü Kaldır
         </button>
-        <span className="ml-auto text-[9px] text-slate-600">{sortedEntries.length} / {uniqueVals.size}</span>
+        <span className="ml-auto text-[9px]" style={{ color: 'var(--text-muted)' }}>{sortedEntries.length} / {uniqueVals.size}</span>
       </div>
 
       {/* Checkbox listesi */}
@@ -232,30 +239,37 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
           const checked = localSelected.has(val);
           return (
             <label key={val}
-              className={`flex items-center gap-2 px-2 py-[3px] rounded-md cursor-pointer transition-colors text-xs ${checked ? 'text-slate-300 hover:bg-slate-700/30' : 'text-slate-600 hover:bg-slate-700/20'}`}
+              className="flex items-center gap-2 px-2 py-[3px] rounded-md cursor-pointer transition-colors text-xs"
+              style={{ color: checked ? 'var(--text-2)' : 'var(--text-muted)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = ''; }}
             >
               <input type="checkbox" checked={checked} onChange={() => toggle(val)}
-                className="w-3 h-3 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500/30 focus:ring-1 cursor-pointer accent-cyan-500"
+                className="w-3 h-3 rounded text-cyan-500 focus:ring-cyan-500/30 focus:ring-1 cursor-pointer accent-cyan-500"
+                style={{ borderColor: 'var(--input-border)', background: 'var(--input-bg)' }}
               />
               <span className="truncate flex-1">{val || '(Boş)'}</span>
-              <span className="text-[9px] text-slate-600 tabular-nums">{count}</span>
+              <span className="text-[9px] tabular-nums" style={{ color: 'var(--text-muted)' }}>{count}</span>
             </label>
           );
         })}
         {sortedEntries.length === 0 && (
-          <div className="text-center text-xs text-slate-600 py-3">Sonuç bulunamadı</div>
+          <div className="text-center text-xs py-3" style={{ color: 'var(--text-muted)' }}>Sonuç bulunamadı</div>
         )}
       </div>
 
       {/* Alt butonlar: Tamam / İptal */}
-      <div className="border-t border-slate-700/40 px-3 py-2 flex items-center gap-2">
+      <div className="border-t px-3 py-2 flex items-center gap-2" style={{ borderColor: 'var(--border-2)' }}>
         <button onClick={handleApply}
           className="flex-1 px-3 py-1.5 text-[11px] font-bold bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-all"
         >
           Tamam
         </button>
         <button onClick={onClose}
-          className="flex-1 px-3 py-1.5 text-[11px] font-bold text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg border border-slate-700/40 transition-all"
+          className="flex-1 px-3 py-1.5 text-[11px] font-bold rounded-lg border transition-all"
+          style={{ color: 'var(--text-3)', borderColor: 'var(--border-2)' }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-2)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = ''; }}
         >
           İptal
         </button>
@@ -721,13 +735,13 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     <div className="space-y-4">
 
       {/* Kural Yükleme Durumu */}
-      <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-5">
+      <div className="backdrop-blur-xl rounded-2xl border p-5" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kural Veritabanı</span>
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>Kural Veritabanı</span>
           </div>
           {/* API Key Yönetimi */}
           {!hasApiKey && !showApiKeyInput && (
@@ -744,7 +758,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
           {hasApiKey && (
             <div className="flex items-center gap-1.5">
               <span className="px-2 py-1 text-xs font-bold rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">Key Aktif</span>
-              <button onClick={handleRemoveApiKey} className="p-1 text-slate-500 hover:text-red-400 transition-colors" title="API Key Sil">
+              <button onClick={handleRemoveApiKey} className="p-1 hover:text-red-400 transition-colors" style={{ color: 'var(--text-muted)' }} title="API Key Sil">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -768,7 +782,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
         {/* API Key Input */}
         {showApiKeyInput && (
-          <div className="mt-3 flex items-center gap-2 p-3 bg-slate-800/50 rounded-lg border border-blue-500/20">
+          <div className="mt-3 flex items-center gap-2 p-3 rounded-lg border border-blue-500/20" style={{ background: 'var(--surface-2)' }}>
             <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
@@ -778,10 +792,11 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               onChange={(e) => setApiKeyInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSaveApiKey()}
               placeholder="Claude API Key (sk-ant-...)"
-              className="flex-1 px-3 py-1.5 text-xs bg-slate-900/50 border border-slate-700/50 rounded-md text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500/50"
+              className="flex-1 px-3 py-1.5 text-xs border rounded-md focus:outline-none focus:border-blue-500/50"
+              style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--text-2)' }}
             />
             <button onClick={handleSaveApiKey} className="px-3 py-1.5 text-xs font-bold bg-blue-600 text-white rounded-md hover:bg-blue-500 transition-all">Kaydet</button>
-            <button onClick={() => { setShowApiKeyInput(false); setApiKeyInput(''); }} className="px-3 py-1.5 text-xs font-bold bg-slate-700 text-slate-300 rounded-md hover:bg-slate-600 transition-all">İptal</button>
+            <button onClick={() => { setShowApiKeyInput(false); setApiKeyInput(''); }} className="px-3 py-1.5 text-xs font-bold rounded-md transition-all" style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }}>İptal</button>
           </div>
         )}
 
@@ -793,14 +808,14 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             { key: 'gil', label: 'GİL', status: ruleLoadStatus?.gil },
             { key: 'sut', label: 'SUT', status: ruleLoadStatus?.sut },
           ].map(src => (
-            <div key={src.key} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${src.status?.loaded ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-slate-800/50 border-slate-700/30 text-slate-500'}`}>
+            <div key={src.key} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${src.status?.loaded ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : ''}`} style={!src.status?.loaded ? { background: 'var(--surface-2)', borderColor: 'var(--border-2)', color: 'var(--text-muted)' } : undefined}>
               {src.status?.loaded ? (
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
               ) : (
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
               )}
               {src.label}
-              {src.status?.loaded && <span className="text-[10px] font-normal text-slate-500 ml-1">({src.status.count.toLocaleString('tr-TR')})</span>}
+              {src.status?.loaded && <span className="text-[10px] font-normal ml-1" style={{ color: 'var(--text-muted)' }}>({src.status.count.toLocaleString('tr-TR')})</span>}
             </div>
           ))}
           {rulesMaster && (
@@ -813,18 +828,18 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
         {/* Kayıtlı Kural Metadata Bilgisi */}
         {rulesMetadata && (
-          <div className="mt-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/20">
+          <div className="mt-3 p-3 rounded-lg border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
             <div className="flex items-center gap-2 mb-2">
               <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kayıtlı Kural Bilgisi</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>Kayıtlı Kural Bilgisi</span>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-500">
-              <span>Versiyon: <span className="text-slate-300 font-bold">{rulesMetadata.version}</span></span>
-              <span>Oluşturulma: <span className="text-slate-300 font-bold">{new Date(rulesMetadata.createdAt).toLocaleDateString('tr-TR')} {new Date(rulesMetadata.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span></span>
-              <span>Toplam İşlem: <span className="text-slate-300 font-bold">{rulesMetadata.stats.totalProcedures.toLocaleString('tr-TR')}</span></span>
-              <span>Çıkarılan Kural: <span className="text-slate-300 font-bold">{rulesMetadata.stats.rulesExtracted.toLocaleString('tr-TR')}</span></span>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+              <span>Versiyon: <span className="font-bold" style={{ color: 'var(--text-2)' }}>{rulesMetadata.version}</span></span>
+              <span>Oluşturulma: <span className="font-bold" style={{ color: 'var(--text-2)' }}>{new Date(rulesMetadata.createdAt).toLocaleDateString('tr-TR')} {new Date(rulesMetadata.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span></span>
+              <span>Toplam İşlem: <span className="font-bold" style={{ color: 'var(--text-2)' }}>{rulesMetadata.stats.totalProcedures.toLocaleString('tr-TR')}</span></span>
+              <span>Çıkarılan Kural: <span className="font-bold" style={{ color: 'var(--text-2)' }}>{rulesMetadata.stats.rulesExtracted.toLocaleString('tr-TR')}</span></span>
               {rulesMetadata.stats.crossRefsResolved > 0 && (
-                <span>Çapraz Referans: <span className="text-slate-300 font-bold">{rulesMetadata.stats.crossRefsResolved.toLocaleString('tr-TR')}</span></span>
+                <span>Çapraz Referans: <span className="font-bold" style={{ color: 'var(--text-2)' }}>{rulesMetadata.stats.crossRefsResolved.toLocaleString('tr-TR')}</span></span>
               )}
             </div>
           </div>
@@ -832,7 +847,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
       </div>
 
       {/* Analiz Kontrol */}
-      <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-5">
+      <div className="backdrop-blur-xl rounded-2xl border p-5" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
         <div className="flex items-center gap-3">
           <button onClick={handleStartAnalysis} disabled={!canAnalyze} className="px-6 py-2.5 text-sm font-black bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:from-amber-500 hover:to-orange-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
@@ -847,7 +862,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
           </button>
           {results.length > 0 && (
             <>
-              <button onClick={handleClearAnalysis} className="px-4 py-2.5 text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-xl transition-all flex items-center gap-2">
+              <button onClick={handleClearAnalysis} className="px-4 py-2.5 text-sm font-semibold rounded-xl transition-all flex items-center gap-2" style={{ color: 'var(--text-3)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-2)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = ''; }}
+              >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 Temizle
               </button>
@@ -861,10 +879,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
         {(isLoading || isAnalyzing || isAuditing) && progress && (
           <div className="mt-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-400">{progress.message}</span>
+              <span className="text-xs" style={{ color: 'var(--text-3)' }}>{progress.message}</span>
               <span className="text-xs font-bold text-amber-400">{progressPercent}%</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-2">
+            <div className="w-full rounded-full h-2" style={{ background: 'var(--surface-3)' }}>
               <div className={`h-2 rounded-full transition-all duration-300 ${
                 progress.phase === 'ai-extraction'
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500'
@@ -874,38 +892,38 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
           </div>
         )}
         {!rulesMaster && !isLoading && (
-          <p className="mt-2 text-xs text-slate-500">Önce kuralları yükleyin, sonra analiz başlatın.</p>
+          <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Önce kuralları yükleyin, sonra analiz başlatın.</p>
         )}
       </div>
 
       {/* Özet Dashboard */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          <SummaryCard label="Toplam Analiz" value={formatNumber(summary.toplamAnaliz)} color="text-white" />
+          <SummaryCard label="Toplam Analiz" value={formatNumber(summary.toplamAnaliz)} color="--text-1" />
           <SummaryCard label="Uygun" value={formatNumber(summary.uygunSayisi)} color="text-emerald-400" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunSayisi / summary.toplamAnaliz * 100) : 0}`} />
           <SummaryCard label="Uygunsuz" value={formatNumber(summary.uygunsuzSayisi)} color="text-red-400" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunsuzSayisi / summary.toplamAnaliz * 100) : 0}`} />
           <SummaryCard label="Manuel İnceleme" value={formatNumber(summary.manuelIncelemeSayisi)} color="text-amber-400" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.manuelIncelemeSayisi / summary.toplamAnaliz * 100) : 0}`} />
           <SummaryCard label="Eşleşen" value={formatNumber(summary.eslesenSayisi)} color="text-blue-400" />
-          <SummaryCard label="Eşleşmeyen" value={formatNumber(summary.eslesemeyenSayisi)} color="text-slate-400" />
+          <SummaryCard label="Eşleşmeyen" value={formatNumber(summary.eslesemeyenSayisi)} color="--text-3" />
           <SummaryCard label="Muaf İşlem" value={formatNumber(summary.muafIslemSayisi)} color="text-violet-400" />
         </div>
       )}
 
       {/* Full Audit Sonuçları */}
       {auditResult && (
-        <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-violet-500/30 p-5 space-y-4">
+        <div className="backdrop-blur-xl rounded-2xl border border-violet-500/30 p-5 space-y-4" style={{ background: 'var(--surface-1)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
               <span className="text-sm font-bold text-violet-400">Full Audit Sonuclari</span>
-              <span className="text-xs text-slate-500">({auditResult.timestamp.slice(0, 10)})</span>
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>({auditResult.timestamp.slice(0, 10)})</span>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={handleExportAudit} className="px-3 py-1.5 text-xs font-bold text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 rounded-lg transition-all flex items-center gap-1.5 border border-violet-500/20">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 JSON Indir
               </button>
-              <button onClick={() => setAuditResult(null)} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-300 hover:bg-slate-700/30 rounded-lg transition-all">
+              <button onClick={() => setAuditResult(null)} className="px-3 py-1.5 text-xs font-bold rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}>
                 Kapat
               </button>
             </div>
@@ -913,12 +931,12 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
           {/* Özet Kartları */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-            <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/30">
-              <p className="text-[10px] font-bold text-slate-500 uppercase">Toplam Entry</p>
-              <p className="text-lg font-black text-white">{auditResult.totalEntries.toLocaleString('tr-TR')}</p>
+            <div className="rounded-lg p-3 border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+              <p className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Toplam Entry</p>
+              <p className="text-lg font-black" style={{ color: 'var(--text-1)' }}>{auditResult.totalEntries.toLocaleString('tr-TR')}</p>
             </div>
-            <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/30">
-              <p className="text-[10px] font-bold text-slate-500 uppercase">AI Analiz</p>
+            <div className="rounded-lg p-3 border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+              <p className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>AI Analiz</p>
               <p className="text-lg font-black text-blue-400">{auditResult.uniqueTextsAnalyzed.toLocaleString('tr-TR')}</p>
             </div>
             <div className="bg-emerald-500/5 rounded-lg p-3 border border-emerald-500/20">
@@ -945,14 +963,14 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2">AI'in Bulup Regex'in Kacirdigi Pattern'ler (Regex'e eklenecek)</h4>
               <div className="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar-compliance">
                 {auditResult.regexMissedPatterns.slice(0, 20).map((p, i) => (
-                  <div key={i} className="bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/30">
+                  <div key={i} className="rounded-lg p-2.5 border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-bold text-cyan-400">{p.pattern}</span>
-                      <span className="text-[10px] text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded">{p.count}x</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--text-muted)', background: 'var(--surface-3)' }}>{p.count}x</span>
                     </div>
                     <div className="space-y-0.5">
                       {p.examples.map((ex, j) => (
-                        <p key={j} className="text-[10px] text-slate-500 truncate">{ex}</p>
+                        <p key={j} className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{ex}</p>
                       ))}
                     </div>
                   </div>
@@ -970,10 +988,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                   <div key={i} className="bg-red-500/5 rounded-lg p-2.5 border border-red-500/20">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-mono text-red-400">{entry.islem_kodu}</span>
-                      <span className="text-[10px] text-slate-500">{entry.kaynak}</span>
-                      <span className="text-xs text-slate-400 truncate flex-1">{entry.islem_adi}</span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{entry.kaynak}</span>
+                      <span className="text-xs truncate flex-1" style={{ color: 'var(--text-3)' }}>{entry.islem_adi}</span>
                     </div>
-                    <p className="text-[10px] text-slate-500 mb-1 truncate">{entry.aciklama_raw.substring(0, 150)}</p>
+                    <p className="text-[10px] mb-1 truncate" style={{ color: 'var(--text-muted)' }}>{entry.aciklama_raw.substring(0, 150)}</p>
                     {entry.diffs.filter(d => d.source === 'conflict').map((d, j) => (
                       <p key={j} className="text-[10px] text-red-300">{d.description}</p>
                     ))}
@@ -992,10 +1010,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                   <div key={i} className="bg-cyan-500/5 rounded-lg p-2.5 border border-cyan-500/20">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-mono text-cyan-400">{entry.islem_kodu}</span>
-                      <span className="text-[10px] text-slate-500">{entry.kaynak}</span>
-                      <span className="text-xs text-slate-400 truncate flex-1">{entry.islem_adi}</span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{entry.kaynak}</span>
+                      <span className="text-xs truncate flex-1" style={{ color: 'var(--text-3)' }}>{entry.islem_adi}</span>
                     </div>
-                    <p className="text-[10px] text-slate-500 mb-1 truncate">{entry.aciklama_raw.substring(0, 150)}</p>
+                    <p className="text-[10px] mb-1 truncate" style={{ color: 'var(--text-muted)' }}>{entry.aciklama_raw.substring(0, 150)}</p>
                     {entry.diffs.filter(d => d.source === 'ai_only').map((d, j) => (
                       <p key={j} className="text-[10px] text-cyan-300">{d.description}</p>
                     ))}
@@ -1009,10 +1027,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
       {/* Filtre Bar */}
       {results.length > 0 && (
-        <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-4 flex flex-wrap gap-3 items-center">
+        <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-wrap gap-3 items-center" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
           <div className="flex items-center gap-2">
-            <label className="text-[10px] font-bold text-slate-500 uppercase">Durum:</label>
-            <select value={filterDurum} onChange={e => { setFilterDurum(e.target.value as any); setCurrentPage(1); }} className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Durum:</label>
+            <select value={filterDurum} onChange={e => { setFilterDurum(e.target.value as any); setCurrentPage(1); }} className="border text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
               <option value="TUMU">Tümü</option>
               <option value="UYGUN">Uygun</option>
               <option value="UYGUNSUZ">Uygunsuz</option>
@@ -1021,16 +1039,16 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[10px] font-bold text-slate-500 uppercase">Eşleşme:</label>
-            <select value={filterEsleme} onChange={e => { setFilterEsleme(e.target.value as any); setCurrentPage(1); }} className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Eşleşme:</label>
+            <select value={filterEsleme} onChange={e => { setFilterEsleme(e.target.value as any); setCurrentPage(1); }} className="border text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
               <option value="TUMU">Tümü</option>
               <option value="ESLESTI">Eşleşti</option>
               <option value="ESLESEMEDI">Eşleşemedi</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[10px] font-bold text-slate-500 uppercase">Kural:</label>
-            <select value={filterKuralTipi} onChange={e => { setFilterKuralTipi(e.target.value as any); setCurrentPage(1); }} className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Kural:</label>
+            <select value={filterKuralTipi} onChange={e => { setFilterKuralTipi(e.target.value as any); setCurrentPage(1); }} className="border text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
               <option value="TUMU">Tümü</option>
               <option value="BASAMAK_KISITI">Basamak</option>
               <option value="BRANS_KISITI">Branş</option>
@@ -1042,38 +1060,38 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[10px] font-bold text-slate-500 uppercase">Muaf:</label>
-            <select value={filterMuaf} onChange={e => { setFilterMuaf(e.target.value as any); setCurrentPage(1); }} className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+            <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Muaf:</label>
+            <select value={filterMuaf} onChange={e => { setFilterMuaf(e.target.value as any); setCurrentPage(1); }} className="border text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
               <option value="TUMU">Tümü</option>
               <option value="MUAF">Muaf</option>
               <option value="MUAF_DEGIL">Muaf Değil</option>
             </select>
           </div>
           <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-            <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            <input type="text" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} placeholder="GİL kodu, doktor, hasta..." className="flex-1 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50 placeholder-slate-600" />
+            <svg className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <input type="text" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} placeholder="GİL kodu, doktor, hasta..." className="flex-1 border text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} />
           </div>
-          <span className="text-xs text-slate-500 ml-auto">{filteredResults.length.toLocaleString('tr-TR')} sonuç</span>
+          <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>{filteredResults.length.toLocaleString('tr-TR')} sonuç</span>
         </div>
       )}
 
       {/* Sonuç Tablosu */}
       {results.length > 0 && (
         <>
-          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-t-2xl border border-b-0 border-slate-700/30 px-5 py-3 flex items-center justify-between">
-            <span className="text-xs text-slate-500">{filteredResults.length.toLocaleString('tr-TR')} sonuç / {results.length.toLocaleString('tr-TR')} toplam</span>
+          <div className="backdrop-blur-xl rounded-t-2xl border border-b-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{filteredResults.length.toLocaleString('tr-TR')} sonuç / {results.length.toLocaleString('tr-TR')} toplam</span>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">Göster:</span>
-              <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Göster:</span>
+              <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }} className="border text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
                 {PAGE_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>
 
-          <div ref={tableRef} className="bg-[#0a0a14] border border-slate-700/30 overflow-auto max-h-[500px] custom-scrollbar-compliance">
+          <div ref={tableRef} className="border overflow-auto max-h-[500px] custom-scrollbar-compliance" style={{ background: 'var(--bg-app)', borderColor: 'var(--border-2)' }}>
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
-                <tr className="bg-[#1a1a2e] border-b border-slate-700/50">
+                <tr className="border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
                   <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider w-[40px]">#</th>
                   {TABLE_COLUMNS.map(col => {
                     const hasFilter = !!columnFilters[col.key];
@@ -1126,17 +1144,20 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                   const globalIdx = (currentPage - 1) * pageSize + idx + 1;
                   const st = statusStyles[result.uygunluk_durumu] || statusStyles.UYGUN;
                   return (
-                    <tr key={idx} onClick={() => { setDetailRow(row); setDetailResult(result); }} className={`border-b border-slate-800/30 hover:bg-slate-700/20 transition-colors cursor-pointer border-l-2 ${st.borderL} ${idx % 2 === 0 ? 'bg-[#0d0d1a]' : 'bg-[#0a0a14]'}`}>
-                      <td className="px-3 py-1.5 text-xs text-slate-600 font-mono">{globalIdx}</td>
+                    <tr key={idx} onClick={() => { setDetailRow(row); setDetailResult(result); }} className={`border-b transition-colors cursor-pointer border-l-2 ${st.borderL}`} style={{ borderBottomColor: 'var(--border-2)', background: idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'var(--bg-app)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--table-row-hover)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'var(--bg-app)'; }}
+                    >
+                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{globalIdx}</td>
                       <td className="px-3 py-1.5"><span className={`text-[10px] font-black px-2 py-0.5 rounded ${st.color} ${st.bg} border ${st.border}`}>{st.label}</span></td>
-                      <td className="px-3 py-1.5 text-xs text-slate-300 font-mono">{row.gilKodu}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-400 truncate max-w-[250px]">{row.gilAdi}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-400 truncate max-w-[160px]">{row.doktor}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-500 truncate max-w-[140px]">{row.uzmanlik}</td>
-                      <td className="px-3 py-1.5 text-xs text-center">{result.ihlaller.length > 0 ? <span className="text-red-400 font-bold">{result.ihlaller.length}</span> : <span className="text-slate-600">0</span>}</td>
-                      <td className="px-3 py-1.5 text-[10px] text-slate-500 font-bold">{result.eslesen_kural?.kaynak || '—'}</td>
+                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-2)' }}>{row.gilKodu}</td>
+                      <td className="px-3 py-1.5 text-xs truncate max-w-[250px]" style={{ color: 'var(--text-3)' }}>{row.gilAdi}</td>
+                      <td className="px-3 py-1.5 text-xs truncate max-w-[160px]" style={{ color: 'var(--text-3)' }}>{row.doktor}</td>
+                      <td className="px-3 py-1.5 text-xs truncate max-w-[140px]" style={{ color: 'var(--text-muted)' }}>{row.uzmanlik}</td>
+                      <td className="px-3 py-1.5 text-xs text-center">{result.ihlaller.length > 0 ? <span className="text-red-400 font-bold">{result.ihlaller.length}</span> : <span style={{ color: 'var(--text-muted)' }}>0</span>}</td>
+                      <td className="px-3 py-1.5 text-[10px] font-bold" style={{ color: 'var(--text-muted)' }}>{result.eslesen_kural?.kaynak || '—'}</td>
                       <td className="px-3 py-1.5" title={result.guvenNedeni || ''}><span className={`text-[10px] font-bold ${result.eslesme_guveni === 'Yüksek' ? 'text-emerald-400' : result.eslesme_guveni === 'Orta' ? 'text-amber-400' : 'text-red-400'}`}>{result.eslesme_guveni}</span></td>
-                      <td className="px-3 py-1.5 text-xs text-slate-500 truncate max-w-[250px]">
+                      <td className="px-3 py-1.5 text-xs truncate max-w-[250px]" style={{ color: 'var(--text-muted)' }}>
                         {result.ihlaller.length > 0
                           ? result.ihlaller.map(i => `[${i.ihlal_kodu}] ${i.ihlal_aciklamasi}`).join(' | ').substring(0, 120) + (result.ihlaller.map(i => i.ihlal_aciklamasi).join('').length > 120 ? '...' : '')
                           : result.eslesmeDurumu === 'ESLESEMEDI' ? 'Kural eşleşmesi bulunamadı' : '—'
@@ -1147,7 +1168,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                 })}
                 {paginatedResults.length === 0 && (
                   <tr>
-                    <td colSpan={TABLE_COLUMNS.length + 1} className="px-4 py-8 text-center text-xs text-slate-600">
+                    <td colSpan={TABLE_COLUMNS.length + 1} className="px-4 py-8 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
                       Filtre kriterlerine uygun sonuç bulunamadı.
                     </td>
                   </tr>
@@ -1158,11 +1179,11 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
           {/* Sayfalama */}
           {totalPages > 1 && (
-            <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-slate-700/30 px-5 py-3 flex items-center justify-between">
-              <p className="text-xs text-slate-500">{((currentPage - 1) * pageSize + 1).toLocaleString('tr-TR')} - {Math.min(currentPage * pageSize, filteredResults.length).toLocaleString('tr-TR')} / {filteredResults.length.toLocaleString('tr-TR')} sonuç</p>
+            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{((currentPage - 1) * pageSize + 1).toLocaleString('tr-TR')} - {Math.min(currentPage * pageSize, filteredResults.length).toLocaleString('tr-TR')} / {filteredResults.length.toLocaleString('tr-TR')} sonuç</p>
               <div className="flex items-center gap-1">
-                <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'««'}</button>
-                <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'«'}</button>
+                <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'««'}</button>
+                <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'«'}</button>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let page: number;
                   if (totalPages <= 5) page = i + 1;
@@ -1170,15 +1191,15 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                   else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
                   else page = currentPage - 2 + i;
                   return (
-                    <button key={page} onClick={() => goToPage(page)} className={`px-2.5 py-1 text-xs rounded transition-all ${currentPage === page ? 'bg-amber-600 text-white font-bold' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}>{page}</button>
+                    <button key={page} onClick={() => goToPage(page)} className={`px-2.5 py-1 text-xs rounded transition-all ${currentPage === page ? 'bg-amber-600 text-white font-bold' : ''}`} style={currentPage !== page ? { color: 'var(--text-3)' } : undefined}>{page}</button>
                   );
                 })}
-                <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'»'}</button>
-                <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'»»'}</button>
+                <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'»'}</button>
+                <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'»»'}</button>
               </div>
             </div>
           )}
-          {totalPages <= 1 && <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-slate-700/30 h-2" />}
+          {totalPages <= 1 && <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 h-2" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} />}
         </>
       )}
 
@@ -1188,7 +1209,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
       {uygunsuzIslemler.length > 0 && (
         <div className="space-y-0">
           {/* Başlık + Kontroller */}
-          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-t-2xl border border-b-0 border-red-500/20 p-5">
+          <div className="backdrop-blur-xl rounded-t-2xl border border-b-0 border-red-500/20 p-5" style={{ background: 'var(--surface-1)' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center">
@@ -1198,7 +1219,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-red-400 uppercase tracking-wider">Hekim Bazlı Uygunsuz İşlemler</h3>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
                     {uygunsuzIslemler.length.toLocaleString('tr-TR')} uygunsuz işlem · {doktorListesi.length} hekim
                   </p>
                 </div>
@@ -1217,11 +1238,12 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             {/* Filtreler */}
             <div className="flex flex-wrap gap-3 items-center">
               <div className="flex items-center gap-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Hekim:</label>
+                <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Hekim:</label>
                 <select
                   value={selectedDoktor}
                   onChange={e => { setSelectedDoktor(e.target.value); setUygunsuzCurrentPage(1); }}
-                  className="bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500/50 max-w-[220px]"
+                  className="border text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500/50 max-w-[220px]"
+                  style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
                 >
                   <option value="TUMU">Tüm Hekimler ({uygunsuzIslemler.length})</option>
                   {doktorListesi.map(([dr, count]) => (
@@ -1230,7 +1252,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                 </select>
               </div>
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -1238,18 +1260,19 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                   value={uygunsuzSearchTerm}
                   onChange={e => { setUygunsuzSearchTerm(e.target.value); setUygunsuzCurrentPage(1); }}
                   placeholder="İşlem no, hasta, GİL kodu, doktor, ihlal..."
-                  className="flex-1 bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500/50 placeholder-slate-600"
+                  className="flex-1 border text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-500/50"
+                  style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
                 />
               </div>
-              <span className="text-xs text-slate-500 ml-auto">{filteredUygunsuz.length.toLocaleString('tr-TR')} sonuç</span>
+              <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>{filteredUygunsuz.length.toLocaleString('tr-TR')} sonuç</span>
             </div>
           </div>
 
           {/* Tablo */}
-          <div ref={uygunsuzTableRef} className="bg-[#0a0a14] border border-red-500/20 border-t-0 overflow-auto max-h-[500px] custom-scrollbar-compliance">
+          <div ref={uygunsuzTableRef} className="border border-red-500/20 border-t-0 overflow-auto max-h-[500px] custom-scrollbar-compliance" style={{ background: 'var(--bg-app)' }}>
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
-                <tr className="bg-[#1a1a2e] border-b border-red-500/20">
+                <tr className="border-b border-red-500/20" style={{ background: 'var(--surface-2)' }}>
                   <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider w-[40px]">#</th>
                   <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[100px]">İşlem No</th>
                   <th className="px-3 py-2.5 text-left text-[10px] font-bold text-red-400 uppercase tracking-wider min-w-[160px]">Hasta Adı Soyadı</th>
@@ -1270,18 +1293,19 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                     <tr
                       key={idx}
                       onClick={() => { setDetailRow(item.row); setDetailResult(item.result); }}
-                      className={`border-b border-slate-800/30 hover:bg-red-500/5 transition-colors cursor-pointer border-l-2 border-l-red-500 ${idx % 2 === 0 ? 'bg-[#0d0d1a]' : 'bg-[#0a0a14]'}`}
+                      className="border-b hover:bg-red-500/5 transition-colors cursor-pointer border-l-2 border-l-red-500"
+                      style={{ borderBottomColor: 'var(--border-2)', background: idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'var(--bg-app)' }}
                     >
-                      <td className="px-3 py-1.5 text-xs text-slate-600 font-mono">{globalIdx}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-300 font-mono">{item.row.islemNo}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-300">{item.row.adiSoyadi}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-400 font-mono">{item.row.hastaTc}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-400">{item.row.tarih}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-500">{item.row.saat}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-300 truncate max-w-[160px]">{item.row.doktor}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-500 truncate max-w-[140px]">{item.row.uzmanlik}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-300 font-mono">{item.row.gilKodu}</td>
-                      <td className="px-3 py-1.5 text-xs text-slate-400 truncate max-w-[250px]">{item.row.gilAdi}</td>
+                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{globalIdx}</td>
+                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-2)' }}>{item.row.islemNo}</td>
+                      <td className="px-3 py-1.5 text-xs" style={{ color: 'var(--text-2)' }}>{item.row.adiSoyadi}</td>
+                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-3)' }}>{item.row.hastaTc}</td>
+                      <td className="px-3 py-1.5 text-xs" style={{ color: 'var(--text-3)' }}>{item.row.tarih}</td>
+                      <td className="px-3 py-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>{item.row.saat}</td>
+                      <td className="px-3 py-1.5 text-xs truncate max-w-[160px]" style={{ color: 'var(--text-2)' }}>{item.row.doktor}</td>
+                      <td className="px-3 py-1.5 text-xs truncate max-w-[140px]" style={{ color: 'var(--text-muted)' }}>{item.row.uzmanlik}</td>
+                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-2)' }}>{item.row.gilKodu}</td>
+                      <td className="px-3 py-1.5 text-xs truncate max-w-[250px]" style={{ color: 'var(--text-3)' }}>{item.row.gilAdi}</td>
                       <td className="px-3 py-1.5 text-xs text-red-400/80 truncate max-w-[300px]" title={item.ihlalDetay}>
                         {item.ihlalDetay.length > 120 ? item.ihlalDetay.substring(0, 120) + '...' : item.ihlalDetay}
                       </td>
@@ -1290,7 +1314,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                 })}
                 {paginatedUygunsuz.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="px-4 py-8 text-center text-xs text-slate-600">
+                    <td colSpan={11} className="px-4 py-8 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
                       Filtre kriterlerine uygun uygunsuz işlem bulunamadı.
                     </td>
                   </tr>
@@ -1301,13 +1325,13 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
           {/* Sayfalama */}
           {uygunsuzTotalPages > 1 && (
-            <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 px-5 py-3 flex items-center justify-between">
-              <p className="text-xs text-slate-500">
+            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)' }}>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {((uygunsuzCurrentPage - 1) * uygunsuzPageSize + 1).toLocaleString('tr-TR')} - {Math.min(uygunsuzCurrentPage * uygunsuzPageSize, filteredUygunsuz.length).toLocaleString('tr-TR')} / {filteredUygunsuz.length.toLocaleString('tr-TR')} sonuç
               </p>
               <div className="flex items-center gap-1">
-                <button onClick={() => goToUygunsuzPage(1)} disabled={uygunsuzCurrentPage === 1} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'««'}</button>
-                <button onClick={() => goToUygunsuzPage(uygunsuzCurrentPage - 1)} disabled={uygunsuzCurrentPage === 1} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'«'}</button>
+                <button onClick={() => goToUygunsuzPage(1)} disabled={uygunsuzCurrentPage === 1} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'««'}</button>
+                <button onClick={() => goToUygunsuzPage(uygunsuzCurrentPage - 1)} disabled={uygunsuzCurrentPage === 1} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'«'}</button>
                 {Array.from({ length: Math.min(5, uygunsuzTotalPages) }, (_, i) => {
                   let page: number;
                   if (uygunsuzTotalPages <= 5) page = i + 1;
@@ -1315,19 +1339,19 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                   else if (uygunsuzCurrentPage >= uygunsuzTotalPages - 2) page = uygunsuzTotalPages - 4 + i;
                   else page = uygunsuzCurrentPage - 2 + i;
                   return (
-                    <button key={page} onClick={() => goToUygunsuzPage(page)} className={`px-2.5 py-1 text-xs rounded transition-all ${uygunsuzCurrentPage === page ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}>{page}</button>
+                    <button key={page} onClick={() => goToUygunsuzPage(page)} className={`px-2.5 py-1 text-xs rounded transition-all ${uygunsuzCurrentPage === page ? 'bg-red-600 text-white font-bold' : ''}`} style={uygunsuzCurrentPage !== page ? { color: 'var(--text-3)' } : undefined}>{page}</button>
                   );
                 })}
-                <button onClick={() => goToUygunsuzPage(uygunsuzCurrentPage + 1)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'»'}</button>
-                <button onClick={() => goToUygunsuzPage(uygunsuzTotalPages)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all">{'»»'}</button>
+                <button onClick={() => goToUygunsuzPage(uygunsuzCurrentPage + 1)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'»'}</button>
+                <button onClick={() => goToUygunsuzPage(uygunsuzTotalPages)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }}>{'»»'}</button>
               </div>
             </div>
           )}
-          {uygunsuzTotalPages <= 1 && <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 h-2" />}
+          {uygunsuzTotalPages <= 1 && <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 h-2" style={{ background: 'var(--surface-1)' }} />}
 
           {/* Doktor Bazlı Özet Kartları */}
           {doktorListesi.length > 0 && (
-            <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-red-500/20 p-5 mt-3">
+            <div className="backdrop-blur-xl rounded-2xl border border-red-500/20 p-5 mt-3" style={{ background: 'var(--surface-1)' }}>
               <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3">Hekimlere Göre Uygunsuz İşlem Dağılımı</h4>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                 {doktorListesi.slice(0, 20).map(([dr, count]) => (
@@ -1337,12 +1361,13 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                     className={`text-left p-3 rounded-lg border transition-all ${
                       selectedDoktor === dr
                         ? 'bg-red-500/10 border-red-500/30 ring-1 ring-red-500/20'
-                        : 'bg-slate-800/30 border-slate-700/20 hover:bg-slate-700/30'
+                        : ''
                     }`}
+                    style={selectedDoktor !== dr ? { background: 'var(--surface-2)', borderColor: 'var(--border-2)' } : undefined}
                   >
-                    <p className={`text-xs font-bold truncate ${selectedDoktor === dr ? 'text-red-400' : 'text-slate-300'}`}>{dr}</p>
+                    <p className={`text-xs font-bold truncate ${selectedDoktor === dr ? 'text-red-400' : ''}`} style={selectedDoktor !== dr ? { color: 'var(--text-2)' } : undefined}>{dr}</p>
                     <p className="text-lg font-black text-red-400 mt-0.5">{count}</p>
-                    <p className="text-[10px] text-slate-500">uygunsuz işlem</p>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>uygunsuz işlem</p>
                   </button>
                 ))}
               </div>
@@ -1355,23 +1380,26 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
       <style>{`
         .custom-scrollbar-compliance::-webkit-scrollbar { width: 8px; height: 8px; }
-        .custom-scrollbar-compliance::-webkit-scrollbar-track { background: #0a0a14; }
-        .custom-scrollbar-compliance::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        .custom-scrollbar-compliance::-webkit-scrollbar-thumb:hover { background: #475569; }
-        .custom-scrollbar-compliance::-webkit-scrollbar-corner { background: #0a0a14; }
+        .custom-scrollbar-compliance::-webkit-scrollbar-track { background: var(--bg-app); }
+        .custom-scrollbar-compliance::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
+        .custom-scrollbar-compliance::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+        .custom-scrollbar-compliance::-webkit-scrollbar-corner { background: var(--bg-app); }
       `}</style>
     </div>
   );
 };
 
-const SummaryCard: React.FC<{ label: string; value: string; color: string; sub?: string }> = ({ label, value, color, sub }) => (
-  <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-xl border border-slate-700/30 p-3">
-    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
-    <div className="flex items-baseline gap-1.5">
-      <p className={`text-lg font-black ${color}`}>{value}</p>
-      {sub && <span className="text-xs text-slate-500">{sub}</span>}
+const SummaryCard: React.FC<{ label: string; value: string; color: string; sub?: string }> = ({ label, value, color, sub }) => {
+  const isVar = color.startsWith('--');
+  return (
+    <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+      <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+      <div className="flex items-baseline gap-1.5">
+        <p className={`text-lg font-black ${isVar ? '' : color}`} style={isVar ? { color: `var(${color})` } : undefined}>{value}</p>
+        {sub && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{sub}</span>}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default ComplianceAnalysisPanel;

@@ -287,7 +287,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
               <thead className="bg-[var(--table-header-bg)] border-b border-[var(--table-border)]">
                 <tr>
                   <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest sticky left-0 bg-[var(--table-header-bg)] shadow-[2px_0_5px_rgba(0,0,0,0.1)]">Hekim Ad Soyad</th>
-                  <th className="px-10 py-5 text-[11px] font-black text-sky-300 uppercase tracking-widest text-center bg-sky-500/10">TOPLAM KAPASİTE</th>
+                  <th className="px-10 py-5 text-[11px] font-black text-sky-500 uppercase tracking-widest text-center bg-sky-500/10">TOPLAM KAPASİTE</th>
                   {activeActions.map(action => (
                     <th key={action} className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center border-l border-[var(--table-border)]">{action} (GÜN)</th>
                   ))}
@@ -301,7 +301,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                       {stats.branch && <p className="text-[10px] font-medium text-[var(--text-muted)] mt-0.5">{stats.branch}</p>}
                     </td>
                     <td className="px-10 py-5 text-center">
-                       <span className="bg-sky-500/20 text-white px-4 py-1.5 rounded-xl font-black text-xs border border-sky-400/30">{stats.totalCapacity.toLocaleString('tr-TR')}</span>
+                       <span className="bg-sky-500/20 px-4 py-1.5 rounded-xl font-black text-xs border border-sky-400/30" style={{ color: 'var(--text-1)' }}>{stats.totalCapacity.toLocaleString('tr-TR')}</span>
                     </td>
                     {activeActions.map(action => {
                       const dayCount = stats.actionDays[action] || 0;

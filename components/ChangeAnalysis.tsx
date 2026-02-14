@@ -642,7 +642,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             {/* Sürüm Yükleme Butonları */}
             {isAdmin && (
               <>
-                <label htmlFor="oldVersionUpload" className="bg-slate-700 text-white px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer hover:bg-slate-800 active:scale-95 flex items-center gap-2 transition-all">
+                <label htmlFor="oldVersionUpload" className="px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer active:scale-95 flex items-center gap-2 transition-all hover:opacity-80" style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-1)' }}>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                   Eski Yükle
                 </label>
@@ -675,24 +675,24 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       {comparison && !isProcessing && (
         <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
           {/* Dashboard Summary Bar */}
-          <div className="bg-slate-900 text-white p-12 rounded-[56px] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-10 border border-slate-800 relative overflow-hidden">
+          <div className="p-12 rounded-[56px] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden" style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-1)', border: '1px solid var(--border-2)' }}>
             <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full -mr-48 -mt-48 blur-3xl"></div>
             <div className="text-center md:text-left relative z-10">
-              <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-4">BAŞLANGIÇ TOPLAMI ({baselineLabel})</p>
-              <h3 className="text-5xl font-black tracking-tighter">{Number(comparison.totalBaseCap).toLocaleString('tr-TR')}</h3>
+              <p className="font-black text-[10px] uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--text-muted)' }}>BAŞLANGIÇ TOPLAMI ({baselineLabel})</p>
+              <h3 className="text-5xl font-black tracking-tighter" style={{ color: 'var(--text-1)' }}>{Number(comparison.totalBaseCap).toLocaleString('tr-TR')}</h3>
             </div>
             <div className="text-center relative z-10">
               {/* Fix: Ensured number type for subtraction using Number() for robustness. */}
               <div className={`px-10 py-6 rounded-[32px] border-2 ${(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
-                <p className="text-slate-400 font-black text-[10px] uppercase tracking-widest mb-1">NET FARK</p>
-                <h3 className="text-5xl font-black tracking-tighter">
+                <p className="font-black text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--text-3)' }}>NET FARK</p>
+                <h3 className="text-5xl font-black tracking-tighter" style={{ color: 'inherit' }}>
                   {(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) > 0 ? '+' : ''}{(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)).toLocaleString('tr-TR')}
                 </h3>
               </div>
             </div>
             <div className="text-center md:text-right relative z-10">
-              <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em] mb-4">GÜNCEL TOPLAM ({updatedLabel})</p>
-              <h3 className="text-5xl font-black tracking-tighter">{Number(comparison.totalUpdCap).toLocaleString('tr-TR')}</h3>
+              <p className="font-black text-[10px] uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--text-muted)' }}>GÜNCEL TOPLAM ({updatedLabel})</p>
+              <h3 className="text-5xl font-black tracking-tighter" style={{ color: 'var(--text-1)' }}>{Number(comparison.totalUpdCap).toLocaleString('tr-TR')}</h3>
             </div>
           </div>
 
@@ -709,7 +709,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                 {comparison.topBranchChanges.map((br: any, idx: number) => (
                   <div key={br.name} className="bg-[var(--surface-2)] border border-[var(--border-1)] rounded-2xl p-3.5 flex flex-col gap-2 hover:bg-[var(--surface-hover)] transition-all group">
                     <div className="flex items-center gap-4">
-                      <div className="w-7 h-7 rounded-lg bg-slate-700 text-white flex items-center justify-center text-[10px] font-black shrink-0">{idx + 1}</div>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0" style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-1)' }}>{idx + 1}</div>
                       <div className="flex-1 min-w-0"><p className="text-[11px] font-bold uppercase text-[var(--text-1)] leading-tight break-words">{br.name}</p></div>
                       <div className="text-right shrink-0">
                         <p className={`text-[12px] font-black leading-none ${br.delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{br.delta > 0 ? '+' : ''}{br.delta.toLocaleString('tr-TR')}</p>
@@ -758,7 +758,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
           <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
             <div className="p-8 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)]">
                <h4 className="text-xl font-black text-[var(--text-1)] uppercase italic">Hekim Bazlı Değişim Detayları</h4>
-               <div className="bg-slate-700 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">{comparison.phys_compare.length} HEKİMDE DEĞİŞİM</div>
+               <div className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest" style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-1)' }}>{comparison.phys_compare.length} HEKİMDE DEĞİŞİM</div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -853,24 +853,24 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                   </table>
                                 </div>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                  <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">BAŞLANGIÇ OTURUMLARI ({baselineLabel})</p>
-                                    <div className="max-h-56 overflow-y-auto custom-scrollbar border rounded-2xl">
+                                  <div className="p-8 rounded-[32px] shadow-sm" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
+                                    <p className="text-[10px] font-black uppercase mb-4 tracking-widest" style={{ color: 'var(--text-3)' }}>BAŞLANGIÇ OTURUMLARI ({baselineLabel})</p>
+                                    <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-2xl" style={{ border: '1px solid var(--border-2)' }}>
                                       <table className="w-full text-[10px] text-left">
-                                        <thead className="bg-slate-50 sticky top-0"><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                          {p.bPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:bg-slate-50"><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
+                                        <thead className="sticky top-0" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
+                                        <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
+                                          {p.bPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:opacity-80" style={{ borderColor: 'var(--border-2)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>
                                       </table>
                                     </div>
                                   </div>
-                                  <div className="bg-white p-8 rounded-[32px] shadow-sm border border-rose-100">
+                                  <div className="p-8 rounded-[32px] shadow-sm" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
                                     <p className="text-[10px] font-black text-rose-400 uppercase mb-4 tracking-widest">GÜNCEL OTURUMLAR ({updatedLabel})</p>
-                                    <div className="max-h-56 overflow-y-auto custom-scrollbar border rounded-2xl">
+                                    <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-2xl" style={{ border: '1px solid var(--border-2)' }}>
                                       <table className="w-full text-[10px] text-left">
-                                        <thead className="bg-rose-50/50 sticky top-0"><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                          {p.uPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:bg-rose-50/30"><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
+                                        <thead className="sticky top-0" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
+                                        <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
+                                          {p.uPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:opacity-80" style={{ borderColor: 'var(--border-2)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>
                                       </table>
                                     </div>

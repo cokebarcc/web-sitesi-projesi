@@ -90,8 +90,8 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
     if (active && payload && payload.length) {
       const dataPoint = payload[0]?.payload;
       return (
-        <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 shadow-xl">
-          <p className="text-white font-bold text-sm mb-2">{dataPoint?.monthLabel}</p>
+        <div className="backdrop-blur-xl rounded-xl border p-4 shadow-xl" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+          <p className="text-[var(--text-1)] font-bold text-sm mb-2">{dataPoint?.monthLabel}</p>
           <div className="space-y-1.5">
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex items-center gap-2">
@@ -99,15 +99,15 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-slate-400 text-xs">{entry.name}:</span>
-                <span className="text-white font-bold text-sm">
+                <span className="text-[var(--text-3)] text-xs">{entry.name}:</span>
+                <span className="text-[var(--text-1)] font-bold text-sm">
                   {entry.value !== null ? entry.value.toFixed(1) : '-'}
                 </span>
               </div>
             ))}
           </div>
           {payload[0]?.payload?.hastanetoplam && payload[1]?.payload?.trOrtalama && (
-            <div className="mt-3 pt-2 border-t border-slate-700/50">
+            <div className="mt-3 pt-2 border-t border-[var(--border-2)]">
               <div className="flex items-center gap-1 text-xs">
                 {payload[0].payload.hastanetoplam >= payload[1].payload.trOrtalama ? (
                   <>
@@ -183,7 +183,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   const legendProps = {
     wrapperStyle: { paddingTop: '20px' },
     formatter: (value: string) => (
-      <span className="text-slate-300 text-xs">{value}</span>
+      <span className="text-[var(--text-2)] text-xs">{value}</span>
     )
   };
 
@@ -197,20 +197,20 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
       {/* Başlık ve Stil Seçici */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-bold text-white">Performans Trendi</h3>
+          <h3 className="text-lg font-bold text-[var(--text-1)]">Performans Trendi</h3>
           <p className="text-xs text-[var(--text-muted)] mt-1">
             {institutionName ? `${institutionName} - ` : ''}Son {data.length} aylık performans
           </p>
         </div>
 
         {/* Stil Seçici */}
-        <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-[var(--surface-2)] rounded-xl p-1">
           <button
             onClick={() => setChartStyle('line')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               chartStyle === 'line'
                 ? 'bg-indigo-500 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)]'
             }`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -222,7 +222,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               chartStyle === 'bar'
                 ? 'bg-indigo-500 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)]'
             }`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -234,7 +234,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               chartStyle === 'area'
                 ? 'bg-indigo-500 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)]'
             }`}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -363,7 +363,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
       </div>
 
       {/* Alt bilgi */}
-      <div className="mt-4 pt-4 border-t border-slate-700/30 flex items-center justify-between text-xs text-[var(--text-muted)]">
+      <div className="mt-4 pt-4 border-t border-[var(--border-2)] flex items-center justify-between text-xs text-[var(--text-muted)]">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 rounded bg-indigo-500" />

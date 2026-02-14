@@ -183,8 +183,8 @@ const SutMevzuati: React.FC = () => {
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">SUT Mevzuatı</h1>
-              <p className="text-sm text-slate-400">Veriler yükleniyor...</p>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>SUT Mevzuatı</h1>
+              <p className="text-sm" style={{ color: 'var(--text-3)' }}>Veriler yükleniyor...</p>
             </div>
           </div>
         </div>
@@ -207,8 +207,8 @@ const SutMevzuati: React.FC = () => {
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">SUT Mevzuatı</h1>
-            <p className="text-sm text-slate-400">Sağlık Uygulama Tebliği mevzuat dosyası</p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>SUT Mevzuatı</h1>
+            <p className="text-sm" style={{ color: 'var(--text-3)' }}>Sağlık Uygulama Tebliği mevzuat dosyası</p>
           </div>
         </div>
       </div>
@@ -228,12 +228,22 @@ const SutMevzuati: React.FC = () => {
         .sut-toc-link:hover {
           color: #22d3ee !important;
         }
+        .sut-content p { color: var(--text-2); }
+        .sut-content h1,
+        .sut-content h2,
+        .sut-content h3,
+        .sut-content h4 { color: var(--text-1); }
+        .sut-content strong { color: var(--text-1); }
+        .sut-content li { color: var(--text-2); }
+        .sut-content th { background: var(--surface-1); color: var(--text-2); border-color: var(--border-2); }
+        .sut-content td { color: var(--text-2); border-color: var(--border-2); }
+        .sut-content sup { color: var(--text-3); }
       `}</style>
 
       {/* Word Yükleme / İçerik */}
       {!htmlContent ? (
         <div className="space-y-4">
-          <label className={`bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-12 cursor-pointer hover:border-cyan-500/50 hover:bg-slate-800/60 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+          <label className={`backdrop-blur-xl rounded-2xl border p-12 cursor-pointer hover:border-cyan-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
             <div className="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-colors">
               {loading ? (
                 <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
@@ -243,10 +253,10 @@ const SutMevzuati: React.FC = () => {
                 </svg>
               )}
             </div>
-            <h3 className="text-lg font-semibold text-white group-hover:text-cyan-300 transition-colors mb-1">
+            <h3 className="text-lg font-semibold group-hover:text-cyan-300 transition-colors mb-1" style={{ color: 'var(--text-1)' }}>
               {loading ? 'Dosya İşleniyor...' : 'SUT Word Dosyasını Yükleyin'}
             </h3>
-            <p className="text-sm text-slate-400 text-center max-w-md">
+            <p className="text-sm text-center max-w-md" style={{ color: 'var(--text-3)' }}>
               .docx formatında SUT mevzuat dosyasını yükleyin. Üzeri çizilmiş (güncellenmiş) maddeler otomatik olarak kaldırılacaktır.
             </p>
             <input type="file" className="hidden" accept=".docx" onChange={handleUpload} />
@@ -255,7 +265,7 @@ const SutMevzuati: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {/* Üst Bar */}
-          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-cyan-500/10 rounded-lg flex items-center justify-center">
                 <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,12 +273,12 @@ const SutMevzuati: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">SUT Mevzuatı</h3>
-                <p className="text-xs text-slate-500">{fileName}</p>
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>SUT Mevzuatı</h3>
+                <p className="text-xs" style={{ color: 'var(--text-3)' }}>{fileName}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <label className="bg-slate-700/50 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer hover:bg-slate-700 transition-colors border border-slate-600/30">
+              <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>
                 Değiştir
                 <input type="file" className="hidden" accept=".docx" onChange={handleUpload} />
               </label>
@@ -279,28 +289,29 @@ const SutMevzuati: React.FC = () => {
           </div>
 
           {/* İçerik */}
-          <div className="bg-[#12121a]/80 backdrop-blur-xl rounded-2xl border border-slate-700/30 p-6 sm:p-8">
+          <div className="backdrop-blur-xl rounded-2xl border p-6 sm:p-8" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
             <div
               ref={contentRef}
               onClick={handleContentClick}
-              className="sut-content prose prose-invert prose-sm max-w-none
-                [&_p]:text-slate-300 [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2
-                [&_h1]:text-white [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h1]:scroll-mt-4
-                [&_h2]:text-white [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h2]:scroll-mt-4
-                [&_h3]:text-white [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:scroll-mt-4
-                [&_h4]:text-white [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mb-2 [&_h4]:mt-3 [&_h4]:scroll-mt-4
-                [&_strong]:text-white [&_strong]:font-bold
-                [&_em]:text-cyan-300 [&_em]:italic
+              className="sut-content prose prose-sm max-w-none
+                [&_p]:text-sm [&_p]:leading-relaxed [&_p]:mb-2
+                [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-6 [&_h1]:scroll-mt-4
+                [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-5 [&_h2]:scroll-mt-4
+                [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:scroll-mt-4
+                [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mb-2 [&_h4]:mt-3 [&_h4]:scroll-mt-4
+                [&_strong]:font-bold
+                [&_em]:italic
                 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3
                 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3
-                [&_li]:text-slate-300 [&_li]:text-sm [&_li]:mb-1
+                [&_li]:text-sm [&_li]:mb-1
                 [&_table]:w-full [&_table]:border-collapse [&_table]:mb-4
-                [&_th]:bg-slate-800 [&_th]:text-slate-300 [&_th]:text-xs [&_th]:font-bold [&_th]:px-3 [&_th]:py-2 [&_th]:border [&_th]:border-slate-700/50 [&_th]:text-left
-                [&_td]:text-slate-300 [&_td]:text-xs [&_td]:px-3 [&_td]:py-2 [&_td]:border [&_td]:border-slate-700/30
+                [&_th]:text-xs [&_th]:font-bold [&_th]:px-3 [&_th]:py-2 [&_th]:border [&_th]:text-left
+                [&_td]:text-xs [&_td]:px-3 [&_td]:py-2 [&_td]:border
                 [&_a]:text-cyan-400 [&_a]:underline
-                [&_sup]:text-xs [&_sup]:text-slate-400
+                [&_sup]:text-xs
                 [&_[id]]:scroll-mt-4
               "
+              style={{ color: 'var(--text-2)' }}
               dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
           </div>

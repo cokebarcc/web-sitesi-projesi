@@ -236,14 +236,15 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           ${isExpanded ? 'w-64' : 'w-[72px]'}
           ${isDark
             ? 'bg-[#0c1423] border-[#2d4163]/30 shadow-black/50'
-            : 'bg-white/95 border-slate-200/60 shadow-slate-300/50'
+            : 'shadow-[0_25px_50px_-12px_rgba(0,0,0,0.08)]'
           }
         `}
+        style={!isDark ? { background: 'var(--surface-1)', borderColor: 'var(--border-2)' } : undefined}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
       >
         {/* Logo */}
-        <div className={`p-4 border-b ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
+        <div className="p-4 border-b" style={{ borderColor: 'var(--border-2)' }}>
           <button
             onClick={() => onNavigate('welcome')}
             className="flex items-center gap-3 group"
@@ -253,8 +254,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             </div>
             {isExpanded && (
               <div className="flex flex-col overflow-hidden">
-                <span className={`text-lg font-bold tracking-tight whitespace-nowrap ${isDark ? 'text-white' : 'text-slate-800'}`}>MEDİS</span>
-                <span className={`text-[9px] whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Merkezi Dijital Sağlık</span>
+                <span className="text-lg font-bold tracking-tight whitespace-nowrap" style={{ color: 'var(--text-1)' }}>MEDİS</span>
+                <span className="text-[9px] whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>Merkezi Dijital Sağlık</span>
               </div>
             )}
           </button>
@@ -267,13 +268,13 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onNavigate(item.view)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                ${isViewActive(item.view)
-                  ? isDark ? 'bg-slate-700/50 text-white' : 'bg-blue-50 text-blue-700'
-                  : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }
-              `}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+              style={isViewActive(item.view)
+                ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                : { color: 'var(--text-3)' }
+              }
+              onMouseEnter={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+              onMouseLeave={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
               title={!isExpanded ? item.label : undefined}
             >
               <div className={`shrink-0 ${isViewActive(item.view) ? 'text-blue-400' : ''}`}>
@@ -288,9 +289,9 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           {/* Favorites Section */}
           {favorites.length > 0 && (
             <>
-              <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
+              <div className="h-px my-3" style={{ background: 'var(--border-2)' }} />
               {isExpanded && (
-                <p className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? 'text-amber-500/60' : 'text-amber-600/60'}`}>
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-500/60">
                   Favoriler
                 </p>
               )}
@@ -307,13 +308,13 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                   <button
                     key={`fav-${favView}`}
                     onClick={() => onNavigate(favView)}
-                    className={`
-                      w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200
-                      ${isViewActive(favView)
-                        ? isDark ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700'
-                        : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                      }
-                    `}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200"
+                    style={isViewActive(favView)
+                      ? { background: 'rgba(245,158,11,0.1)', color: '#fbbf24' }
+                      : { color: 'var(--text-3)' }
+                    }
+                    onMouseEnter={e => { if (!isViewActive(favView)) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                    onMouseLeave={e => { if (!isViewActive(favView)) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
                     title={!isExpanded ? item.label : undefined}
                   >
                     <div className="shrink-0 relative">
@@ -331,7 +332,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           )}
 
           {/* Divider */}
-          <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
+          <div className="h-px my-3" style={{ background: 'var(--border-2)' }} />
 
           {/* Groups */}
           {menuGroups.map(group => {
@@ -345,13 +346,13 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
               <div key={group.id}>
                 <button
                   onClick={() => isExpanded && toggleGroup(group.id)}
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                    ${hasActiveChild
-                      ? isDark ? 'bg-slate-800/50 text-white' : 'bg-blue-50 text-blue-700'
-                      : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                    }
-                  `}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+                  style={hasActiveChild
+                    ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                    : { color: 'var(--text-3)' }
+                  }
+                  onMouseEnter={e => { if (!hasActiveChild) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                  onMouseLeave={e => { if (!hasActiveChild) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
                   title={!isExpanded ? group.label : undefined}
                 >
                   <div className={`shrink-0 ${(group as any).iconColor || (hasActiveChild ? 'text-blue-400' : '')}`}>
@@ -383,7 +384,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                     overflow-hidden transition-all duration-300
                     ${isOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}
                   `}>
-                    <div className={`ml-5 pl-3 border-l mt-1 space-y-0.5 ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
+                    <div className="ml-5 pl-3 border-l mt-1 space-y-0.5" style={{ borderColor: 'var(--border-2)' }}>
                       {visibleItems.map(item => {
                         const isDisabled = (item as any).disabled;
                         const isGoren = group.id === 'goren-perf';
@@ -396,22 +397,28 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                               disabled={isDisabled}
                               className={`
                                 flex-1 text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-2
-                                ${isDisabled
-                                  ? 'text-slate-600 cursor-not-allowed opacity-50'
-                                  : isViewActive(item.view)
-                                    ? isDark
-                                      ? isGoren ? 'text-white bg-purple-500/20 font-medium' : 'text-white bg-slate-700/30 font-medium'
-                                      : isGoren ? 'text-purple-700 bg-purple-50 font-medium' : 'text-blue-700 bg-blue-50 font-medium'
-                                    : isDark ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
-                                }
+                                ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
+                                ${!isDisabled && isViewActive(item.view) && isGoren ? 'text-purple-700 bg-purple-500/20 font-medium' : ''}
+                                ${!isDisabled && isViewActive(item.view) && !isGoren ? 'font-medium' : ''}
                               `}
+                              style={
+                                isDisabled
+                                  ? { color: 'var(--text-muted)' }
+                                  : isViewActive(item.view) && !isGoren
+                                    ? { color: 'var(--text-1)', background: 'var(--surface-hover)' }
+                                    : !isViewActive(item.view)
+                                      ? { color: 'var(--text-muted)' }
+                                      : undefined
+                              }
+                              onMouseEnter={e => { if (!isDisabled && !isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                              onMouseLeave={e => { if (!isDisabled && !isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; } }}
                             >
                               {hasData !== undefined && (
-                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasData ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasData ? 'bg-emerald-400 animate-pulse' : ''}`} style={!hasData ? { background: 'var(--text-muted)' } : undefined} />
                               )}
                               {item.label}
                               {isDisabled && (
-                                <span className="ml-2 text-[9px] text-slate-500">(Yakında)</span>
+                                <span className="ml-2 text-[9px]" style={{ color: 'var(--text-muted)' }}>(Yakında)</span>
                               )}
                             </button>
                             {/* Favorite star - visible on hover */}
@@ -420,8 +427,9 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                               className={`shrink-0 p-1 rounded transition-all duration-200 ${
                                 isFav
                                   ? 'text-amber-400 opacity-100'
-                                  : 'text-slate-600 opacity-0 group-hover/item:opacity-100 hover:text-amber-400'
+                                  : 'opacity-0 group-hover/item:opacity-100 hover:text-amber-400'
                               }`}
+                              style={!isFav ? { color: 'var(--text-muted)' } : undefined}
                               title={isFav ? 'Favorilerden çıkar' : 'Favorilere ekle'}
                             >
                               <svg className="w-3 h-3" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
@@ -439,12 +447,12 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           })}
 
           {/* Divider */}
-          <div className={`h-px my-3 ${isDark ? 'bg-slate-700/30' : 'bg-slate-200/60'}`} />
+          <div className="h-px my-3" style={{ background: 'var(--border-2)' }} />
 
           {/* Support */}
           <div className="space-y-1">
             {isExpanded && (
-              <p className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+              <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                 Destek
               </p>
             )}
@@ -452,13 +460,13 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.view)}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${isViewActive(item.view)
-                    ? isDark ? 'bg-slate-700/50 text-white' : 'bg-blue-50 text-blue-700'
-                    : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }
-                `}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+                style={isViewActive(item.view)
+                  ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                  : { color: 'var(--text-3)' }
+                }
+                onMouseEnter={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                onMouseLeave={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
                 title={!isExpanded ? item.label : undefined}
               >
                 <div className={`shrink-0 ${isViewActive(item.view) ? 'text-blue-400' : ''}`}>
@@ -474,13 +482,13 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             {isAdmin && (
               <button
                 onClick={() => onNavigate('admin')}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${isViewActive('admin')
-                    ? isDark ? 'bg-slate-700/50 text-white' : 'bg-blue-50 text-blue-700'
-                    : isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }
-                `}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+                style={isViewActive('admin')
+                  ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                  : { color: 'var(--text-3)' }
+                }
+                onMouseEnter={e => { if (!isViewActive('admin')) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                onMouseLeave={e => { if (!isViewActive('admin')) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
                 title={!isExpanded ? 'Kullanıcı Yönetimi' : undefined}
               >
                 <div className={`shrink-0 ${isViewActive('admin') ? 'text-rose-400' : ''}`}>
@@ -497,14 +505,15 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         </nav>
 
         {/* Footer */}
-        <div className={`p-3 border-t ${isDark ? 'border-slate-700/30' : 'border-slate-200/60'}`}>
+        <div className="p-3 border-t" style={{ borderColor: 'var(--border-2)' }}>
           {/* Theme Toggle - iOS Style */}
           {onToggleTheme && (
             <button
               onClick={onToggleTheme}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-2 ${
-                isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-2"
+              style={{ color: 'var(--text-3)' }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
               title={!isExpanded ? (theme === 'dark' ? 'Açık Mod' : 'Koyu Mod') : undefined}
             >
               {/* Toggle Switch */}
@@ -512,20 +521,22 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
                 <div
                   className={`
                     w-10 h-6 rounded-full transition-all duration-300 flex items-center
-                    ${theme === 'dark' ? 'bg-slate-600' : 'bg-amber-400'}
+                    ${theme === 'dark' ? '' : 'bg-amber-400'}
                   `}
+                  style={theme === 'dark' ? { background: 'var(--text-muted)' } : undefined}
                 >
                   <div
                     className={`
                       w-5 h-5 rounded-full shadow-md transition-all duration-300 flex items-center justify-center
                       ${theme === 'dark'
-                        ? 'translate-x-0.5 bg-slate-300'
+                        ? 'translate-x-0.5'
                         : 'translate-x-[18px] bg-white'
                       }
                     `}
+                    style={theme === 'dark' ? { background: 'var(--text-2)' } : undefined}
                   >
                     {theme === 'dark' ? (
-                      <svg className="w-3 h-3 text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-3 h-3" style={{ color: 'var(--bg-app)' }} fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                       </svg>
                     ) : (
@@ -546,9 +557,10 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
 
           {/* Settings */}
           <button
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-2 ${
-              isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-2"
+            style={{ color: 'var(--text-3)' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
             title={!isExpanded ? 'Ayarlar' : undefined}
           >
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -559,11 +571,13 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           </button>
 
           {/* User */}
-          <div className={`
-            flex items-center gap-3 px-3 py-2.5 rounded-xl
-            ${!isExpanded ? 'justify-center' : ''}
-            ${isDark ? 'bg-slate-800/30' : 'bg-slate-100'}
-          `}>
+          <div
+            className={`
+              flex items-center gap-3 px-3 py-2.5 rounded-xl
+              ${!isExpanded ? 'justify-center' : ''}
+            `}
+            style={{ background: 'var(--surface-2)' }}
+          >
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shrink-0">
               <span className="text-white font-semibold text-sm">
                 {userEmail?.charAt(0).toUpperCase() || 'U'}
@@ -571,10 +585,10 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             </div>
             {isExpanded && (
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-medium truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                <p className="text-xs font-medium truncate" style={{ color: 'var(--text-1)' }}>
                   {userEmail || 'Kullanıcı'}
                 </p>
-                <p className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>Oturum açık</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Oturum açık</p>
               </div>
             )}
           </div>
@@ -582,11 +596,10 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
           {/* Logout */}
           <button
             onClick={onLogout}
-            className={`w-full flex items-center justify-center gap-2 mt-2 px-3 py-2 rounded-xl transition-all duration-200 border ${
-              isDark
-                ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border-slate-700/30 hover:border-rose-500/30'
-                : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50 border-slate-200 hover:border-rose-300'
-            }`}
+            className="w-full flex items-center justify-center gap-2 mt-2 px-3 py-2 rounded-xl transition-all duration-200 border"
+            style={{ color: 'var(--text-3)', borderColor: 'var(--border-2)' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fb7185'; e.currentTarget.style.background = 'rgba(244,63,94,0.1)'; e.currentTarget.style.borderColor = 'rgba(244,63,94,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border-2)'; }}
             title={!isExpanded ? 'Çıkış Yap' : undefined}
           >
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

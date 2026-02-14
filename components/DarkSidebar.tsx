@@ -220,13 +220,13 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
 
   return (
     <aside className={`
-      h-screen sticky top-0 bg-[#0d0d1a] text-white flex flex-col shrink-0 no-print
+      h-screen sticky top-0 bg-[#0d0d1a] flex flex-col shrink-0 no-print
       transition-all duration-300 ease-in-out
       ${isCollapsed ? 'w-20' : 'w-60'}
-      border-r border-slate-800/50
-    `}>
+      border-r
+    `} style={{ color: 'var(--text-1)', borderColor: 'var(--border-2)' }}>
       {/* Logo Area */}
-      <div className="p-5 border-b border-slate-800/50">
+      <div className="p-5 border-b" style={{ borderColor: 'var(--border-2)' }}>
         <button
           onClick={() => onNavigate('welcome')}
           className="flex items-center gap-3 group"
@@ -236,8 +236,8 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-lg font-bold text-white tracking-tight">MEDİS</span>
-              <span className="text-[9px] text-slate-500 leading-tight">Merkezi Dijital Sağlık</span>
+              <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-1)' }}>MEDİS</span>
+              <span className="text-[9px] leading-tight" style={{ color: 'var(--text-muted)' }}>Merkezi Dijital Sağlık</span>
             </div>
           )}
         </button>
@@ -251,18 +251,18 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onNavigate(item.view)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                ${isViewActive(item.view)
-                  ? 'bg-slate-700/50 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }
-              `}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+              style={isViewActive(item.view)
+                ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                : { color: 'var(--text-3)' }
+              }
+              onMouseEnter={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+              onMouseLeave={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
             >
               <div className={`
                 w-8 h-8 rounded-lg flex items-center justify-center transition-colors
-                ${isViewActive(item.view) ? 'bg-blue-500/20 text-blue-400' : 'text-slate-500'}
-              `}>
+                ${isViewActive(item.view) ? 'bg-blue-500/20 text-blue-400' : ''}
+              `} style={!isViewActive(item.view) ? { color: 'var(--text-muted)' } : undefined}>
                 {item.icon}
               </div>
               {!isCollapsed && (
@@ -273,7 +273,7 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-slate-800/50 my-4" />
+        <div className="h-px my-4" style={{ background: 'var(--border-2)' }} />
 
         {/* Grouped Items */}
         {menuGroups.slice(1).map(group => {
@@ -287,19 +287,19 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
             <div key={group.id} className="mb-2">
               <button
                 onClick={() => toggleGroup(group.id)}
-                className={`
-                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${hasActiveChild
-                    ? 'bg-slate-800/50 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/30'
-                  }
-                `}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+                style={hasActiveChild
+                  ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                  : { color: 'var(--text-3)' }
+                }
+                onMouseEnter={e => { if (!hasActiveChild) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                onMouseLeave={e => { if (!hasActiveChild) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
               >
                 <div className={`
                   w-8 h-8 rounded-lg flex items-center justify-center transition-colors
                   ${hasActiveChild ? 'bg-blue-500/20' : ''}
-                  ${(group as any).iconColor || 'text-slate-500'}
-                `}>
+                  ${(group as any).iconColor || ''}
+                `} style={!(group as any).iconColor ? { color: 'var(--text-muted)' } : undefined}>
                   {group.icon}
                 </div>
                 {!isCollapsed && (
@@ -321,18 +321,21 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
                   overflow-hidden transition-all duration-300
                   ${isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}
                 `}>
-                  <div className="ml-5 pl-4 border-l border-slate-800/50 mt-1 space-y-0.5">
+                  <div className="ml-5 pl-4 border-l mt-1 space-y-0.5" style={{ borderColor: 'var(--border-2)' }}>
                     {visibleItems.map(item => (
                       <button
                         key={item.id}
                         onClick={() => onNavigate(item.view)}
                         className={`
                           w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200
-                          ${isViewActive(item.view)
-                            ? 'text-white bg-slate-700/30 font-medium'
-                            : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
-                          }
+                          ${isViewActive(item.view) ? 'font-medium' : ''}
                         `}
+                        style={isViewActive(item.view)
+                          ? { color: 'var(--text-1)', background: 'var(--surface-hover)' }
+                          : { color: 'var(--text-muted)' }
+                        }
+                        onMouseEnter={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-2)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                        onMouseLeave={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; } }}
                       >
                         {item.label}
                       </button>
@@ -345,29 +348,29 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
         })}
 
         {/* Divider */}
-        <div className="h-px bg-slate-800/50 my-4" />
+        <div className="h-px my-4" style={{ background: 'var(--border-2)' }} />
 
         {/* Support Section */}
         <div className="space-y-1">
-          <p className="px-3 py-2 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+          <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
             Destek
           </p>
           {supportItems.filter(item => item.hasAccess).map(item => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.view)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                ${isViewActive(item.view)
-                  ? 'bg-slate-700/50 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }
-              `}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+              style={isViewActive(item.view)
+                ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                : { color: 'var(--text-3)' }
+              }
+              onMouseEnter={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+              onMouseLeave={e => { if (!isViewActive(item.view)) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
             >
               <div className={`
                 w-8 h-8 rounded-lg flex items-center justify-center
-                ${isViewActive(item.view) ? 'bg-blue-500/20 text-blue-400' : 'text-slate-500'}
-              `}>
+                ${isViewActive(item.view) ? 'bg-blue-500/20 text-blue-400' : ''}
+              `} style={!isViewActive(item.view) ? { color: 'var(--text-muted)' } : undefined}>
                 {item.icon}
               </div>
               {!isCollapsed && (
@@ -380,18 +383,18 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
           {isAdmin && (
             <button
               onClick={() => onNavigate('admin')}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                ${isViewActive('admin')
-                  ? 'bg-slate-700/50 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }
-              `}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+              style={isViewActive('admin')
+                ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                : { color: 'var(--text-3)' }
+              }
+              onMouseEnter={e => { if (!isViewActive('admin')) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+              onMouseLeave={e => { if (!isViewActive('admin')) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
             >
               <div className={`
                 w-8 h-8 rounded-lg flex items-center justify-center
-                ${isViewActive('admin') ? 'bg-rose-500/20 text-rose-400' : 'text-slate-500'}
-              `}>
+                ${isViewActive('admin') ? 'bg-rose-500/20 text-rose-400' : ''}
+              `} style={!isViewActive('admin') ? { color: 'var(--text-muted)' } : undefined}>
                 <UsersIcon />
               </div>
               {!isCollapsed && (
@@ -403,13 +406,16 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
       </nav>
 
       {/* Footer - User & Settings */}
-      <div className="p-4 border-t border-slate-800/50">
+      <div className="p-4 border-t" style={{ borderColor: 'var(--border-2)' }}>
         {/* Settings */}
         <button
           onClick={() => {}}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all duration-200 mb-2"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-2"
+          style={{ color: 'var(--text-3)' }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
         >
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
             <SettingsIcon />
           </div>
           {!isCollapsed && <span className="text-sm font-medium">Ayarlar</span>}
@@ -417,9 +423,9 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
 
         {/* User Info */}
         <div className={`
-          flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-800/30
+          flex items-center gap-3 px-3 py-3 rounded-xl
           ${isCollapsed ? 'justify-center' : ''}
-        `}>
+        `} style={{ background: 'var(--surface-2)' }}>
           <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
             <span className="text-white font-semibold text-sm">
               {userEmail?.charAt(0).toUpperCase() || 'U'}
@@ -427,10 +433,10 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate">
+              <p className="text-xs font-medium truncate" style={{ color: 'var(--text-1)' }}>
                 {userEmail || 'Kullanıcı'}
               </p>
-              <p className="text-[10px] text-slate-500">Oturum açık</p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Oturum açık</p>
             </div>
           )}
         </div>
@@ -438,7 +444,10 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
         {/* Logout */}
         <button
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 mt-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-200 border border-slate-800/50 hover:border-rose-500/30"
+          className="w-full flex items-center justify-center gap-2 mt-3 px-3 py-2.5 rounded-xl transition-all duration-200 border"
+          style={{ color: 'var(--text-3)', borderColor: 'var(--border-2)' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#fb7185'; e.currentTarget.style.background = 'rgba(244,63,94,0.1)'; e.currentTarget.style.borderColor = 'rgba(244,63,94,0.3)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border-2)'; }}
         >
           <LogoutIcon />
           {!isCollapsed && <span className="text-sm font-medium">Çıkış Yap</span>}
@@ -448,7 +457,10 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
       {/* Collapse Toggle */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all z-50"
+        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border flex items-center justify-center transition-all z-50"
+        style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)', color: 'var(--text-3)' }}
+        onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'var(--surface-2)'; }}
       >
         <svg
           className={`w-3 h-3 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}

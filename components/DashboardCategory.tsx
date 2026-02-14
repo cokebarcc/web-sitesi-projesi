@@ -215,7 +215,8 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
       <div className="p-8">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-sm uppercase transition-all mb-6"
+          className="flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm uppercase transition-all mb-6"
+          style={{ backgroundColor: 'var(--surface-2)' }}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -223,12 +224,12 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
           Dashboard'a Dön
         </button>
 
-        <div className="bg-white rounded-[32px] p-12 text-center shadow-sm border border-slate-100">
-          <svg className="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="rounded-[32px] p-12 text-center shadow-sm" style={{ backgroundColor: 'var(--surface-1)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-2)' }}>
+          <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          <h2 className="text-2xl font-black text-slate-900 mb-2">Erişim Yok</h2>
-          <p className="text-slate-500 font-medium">
+          <h2 className="text-2xl font-black mb-2" style={{ color: 'var(--text-1)' }}>Erişim Yok</h2>
+          <p className="font-medium" style={{ color: 'var(--text-3)' }}>
             Bu kategorideki modüllere erişim yetkiniz bulunmamaktadır.
           </p>
         </div>
@@ -242,43 +243,46 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-sm uppercase transition-all"
+          className="flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm uppercase transition-all"
+          style={{ backgroundColor: 'var(--surface-2)' }}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           Dashboard'a Dön
         </button>
-        <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900">
+        <h1 className="text-3xl font-black uppercase tracking-tight" style={{ color: 'var(--text-1)' }}>
           {CATEGORY_TITLES[category]}
         </h1>
         <div className="w-[200px]"></div> {/* Spacer for centering */}
       </div>
 
       {/* Tab Navigation & Content */}
-      <div className="bg-white rounded-[32px] border border-slate-100 overflow-hidden shadow-sm">
+      <div className="rounded-[32px] overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--surface-1)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-2)' }}>
         {/* Module Cards */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availableTabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
-              className="group bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-500 rounded-2xl p-6 text-left transition-all hover:shadow-lg"
+              className="group hover:border-blue-500 border-2 rounded-2xl p-6 text-left transition-all hover:shadow-lg"
+              style={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-2)' }}
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-blue-50 group-hover:bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 transition-all shrink-0">
                   {tab.icon}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-black text-sm uppercase text-slate-900 mb-2">
+                  <h3 className="font-black text-sm uppercase mb-2" style={{ color: 'var(--text-1)' }}>
                     {tab.label}
                   </h3>
-                  <p className="text-xs text-slate-500 font-medium">
+                  <p className="text-xs font-medium" style={{ color: 'var(--text-3)' }}>
                     Modülü görüntülemek için tıklayın
                   </p>
                 </div>
                 <svg
-                  className="w-5 h-5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"
+                  className="w-5 h-5 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"
+                  style={{ color: 'var(--text-3)' }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

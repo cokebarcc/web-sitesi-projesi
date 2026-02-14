@@ -89,19 +89,19 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 lg:p-8">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className="absolute inset-0 backdrop-blur-md" style={{ background: 'var(--bg-app)', opacity: 0.6 }} onClick={onClose}></div>
       <div className="relative w-full max-w-[1200px] max-h-[90vh] bg-white rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-10 border-b border-slate-50 flex justify-between items-start bg-slate-50/30">
+        <div className="p-10 flex justify-between items-start" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--surface-3)' }}>
           <div>
-            <h3 className="text-3xl font-black uppercase text-slate-900 tracking-tight">{doctor.doctorName}</h3>
+            <h3 className="text-3xl font-black uppercase tracking-tight" style={{ color: 'var(--text-1)' }}>{doctor.doctorName}</h3>
             <div className="flex items-center gap-3 mt-1">
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{doctor.branchName}</p>
-              <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+              <p className="text-sm font-bold uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>{doctor.branchName}</p>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--surface-2)' }}></div>
               <p className="text-sm font-black text-indigo-600 uppercase tracking-widest">{periodMonth} {periodYear}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-4 bg-white border border-slate-200 rounded-full hover:bg-slate-100 transition-all shadow-sm group">
-            <svg className="w-6 h-6 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={onClose} className="p-4 bg-white rounded-full transition-all shadow-sm group" style={{ border: '1px solid var(--border-2)' }}>
+            <svg className="w-6 h-6" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -109,7 +109,7 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
 
         <div className="flex-1 overflow-y-auto p-10 space-y-12 custom-scrollbar">
           <div className="space-y-6">
-            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2" style={{ color: 'var(--text-3)' }}>
               <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
               Kapasite Kullanım Özeti
             </h4>
@@ -139,22 +139,22 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
           </div>
 
           <div className="space-y-6">
-            <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] flex items-center gap-2" style={{ color: 'var(--text-3)' }}>
               <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
               Aylık Faaliyet Analiz Raporu
             </h4>
-            <div className="bg-white rounded-[40px] border border-slate-100 overflow-hidden shadow-sm">
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 divide-x divide-y divide-slate-50">
+            <div className="bg-white rounded-[40px] overflow-hidden shadow-sm" style={{ border: '1px solid var(--border-2)' }}>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 divide-x divide-y" style={{ '--tw-divide-opacity': 1, '--tw-divide-color': 'var(--border-2)' } as React.CSSProperties}>
                 {Object.entries(activitySummary).length > 0 ? (
                   Object.entries(activitySummary).map(([act, days]) => (
-                    <div key={act} className="p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors">
-                      <p className="text-[9px] font-black text-slate-400 uppercase mb-2 line-clamp-1 h-3">{act}</p>
-                      <p className="text-2xl font-black text-slate-800">{days.toString().replace('.', ',')}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">GÜN</p>
+                    <div key={act} className="p-6 flex flex-col items-center justify-center text-center transition-colors" style={{ ['--hover-bg' as string]: 'var(--surface-3)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-3)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                      <p className="text-[9px] font-black uppercase mb-2 line-clamp-1 h-3" style={{ color: 'var(--text-3)' }}>{act}</p>
+                      <p className="text-2xl font-black" style={{ color: 'var(--text-1)' }}>{days.toString().replace('.', ',')}</p>
+                      <p className="text-[9px] font-bold uppercase mt-1" style={{ color: 'var(--text-3)' }}>GÜN</p>
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-full p-12 text-center text-slate-300 font-black uppercase italic tracking-widest">
+                  <div className="col-span-full p-12 text-center font-black uppercase italic tracking-widest" style={{ color: 'var(--text-muted)' }}>
                     Cetvel kaydı bulunamadı
                   </div>
                 )}
@@ -273,7 +273,7 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
         <h3 className="text-2xl font-black uppercase">{month} {year} KAPASİTE KULLANIM GRAFİĞİ</h3>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-xs font-black text-slate-500 uppercase">Branş:</label>
+            <label className="text-xs font-black uppercase" style={{ color: 'var(--text-muted)' }}>Branş:</label>
             <select
               value={branchFilter}
               onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
@@ -284,7 +284,7 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs font-black text-slate-500 uppercase">Göster:</label>
+            <label className="text-xs font-black uppercase" style={{ color: 'var(--text-muted)' }}>Göster:</label>
             <select
               value={viewLimit}
               onChange={(e) => { setViewLimit(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)); setCurrentPage(1); }}
@@ -330,17 +330,23 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
+            className="px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
+            style={{ background: 'var(--surface-3)' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-3)')}
           >
             Önceki
           </button>
-          <span className="text-sm font-bold text-slate-600">
+          <span className="text-sm font-bold" style={{ color: 'var(--text-2)' }}>
             Sayfa {currentPage} / {totalPages}
           </span>
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
+            className="px-4 py-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm"
+            style={{ background: 'var(--surface-3)' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-3)')}
           >
             Sonraki
           </button>
@@ -515,8 +521,8 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           return (
             <div className="h-full w-full bg-white flex items-center justify-center p-8">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
-                <div className="bg-slate-900 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
-                  <p className="text-slate-400 text-xs font-black uppercase mb-2">Toplam Kapasite Sayısı</p>
+                <div className="text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center" style={{ background: 'var(--bg-app)' }}>
+                  <p className="text-xs font-black uppercase mb-2" style={{ color: 'var(--text-3)' }}>Toplam Kapasite Sayısı</p>
                   <h4 className="text-5xl font-black">{kpiData.totalCapacityCount.toLocaleString('tr-TR')}</h4>
                 </div>
                 <div className="bg-indigo-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
@@ -545,7 +551,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           );
 
         default:
-          return <div className="h-full flex items-center justify-center bg-slate-50"><p className="text-slate-400 font-black uppercase tracking-widest">{widget.type}</p></div>;
+          return <div className="h-full flex items-center justify-center" style={{ background: 'var(--surface-3)' }}><p className="font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>{widget.type}</p></div>;
       }
     }, [widget.type, state.month, state.year, state.branch, isPresentation]);
 
@@ -583,8 +589,8 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
               className="absolute inset-x-0 bottom-0 bg-white border-t-4 border-indigo-600 p-6 shadow-2xl rounded-t-3xl z-20"
             >
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-black text-slate-900 uppercase text-sm">Widget Ayarları</h4>
-                <button onClick={() => setEditingWidgetId(null)} className="text-slate-400 hover:text-slate-600">
+                <h4 className="font-black uppercase text-sm" style={{ color: 'var(--text-1)' }}>Widget Ayarları</h4>
+                <button onClick={() => setEditingWidgetId(null)} style={{ color: 'var(--text-3)' }}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -593,33 +599,33 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Ay</label>
+                  <label className="block text-xs font-black uppercase mb-2" style={{ color: 'var(--text-muted)' }}>Ay</label>
                   <select
                     value={state.month || currentMonth}
                     onChange={(e) => updateWidgetState(slideId, widget.id, { month: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 ring-indigo-500"
+                    className="w-full px-4 py-2 rounded-xl font-bold text-sm outline-none focus:ring-2 ring-indigo-500" style={{ border: '1px solid var(--input-border)', background: 'var(--input-bg)', color: 'var(--input-text)' }}
                   >
                     {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Yıl</label>
+                  <label className="block text-xs font-black uppercase mb-2" style={{ color: 'var(--text-muted)' }}>Yıl</label>
                   <select
                     value={state.year || currentYear}
                     onChange={(e) => updateWidgetState(slideId, widget.id, { year: Number(e.target.value) })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 ring-indigo-500"
+                    className="w-full px-4 py-2 rounded-xl font-bold text-sm outline-none focus:ring-2 ring-indigo-500" style={{ border: '1px solid var(--input-border)', background: 'var(--input-bg)', color: 'var(--input-text)' }}
                   >
                     {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Branş</label>
+                  <label className="block text-xs font-black uppercase mb-2" style={{ color: 'var(--text-muted)' }}>Branş</label>
                   <select
                     value={state.branch || 'ALL'}
                     onChange={(e) => updateWidgetState(slideId, widget.id, { branch: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:ring-2 ring-indigo-500"
+                    className="w-full px-4 py-2 rounded-xl font-bold text-sm outline-none focus:ring-2 ring-indigo-500" style={{ border: '1px solid var(--input-border)', background: 'var(--input-bg)', color: 'var(--input-text)' }}
                   >
                     {availableBranches.map(b => (
                       <option key={b} value={b}>
@@ -640,8 +646,8 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 no-print">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 uppercase">Sunum Düzenleyici</h2>
-          <p className="text-slate-500 font-bold uppercase text-xs">Modül görünümlerini aynalayarak profesyonel slaytlar oluşturun.</p>
+          <h2 className="text-3xl font-black uppercase" style={{ color: 'var(--text-1)' }}>Sunum Düzenleyici</h2>
+          <p className="font-bold uppercase text-xs" style={{ color: 'var(--text-muted)' }}>Modül görünümlerini aynalayarak profesyonel slaytlar oluşturun.</p>
         </div>
         <button onClick={startPresentation} className="bg-indigo-600 text-white px-12 py-5 rounded-3xl font-black uppercase shadow-xl hover:bg-indigo-700 transition-all">
           <span className="flex items-center gap-3">
@@ -656,7 +662,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 no-print">
         <div className="lg:col-span-8">
           {activeSlideId ? (
-            <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm min-h-[600px] flex flex-col">
+            <div className="bg-white p-10 rounded-[48px] shadow-sm min-h-[600px] flex flex-col" style={{ border: '1px solid var(--border-2)' }}>
               <div className="flex justify-between items-center border-b pb-8 mb-8">
                 <input
                   value={slides.find(s=>s.id===activeSlideId)?.title}
@@ -678,8 +684,8 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                 </div>
               </div>
               <div
-                className="flex-1 bg-slate-900 rounded-[32px] shadow-2xl flex flex-col gap-4 p-4 overflow-y-auto"
-                style={{ aspectRatio: '16/9' }}
+                className="flex-1 rounded-[32px] shadow-2xl flex flex-col gap-4 p-4 overflow-y-auto"
+                style={{ background: 'var(--bg-app)', aspectRatio: '16/9' }}
               >
                 {slides.find(s=>s.id===activeSlideId)?.widgets.map(w => (
                   <WidgetMirror key={w.id} widget={w} slideId={activeSlideId} />
@@ -696,12 +702,12 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
               </div>
             </div>
           ) : (
-            <div className="bg-slate-50 p-20 rounded-[48px] border-2 border-dashed border-slate-200 text-center text-slate-300 font-black text-2xl uppercase">
+            <div className="p-20 rounded-[48px] border-2 border-dashed text-center font-black text-2xl uppercase" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)', color: 'var(--text-muted)' }}>
               DÜZENLEMEK İÇİN SOLDAKİ LİSTEDEN BİR SLAYT SEÇİN
             </div>
           )}
         </div>
-        <div className="lg:col-span-4 bg-slate-900 rounded-[48px] p-10 text-white min-h-[600px] flex flex-col">
+        <div className="lg:col-span-4 rounded-[48px] p-10 text-white min-h-[600px] flex flex-col" style={{ background: 'var(--bg-app)' }}>
           <h3 className="text-xl font-black uppercase mb-8 italic">Slayt Akışı</h3>
           <div className="flex-1 space-y-4 overflow-auto custom-scrollbar">
             {slides.map((s, idx) => (
@@ -715,7 +721,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-xs font-black text-slate-500">{(idx+1).toString().padStart(2,'0')}</span>
+                  <span className="text-xs font-black" style={{ color: 'var(--text-muted)' }}>{(idx+1).toString().padStart(2,'0')}</span>
                   <span className="text-sm font-black uppercase truncate">{s.title}</span>
                 </div>
               </div>
@@ -727,7 +733,10 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
               setSlides([...slides, {id, title:'YENİ SLAYT', widgets:[]}]);
               setActiveSlideId(id);
             }}
-            className="mt-8 bg-white text-slate-900 w-full py-5 rounded-[28px] font-black uppercase text-xs hover:bg-slate-100 transition-all"
+            className="mt-8 bg-white w-full py-5 rounded-[28px] font-black uppercase text-xs transition-all"
+            style={{ color: 'var(--text-1)' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-3)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'white')}
           >
             + YENİ SLAYT EKLE
           </button>
@@ -737,7 +746,8 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
       {/* Widget Gallery Modal */}
       {showWidgetGallery && activeSlideId && (
         <div
-          className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+          className="fixed inset-0 z-[500] flex items-center justify-center p-4 backdrop-blur-md"
+          style={{ background: 'color-mix(in srgb, var(--bg-app) 60%, transparent)' }}
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) {
               e.preventDefault();
@@ -752,15 +762,16 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
               e.stopPropagation();
             }}
           >
-            <div className="p-10 border-b border-slate-100">
+            <div className="p-10" style={{ borderBottom: '1px solid var(--border-2)' }}>
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-3xl font-black uppercase text-slate-900">Widget Galerisi</h3>
-                  <p className="text-slate-500 font-bold mt-1">Slayta eklemek için bir widget seçin</p>
+                  <h3 className="text-3xl font-black uppercase" style={{ color: 'var(--text-1)' }}>Widget Galerisi</h3>
+                  <p className="font-bold mt-1" style={{ color: 'var(--text-muted)' }}>Slayta eklemek için bir widget seçin</p>
                 </div>
                 <button
                   onClick={() => setShowWidgetGallery(false)}
-                  className="text-slate-400 hover:text-slate-600 p-2"
+                  className="p-2"
+                  style={{ color: 'var(--text-3)' }}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
@@ -771,7 +782,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
             <div className="p-10 max-h-[600px] overflow-y-auto custom-scrollbar">
               {['Genel', 'Verimlilik', 'Cetvel'].map(category => (
                 <div key={category} className="mb-10">
-                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <h4 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: 'var(--text-3)' }}>
                     <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
                     {category}
                   </h4>
@@ -780,10 +791,11 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                       <button
                         key={widget.type}
                         onClick={() => addWidgetToSlide(activeSlideId, widget.type)}
-                        className="bg-slate-50 hover:bg-indigo-50 border-2 border-slate-200 hover:border-indigo-300 rounded-2xl p-6 text-left transition-all hover:scale-105 hover:shadow-lg group"
+                        className="hover:bg-indigo-50 border-2 hover:border-indigo-300 rounded-2xl p-6 text-left transition-all hover:scale-105 hover:shadow-lg group"
+                        style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}
                       >
                         <div className="text-4xl mb-3">{widget.icon}</div>
-                        <div className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                        <div className="text-sm font-black group-hover:text-indigo-600 transition-colors" style={{ color: 'var(--text-1)' }}>
                           {widget.label}
                         </div>
                       </button>
@@ -816,13 +828,13 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
               </button>
             </div>
             <div className={`absolute inset-x-0 bottom-10 px-20 flex justify-between items-center transition-opacity duration-500 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-              <button onClick={() => setCurrentSlideIndex(p => Math.max(0, p - 1))} className={`bg-slate-900 text-white p-8 rounded-3xl shadow-2xl transition-all ${currentSlideIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 active:scale-95'}`}>
+              <button onClick={() => setCurrentSlideIndex(p => Math.max(0, p - 1))} className={`text-white p-8 rounded-3xl shadow-2xl transition-all ${currentSlideIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 active:scale-95'}`} style={{ background: 'var(--bg-app)' }}>
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M15 19l-7-7 7-7"/>
                 </svg>
               </button>
-              <div className="bg-slate-900/90 text-white px-12 py-5 rounded-full font-black text-2xl tracking-[0.2em]">{currentSlideIndex + 1} / {slides.length}</div>
-              <button onClick={() => setCurrentSlideIndex(p => Math.min(slides.length - 1, p + 1))} className={`bg-slate-900 text-white p-8 rounded-3xl shadow-2xl transition-all ${currentSlideIndex === slides.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 active:scale-95'}`}>
+              <div className="text-white px-12 py-5 rounded-full font-black text-2xl tracking-[0.2em]" style={{ background: 'color-mix(in srgb, var(--bg-app) 90%, transparent)' }}>{currentSlideIndex + 1} / {slides.length}</div>
+              <button onClick={() => setCurrentSlideIndex(p => Math.min(slides.length - 1, p + 1))} className={`text-white p-8 rounded-3xl shadow-2xl transition-all ${currentSlideIndex === slides.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 active:scale-95'}`} style={{ background: 'var(--bg-app)' }}>
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M9 5l7 7-7 7"/>
                 </svg>
