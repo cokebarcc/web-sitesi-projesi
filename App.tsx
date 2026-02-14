@@ -54,7 +54,7 @@ import ComparisonWizard from './components/ComparisonWizard';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 import SessionManagement from './src/components/SessionManagement';
-import { registerSession } from './src/services/sessionService';
+import { registerSession, logoutSession } from './src/services/sessionService';
 
 // Logolar
 import sbLogo from './logo/sb logo.png';
@@ -1270,6 +1270,7 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     try {
+      await logoutSession();
       await signOut(auth);
       setUser(null);
     } catch (error) {
