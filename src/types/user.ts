@@ -10,7 +10,12 @@ export interface UserPermissions {
     efficiencyAnalysis: boolean;
     serviceAnalysis: boolean;
     aiChatbot: boolean;
-    gorenBashekimlik: boolean;
+    gorenIlsm: boolean;
+    gorenIlcesm: boolean;
+    gorenBh: boolean;
+    gorenAdsh: boolean;
+    gorenAsh: boolean;
+    gorenManuel: boolean;
     analysisModule: boolean;
     schedulePlanning: boolean;
     performancePlanning: boolean;
@@ -30,6 +35,14 @@ export interface UserPermissions {
     physicianData: boolean;
     emergencyService: boolean;
     activeDemand: boolean;
+    changeAnalysis: boolean;
+    gil: boolean;
+    ekListeTanimlama: boolean;
+    gorenIlsm: boolean;
+    gorenIlcesm: boolean;
+    gorenBh: boolean;
+    gorenAdsh: boolean;
+    gorenAsh: boolean;
   };
 }
 
@@ -54,7 +67,12 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
     efficiencyAnalysis: true,
     serviceAnalysis: true,
     aiChatbot: true,
-    gorenBashekimlik: true,
+    gorenIlsm: true,
+    gorenIlcesm: true,
+    gorenBh: true,
+    gorenAdsh: true,
+    gorenAsh: true,
+    gorenManuel: true,
     analysisModule: true,
     schedulePlanning: true,
     performancePlanning: true,
@@ -72,5 +90,13 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
     physicianData: false,
     emergencyService: false,
     activeDemand: false,
+    changeAnalysis: false,
+    gil: false,
+    ekListeTanimlama: false,
+    gorenIlsm: false,
+    gorenIlcesm: false,
+    gorenBh: false,
+    gorenAdsh: false,
+    gorenAsh: false,
   },
 };

@@ -125,12 +125,12 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       ),
       iconColor: 'text-purple-400',
       items: [
-        { id: 'goren-manuel', label: 'Manuel Hesaplama', view: 'goren-manuel', hasAccess: true },
-        { id: 'goren-ilsm', label: 'İl Sağlık Müdürlüğü', view: 'goren-ilsm', hasAccess: true },
-        { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: true },
-        { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: true },
-        { id: 'goren-adsh', label: 'ADSH', view: 'goren-adsh', hasAccess: true },
-        { id: 'goren-ash', label: 'Acil Sağlık', view: 'goren-ash', hasAccess: true }
+        { id: 'goren-manuel', label: 'Manuel Hesaplama', view: 'goren-manuel', hasAccess: hasModuleAccess('gorenManuel') },
+        { id: 'goren-ilsm', label: 'İl Sağlık Müdürlüğü', view: 'goren-ilsm', hasAccess: hasModuleAccess('gorenIlsm') },
+        { id: 'goren-ilcesm', label: 'İlçe Sağlık Müdürlüğü', view: 'goren-ilcesm', hasAccess: hasModuleAccess('gorenIlcesm') },
+        { id: 'goren-bh', label: 'Başhekimlik', view: 'goren-bh', hasAccess: hasModuleAccess('gorenBh') },
+        { id: 'goren-adsh', label: 'ADSH', view: 'goren-adsh', hasAccess: hasModuleAccess('gorenAdsh') },
+        { id: 'goren-ash', label: 'Acil Sağlık', view: 'goren-ash', hasAccess: hasModuleAccess('gorenAsh') }
       ]
     },
     {
@@ -178,17 +178,6 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
       ),
       view: 'ai-chatbot',
       hasAccess: hasModuleAccess('aiChatbot')
-    },
-    {
-      id: 'goren',
-      label: 'GÖREN Başarı',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-      view: 'goren',
-      hasAccess: hasModuleAccess('gorenBashekimlik')
     },
     {
       id: 'comparison-wizard',
