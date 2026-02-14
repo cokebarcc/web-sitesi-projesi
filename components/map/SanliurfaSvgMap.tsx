@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
-import { SVG_PATHS, SVG_CONFIG, DISTRICTS } from '../../src/data/sanliurfaDistricts';
+import { SVG_PATHS, SVG_CONFIG, DISTRICTS, INSTITUTION_STYLES, PROVINCE_BOUNDS } from '../../src/data/sanliurfaDistricts';
+import type { InstitutionMarker } from '../../src/data/sanliurfaDistricts';
 
 interface SanliurfaSvgMapProps {
   theme: 'dark' | 'light';
   selectedDistrict: string | null;
   onDistrictClick: (districtName: string) => void;
+  markers?: InstitutionMarker[];
+}
+
+// Lat/Lng → SVG koordinat dönüşümü
+function latLngToSvg(lat: number, lng: number): { x: number; y: number } {
+  const [[minLat, minLng], [maxLat, maxLng]] = PROVINCE_BOUNDS;
+  const x = ((lng - minLng) / (maxLng - minLng)) * SVG_CONFIG.width;
+  const y = ((maxLat - lat) / (maxLat - minLat)) * SVG_CONFIG.height;
+  return { x, y };
 }
 
 const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
   theme,
   selectedDistrict,
   onDistrictClick,
+  markers = [],
 }) => {
   const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
   const isDark = theme === 'dark';
@@ -133,6 +144,34 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
             >
               {name}
             </text>
+          );
+        })}
+
+        {/* Kurum pinleri */}
+        {markers.map((marker) => {
+          const { x, y } = latLngToSvg(marker.lat, marker.lng);
+          const style = INSTITUTION_STYLES[marker.type];
+          const r = style.size * 0.3;
+          return (
+            <g key={marker.id} style={{ pointerEvents: 'none' }}>
+              {/* Pin gölgesi */}
+              <circle cx={x} cy={y + 1} r={r + 1} fill="rgba(0,0,0,0.3)" />
+              {/* Pin dairesi */}
+              <circle cx={x} cy={y} r={r} fill={style.bg} stroke="#fff" strokeWidth={1.5} />
+              {/* Pin etiketi */}
+              <text
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill="#fff"
+                fontSize={r * 1.1}
+                fontWeight={700}
+                fontFamily="Inter, sans-serif"
+              >
+                {style.label}
+              </text>
+            </g>
           );
         })}
       </svg>

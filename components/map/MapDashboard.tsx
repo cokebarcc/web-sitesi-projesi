@@ -280,7 +280,7 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
                           : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
-                    Uydu
+                    Gerçek Harita
                   </button>
                 </div>
                 {/* Büyütme butonu — sadece satellite modda */}
@@ -326,6 +326,7 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
                 theme={theme}
                 selectedDistrict={selectedDistrict}
                 onDistrictClick={handleDistrictClick}
+                markers={markers}
               />
             ) : isLoading ? (
               <div className="flex items-center justify-center h-full">
