@@ -48,7 +48,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+      <div className="g-section-card p-6">
         <div className="h-80 flex items-center justify-center">
           <div className="flex items-center gap-3 text-[var(--text-muted)]">
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   // Veri yoksa
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+      <div className="g-section-card p-6">
         <div className="h-80 flex flex-col items-center justify-center text-[var(--text-muted)]">
           <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -142,10 +142,10 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   // Ortak eksen özellikleri
   const xAxisProps = {
     dataKey: 'shortLabel',
-    stroke: '#64748b',
+    stroke: 'var(--g-text-muted, #64748b)',
     fontSize: 11,
     tickLine: false,
-    axisLine: { stroke: '#334155' }
+    axisLine: { stroke: 'var(--g-border, #334155)' }
   };
 
   // Y ekseni için min/max değerleri hesapla (5'lik paydalar için)
@@ -164,10 +164,10 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   }
 
   const yAxisProps = {
-    stroke: '#64748b',
+    stroke: 'var(--g-text-muted, #64748b)',
     fontSize: 11,
     tickLine: false,
-    axisLine: { stroke: '#334155' },
+    axisLine: { stroke: 'var(--g-border, #334155)' },
     domain: [Math.max(0, yMin), yMax] as [number, number],
     ticks: yTicks
   };
@@ -175,7 +175,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   // Ortak grid özellikleri
   const gridProps = {
     strokeDasharray: '3 3',
-    stroke: '#334155',
+    stroke: 'var(--g-border, #334155)',
     vertical: false
   };
 
@@ -193,12 +193,12 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
     : null;
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+    <div className="g-section-card p-6">
       {/* Başlık ve Stil Seçici */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-bold text-[var(--text-1)]">Performans Trendi</h3>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
+          <h3 className="g-title-section">Performans Trendi</h3>
+          <p className="g-text-small" style={{ color: 'var(--g-text-muted)', marginTop: '4px' }}>
             {institutionName ? `${institutionName} - ` : ''}Son {data.length} aylık performans
           </p>
         </div>

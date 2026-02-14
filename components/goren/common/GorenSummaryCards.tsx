@@ -1,7 +1,8 @@
 /**
- * GÖREN Özet Kartları
+ * GÖREN Özet Kartları — Premium Design System
  *
  * Toplam puan, TR Rol Ortalaması, başarı oranı ve muaf gösterge sayısı
+ * Uses g-kpi-card tokens from goren-premium.css
  */
 
 import React, { useState } from 'react';
@@ -64,11 +65,11 @@ export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
         {[1, 2, 3, 4].map(i => (
           <div
             key={i}
-            className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6 animate-pulse"
+            className="g-kpi-card animate-pulse"
           >
-            <div className="h-3 bg-gray-300 rounded w-24 mb-3" />
-            <div className="h-8 bg-gray-300 rounded w-16 mb-2" />
-            <div className="h-2 bg-gray-200 rounded w-32" />
+            <div className="h-3 rounded w-24 mb-3" style={{ background: 'var(--g-border)' }} />
+            <div className="h-8 rounded w-16 mb-2" style={{ background: 'var(--g-border)' }} />
+            <div className="h-2 rounded w-32" style={{ background: 'var(--g-border-light)' }} />
           </div>
         ))}
       </div>
@@ -199,15 +200,14 @@ const TrRolOrtalamasiCard: React.FC<TrRolOrtalamasiCardProps> = ({
   onTempValueChange
 }) => {
   return (
-    <div className="bg-purple-500/10 backdrop-blur-xl rounded-3xl border border-purple-500/20 p-6 relative">
+    <div className="g-kpi-card g-kpi-card--purple">
       <div className="flex items-start justify-between">
-        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-          TR ROL ORTALAMASI
-        </p>
+        <p className="g-text-meta">TR ROL ORTALAMASI</p>
         {isAdmin && !isEditing && (
           <button
             onClick={onStartEdit}
-            className="text-purple-400 hover:text-purple-300 transition-colors"
+            style={{ color: 'var(--g-accent)' }}
+            className="hover:opacity-80 transition-opacity"
             title="Düzenle"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -218,12 +218,23 @@ const TrRolOrtalamasiCard: React.FC<TrRolOrtalamasiCardProps> = ({
       </div>
 
       {isEditing ? (
-        <div className="mt-2">
+        <div style={{ marginTop: 'var(--g-space-2)' }}>
           <input
             type="number"
             value={tempValue}
             onChange={(e) => onTempValueChange(e.target.value)}
-            className="w-full bg-purple-900/30 border border-purple-500/30 rounded-lg px-3 py-2 text-2xl font-black text-purple-400 focus:outline-none focus:border-purple-400"
+            className="g-num"
+            style={{
+              width: '100%',
+              background: 'var(--g-surface-sunken)',
+              border: '2px solid var(--g-accent)',
+              borderRadius: 'var(--g-radius-md)',
+              padding: 'var(--g-space-2) var(--g-space-3)',
+              fontSize: '24px',
+              fontWeight: 900,
+              color: 'var(--g-text)',
+              outline: 'none'
+            }}
             placeholder="0"
             autoFocus
             onKeyDown={(e) => {
@@ -231,16 +242,18 @@ const TrRolOrtalamasiCard: React.FC<TrRolOrtalamasiCardProps> = ({
               if (e.key === 'Escape') onCancel();
             }}
           />
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2" style={{ marginTop: 'var(--g-space-2)' }}>
             <button
               onClick={onSave}
-              className="flex-1 px-3 py-1.5 bg-purple-500 text-white text-xs font-bold rounded-lg hover:bg-purple-600 transition-colors"
+              className="g-btn g-btn-primary"
+              style={{ flex: 1, height: '32px', fontSize: '12px' }}
             >
               Kaydet
             </button>
             <button
               onClick={onCancel}
-              className="flex-1 px-3 py-1.5 bg-[var(--surface-3)] text-[var(--text-1)] text-xs font-bold rounded-lg hover:bg-[var(--surface-hover)] transition-colors"
+              className="g-btn g-btn-secondary"
+              style={{ flex: 1, height: '32px', fontSize: '12px' }}
             >
               İptal
             </button>
@@ -248,10 +261,10 @@ const TrRolOrtalamasiCard: React.FC<TrRolOrtalamasiCardProps> = ({
         </div>
       ) : (
         <>
-          <h3 className="text-3xl font-black text-purple-400 mt-2">
+          <h3 className="g-num" style={{ fontSize: '30px', fontWeight: 900, color: 'var(--g-text)', marginTop: 'var(--g-space-2)' }}>
             {value !== null ? value.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) : '-'}
           </h3>
-          <p className="text-[11px] text-[var(--text-muted)] mt-2">
+          <p className="g-text-small" style={{ marginTop: 'var(--g-space-2)', color: 'var(--g-text-muted)' }}>
             {value !== null ? 'Türkiye rol ortalaması' : 'Henüz belirlenmedi'}
           </p>
         </>
@@ -280,65 +293,37 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   showProgress,
   progressValue = 0
 }) => {
-  const colorClasses = {
-    indigo: {
-      text: 'text-indigo-400',
-      bg: 'bg-indigo-500/10',
-      border: 'border-indigo-500/20',
-      progress: 'bg-indigo-500'
-    },
-    purple: {
-      text: 'text-purple-400',
-      bg: 'bg-purple-500/10',
-      border: 'border-purple-500/20',
-      progress: 'bg-purple-500'
-    },
-    emerald: {
-      text: 'text-emerald-400',
-      bg: 'bg-emerald-500/10',
-      border: 'border-emerald-500/20',
-      progress: 'bg-emerald-500'
-    },
-    amber: {
-      text: 'text-amber-400',
-      bg: 'bg-amber-500/10',
-      border: 'border-amber-500/20',
-      progress: 'bg-amber-500'
-    },
-    rose: {
-      text: 'text-rose-400',
-      bg: 'bg-rose-500/10',
-      border: 'border-rose-500/20',
-      progress: 'bg-rose-500'
-    },
-    orange: {
-      text: 'text-orange-400',
-      bg: 'bg-orange-500/10',
-      border: 'border-orange-500/20',
-      progress: 'bg-orange-500'
-    },
-    violet: {
-      text: 'text-violet-400',
-      bg: 'bg-violet-500/10',
-      border: 'border-violet-500/20',
-      progress: 'bg-violet-500'
-    }
+  // Map color to the g-kpi-card accent class
+  const kpiAccentClass = `g-kpi-card--${color}`;
+
+  // Progress bar gradient colors
+  const progressColors: Record<string, string> = {
+    indigo: 'linear-gradient(to right, #6366f1, #4f46e5)',
+    purple: 'linear-gradient(to right, #7c3aed, #6d28d9)',
+    emerald: 'linear-gradient(to right, #059669, #047857)',
+    amber: 'linear-gradient(to right, #d97706, #b45309)',
+    rose: 'linear-gradient(to right, #e11d48, #be123c)',
+    orange: 'linear-gradient(to right, #ea580c, #c2410c)',
+    violet: 'linear-gradient(to right, #8b5cf6, #7c3aed)'
   };
 
-  const classes = colorClasses[color];
+  // Value accent color
+  const valueColors: Record<string, string> = {
+    indigo: 'var(--g-accent)',
+    purple: '#7c3aed',
+    emerald: 'var(--g-success)',
+    amber: 'var(--g-warning)',
+    rose: 'var(--g-danger)',
+    orange: '#ea580c',
+    violet: '#8b5cf6'
+  };
 
   return (
-    <div className={`${classes.bg} backdrop-blur-xl rounded-3xl border ${classes.border} p-6`}>
+    <div className={`g-kpi-card ${kpiAccentClass}`}>
       <div className="flex items-start justify-between">
-        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-          {title}
-        </p>
+        <p className="g-text-meta">{title}</p>
         {trend && (
-          <span className={`${
-            trend === 'up' ? 'text-emerald-400' :
-            trend === 'down' ? 'text-rose-400' :
-            'text-gray-400'
-          }`}>
+          <span style={{ color: trend === 'up' ? 'var(--g-success)' : trend === 'down' ? 'var(--g-danger)' : 'var(--g-text-muted)' }}>
             {trend === 'up' && (
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -358,21 +343,21 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
         )}
       </div>
 
-      <h3 className={`text-3xl font-black ${classes.text} mt-2`}>
+      <h3 className="g-num" style={{ fontSize: '30px', fontWeight: 900, color: valueColors[color], marginTop: 'var(--g-space-2)' }}>
         {value}
       </h3>
 
-      <p className="text-[11px] text-[var(--text-muted)] mt-2">
+      <p className="g-text-small" style={{ marginTop: 'var(--g-space-2)', color: 'var(--g-text-muted)' }}>
         {subtitle}
       </p>
 
       {/* İlerleme çubuğu */}
       {showProgress && (
-        <div className="mt-3">
-          <div className="w-full h-2 bg-[var(--bg-3)] rounded-full overflow-hidden">
+        <div style={{ marginTop: 'var(--g-space-3)' }}>
+          <div className="g-progress">
             <div
-              className={`h-full ${classes.progress} rounded-full transition-all duration-500`}
-              style={{ width: `${Math.min(progressValue, 100)}%` }}
+              className="g-progress-bar"
+              style={{ width: `${Math.min(progressValue, 100)}%`, background: progressColors[color] }}
             />
           </div>
         </div>

@@ -37,6 +37,9 @@ import {
   BHHistoryData
 } from '../../src/services/gorenStorage';
 
+// Premium design system
+import './goren-premium.css';
+
 // Alt bileşenler
 import GorenFilterPanel from './common/GorenFilterPanel';
 import GorenSummaryCards from './common/GorenSummaryCards';
@@ -631,15 +634,15 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   // Gösterge yoksa uyarı göster
   if (definitions.length === 0) {
     return (
-      <div className="p-8">
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-8 text-center">
-          <svg className="w-16 h-16 text-amber-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="goren-module p-8">
+        <div className="g-card p-8 text-center" style={{ borderColor: 'var(--g-warning)', borderWidth: '1px' }}>
+          <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--g-warning)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <h3 className="text-xl font-bold text-amber-400 mb-2">
+          <h3 className="g-title-section mb-2" style={{ color: 'var(--g-warning-text)' }}>
             {INSTITUTION_TYPE_LABELS[moduleType]} Modülü Yakında
           </h3>
-          <p className="text-[var(--text-muted)]">
+          <p className="g-text-body" style={{ color: 'var(--g-text-muted)' }}>
             Bu modül için gösterge tanımları henüz eklenmedi. Yakında aktif olacaktır.
           </p>
         </div>
@@ -648,16 +651,10 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="goren-module" style={{ padding: 'var(--g-space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--g-space-6)' }}>
       {/* Bildirim */}
       {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-2xl shadow-lg backdrop-blur-xl border ${
-          notification.type === 'success'
-            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-            : notification.type === 'error'
-              ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
-              : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-        }`}>
+        <div className={`g-toast fixed top-4 right-4 z-50 g-toast--${notification.type}`}>
           <div className="flex items-center gap-3">
             {notification.type === 'success' && (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -708,27 +705,32 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
       {/* BH için Toplam Puan Büyük Kart */}
       {totalDirectGP !== null && (
-        <div className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-indigo-600/20 backdrop-blur-xl rounded-3xl border border-indigo-500/30 p-8 mb-6">
-          <div className="flex items-center justify-between">
+        <div className="g-hero-card">
+          <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-indigo-300 uppercase tracking-wider mb-2">
-                {filterState.institutionName || 'Seçili Kurum'} - {MONTHS[filterState.month - 1]} {filterState.year}
+              <p className="g-text-meta" style={{ color: 'rgba(255,255,255,0.7)', marginBottom: 'var(--g-space-2)' }}>
+                {filterState.institutionName || 'Seçili Kurum'} — {MONTHS[filterState.month - 1]} {filterState.year}
               </p>
-              <h2 className="text-5xl font-black text-white mb-2">
+              <h2 className="g-num" style={{ fontSize: '48px', fontWeight: 900, color: '#ffffff', lineHeight: 1.1, marginBottom: 'var(--g-space-2)' }}>
                 {totalDirectGP}
-                <span className="text-2xl font-normal text-indigo-300 ml-2">/ {definitions.reduce((sum, d) => sum + d.maxPoints, 0)} puan</span>
+                <span style={{ fontSize: '22px', fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginLeft: '8px' }}>/ {definitions.reduce((sum, d) => sum + d.maxPoints, 0)} puan</span>
               </h2>
-              <p className="text-indigo-200">
+              <p className="g-text-body" style={{ color: 'rgba(255,255,255,0.7)' }}>
                 Dönem İçi Toplam Performans Puanı
               </p>
             </div>
             <div className="text-right">
-              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-indigo-500/20 border-4 border-indigo-400/30">
-                <span className="text-3xl font-bold text-indigo-300">
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: '96px', height: '96px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.15)', border: '3px solid rgba(255,255,255,0.25)',
+                backdropFilter: 'blur(8px)'
+              }}>
+                <span className="g-num" style={{ fontSize: '28px', fontWeight: 800, color: '#ffffff' }}>
                   %{summary ? summary.achievementRate.toFixed(0) : '0'}
                 </span>
               </div>
-              <p className="text-sm text-indigo-300 mt-2">Başarı Oranı</p>
+              <p className="g-text-small" style={{ color: 'rgba(255,255,255,0.6)', marginTop: 'var(--g-space-2)' }}>Başarı Oranı</p>
             </div>
           </div>
         </div>
@@ -805,14 +807,14 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
           />
         )
       ) : (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-12 text-center">
-          <svg className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="g-card" style={{ padding: 'var(--g-space-12)', textAlign: 'center' }}>
+          <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--g-text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <h3 className="text-lg font-bold text-[var(--text-1)] mb-2">
+          <h3 className="g-title-section" style={{ marginBottom: 'var(--g-space-2)' }}>
             Kurum Seçin
           </h3>
-          <p className="text-sm text-[var(--text-muted)]">
+          <p className="g-text-body" style={{ color: 'var(--g-text-muted)' }}>
             Performans hesaplaması yapabilmek için yukarıdan bir kurum seçin ve "Uygula" butonuna tıklayın.
           </p>
         </div>

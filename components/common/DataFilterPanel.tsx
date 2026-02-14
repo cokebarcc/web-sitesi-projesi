@@ -104,7 +104,7 @@ const DataFilterPanel: React.FC<DataFilterPanelProps> = ({
   const hasSelection = selectedYears.length > 0 || selectedMonths.length > 0 || !!selectedHospital || !!selectedBranch;
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-5 relative z-[100]">
+    <div className="sticky-filter-panel bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-5">
       {/* Tüm Filtreler Tek Satırda */}
       <div className="flex flex-wrap gap-3 items-end">
         {/* Hastane Seçimi */}

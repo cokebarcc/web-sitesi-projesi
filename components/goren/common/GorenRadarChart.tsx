@@ -382,7 +382,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+      <div className="g-section-card p-6">
         <div className="h-[500px] flex items-center justify-center">
           <div className="flex items-center gap-3 text-[var(--text-muted)]">
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -399,7 +399,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   // Veri yoksa
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+      <div className="g-section-card p-6">
         <div className="h-[500px] flex flex-col items-center justify-center text-[var(--text-muted)]">
           <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -430,7 +430,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
     : null;
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+    <div className="g-section-card p-6">
       {/* Başlık ve Karşılaştırma Filtresi */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -600,7 +600,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       <div className="h-[450px]">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={combinedData} cx="50%" cy="50%" outerRadius="70%">
-            <PolarGrid stroke="var(--border-2)" strokeDasharray="3 3" />
+            <PolarGrid stroke="#94a3b8" strokeDasharray="3 3" strokeOpacity={1} />
             <PolarAngleAxis
               dataKey="category"
               tick={{ fill: 'var(--text-3)', fontSize: 11, fontWeight: 500 }}

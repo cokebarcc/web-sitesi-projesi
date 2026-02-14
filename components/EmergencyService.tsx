@@ -897,7 +897,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       )}
 
       {/* Filtreler */}
-      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6">
+      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="sticky-filter-panel rounded-2xl shadow-sm border p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold">Veri Filtreleme</h3>
           <div className="flex items-center gap-3">
