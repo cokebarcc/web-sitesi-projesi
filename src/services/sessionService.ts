@@ -30,6 +30,9 @@ export interface SessionLog {
 
 const SESSION_STORAGE_KEY = 'medis_session_id';
 
+// Flag: kullanıcı kendi çıkış yaptığında true olur, onSnapshot alert'ini engeller
+let isUserLogout = false;
+
 // Session ID: localStorage'da saklayarak sayfa yenilemelerinde aynı session'ı kullan
 function getOrCreateSessionId(): string {
   let sessionId = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -118,6 +121,8 @@ export async function registerSession(uid: string, email: string, displayName: s
     if (!snap.exists()) {
       terminated = true;
       clearInterval(heartbeat);
+      // Kullanıcı kendi çıkış yaptıysa alert gösterme
+      if (isUserLogout) return;
       localStorage.removeItem(SESSION_STORAGE_KEY);
       alert('Uzun süredir aktif olmadığınız için oturumunuz güvenlik nedeniyle kapatıldı.');
       signOut(auth).catch(() => {});
@@ -216,6 +221,7 @@ export function getCurrentSessionId(): string {
 
 // Kullanıcı logout yaparken çağır - session'ı Firestore'dan sil ve log tut
 export async function logoutSession(): Promise<void> {
+  isUserLogout = true;
   const sessionRef = doc(db, 'sessions', SESSION_ID);
   const sessionSnap = await getDoc(sessionRef);
 
