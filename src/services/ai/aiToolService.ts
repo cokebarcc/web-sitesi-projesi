@@ -149,28 +149,28 @@ export const executeToolCall = async (
 
   switch (toolName as AIToolName) {
     case 'read_schedule_data':
-      return await readScheduleData(args, hospitalId);
+      return await readScheduleData(args as any, hospitalId);
 
     case 'read_muayene_data':
-      return await readMuayeneData(args, hospitalId);
+      return await readMuayeneData(args as any, hospitalId);
 
     case 'read_ameliyat_data':
-      return await readAmeliyatData(args, hospitalId);
+      return await readAmeliyatData(args as any, hospitalId);
 
     case 'compare_periods':
-      return await comparePeriods(args, hospitalId);
+      return await comparePeriods(args as any, hospitalId);
 
     case 'calculate_efficiency':
-      return await calculateEfficiency(args, hospitalId);
+      return await calculateEfficiency(args as any, hospitalId);
 
     case 'get_green_area_rates':
-      return await getGreenAreaRates(args);
+      return await getGreenAreaRates(args as any);
 
     case 'generate_table':
-      return generateTable(args);
+      return generateTable(args as any);
 
     case 'generate_chart_config':
-      return generateChartConfig(args);
+      return generateChartConfig(args as any);
 
     default:
       throw new Error(`Bilinmeyen tool: ${toolName}`);
@@ -517,10 +517,10 @@ async function getGreenAreaRates(
     }
 
     // Hastane filtresi uygula
-    let hospitalData = greenAreaData;
+    let hospitalData: any = greenAreaData;
     if (args.hospital) {
       const filteredData: Record<string, any> = {};
-      Object.entries(greenAreaData).forEach(([hospital, data]) => {
+      Object.entries(greenAreaData as any).forEach(([hospital, data]) => {
         if (hospital.toLowerCase().includes(args.hospital!.toLowerCase())) {
           filteredData[hospital] = data;
         }

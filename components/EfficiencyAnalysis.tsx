@@ -5,6 +5,7 @@ import { DetailedScheduleData, MuayeneMetrics, ScheduleVersion, ProcessedPhysici
 import { MONTHS, YEARS } from '../constants';
 import { getPeriodKey, normalizeDoctorName } from '../utils/formatters';
 import DataFilterPanel from './common/DataFilterPanel';
+import EmptyStateCommon from './common/EmptyState';
 import pptxgen from 'pptxgenjs';
 
 interface EfficiencyAnalysisProps {
@@ -766,7 +767,7 @@ export const CapacityUsageChart = ({ data, onClick }: any) => {
     </div>
     <div className="h-[90%]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={barGap} barCategoryGap="20%" onClick={(state) => { if (state?.activePayload?.[0]?.payload) onClick?.(state.activePayload[0].payload); }}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 100 }} barGap={barGap} barCategoryGap="20%" onClick={(state) => { if ((state as any)?.activePayload?.[0]?.payload) onClick?.((state as any).activePayload[0].payload); }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
           <XAxis dataKey="doctorName" interval={0} tick={<CustomizedXAxisTick onClick={onClick} />} axisLine={false} tickLine={false} height={100} />
           <YAxis fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#64748b'}} />
@@ -774,7 +775,7 @@ export const CapacityUsageChart = ({ data, onClick }: any) => {
             if (active && payload && payload.length) {
               const d = payload[0].payload;
               const f = d.capacity > 0 ? (d.totalExam - d.capacity) : null;
-              return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan', val: d.capacity > 0 ? d.capacity.toLocaleString('tr-TR') : 'Tanımsız', color:'text-indigo-400'}, {label:'Gerçekleşen', val: d.totalExam.toLocaleString('tr-TR'), color:d.status==='UNDER'?'text-rose-400':'text-emerald-400'}, {label:'Verim', val: d.usageRatePct !== null ? `%${formatMetric(d.usageRatePct)}` : '-', color:'text-blue-400'}]} footerLabel="FARK" footer={f === null ? 'Tanımsız' : (f >= 0 ? `+${f.toLocaleString('tr-TR')}` : f.toLocaleString('tr-TR'))} />;
+              return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan', val: d.capacity > 0 ? d.capacity.toLocaleString('tr-TR') : 'Tanımsız', color:'text-indigo-400'}, {label:'Gerçekleşen', val: d.totalExam.toLocaleString('tr-TR'), color:d.status==='UNDER'?'status-danger':'text-emerald-400'}, {label:'Verim', val: d.usageRatePct !== null ? `%${formatMetric(d.usageRatePct)}` : '-', color:'status-info'}]} footerLabel="FARK" footer={f === null ? 'Tanımsız' : (f >= 0 ? `+${f.toLocaleString('tr-TR')}` : f.toLocaleString('tr-TR'))} />;
             }
             return null;
           }} />
@@ -811,7 +812,7 @@ export const SurgicalEfficiencyChart = ({ data }: any) => (
         <Tooltip cursor={{fill: 'rgba(59, 130, 246, 0.1)'}} content={({ active, payload }) => {
           if (active && payload && payload.length) {
             const d = payload[0].payload;
-            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan Gün', val: formatMetric(d.plannedDays), color:'text-indigo-400'}, {label:'A+B+C Vaka', val: formatMetric(d.performedABC), color:'text-emerald-400'}]} footerLabel="Verimlilik" footer={formatMetric(d.efficiencyVal)} footerColor="text-rose-400" />;
+            return <TooltipCard name={d.doctorName} branch={d.branchName} metrics={[{label:'Planlanan Gün', val: formatMetric(d.plannedDays), color:'text-indigo-400'}, {label:'A+B+C Vaka', val: formatMetric(d.performedABC), color:'text-emerald-400'}]} footerLabel="Verimlilik" footer={formatMetric(d.efficiencyVal)} footerColor="status-danger" />;
           }
           return null;
         }} />
@@ -894,7 +895,7 @@ export const ActionDaysChart = ({ data, hasPrevData }: { data: { action: string;
               return <TooltipCard name={d.action} branch="" metrics={metrics}
                 footerLabel={d.delta !== null ? "Değişim" : "Toplam"}
                 footer={d.delta !== null ? `${d.delta > 0 ? '+' : ''}${formatMetric(d.delta)} gün (${d.deltaPct !== null ? `${d.deltaPct > 0 ? '+' : ''}${(d.deltaPct * 100).toFixed(0)}%` : '—'})` : `${formatMetric(d.days)} gün`}
-                footerColor={d.delta !== null ? (d.delta > 0 ? 'text-emerald-400' : d.delta < 0 ? 'text-rose-400' : 'text-[var(--text-3)]') : 'text-indigo-400'} />;
+                footerColor={d.delta !== null ? (d.delta > 0 ? 'text-emerald-400' : d.delta < 0 ? 'status-danger' : 'text-[var(--text-3)]') : 'text-indigo-400'} />;
             }
             return null;
           }} />
@@ -974,7 +975,7 @@ const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allAc
                         <td key={act} className="py-2.5 px-2 text-center">
                           <span className="text-[10px] font-black text-[var(--text-1)]">{fmtDay(val)}</span>
                           {hasPrevData && delta !== 0 && (
-                            <span className={`block text-[8px] font-black ${delta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{fmtDelta(delta)}</span>
+                            <span className={`block text-[8px] font-black ${delta > 0 ? 'text-emerald-400' : 'status-danger'}`}>{fmtDelta(delta)}</span>
                           )}
                         </td>
                       );
@@ -982,7 +983,7 @@ const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allAc
                     <td className="py-2.5 px-3 text-center bg-[var(--surface-2)] group-hover:bg-[var(--surface-hover)]">
                       <span className="text-[10px] font-black text-indigo-400">{fmtDay(row.totalCurrent)}</span>
                       {hasPrevData && row.totalDelta !== 0 && (
-                        <span className={`block text-[8px] font-black ${row.totalDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{fmtDelta(row.totalDelta)}</span>
+                        <span className={`block text-[8px] font-black ${row.totalDelta > 0 ? 'text-emerald-400' : 'status-danger'}`}>{fmtDelta(row.totalDelta)}</span>
                       )}
                     </td>
                   </tr>
@@ -1021,7 +1022,7 @@ const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allAc
                     <td key={act} className="py-3 px-2 text-center">
                       <span className="text-[10px] font-black text-[var(--text-1)]">{fmtDay(total)}</span>
                       {hasPrevData && totalDelta !== 0 && (
-                        <span className={`block text-[8px] font-black ${totalDelta > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{fmtDelta(totalDelta)}</span>
+                        <span className={`block text-[8px] font-black ${totalDelta > 0 ? 'text-emerald-400' : 'status-danger'}`}>{fmtDelta(totalDelta)}</span>
                       )}
                     </td>
                   );
@@ -1029,7 +1030,7 @@ const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allAc
                 <td className="py-3 px-3 text-center">
                   <span className="text-[10px] font-black text-indigo-400">{fmtDay(rows.reduce((s, r) => s + r.totalCurrent, 0))}</span>
                   {hasPrevData && (
-                    <span className={`block text-[8px] font-black ${rows.reduce((s, r) => s + r.totalDelta, 0) > 0 ? 'text-emerald-400' : rows.reduce((s, r) => s + r.totalDelta, 0) < 0 ? 'text-rose-400' : 'text-[var(--text-muted)]'}`}>{fmtDelta(rows.reduce((s, r) => s + r.totalDelta, 0))}</span>
+                    <span className={`block text-[8px] font-black ${rows.reduce((s, r) => s + r.totalDelta, 0) > 0 ? 'text-emerald-400' : rows.reduce((s, r) => s + r.totalDelta, 0) < 0 ? 'status-danger' : 'text-[var(--text-muted)]'}`}>{fmtDelta(rows.reduce((s, r) => s + r.totalDelta, 0))}</span>
                   )}
                 </td>
               </tr>
@@ -1058,7 +1059,7 @@ const KpiCard = ({ title, value, subtitle, source, accent, isEmpty, isWarning, w
   };
   const p = colorMap[accent] || colorMap.capacity;
   const [b, t, d] = p.split(' ');
-  return <div className={`bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] border-t-[3px] ${b} rounded-[20px] p-6 shadow-lg flex flex-col justify-between h-[180px] transition-all hover:shadow-xl group relative overflow-hidden`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-[var(--text-2)] uppercase tracking-wide leading-tight">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black text-rose-400 uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-[var(--text-muted)] mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-[var(--border-1)] pt-3 relative z-10"><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.08] group-hover:opacity-[0.15] transition-opacity blur-2xl`}></div></div>;
+  return <div className={`bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] border-t-[3px] ${b} rounded-[20px] p-6 shadow-lg flex flex-col justify-between h-[180px] transition-all hover:shadow-xl group relative overflow-hidden`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-[var(--text-2)] uppercase tracking-wide leading-tight">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black status-danger uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-[var(--text-muted)] mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-[var(--border-1)] pt-3 relative z-10"><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.08] group-hover:opacity-[0.15] transition-opacity blur-2xl`}></div></div>;
 };
 
 const LocalFilters = ({ value, onChange, limit, onLimitChange, currentPage, totalPages, onPageChange, branches }: any) => (
@@ -1069,11 +1070,11 @@ const LocalFilters = ({ value, onChange, limit, onLimitChange, currentPage, tota
   </div>
 );
 
-const TooltipCard = ({ name, branch, metrics, footerLabel, footer, footerColor = "text-blue-400" }: any) => (
+const TooltipCard = ({ name, branch, metrics, footerLabel, footer, footerColor = "status-info" }: any) => (
   <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-[var(--glass-border-light)] space-y-4 min-w-[240px]"><div><p className="font-black text-[var(--text-1)] uppercase text-xs leading-normal">{name}</p><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{branch}</p></div><div className="space-y-1.5 border-t border-[var(--border-1)] pt-3">{metrics.map((m:any, i:number) => <div key={i} className={`flex justify-between items-center gap-8`}><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{m.label}:</span><span className={`text-xs font-black ${m.color}`}>{m.val}</span></div>)}<div className="flex justify-between items-center gap-8 pt-1.5 mt-1.5 border-t border-[var(--border-2)]"><span className="text-[11px] font-black text-[var(--text-2)] uppercase">{footerLabel}:</span><span className={`text-sm font-black ${footerColor}`}>{footer}</span></div></div></div>
 );
 
-const EmptyState = () => <div className="bg-[var(--surface-2)] border-2 border-dashed border-[var(--border-2)] p-24 rounded-[40px] text-center"><p className="text-[var(--text-muted)] font-black uppercase tracking-[0.2em] text-lg italic">Dönem seçimi bekleniyor</p></div>;
+const EmptyState = () => <EmptyStateCommon icon="calendar" title="Dönem seçimi bekleniyor" />;
 const NoResults = ({text}:any) => <div className="bg-amber-500/10 border-2 border-dashed border-amber-500/30 p-24 rounded-[40px] text-center"><p className="text-amber-400 font-black uppercase tracking-tight">KAYIT BULUNAMADI</p><p className="text-amber-500/80 font-bold mt-2 italic">{text || 'Filtrelere uygun hekim bulunamadı.'}</p></div>;
 
 const DoctorDetailModal = ({
@@ -1238,8 +1239,8 @@ const DoctorDetailModal = ({
                 </p>
               </div>
               <div className={`rounded-[32px] p-8 border ${usageRate !== null && (usageRate as number) < 100 ? 'bg-rose-500/10 border-rose-500/30' : 'bg-blue-500/10 border-blue-500/30'}`}>
-                <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-400' : 'text-blue-400'}`}>KAPASİTE VERİMLİLİĞİ</p>
-                <h5 className={`text-4xl font-black ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-400' : 'text-blue-400'}`}>
+                <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${usageRate !== null && (usageRate as number) < 100 ? 'status-danger' : 'status-info'}`}>KAPASİTE VERİMLİLİĞİ</p>
+                <h5 className={`text-4xl font-black ${usageRate !== null && (usageRate as number) < 100 ? 'status-danger' : 'status-info'}`}>
                   {usageRate !== null ? `%${usageRate.toFixed(1).replace('.', ',')}` : '—'}
                 </h5>
                 <p className={`text-[11px] font-bold mt-2 ${usageRate !== null && (usageRate as number) < 100 ? 'text-rose-500/70' : 'text-blue-500/70'}`}>
@@ -1296,8 +1297,8 @@ const DoctorDetailModal = ({
                       <p className="text-2xl font-black text-[var(--text-1)]">{physicianChangeData.updated_capacity}</p>
                     </div>
                     <div className={`rounded-2xl p-4 text-center border ${physicianChangeData.capacity_delta >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`}>
-                      <p className={`text-[9px] font-black uppercase mb-1 ${physicianChangeData.capacity_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>FARK</p>
-                      <p className={`text-2xl font-black ${physicianChangeData.capacity_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      <p className={`text-[9px] font-black uppercase mb-1 ${physicianChangeData.capacity_delta >= 0 ? 'text-emerald-400' : 'status-danger'}`}>FARK</p>
+                      <p className={`text-2xl font-black ${physicianChangeData.capacity_delta >= 0 ? 'text-emerald-400' : 'status-danger'}`}>
                         {physicianChangeData.capacity_delta > 0 ? '+' : ''}{physicianChangeData.capacity_delta}
                       </p>
                     </div>
@@ -1349,7 +1350,7 @@ const DoctorDetailModal = ({
                                 <td className="py-3 text-[11px] font-black text-[var(--text-muted)] text-center">{String(oldD).replace('.', ',')} G</td>
                                 <td className="py-3 text-[11px] font-black text-[var(--text-1)] text-center">{String(newD).replace('.', ',')} G</td>
                                 <td className="py-3 text-center">
-                                  <span className={`text-[11px] font-black ${actionDiff > 0 ? 'text-emerald-400' : actionDiff < 0 ? 'text-rose-400' : 'text-[var(--text-muted)]'}`}>
+                                  <span className={`text-[11px] font-black ${actionDiff > 0 ? 'text-emerald-400' : actionDiff < 0 ? 'status-danger' : 'text-[var(--text-muted)]'}`}>
                                     {actionDiff > 0 ? '+' : ''}{String(actionDiff).replace('.', ',')} G
                                   </span>
                                 </td>
@@ -1384,7 +1385,7 @@ const DoctorDetailModal = ({
                         </div>
                       </div>
                       <div className="bg-[var(--surface-1)] p-6 rounded-[24px] border border-rose-500/30">
-                        <p className="text-[10px] font-black text-rose-400 uppercase mb-4 tracking-widest">YENİ OTURUMLAR (SON CETVEL)</p>
+                        <p className="text-[10px] font-black status-danger uppercase mb-4 tracking-widest">YENİ OTURUMLAR (SON CETVEL)</p>
                         <div className="max-h-48 overflow-y-auto custom-scrollbar border border-rose-500/20 rounded-xl">
                           <table className="w-full text-[10px] text-left">
                             <thead className="bg-rose-500/10 sticky top-0"><tr><th className="p-2">TARİH</th><th className="p-2">AKSİYON</th><th className="p-2 text-center">KAP</th></tr></thead>

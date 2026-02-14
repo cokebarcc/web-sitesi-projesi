@@ -588,6 +588,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
     if (!isPeriodSelected || sortedDoctors.length === 0) return;
     try {
       const pptx = new pptxgen();
+      const shapes = (pptx as any).shapes;
       pptx.layout = 'LAYOUT_WIDE';
       pptx.title = 'AI Cetvel Planlama Raporu';
       pptx.author = 'MEDIS';
@@ -603,8 +604,8 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       // SLAYT 1: KAPAK
       const s1 = pptx.addSlide();
       s1.background = { color: c.dark };
-      s1.addShape(pptx.shapes.RECTANGLE, { x: 8, y: 0, w: 5.33, h: 0.15, fill: { color: c.primary } });
-      s1.addShape(pptx.shapes.RECTANGLE, { x: 1, y: 3.6, w: 4, h: 0.06, fill: { color: c.primary } });
+      s1.addShape(shapes.RECTANGLE, { x: 8, y: 0, w: 5.33, h: 0.15, fill: { color: c.primary } });
+      s1.addShape(shapes.RECTANGLE, { x: 1, y: 3.6, w: 4, h: 0.06, fill: { color: c.primary } });
       s1.addText('MHRS', { x: 1, y: 1.2, w: 11, h: 0.6, fontSize: 16, fontFace: 'Arial', bold: true, color: c.primary });
       s1.addText('AI CETVEL PLANLAMA', { x: 1, y: 1.9, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
       s1.addText('RAPORU', { x: 1, y: 2.7, w: 11, h: 0.9, fontSize: 40, fontFace: 'Arial', bold: true, color: c.white });
@@ -618,7 +619,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       const s2 = pptx.addSlide();
       s2.background = { color: c.bg };
       s2.addText('ÖZET DASHBOARD', { x: 0.5, y: 0.3, w: 12, h: 0.5, fontSize: 20, fontFace: 'Arial', bold: true, color: c.text });
-      s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
+      s2.addShape(shapes.RECTANGLE, { x: 0.5, y: 0.8, w: 2, h: 0.04, fill: { color: c.primary } });
 
       const kpiW = 3.8; const kpiH = 2.2; const kpiY = 1.2;
       const kpis = [
@@ -628,13 +629,13 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       ];
       kpis.forEach((kpi, i) => {
         const xPos = 0.5 + i * (kpiW + 0.35);
-        s2.addShape(pptx.shapes.RECTANGLE, { x: xPos, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
+        s2.addShape(shapes.RECTANGLE, { x: xPos, y: kpiY, w: kpiW, h: kpiH, fill: { color: c.white }, line: { color: c.border, pt: 1 } });
         s2.addText(kpi.label, { x: xPos, y: kpiY + 0.3, w: kpiW, h: 0.4, fontSize: 9, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'center' });
         s2.addText(kpi.value, { x: xPos, y: kpiY + 0.8, w: kpiW, h: 0.9, fontSize: 36, fontFace: 'Arial', bold: true, color: kpi.color, align: 'center' });
       });
 
       if (proposals.length > 0) {
-        s2.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 3.8, w: 12.33, h: 1.4, fill: { color: c.primaryLight }, line: { color: c.border, pt: 1 } });
+        s2.addShape(shapes.RECTANGLE, { x: 0.5, y: 3.8, w: 12.33, h: 1.4, fill: { color: c.primaryLight }, line: { color: c.border, pt: 1 } });
         s2.addText([
           { text: `${totalReduction} gün`, options: { fontSize: 28, bold: true, color: c.danger, fontFace: 'Arial' } },
           { text: ' ameliyat azaltımı öneriliyor  →  ', options: { fontSize: 14, color: c.text, fontFace: 'Arial' } },
@@ -649,7 +650,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
         const sN = pptx.addSlide();
         sN.background = { color: c.bg };
         sN.addText('CERRAHİ VERİMLİLİK TABLOSU', { x: 0.5, y: 0.2, w: 9, h: 0.45, fontSize: 18, fontFace: 'Arial', bold: true, color: c.text });
-        sN.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.primary } });
+        sN.addShape(shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.primary } });
         if (pageCount > 1) {
           sN.addText(`Sayfa ${page + 1}/${pageCount}`, { x: 10, y: 0.2, w: 2.8, h: 0.45, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
         }
@@ -702,7 +703,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           const sP = pptx.addSlide();
           sP.background = { color: c.bg };
           sP.addText('CETVEL DEĞİŞİKLİK ÖNERİLERİ', { x: 0.5, y: 0.2, w: 9, h: 0.45, fontSize: 18, fontFace: 'Arial', bold: true, color: c.text });
-          sP.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.danger } });
+          sP.addShape(shapes.RECTANGLE, { x: 0.5, y: 0.65, w: 2, h: 0.04, fill: { color: c.danger } });
           if (propPageCount > 1) {
             sP.addText(`Sayfa ${page + 1}/${propPageCount}`, { x: 10, y: 0.2, w: 2.8, h: 0.45, fontSize: 10, fontFace: 'Arial', bold: true, color: c.textMuted, align: 'right' });
           }

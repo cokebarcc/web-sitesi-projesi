@@ -29,7 +29,7 @@ function getOverlapMinutes(start1: number, end1: number, start2: number, end2: n
 /**
  * Parse Excel workbook to ScheduleVersion
  */
-export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: string): ScheduleVersion {
+export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: string): ScheduleVersion & { physicianSummaries?: any[]; rawScheduleData?: any[] } {
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
   const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, dateNF: 'dd.mm.yyyy' });
@@ -95,7 +95,7 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
       physicianSummaries: [],
       rawScheduleData: [],
       physicians: {}
-    };
+    } as any;
   }
 
   const branchIndex = headers.findIndex((h: any) => {
@@ -136,7 +136,7 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
       physicianSummaries: [],
       rawScheduleData: [],
       physicians: {}
-    };
+    } as any;
   }
 
   console.log('✅ [EXCEL-PARSER] Kolon indexleri:', { branchIndex, nameIndex, dateIndex, startTimeIndex, endTimeIndex, actionIndex, capacityIndex });
@@ -206,7 +206,7 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
       startDate,
       startTime,
       endTime
-    });
+    } as any);
   }
 
   // Second pass: Calculate actionDays from dailyMap
@@ -256,7 +256,7 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
     });
 
     // Get original physician name from first occurrence
-    const originalName = rawScheduleData.find(r => normalizeStr(r.physicianName) === normalizedKey)?.physicianName || "";
+    const originalName = (rawScheduleData as any[]).find((r: any) => normalizeStr(r.physicianName) === normalizedKey)?.physicianName || "";
 
     physicianMap[normalizedKey] = {
       name: originalName, // ProcessedPhysicianSummary type'ına uygun
@@ -282,5 +282,5 @@ export function parseExcelToScheduleVersion(workbook: XLSX.WorkBook, label: stri
     physicianSummaries,
     rawScheduleData,
     physicians: physicianMap as any
-  };
+  } as any;
 }

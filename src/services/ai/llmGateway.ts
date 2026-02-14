@@ -52,7 +52,7 @@ export const initializeGemini = (config?: Partial<AIServiceConfig>): void => {
 
 // Tool definitions'ı Gemini formatına dönüştür
 const convertToolsToGeminiFormat = (tools: AIToolDefinition[]): Tool[] => {
-  const functionDeclarations: FunctionDeclaration[] = tools.map(tool => ({
+  const functionDeclarations = tools.map(tool => ({
     name: tool.name,
     description: tool.description,
     parameters: {
@@ -69,7 +69,7 @@ const convertToolsToGeminiFormat = (tools: AIToolDefinition[]): Tool[] => {
       ),
       required: tool.parameters.required,
     },
-  }));
+  })) as unknown as FunctionDeclaration[];
 
   return [{ functionDeclarations }];
 };

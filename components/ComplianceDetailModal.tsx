@@ -15,9 +15,9 @@ function formatNumber(val: number, decimals = 2): string {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  UYGUN: { label: 'UYGUN', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
-  UYGUNSUZ: { label: 'UYGUNSUZ', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30' },
-  MANUEL_INCELEME: { label: 'MANUEL İNCELEME', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+  UYGUN: { label: 'UYGUN', color: 'status-success', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+  UYGUNSUZ: { label: 'UYGUNSUZ', color: 'status-danger', bg: 'bg-red-500/10', border: 'border-red-500/30' },
+  MANUEL_INCELEME: { label: 'MANUEL İNCELEME', color: 'status-warning', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
 };
 
 const kuralTipiLabels: Record<string, string> = {
@@ -104,15 +104,15 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
                 <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Eşleşme</p>
-                <p className={`text-sm font-bold mt-0.5 ${result.eslesmeDurumu === 'ESLESTI' ? 'text-emerald-400' : 'text-red-400'}`}>
+                <p className={`text-sm font-bold mt-0.5 ${result.eslesmeDurumu === 'ESLESTI' ? 'status-success' : 'status-danger'}`}>
                   {result.eslesmeDurumu === 'ESLESTI' ? 'Eşleşti' : 'Eşleşemedi'}
                 </p>
               </div>
               <div className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-2)' }}>
                 <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Güven</p>
                 <p className={`text-sm font-bold mt-0.5 ${
-                  result.eslesme_guveni === 'Yüksek' ? 'text-emerald-400' :
-                  result.eslesme_guveni === 'Orta' ? 'text-amber-400' : 'text-red-400'
+                  result.eslesme_guveni === 'Yüksek' ? 'status-success' :
+                  result.eslesme_guveni === 'Orta' ? 'status-warning' : 'status-danger'
                 }`}>
                   {result.eslesme_guveni}
                 </p>
@@ -154,7 +154,7 @@ const ComplianceDetailModal: React.FC<ComplianceDetailModalProps> = ({ isOpen, o
                     {puanFark !== 0 && (
                       <div className="flex justify-between text-sm mt-1 pt-1 border-t" style={{ borderColor: 'var(--border-2)' }}>
                         <span style={{ color: 'var(--text-3)' }}>Fark:</span>
-                        <span className={`font-mono font-bold ${puanFark > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        <span className={`font-mono font-bold ${puanFark > 0 ? 'status-warning' : 'status-success'}`}>
                           {puanFark > 0 ? '+' : ''}{formatNumber(puanFark)}
                         </span>
                       </div>

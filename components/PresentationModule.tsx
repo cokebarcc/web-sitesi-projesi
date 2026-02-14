@@ -509,7 +509,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
         case 'DETAILED_SUMMARY':
           return (
             <div className="h-full w-full scale-90 origin-top overflow-hidden">
-              <DetailedSchedule data={detailedScheduleData} selectedBranch={state.branch!} onImportExcel={() => {}} onDelete={() => {}} onClearAll={() => {}} onRemoveMonth={() => {}} />
+              <DetailedSchedule data={detailedScheduleData} selectedBranch={state.branch!} onImportExcel={() => {}} onDelete={() => {}} onClearAll={() => {}} onRemoveMonth={() => {}} selectedHospital="" allowedHospitals={[]} onHospitalChange={() => {}} onLoadData={async () => {}} />
             </div>
           );
 

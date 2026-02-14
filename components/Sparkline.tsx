@@ -62,8 +62,8 @@ const Sparkline: React.FC<SparklineProps> = ({
   if (validData.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-xs" style={{ color: 'var(--text-3)' }}
-        style={{ width, height }}
+        className="flex items-center justify-center text-xs"
+        style={{ color: 'var(--text-3)', width, height }}
       >
         -
       </div>

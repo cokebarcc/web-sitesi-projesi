@@ -244,9 +244,9 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
   // Renk hesapla (oran bazlı) - site: sadece metin rengi, arka plan yok
   const getRateColor = (rate: number | null): string => {
     if (rate === null) return 'text-[var(--text-muted)]';
-    if (rate >= 65) return 'text-emerald-400';
+    if (rate >= 65) return 'status-success';
     if (rate >= 60) return 'text-yellow-400';
-    return 'text-red-400';
+    return 'status-danger';
   };
 
   // PNG export için: hücre arka plan rengi (koyu tema → açık tema dönüşümünde kullanılır)
@@ -525,7 +525,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               ŞANLIURFA İLİ ACİL SERVİS GÜNLÜK YEŞİL ALAN HASTA ORANLARI %
             </h3>
             {formatDateRange && (
-              <p className="text-sm font-medium text-emerald-400 mt-1">
+              <p className="text-sm font-medium status-success mt-1">
                 {formatDateRange}
               </p>
             )}
@@ -568,14 +568,14 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleSelectAll}
-                        className="text-xs text-emerald-400 hover:text-emerald-300"
+                        className="text-xs status-success hover:text-emerald-300"
                       >
                         {localSelectedHospitals.length === allHospitals.length ? 'Hiçbirini Seçme' : 'Tümünü Seç'}
                       </button>
                       {localSelectedHospitals.length > 0 && (
                         <button
                           onClick={() => setLocalSelectedHospitals([])}
-                          className="text-xs text-red-400 hover:text-red-300"
+                          className="text-xs status-danger hover:text-red-300"
                         >
                           Temizle
                         </button>
@@ -592,8 +592,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                           type="checkbox"
                           checked={localSelectedHospitals.includes(hospital)}
                           onChange={() => handleHospitalToggle(hospital)}
-                          className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500" style={{ borderColor: 'var(--border-2)' }}
-                          style={{ background: 'var(--surface-3)' }}
+                          className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500"
+                          style={{ borderColor: 'var(--border-2)', background: 'var(--surface-3)' }}
                         />
                         <span className="text-sm truncate" style={{ color: 'var(--text-2)' }}>
                           {getShortHospitalName(hospital)}
@@ -608,6 +608,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               onClick={handleCopy}
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
               style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}
+              aria-label="Tabloyu panoya kopyala"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -618,6 +619,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               onClick={handlePngExport}
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
               style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}
+              aria-label="PNG olarak dışa aktar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -627,6 +629,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             <button
               onClick={handleExcelExport}
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+              aria-label="Excel olarak dışa aktar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -640,9 +643,9 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       {/* Tablo */}
       <div ref={tableRef} className="overflow-x-auto" data-table-scroll>
         <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
-          <thead>
+          <thead className="sticky top-0 z-20">
             <tr style={{ background: 'var(--surface-2)' }}>
-              <th className="sticky left-0 z-10 px-4 py-3 text-left font-semibold min-w-[180px] whitespace-nowrap"
+              <th className="sticky left-0 z-30 px-4 py-3 text-left font-semibold min-w-[180px] whitespace-nowrap"
                   style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-1)' }}>
                 Kurum
               </th>
@@ -655,7 +658,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                   {formatDateHeader(date)}
                 </th>
               ))}
-              <th className="sticky right-0 z-10 px-4 py-3 text-center font-semibold min-w-[140px]"
+              <th className="sticky right-0 z-30 px-4 py-3 text-center font-semibold min-w-[140px]"
                   style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-1)' }}>
                 Trend Eğrisi
               </th>
@@ -718,7 +721,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             {/* İl Geneli Satırı - Sadece showProvinceTotals true ise göster */}
             {showProvinceTotals && (
               <tr style={{ background: 'rgba(52, 211, 153, 0.06)' }} className="font-bold">
-                <td className="sticky left-0 z-10 px-4 py-3 font-bold text-emerald-400"
+                <td className="sticky left-0 z-10 px-4 py-3 font-bold status-success"
                     style={{ borderTop: '2px solid rgba(52, 211, 153, 0.2)', background: 'rgba(52, 211, 153, 0.06)' }}>
                   {provinceTotals.hospitalName}
                 </td>

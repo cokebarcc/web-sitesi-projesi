@@ -505,7 +505,7 @@ const HekimIslemListesiModule: React.FC = () => {
       {/* Veri Yükleme Filtre Paneli */}
       <div className="backdrop-blur-xl rounded-2xl border p-5 mb-6 relative z-[100]" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
         <div className="flex items-center gap-2 mb-4">
-          <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 status-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
           <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>Veri Yükleme</span>
@@ -622,7 +622,7 @@ const HekimIslemListesiModule: React.FC = () => {
             {seciliKurumBilgisi && (
               <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5">
                 <span className="text-[10px] font-bold text-amber-400/70 uppercase tracking-wider">Rol</span>
-                <span className="text-sm font-black text-amber-400">{seciliKurumBilgisi.rolGrubu}</span>
+                <span className="text-sm font-black status-warning">{seciliKurumBilgisi.rolGrubu}</span>
               </div>
             )}
             {hasSelection && (
@@ -647,7 +647,7 @@ const HekimIslemListesiModule: React.FC = () => {
           <div className="mt-3 flex items-center gap-3 flex-wrap">
             {/* Yükleniyor */}
             {firebaseLoading && tableData.length === 0 && (
-              <div className="flex items-center gap-2 text-xs text-amber-400">
+              <div className="flex items-center gap-2 text-xs status-warning">
                 <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -662,7 +662,7 @@ const HekimIslemListesiModule: React.FC = () => {
               <div className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg ${
                 firebaseMessage.type === 'success'
                   ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                  : 'text-red-400 bg-red-500/10 border border-red-500/20'
+                  : 'status-danger bg-red-500/10 border border-red-500/20'
               }`}>
                 {firebaseMessage.type === 'success' ? (
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -793,7 +793,7 @@ const HekimIslemListesiModule: React.FC = () => {
               </div>
               <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Hasta Sayısı</p>
-                <p className="text-lg font-black text-blue-400">{summary.hastaSayisi.toLocaleString('tr-TR')}</p>
+                <p className="text-lg font-black status-info">{summary.hastaSayisi.toLocaleString('tr-TR')}</p>
               </div>
               <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Miktar</p>
@@ -801,11 +801,11 @@ const HekimIslemListesiModule: React.FC = () => {
               </div>
               <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Puan</p>
-                <p className="text-lg font-black text-purple-400">{formatNumber(summary.toplamPuan)}</p>
+                <p className="text-lg font-black status-accent">{formatNumber(summary.toplamPuan)}</p>
               </div>
               <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Tutar</p>
-                <p className="text-lg font-black text-amber-400">{formatNumber(summary.toplamTutar)} ₺</p>
+                <p className="text-lg font-black status-warning">{formatNumber(summary.toplamTutar)} ₺</p>
               </div>
             </div>
           )}
@@ -840,7 +840,7 @@ const HekimIslemListesiModule: React.FC = () => {
               </div>
               <button
                 onClick={handleClearData}
-                className="text-xs text-red-400 hover:text-red-300 font-medium flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition-all"
+                className="text-xs status-danger hover:text-red-300 font-medium flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition-all"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -859,11 +859,11 @@ const HekimIslemListesiModule: React.FC = () => {
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10">
                 <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border-2)' }}>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap w-[40px]" style={{ borderRight: '1px solid var(--border-2)' }}>#</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold status-warning uppercase tracking-wider whitespace-nowrap w-[40px]" style={{ borderRight: '1px solid var(--border-2)' }}>#</th>
                   {tableColumns.map(col => (
                     <th
                       key={col.key}
-                      className={`px-3 py-2.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider whitespace-nowrap ${
+                      className={`px-3 py-2.5 text-[10px] font-bold status-warning uppercase tracking-wider whitespace-nowrap ${
                         col.align === 'right' ? 'text-right' : 'text-left'
                       }`}
                       style={{ minWidth: col.minW, borderRight: '1px solid var(--border-2)' }}

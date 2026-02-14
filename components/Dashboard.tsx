@@ -257,11 +257,11 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, 
                     return (
                       <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-[var(--glass-border-light)]">
                         <p className="font-black text-[var(--text-1)] mb-1">{label}</p>
-                        <p className="text-[9px] font-black text-blue-400 uppercase mb-3">{data.specialty}</p>
+                        <p className="text-[9px] font-black status-info uppercase mb-3">{data.specialty}</p>
                         <div className="space-y-1">
                           <p className="text-xs font-bold text-[var(--text-muted)]">Plan: <span className="text-[var(--text-1)]">{data.PlanMuayene}</span></p>
                           <p className="text-xs font-bold text-[var(--text-muted)]">Fiili: <span className="text-[var(--text-1)]">{data.GercekMuayene}</span></p>
-                          <p className="text-xs font-black text-emerald-400 mt-2">Verim: %{data.UsageRatePercent}</p>
+                          <p className="text-xs font-black status-success mt-2">Verim: %{data.UsageRatePercent}</p>
                         </div>
                       </div>
                     );
@@ -311,7 +311,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, 
                   return (
                     <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-[var(--glass-border-light)]">
                       <p className="font-black text-[var(--text-1)] mb-1">{label}</p>
-                      <p className="text-[9px] font-black text-emerald-400 uppercase mb-3">{data.specialty}</p>
+                      <p className="text-[9px] font-black status-success uppercase mb-3">{data.specialty}</p>
                       <div className="space-y-1">
                         <p className="text-xs font-bold text-[var(--text-muted)]">Plan (Gün): <span className="text-[var(--text-1)]">{data.PlanSurgeryDays}</span></p>
                         <p className="text-xs font-bold text-[var(--text-muted)]">Vaka (Adet): <span className="text-[var(--text-1)]">{data.ActualSurgeryABC}</span></p>
@@ -356,10 +356,10 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, 
 
 const StatCard = ({ title, value, color, subtitle }: any) => {
   const getLabelColor = (c: string) => {
-    if (c === 'blue') return 'text-blue-400';
-    if (c === 'amber') return 'text-amber-400';
-    if (c === 'purple') return 'text-purple-400';
-    if (c === 'emerald') return 'text-emerald-400';
+    if (c === 'blue') return 'status-info';
+    if (c === 'amber') return 'status-warning';
+    if (c === 'purple') return 'status-accent';
+    if (c === 'emerald') return 'status-success';
     return 'text-[var(--text-1)]';
   };
   return (

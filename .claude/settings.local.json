@@ -58,7 +58,10 @@
       "Bash(gh pr list:*)",
       "Bash(gh pr view:*)",
       "Bash(done)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git stash:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash pop:*)"
     ]
   }
 }

@@ -53,6 +53,8 @@ import StickyNotes from './components/StickyNotes';
 import ComparisonWizard from './components/ComparisonWizard';
 import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
+import SessionManagement from './src/components/SessionManagement';
+import { registerSession } from './src/services/sessionService';
 
 // Logolar
 import sbLogo from './logo/sb logo.png';
@@ -164,21 +166,44 @@ const App: React.FC = () => {
 
   // Eski yapı ile uyumluluk için (modüller yavaş yavaş güncellenecek)
   const [branchFilters, setBranchFilters] = useState<Record<ViewType, string | null>>({
-    'detailed-schedule': null,
-    'physician-data': null,
-    'efficiency-analysis': null,
-    'change-analysis': null,
+    'welcome': null,
+    'dashboard': null,
+    'dashboard-mhrs': null,
+    'dashboard-financial': null,
+    'dashboard-preparation': null,
+    'dashboard-support': null,
+    'dashboard-emergency': null,
+    'schedule': null,
     'performance-planning': null,
     'data-entry': null,
+    'physician-data': null,
     'ai-chatbot': null,
     'service-analysis': null,
+    'etik-kurul': null,
+    'hekim-islem-listesi': null,
+    'ek-liste-tanimlama': null,
+    'sut-mevzuati': null,
+    'gil': null,
+    'detailed-schedule': null,
+    'change-analysis': null,
     'goren': null,
     'analysis-module': null,
+    'efficiency-analysis': null,
     'presentation': null,
-    'schedule': null,
-    'admin': null,
     'emergency-service': null,
-    'ai-cetvel-planlama': null
+    'schedule-planning': null,
+    'active-demand': null,
+    'goren-ilsm': null,
+    'goren-ilcesm': null,
+    'goren-bh': null,
+    'goren-adsh': null,
+    'goren-ash': null,
+    'ai-cetvel-planlama': null,
+    'pdf-viewer': null,
+    'comparison-wizard': null,
+    'goren-manuel': null,
+    'admin': null,
+    'session-management': null
   });
 
   // Eski yapı ile uyumluluk - modüller güncellenene kadar kullanılacak
@@ -186,76 +211,168 @@ const App: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   const [monthFilters, setMonthFilters] = useState<Record<ViewType, string>>({
-    'detailed-schedule': '',
-    'physician-data': '',
-    'efficiency-analysis': '',
-    'change-analysis': '',
+    'welcome': '',
+    'dashboard': '',
+    'dashboard-mhrs': '',
+    'dashboard-financial': '',
+    'dashboard-preparation': '',
+    'dashboard-support': '',
+    'dashboard-emergency': '',
+    'schedule': '',
     'performance-planning': '',
     'data-entry': '',
+    'physician-data': '',
     'ai-chatbot': '',
     'service-analysis': '',
+    'etik-kurul': '',
+    'hekim-islem-listesi': '',
+    'ek-liste-tanimlama': '',
+    'sut-mevzuati': '',
+    'gil': '',
+    'detailed-schedule': '',
+    'change-analysis': '',
     'goren': '',
     'analysis-module': '',
+    'efficiency-analysis': '',
     'presentation': '',
-    'schedule': '',
-    'admin': '',
     'emergency-service': '',
-    'ai-cetvel-planlama': ''
+    'schedule-planning': '',
+    'active-demand': '',
+    'goren-ilsm': '',
+    'goren-ilcesm': '',
+    'goren-bh': '',
+    'goren-adsh': '',
+    'goren-ash': '',
+    'ai-cetvel-planlama': '',
+    'pdf-viewer': '',
+    'comparison-wizard': '',
+    'goren-manuel': '',
+    'admin': '',
+    'session-management': ''
   });
 
   const [yearFilters, setYearFilters] = useState<Record<ViewType, number>>({
-    'detailed-schedule': 0,
-    'physician-data': 0,
-    'efficiency-analysis': 0,
-    'change-analysis': 0,
+    'welcome': 0,
+    'dashboard': 0,
+    'dashboard-mhrs': 0,
+    'dashboard-financial': 0,
+    'dashboard-preparation': 0,
+    'dashboard-support': 0,
+    'dashboard-emergency': 0,
+    'schedule': 0,
     'performance-planning': 0,
     'data-entry': 0,
+    'physician-data': 0,
     'ai-chatbot': 0,
     'service-analysis': 0,
+    'etik-kurul': 0,
+    'hekim-islem-listesi': 0,
+    'ek-liste-tanimlama': 0,
+    'sut-mevzuati': 0,
+    'gil': 0,
+    'detailed-schedule': 0,
+    'change-analysis': 0,
     'goren': 0,
     'analysis-module': 0,
+    'efficiency-analysis': 0,
     'presentation': 0,
-    'schedule': 0,
-    'admin': 0,
     'emergency-service': 0,
-    'ai-cetvel-planlama': 0
+    'schedule-planning': 0,
+    'active-demand': 0,
+    'goren-ilsm': 0,
+    'goren-ilcesm': 0,
+    'goren-bh': 0,
+    'goren-adsh': 0,
+    'goren-ash': 0,
+    'ai-cetvel-planlama': 0,
+    'pdf-viewer': 0,
+    'comparison-wizard': 0,
+    'goren-manuel': 0,
+    'admin': 0,
+    'session-management': 0
   });
 
   // Her modül için cetvel seçimleri (ChangeAnalysis için)
   const [baselineLabels, setBaselineLabels] = useState<Record<ViewType, string>>({
-    'detailed-schedule': '',
-    'physician-data': '',
-    'efficiency-analysis': '',
-    'change-analysis': '',
+    'welcome': '',
+    'dashboard': '',
+    'dashboard-mhrs': '',
+    'dashboard-financial': '',
+    'dashboard-preparation': '',
+    'dashboard-support': '',
+    'dashboard-emergency': '',
+    'schedule': '',
     'performance-planning': '',
     'data-entry': '',
+    'physician-data': '',
     'ai-chatbot': '',
     'service-analysis': '',
+    'etik-kurul': '',
+    'hekim-islem-listesi': '',
+    'ek-liste-tanimlama': '',
+    'sut-mevzuati': '',
+    'gil': '',
+    'detailed-schedule': '',
+    'change-analysis': '',
     'goren': '',
     'analysis-module': '',
+    'efficiency-analysis': '',
     'presentation': '',
-    'schedule': '',
-    'admin': '',
     'emergency-service': '',
-    'ai-cetvel-planlama': ''
+    'schedule-planning': '',
+    'active-demand': '',
+    'goren-ilsm': '',
+    'goren-ilcesm': '',
+    'goren-bh': '',
+    'goren-adsh': '',
+    'goren-ash': '',
+    'ai-cetvel-planlama': '',
+    'pdf-viewer': '',
+    'comparison-wizard': '',
+    'goren-manuel': '',
+    'admin': '',
+    'session-management': ''
   });
 
   const [updatedLabels, setUpdatedLabels] = useState<Record<ViewType, string>>({
-    'detailed-schedule': '',
-    'physician-data': '',
-    'efficiency-analysis': '',
-    'change-analysis': '',
+    'welcome': '',
+    'dashboard': '',
+    'dashboard-mhrs': '',
+    'dashboard-financial': '',
+    'dashboard-preparation': '',
+    'dashboard-support': '',
+    'dashboard-emergency': '',
+    'schedule': '',
     'performance-planning': '',
     'data-entry': '',
+    'physician-data': '',
     'ai-chatbot': '',
     'service-analysis': '',
+    'etik-kurul': '',
+    'hekim-islem-listesi': '',
+    'ek-liste-tanimlama': '',
+    'sut-mevzuati': '',
+    'gil': '',
+    'detailed-schedule': '',
+    'change-analysis': '',
     'goren': '',
     'analysis-module': '',
+    'efficiency-analysis': '',
     'presentation': '',
-    'schedule': '',
-    'admin': '',
     'emergency-service': '',
-    'ai-cetvel-planlama': ''
+    'schedule-planning': '',
+    'active-demand': '',
+    'goren-ilsm': '',
+    'goren-ilcesm': '',
+    'goren-bh': '',
+    'goren-adsh': '',
+    'goren-ash': '',
+    'ai-cetvel-planlama': '',
+    'pdf-viewer': '',
+    'comparison-wizard': '',
+    'goren-manuel': '',
+    'admin': '',
+    'session-management': ''
   });
 
   // Mevcut modül için aktif filtreyi al
@@ -332,6 +449,27 @@ const App: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
+
+  // Session Tracking - Kullanıcı giriş yaptığında oturum kaydı oluştur
+  useEffect(() => {
+    if (!user || !userPermissions) return;
+
+    let cleanup: (() => void) | null = null;
+
+    registerSession(
+      user.uid,
+      user.email || '',
+      userPermissions.displayName || user.email?.split('@')[0] || ''
+    ).then((unregister) => {
+      cleanup = unregister;
+    }).catch((err) => {
+      console.error('Session kayıt hatası:', err);
+    });
+
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [user, userPermissions]);
 
   // Firebase Data Sync - Load data from Firestore when user logs in
   // detailedScheduleData is loaded from Storage (see useEffect above)
@@ -541,14 +679,14 @@ const App: React.FC = () => {
                     const processedDocs = allDocKeys.map(key => {
                       const bPhys = base.physicians[key];
                       const uPhys = upd.physicians[key];
-                      const name = uPhys?.name || bPhys?.name || uPhys?.physicianName || bPhys?.physicianName || 'Bilinmiyor';
+                      const name = uPhys?.name || bPhys?.name || (uPhys as any)?.physicianName || (bPhys as any)?.physicianName || 'Bilinmiyor';
                       const branch = uPhys?.branch || bPhys?.branch || 'Bilinmiyor';
                       const baseline_capacity = bPhys?.totalCapacity || 0;
                       const updated_capacity = uPhys?.totalCapacity || 0;
                       const capacity_delta = updated_capacity - baseline_capacity;
 
-                      const baseline_action_days = bPhys?.actionDays || bPhys?.sessionsByAction || {};
-                      const updated_action_days = uPhys?.actionDays || uPhys?.sessionsByAction || {};
+                      const baseline_action_days = bPhys?.actionDays || (bPhys as any)?.sessionsByAction || {};
+                      const updated_action_days = uPhys?.actionDays || (uPhys as any)?.sessionsByAction || {};
                       const all_actions = Array.from(new Set([
                         ...Object.keys(baseline_action_days),
                         ...Object.keys(updated_action_days)
@@ -987,7 +1125,8 @@ const App: React.FC = () => {
                 </>
               );
             case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
-            case 'admin': return <AdminPanel currentUserEmail={user?.email || ''} />;
+            case 'admin': return <AdminPanel currentUserEmail={user?.email || ''} onNavigate={setView} />;
+            case 'session-management': return <SessionManagement currentUserEmail={user?.email || ''} />;
             case 'emergency-service':
               return (
                 <EmergencyService
@@ -1407,7 +1546,7 @@ const App: React.FC = () => {
           }}
         >
             {/* Breadcrumb Navigasyon */}
-            {view !== 'welcome' && (() => {
+            {(() => {
               const viewMeta: Record<string, { group?: string; label: string; groupView?: string }> = {
                 'welcome': { label: 'Ana Sayfa' },
                 'dashboard': { label: 'Kontrol Paneli' },
@@ -1472,7 +1611,6 @@ const App: React.FC = () => {
                 </nav>
               );
             })()}
-            {view === 'welcome' && <div />}
             <div className="flex items-center gap-2">
               {/* Sticky Notes Button */}
               <button

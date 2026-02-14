@@ -189,7 +189,7 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
       id: 'emergency',
       label: 'Acil Servis',
       icon: <EmergencyIcon />,
-      iconColor: 'text-red-400',
+      iconColor: 'status-danger',
       items: [
         { id: 'emergency-service', label: 'Yeşil Alan Oranları', view: 'emergency-service', hasAccess: hasModuleAccess('emergencyService') }
       ]
@@ -261,9 +261,9 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
             >
               <div className={`
                 w-8 h-8 rounded-lg flex items-center justify-center transition-colors
-                ${isViewActive(item.view) ? 'bg-blue-500/20 text-blue-400' : ''}
+                ${isViewActive(item.view) ? 'bg-blue-500/20 status-info' : ''}
               `} style={!isViewActive(item.view) ? { color: 'var(--text-muted)' } : undefined}>
-                {item.icon}
+                {(item as any).icon}
               </div>
               {!isCollapsed && (
                 <span className="text-sm font-medium">{item.label}</span>
@@ -306,7 +306,7 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
                   <>
                     <span className="text-sm font-medium flex-1 text-left">{group.label}</span>
                     {group.badge && (
-                      <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 text-amber-400 rounded">
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500/20 status-warning rounded">
                         {group.badge}
                       </span>
                     )}
@@ -369,7 +369,7 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
             >
               <div className={`
                 w-8 h-8 rounded-lg flex items-center justify-center
-                ${isViewActive(item.view) ? 'bg-blue-500/20 text-blue-400' : ''}
+                ${isViewActive(item.view) ? 'bg-blue-500/20 status-info' : ''}
               `} style={!isViewActive(item.view) ? { color: 'var(--text-muted)' } : undefined}>
                 {item.icon}
               </div>
@@ -381,26 +381,46 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
 
           {/* Admin */}
           {isAdmin && (
-            <button
-              onClick={() => onNavigate('admin')}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
-              style={isViewActive('admin')
-                ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
-                : { color: 'var(--text-3)' }
-              }
-              onMouseEnter={e => { if (!isViewActive('admin')) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
-              onMouseLeave={e => { if (!isViewActive('admin')) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
-            >
-              <div className={`
-                w-8 h-8 rounded-lg flex items-center justify-center
-                ${isViewActive('admin') ? 'bg-rose-500/20 text-rose-400' : ''}
-              `} style={!isViewActive('admin') ? { color: 'var(--text-muted)' } : undefined}>
-                <UsersIcon />
-              </div>
+            <>
+              <button
+                onClick={() => onNavigate('admin')}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+                style={(isViewActive('admin') || isViewActive('session-management'))
+                  ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                  : { color: 'var(--text-3)' }
+                }
+                onMouseEnter={e => { if (!isViewActive('admin') && !isViewActive('session-management')) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                onMouseLeave={e => { if (!isViewActive('admin') && !isViewActive('session-management')) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
+              >
+                <div className={`
+                  w-8 h-8 rounded-lg flex items-center justify-center
+                  ${(isViewActive('admin') || isViewActive('session-management')) ? 'bg-rose-500/20 text-rose-400' : ''}
+                `} style={!(isViewActive('admin') || isViewActive('session-management')) ? { color: 'var(--text-muted)' } : undefined}>
+                  <UsersIcon />
+                </div>
+                {!isCollapsed && (
+                  <span className="text-sm font-medium">Kullanıcı Yönetimi</span>
+                )}
+              </button>
+              {/* Oturum Yönetimi alt menüsü */}
               {!isCollapsed && (
-                <span className="text-sm font-medium">Kullanıcı Yönetimi</span>
+                <button
+                  onClick={() => onNavigate('session-management')}
+                  className="w-full flex items-center gap-3 pl-11 pr-3 py-2 rounded-xl transition-all duration-200"
+                  style={isViewActive('session-management')
+                    ? { background: 'var(--surface-hover)', color: 'var(--text-1)' }
+                    : { color: 'var(--text-3)' }
+                  }
+                  onMouseEnter={e => { if (!isViewActive('session-management')) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                  onMouseLeave={e => { if (!isViewActive('session-management')) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span className="text-xs font-medium">Oturum Yönetimi</span>
+                </button>
               )}
-            </button>
+            </>
           )}
         </div>
       </nav>
