@@ -1,5 +1,6 @@
-import { collection, doc, setDoc, deleteDoc, getDoc, addDoc, onSnapshot, query, orderBy, limit, where, Timestamp, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, doc, setDoc, deleteDoc, getDoc, addDoc, onSnapshot, query, orderBy, limit, Timestamp, getDocs } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
+import { db, auth } from '../../firebase';
 
 export interface ActiveSession {
   uid: string;
@@ -11,7 +12,7 @@ export interface ActiveSession {
   loginAt: Timestamp | null;
   lastActivity: Timestamp | null;
   sessionId: string;
-  status: 'online' | 'idle';
+  status: 'online' | 'idle' | 'offline';
 }
 
 export interface SessionLog {
@@ -101,38 +102,6 @@ export async function registerSession(uid: string, email: string, displayName: s
     await setDoc(sessionRef, sessionData);
   }
 
-  // Bu kullanıcıya ait eski orphan session'ları temizle
-  // (aynı uid + farklı sessionId + 5 dakikadan eski lastActivity)
-  try {
-    const sessionsRef = collection(db, 'sessions');
-    const userSessions = await getDocs(query(sessionsRef, where('uid', '==', uid)));
-    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-
-    for (const sessionDoc of userSessions.docs) {
-      if (sessionDoc.id === SESSION_ID) continue; // Kendi session'ımızı silme
-      const data = sessionDoc.data();
-      const lastActivity = data.lastActivity?.toMillis?.() || 0;
-      if (lastActivity < fiveMinAgo) {
-        // Orphan session - log tut ve sil
-        await addDoc(collection(db, 'sessionLogs'), {
-          uid: data.uid || '',
-          email: data.email || '',
-          displayName: data.displayName || '',
-          deviceInfo: data.deviceInfo || '',
-          browser: data.browser || '',
-          os: data.os || '',
-          loginAt: data.loginAt || null,
-          logoutAt: Timestamp.now(),
-          logoutReason: 'tab_closed' as const,
-          sessionId: sessionDoc.id,
-        });
-        await deleteDoc(sessionDoc.ref);
-      }
-    }
-  } catch {
-    // Temizleme başarısız olursa sessizce devam et
-  }
-
   // Heartbeat: Her 30 saniyede lastActivity güncelle
   const heartbeat = setInterval(async () => {
     try {
@@ -142,20 +111,37 @@ export async function registerSession(uid: string, email: string, displayName: s
     }
   }, 30_000);
 
-  // Sayfa kapanırken session'ı sil ve log tut
+  // Sayfa kapanırken session'ı offline olarak işaretle (silme - admin görebilsin)
   const handleUnload = () => {
-    // Session'ı sil - beforeunload'da async çalışmaz ama deniyoruz
-    deleteDoc(sessionRef).catch(() => {});
+    // Firestore'da status güncelle - beforeunload'da async çalışmayabilir
+    setDoc(sessionRef, { status: 'offline', lastActivity: Timestamp.now() }, { merge: true }).catch(() => {});
     // localStorage'daki session ID'yi temizle ki yeni sekme yeni session alsın
     localStorage.removeItem(SESSION_STORAGE_KEY);
   };
 
   window.addEventListener('beforeunload', handleUnload);
 
+  // Admin tarafından oturum kapatılırsa kullanıcıyı otomatik çıkış yaptır
+  // Session doc silindiğinde veya forceLogout flag'i yazıldığında tetiklenir
+  let terminated = false;
+  const unsubSessionWatch = onSnapshot(sessionRef, (snap) => {
+    if (terminated) return;
+    if (!snap.exists()) {
+      // Session doc silindi → admin terminate etti
+      terminated = true;
+      clearInterval(heartbeat);
+      window.removeEventListener('beforeunload', handleUnload);
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      alert('Oturumunuz yönetici tarafından kapatıldı. Giriş sayfasına yönlendiriliyorsunuz.');
+      signOut(auth).catch(() => {});
+    }
+  });
+
   // Cleanup fonksiyonu döndür (React useEffect cleanup)
   return () => {
     clearInterval(heartbeat);
     window.removeEventListener('beforeunload', handleUnload);
+    unsubSessionWatch();
   };
 }
 
@@ -167,11 +153,17 @@ export function subscribeToSessions(callback: (sessions: ActiveSession[]) => voi
   return onSnapshot(q, (snapshot) => {
     const sessions: ActiveSession[] = snapshot.docs.map(d => {
       const data = d.data();
-      // Heartbeat kontrolü: 2 dakikadan fazla heartbeat gelmemişse idle
-      let status: 'online' | 'idle' = 'online';
-      if (data.lastActivity?.toMillis) {
+      // Status belirleme:
+      // - Firestore'da 'offline' olarak işaretlenmişse → offline (kırmızı)
+      // - 10 dakikadan fazla heartbeat gelmemişse → offline (kırmızı)
+      // - 2-10 dakika arası → idle (sarı)
+      // - 2 dakikadan az → online (yeşil)
+      let status: 'online' | 'idle' | 'offline' = data.status === 'offline' ? 'offline' : 'online';
+      if (status !== 'offline' && data.lastActivity?.toMillis) {
         const diffMs = Date.now() - data.lastActivity.toMillis();
-        if (diffMs > 2 * 60 * 1000) {
+        if (diffMs > 10 * 60 * 1000) {
+          status = 'offline';
+        } else if (diffMs > 2 * 60 * 1000) {
           status = 'idle';
         }
       }
@@ -236,17 +228,19 @@ export function getCurrentSessionId(): string {
   return SESSION_ID;
 }
 
-// Admin: Tüm eski (stale) oturumları temizle
+// Admin: Tüm offline oturumları temizle (heartbeat gelmeyen veya offline olarak işaretlenmiş)
 export async function cleanupStaleSessions(): Promise<number> {
   const sessionsRef = collection(db, 'sessions');
   const allSessions = await getDocs(query(sessionsRef));
-  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  const tenMinAgo = Date.now() - 10 * 60 * 1000;
   let cleaned = 0;
 
   for (const sessionDoc of allSessions.docs) {
     const data = sessionDoc.data();
     const lastActivity = data.lastActivity?.toMillis?.() || 0;
-    if (lastActivity < fiveMinAgo) {
+    const isOffline = data.status === 'offline' || lastActivity < tenMinAgo;
+
+    if (isOffline) {
       await addDoc(collection(db, 'sessionLogs'), {
         uid: data.uid || '',
         email: data.email || '',
