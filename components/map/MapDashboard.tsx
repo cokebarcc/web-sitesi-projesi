@@ -213,60 +213,76 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
       </>)}
 
       {/* Ana Icerik: Harita + Sag Panel */}
-      <div className="flex gap-4" style={{ height: mapExpanded ? 'calc(100vh - 80px)' : 'calc(100vh - 195px)', minHeight: '500px', transition: 'height 0.3s ease' }}>
-        {/* Harita Karti — sol taraf %60 */}
+      <div className={`flex gap-4 ${mapExpanded ? 'fixed inset-0 z-[9999] p-0' : ''}`} style={mapExpanded ? { height: '100vh' } : { height: 'calc(100vh - 195px)', minHeight: '500px' }}>
+        {/* Harita Karti */}
         <div
           className={[
-            'rounded-2xl border overflow-hidden flex flex-col',
-            isDark ? 'border-white/[0.06]' : 'border-slate-200',
-            editMode ? (isDark ? 'ring-1 ring-amber-500/30' : 'ring-1 ring-amber-300') : '',
+            'overflow-hidden flex flex-col',
+            mapExpanded ? '' : 'rounded-2xl border',
+            !mapExpanded && isDark ? 'border-white/[0.06]' : '',
+            !mapExpanded && !isDark ? 'border-slate-200' : '',
+            editMode && !mapExpanded ? (isDark ? 'ring-1 ring-amber-500/30' : 'ring-1 ring-amber-300') : '',
           ].join(' ')}
-          style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff', flex: '0 0 60%', maxWidth: '60%' }}
+          style={{
+            backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+            ...(mapExpanded ? { flex: '1 1 100%', maxWidth: '100%' } : { flex: '0 0 60%', maxWidth: '60%' }),
+          }}
         >
-          {/* Harita Kart Basligi */}
-          <div className={`flex items-center justify-between px-5 py-3 border-b shrink-0 ${
-            isDark ? 'border-white/[0.06]' : 'border-slate-200'
-          }`}>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke={isDark ? '#94a3b8' : '#64748b'} viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              <span className={`text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                {editMode ? 'Pin Yerlestirme Modu' : 'Ilce Haritasi'}
-              </span>
-              {selectedDistrict && !editMode && (
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{
-                  backgroundColor: `${district?.color}20`,
-                  color: district?.color,
-                }}>
-                  {selectedDistrict}
-                </span>
-              )}
-            </div>
-            {/* Expand / Collapse butonu */}
-            <button
-              onClick={() => setMapExpanded(prev => !prev)}
-              className={`p-1.5 rounded-lg transition-all ${
-                isDark
-                  ? 'hover:bg-white/10 text-slate-400 hover:text-white'
-                  : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
-              }`}
-              title={mapExpanded ? 'Haritayı küçült' : 'Haritayı büyüt'}
-            >
-              {mapExpanded ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+          {/* Harita Kart Basligi — expanded modda floating */}
+          {!mapExpanded && (
+            <div className={`flex items-center justify-between px-5 py-3 border-b shrink-0 ${
+              isDark ? 'border-white/[0.06]' : 'border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke={isDark ? '#94a3b8' : '#64748b'} viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
-              ) : (
+                <span className={`text-sm font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {editMode ? 'Pin Yerlestirme Modu' : 'Ilce Haritasi'}
+                </span>
+                {selectedDistrict && !editMode && (
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{
+                    backgroundColor: `${district?.color}20`,
+                    color: district?.color,
+                  }}>
+                    {selectedDistrict}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setMapExpanded(true)}
+                className={`p-1.5 rounded-lg transition-all ${
+                  isDark
+                    ? 'hover:bg-white/10 text-slate-400 hover:text-white'
+                    : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
+                }`}
+                title="Haritayı büyüt"
+              >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
                 </svg>
-              )}
-            </button>
-          </div>
+              </button>
+            </div>
+          )}
 
           {/* Harita Alani */}
           <div className="flex-1 relative" style={{ minHeight: 0 }}>
+            {/* Expanded modda floating küçültme butonu */}
+            {mapExpanded && (
+              <button
+                onClick={() => setMapExpanded(false)}
+                className={`absolute top-3 right-3 z-[1001] p-2 rounded-xl shadow-lg transition-all ${
+                  isDark
+                    ? 'bg-[#0f1729]/90 hover:bg-[#0f1729] text-white border border-white/10'
+                    : 'bg-white/90 hover:bg-white text-slate-700 border border-slate-200'
+                } backdrop-blur-sm`}
+                title="Haritayı küçült"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                </svg>
+              </button>
+            )}
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -307,19 +323,21 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
           </div>
         </div>
 
-        {/* Sag Panel — KPI alanı */}
-        <div className="flex-1 flex flex-col gap-3 min-w-0">
-          {/* Placeholder — buraya KPI kartları eklenecek */}
-          <div className={`flex-1 rounded-2xl border flex items-center justify-center ${
-            isDark
-              ? 'bg-white/[0.02] border-white/[0.06]'
-              : 'bg-white border-slate-200'
-          }`}>
-            <span className={`text-sm ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-              KPI alanı
-            </span>
+        {/* Sag Panel — KPI alanı (expanded modda gizle) */}
+        {!mapExpanded && (
+          <div className="flex-1 flex flex-col gap-3 min-w-0">
+            {/* Placeholder — buraya KPI kartları eklenecek */}
+            <div className={`flex-1 rounded-2xl border flex items-center justify-center ${
+              isDark
+                ? 'bg-white/[0.02] border-white/[0.06]'
+                : 'bg-white border-slate-200'
+            }`}>
+              <span className={`text-sm ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                KPI alanı
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
