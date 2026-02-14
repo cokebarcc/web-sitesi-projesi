@@ -111,26 +111,13 @@ export async function registerSession(uid: string, email: string, displayName: s
     }
   }, 30_000);
 
-  // Sayfa kapanırken session'ı offline olarak işaretle (silme - admin görebilsin)
-  const handleUnload = () => {
-    // Firestore'da status güncelle - beforeunload'da async çalışmayabilir
-    setDoc(sessionRef, { status: 'offline', lastActivity: Timestamp.now() }, { merge: true }).catch(() => {});
-    // localStorage'daki session ID'yi temizle ki yeni sekme yeni session alsın
-    localStorage.removeItem(SESSION_STORAGE_KEY);
-  };
-
-  window.addEventListener('beforeunload', handleUnload);
-
   // Admin tarafından oturum kapatılırsa kullanıcıyı otomatik çıkış yaptır
-  // Session doc silindiğinde veya forceLogout flag'i yazıldığında tetiklenir
   let terminated = false;
   const unsubSessionWatch = onSnapshot(sessionRef, (snap) => {
     if (terminated) return;
     if (!snap.exists()) {
-      // Session doc silindi → admin terminate etti
       terminated = true;
       clearInterval(heartbeat);
-      window.removeEventListener('beforeunload', handleUnload);
       localStorage.removeItem(SESSION_STORAGE_KEY);
       alert('Uzun süredir aktif olmadığınız için oturumunuz güvenlik nedeniyle kapatıldı.');
       signOut(auth).catch(() => {});
@@ -140,7 +127,6 @@ export async function registerSession(uid: string, email: string, displayName: s
   // Cleanup fonksiyonu döndür (React useEffect cleanup)
   return () => {
     clearInterval(heartbeat);
-    window.removeEventListener('beforeunload', handleUnload);
     unsubSessionWatch();
   };
 }
@@ -226,6 +212,31 @@ export async function terminateSession(sessionId: string): Promise<void> {
 // Mevcut session ID'yi dışa aktar
 export function getCurrentSessionId(): string {
   return SESSION_ID;
+}
+
+// Kullanıcı logout yaparken çağır - session'ı Firestore'dan sil ve log tut
+export async function logoutSession(): Promise<void> {
+  const sessionRef = doc(db, 'sessions', SESSION_ID);
+  const sessionSnap = await getDoc(sessionRef);
+
+  if (sessionSnap.exists()) {
+    const data = sessionSnap.data();
+    await addDoc(collection(db, 'sessionLogs'), {
+      uid: data.uid || '',
+      email: data.email || '',
+      displayName: data.displayName || '',
+      deviceInfo: data.deviceInfo || '',
+      browser: data.browser || '',
+      os: data.os || '',
+      loginAt: data.loginAt || null,
+      logoutAt: Timestamp.now(),
+      logoutReason: 'logout' as const,
+      sessionId: SESSION_ID,
+    });
+    await deleteDoc(sessionRef);
+  }
+
+  localStorage.removeItem(SESSION_STORAGE_KEY);
 }
 
 // Admin: Tüm offline oturumları temizle (heartbeat gelmeyen veya offline olarak işaretlenmiş)
