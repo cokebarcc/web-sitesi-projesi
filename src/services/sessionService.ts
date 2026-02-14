@@ -132,7 +132,7 @@ export async function registerSession(uid: string, email: string, displayName: s
       clearInterval(heartbeat);
       window.removeEventListener('beforeunload', handleUnload);
       localStorage.removeItem(SESSION_STORAGE_KEY);
-      alert('Oturumunuz yönetici tarafından kapatıldı. Giriş sayfasına yönlendiriliyorsunuz.');
+      alert('Uzun süredir aktif olmadığınız için oturumunuz güvenlik nedeniyle kapatıldı.');
       signOut(auth).catch(() => {});
     }
   });
