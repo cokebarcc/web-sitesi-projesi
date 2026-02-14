@@ -3,6 +3,7 @@ import { DISTRICTS, INSTITUTION_MARKERS, INSTITUTION_STYLES, getDistrictInstitut
 import type { InstitutionMarker } from '../../src/data/sanliurfaDistricts';
 import { loadInstitutions, saveInstitutions } from '../../src/services/mapInstitutionStorage';
 import SanliurfaLeafletMap from './SanliurfaLeafletMap';
+import SanliurfaSvgMap from './SanliurfaSvgMap';
 import PinEditorPanel from './PinEditorPanel';
 
 interface MapDashboardProps {
@@ -27,6 +28,7 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
+  const [mapMode, setMapMode] = useState<'svg' | 'satellite'>('svg');
 
   const isDark = theme === 'dark';
 
@@ -249,19 +251,55 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
                   </span>
                 )}
               </div>
-              <button
-                onClick={() => setMapExpanded(true)}
-                className={`p-1.5 rounded-lg transition-all ${
-                  isDark
-                    ? 'hover:bg-white/10 text-slate-400 hover:text-white'
-                    : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
-                }`}
-                title="Haritayı büyüt"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Harita modu geçiş butonları */}
+                <div className={`flex rounded-lg p-0.5 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+                  <button
+                    onClick={() => setMapMode('svg')}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                      mapMode === 'svg'
+                        ? isDark
+                          ? 'bg-white/10 text-white shadow-sm'
+                          : 'bg-white text-slate-900 shadow-sm'
+                        : isDark
+                          ? 'text-slate-500 hover:text-slate-300'
+                          : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    Harita
+                  </button>
+                  <button
+                    onClick={() => setMapMode('satellite')}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                      mapMode === 'satellite'
+                        ? isDark
+                          ? 'bg-white/10 text-white shadow-sm'
+                          : 'bg-white text-slate-900 shadow-sm'
+                        : isDark
+                          ? 'text-slate-500 hover:text-slate-300'
+                          : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    Uydu
+                  </button>
+                </div>
+                {/* Büyütme butonu — sadece satellite modda */}
+                {mapMode === 'satellite' && (
+                  <button
+                    onClick={() => setMapExpanded(true)}
+                    className={`p-1.5 rounded-lg transition-all ${
+                      isDark
+                        ? 'hover:bg-white/10 text-slate-400 hover:text-white'
+                        : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
+                    }`}
+                    title="Haritayı büyüt"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -283,7 +321,13 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
                 </svg>
               </button>
             )}
-            {isLoading ? (
+            {mapMode === 'svg' && !mapExpanded ? (
+              <SanliurfaSvgMap
+                theme={theme}
+                selectedDistrict={selectedDistrict}
+                onDistrictClick={handleDistrictClick}
+              />
+            ) : isLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                   Yukleniyor...
