@@ -1347,6 +1347,8 @@ const App: React.FC = () => {
           <MapDashboard
             theme={theme}
             userName={userPermissions?.displayName || user?.email?.split('@')[0]}
+            userEmail={user?.email || ''}
+            isAdmin={isAdmin}
           />
         </div>
       </div>

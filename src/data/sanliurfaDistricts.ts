@@ -12,6 +12,7 @@ export type InstitutionType =
   | 'ADSH';         // ADSH/ADSM — turuncu bg, beyaz "A"
 
 export interface InstitutionMarker {
+  id: string;
   name: string;
   type: InstitutionType;
   lat: number;
@@ -31,50 +32,18 @@ export interface DistrictData {
 
 // Pin stil ayarları: renk, etiket, boyut
 export const INSTITUTION_STYLES: Record<InstitutionType, { bg: string; label: string; size: number }> = {
-  ISM:        { bg: '#00cec9', label: 'İSM', size: 32 },
+  ISM:        { bg: '#e05a00', label: 'M',   size: 34 },
   HASTANE:    { bg: '#3b82f6', label: 'H',   size: 26 },
   OZEL:       { bg: '#ec4899', label: 'H',   size: 26 },
-  UNIVERSITE: { bg: '#8b5cf6', label: 'H',   size: 26 },
+  UNIVERSITE: { bg: '#8b5cf6', label: 'H',   size: 28 },
   SEHIR:      { bg: '#ef4444', label: 'H',   size: 32 },
-  ILCE_SM:    { bg: '#10b981', label: 'SM',  size: 24 },
+  ILCE_SM:    { bg: '#10b981', label: 'S',   size: 24 },
   ADSH:       { bg: '#f59e0b', label: 'A',   size: 24 },
 };
 
-// Tüm kurumların harita marker verileri
-// Koordinatlar yaklaşık kurum konumları — gerekirse düzeltilebilir
-export const INSTITUTION_MARKERS: InstitutionMarker[] = [
-  // İl Sağlık Müdürlüğü (1 adet)
-  { name: 'Şanlıurfa İl Sağlık Müdürlüğü', type: 'ISM', lat: 37.1674, lng: 38.7955 },
-
-  // Kamu Hastaneleri
-  { name: 'Şanlıurfa EAH',          type: 'HASTANE', lat: 37.1580, lng: 38.7920 },
-  { name: 'Mehmet Akif İnan EAH',   type: 'HASTANE', lat: 37.1450, lng: 38.7650 },
-  { name: 'Balıklıgöl DH',          type: 'HASTANE', lat: 37.1500, lng: 38.7850 },
-  { name: 'Birecik DH',             type: 'HASTANE', lat: 37.0356, lng: 37.9853 },
-  { name: 'Bozova DH',              type: 'HASTANE', lat: 37.3688, lng: 38.5256 },
-  { name: 'Ceylanpınar DH',         type: 'HASTANE', lat: 36.8431, lng: 40.0474 },
-  { name: 'Eyyübiye DH',            type: 'HASTANE', lat: 36.8870, lng: 38.7983 },
-  { name: 'Harran DH',              type: 'HASTANE', lat: 36.8625, lng: 39.0207 },
-  { name: 'Hilvan DH',              type: 'HASTANE', lat: 37.5768, lng: 38.9498 },
-  { name: 'Karaköprü DH',           type: 'HASTANE', lat: 37.2068, lng: 38.6867 },
-  { name: 'Siverek DH',             type: 'HASTANE', lat: 37.7486, lng: 39.3225 },
-  { name: 'Suruç DH',               type: 'HASTANE', lat: 36.9642, lng: 38.4247 },
-  { name: 'Viranşehir DH',          type: 'HASTANE', lat: 37.2296, lng: 39.7646 },
-
-  // Üniversite Hastanesi
-  { name: 'Harran Üniv. Araştırma Has.', type: 'UNIVERSITE', lat: 37.1350, lng: 38.8200 },
-
-  // Özel Hastaneler — kullanıcı ekleyecek
-  // { name: 'Örnek Özel Hastane', type: 'OZEL', lat: 0, lng: 0 },
-
-  // Şehir Hastanesi — kullanıcı ekleyecek
-  // { name: 'Şanlıurfa Şehir Hastanesi', type: 'SEHIR', lat: 0, lng: 0 },
-
-  // ADSH / ADSM
-  { name: 'Şanlıurfa ADSH',   type: 'ADSH', lat: 37.1600, lng: 38.7700 },
-  { name: 'Siverek ADSH',     type: 'ADSH', lat: 37.7550, lng: 39.3150 },
-  { name: 'Viranşehir ADSH',  type: 'ADSH', lat: 37.2350, lng: 39.7580 },
-];
+// Kurum pin verileri Firestore'dan yüklenir (appData/mapInstitutions)
+// Bu dizi sadece Firestore'a henüz veri kaydedilmemişse fallback olarak kullanılır
+export const INSTITUTION_MARKERS: InstitutionMarker[] = [];
 
 export const DISTRICTS: Record<string, DistrictData> = {
   'Akçakale': {

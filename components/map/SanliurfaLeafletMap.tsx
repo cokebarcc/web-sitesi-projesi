@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, useMapEvents, Marker, Tooltip } from 
 import L from 'leaflet';
 import type { GeoJSON as LeafletGeoJSON, Layer, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { GEOJSON_DATA, PROVINCE_CENTER, PROVINCE_BOUNDS, DISTRICTS, INSTITUTION_MARKERS, INSTITUTION_STYLES } from '../../src/data/sanliurfaDistricts';
+import { GEOJSON_DATA, PROVINCE_CENTER, PROVINCE_BOUNDS, DISTRICTS, INSTITUTION_STYLES } from '../../src/data/sanliurfaDistricts';
 import type { InstitutionMarker } from '../../src/data/sanliurfaDistricts';
 import MapResizeHandler from './MapResizeHandler';
 
@@ -13,11 +13,12 @@ const HOVER_COLOR = '#00cec9';
 const FILL_MAX_ZOOM = 10;
 
 // Kurum pin'i için DivIcon oluştur
-function createInstitutionIcon(marker: InstitutionMarker): L.DivIcon {
+function createInstitutionIcon(marker: InstitutionMarker, isHighlighted?: boolean): L.DivIcon {
   const style = INSTITUTION_STYLES[marker.type];
   const s = style.size;
-  const fontSize = marker.type === 'ISM' ? 9 : marker.type === 'ILCE_SM' ? 9 : s >= 32 ? 13 : 11;
+  const fontSize = s >= 34 ? 15 : s >= 32 ? 14 : s >= 28 ? 13 : 12;
   const fontWeight = 800;
+  const ring = isHighlighted ? `0 0 0 3px #facc15, 0 0 12px rgba(250,204,21,0.5),` : '';
 
   return L.divIcon({
     className: 'institution-pin',
@@ -31,11 +32,12 @@ function createInstitutionIcon(marker: InstitutionMarker): L.DivIcon {
         border-radius:50%;
         display:flex;align-items:center;justify-content:center;
         color:#fff;font-size:${fontSize}px;font-weight:${fontWeight};
-        box-shadow:0 2px 8px rgba(0,0,0,0.4),0 0 0 2px rgba(255,255,255,0.3);
+        box-shadow:${ring}0 2px 8px rgba(0,0,0,0.4),0 0 0 2px rgba(255,255,255,0.3);
         position:relative;
         font-family:system-ui,sans-serif;
-        letter-spacing:${marker.type === 'ISM' || marker.type === 'ILCE_SM' ? '-0.5px' : '0'};
+        letter-spacing:0;
         line-height:1;
+        cursor:${isHighlighted !== undefined ? 'pointer' : 'default'};
       ">${style.label}<div style="
         position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);
         width:0;height:0;
@@ -51,6 +53,12 @@ interface SanliurfaLeafletMapProps {
   selectedDistrict: string | null;
   isPanelOpen: boolean;
   onDistrictClick: (districtName: string) => void;
+  // Pin yönetimi
+  markers: InstitutionMarker[];
+  editMode?: boolean;
+  selectedMarkerId?: string | null;
+  onMapClick?: (lat: number, lng: number) => void;
+  onMarkerClick?: (marker: InstitutionMarker) => void;
 }
 
 // İl sınırları dışını karartmak için inverse mask oluştur
@@ -102,18 +110,33 @@ function ZoomTracker({ zoomRef, geojsonRef, getStyle }: {
   return null;
 }
 
+// Edit modda haritaya tıklama olaylarını dinleyen bileşen
+function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (e: LeafletMouseEvent) => {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
 const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
   theme,
   selectedDistrict,
   isPanelOpen,
   onDistrictClick,
+  markers,
+  editMode = false,
+  selectedMarkerId,
+  onMapClick,
+  onMarkerClick,
 }) => {
   const geojsonRef = useRef<LeafletGeoJSON | null>(null);
   const zoomRef = useRef<number>(9);
   const isDark = theme === 'dark';
 
-  // Uydu haritası
-  const tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  // Google Satellite — daha güncel uydu görüntüleri
+  const tileUrl = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
 
   // İl dışı mask verisi (bir kez hesapla)
   const maskData = useMemo(() => buildProvinceMask(), []);
@@ -149,6 +172,7 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
 
     layer.on({
       mouseover: (e: LeafletMouseEvent) => {
+        if (editMode) return; // Edit modda hover efekti kapalı
         const target = e.target;
         const isZoomedOut = zoomRef.current <= FILL_MAX_ZOOM;
         target.setStyle({
@@ -173,6 +197,7 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
         }
       },
       mouseout: (e: LeafletMouseEvent) => {
+        if (editMode) return;
         if (geojsonRef.current) {
           geojsonRef.current.resetStyle(e.target);
         }
@@ -189,21 +214,32 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
         }
       },
       click: () => {
-        onDistrictClick(name);
+        if (!editMode) {
+          onDistrictClick(name);
+        }
       },
     });
 
+    // Bazı ilçe isimlerini pin ile çakışmaması için kaydır
+    const labelOffsets: Record<string, [number, number]> = {
+      'Akçakale': [-60, 12],
+      'Viranşehir': [0, -35],
+    };
     layer.bindTooltip(name, {
       permanent: true,
       direction: 'center',
       className: `district-leaflet-label ${isDark ? 'dark' : 'light'}`,
+      ...(labelOffsets[name] && { offset: L.point(labelOffsets[name][0], labelOffsets[name][1]) }),
     });
-  }, [onDistrictClick, isDark]);
+  }, [onDistrictClick, isDark, editMode]);
 
-  // Kurum pin ikonlarını bir kez hesapla
+  // Kurum pin ikonlarını hesapla
   const markerIcons = useMemo(() =>
-    INSTITUTION_MARKERS.map(m => ({ marker: m, icon: createInstitutionIcon(m) })),
-  []);
+    markers.map(m => ({
+      marker: m,
+      icon: createInstitutionIcon(m, editMode ? m.id === selectedMarkerId : undefined),
+    })),
+  [markers, editMode, selectedMarkerId]);
 
   const selectedCenter = selectedDistrict ? DISTRICTS[selectedDistrict]?.center : undefined;
 
@@ -213,14 +249,15 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
       zoom={9}
       bounds={PROVINCE_BOUNDS}
       boundsOptions={{ padding: [-20, -80] }}
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '100%', height: '100%', cursor: editMode ? 'crosshair' : '' }}
       zoomControl={false}
       attributionControl={false}
       minZoom={8}
     >
       <TileLayer
         url={tileUrl}
-        attribution='&copy; Esri'
+        attribution='&copy; Google'
+        maxZoom={20}
       />
       {/* İl dışı karartma maskesi */}
       <GeoJSON
@@ -235,7 +272,7 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
         }}
       />
       <GeoJSON
-        key={`geojson-${selectedDistrict}-${theme}`}
+        key={`geojson-${selectedDistrict}-${theme}-${editMode}`}
         ref={(ref) => { geojsonRef.current = ref as unknown as LeafletGeoJSON; }}
         data={GEOJSON_DATA}
         style={getStyle as any}
@@ -244,9 +281,15 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
       {/* Kurum pin'leri */}
       {markerIcons.map(({ marker, icon }, i) => (
         <Marker
-          key={`inst-${i}`}
+          key={`inst-${marker.id || i}`}
           position={[marker.lat, marker.lng]}
           icon={icon}
+          eventHandlers={editMode && onMarkerClick ? {
+            click: (e) => {
+              L.DomEvent.stopPropagation(e as any);
+              onMarkerClick(marker);
+            },
+          } : undefined}
         >
           <Tooltip
             direction="top"
@@ -257,6 +300,10 @@ const SanliurfaLeafletMap: React.FC<SanliurfaLeafletMapProps> = ({
           </Tooltip>
         </Marker>
       ))}
+      {/* Edit modda haritaya tıklama dinleyici */}
+      {editMode && onMapClick && (
+        <MapClickHandler onMapClick={onMapClick} />
+      )}
       <ZoomTracker zoomRef={zoomRef} geojsonRef={geojsonRef} getStyle={getStyle} />
       <MapResizeHandler
         isPanelOpen={isPanelOpen}

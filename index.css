@@ -188,6 +188,11 @@ code {
   font-family: 'Inter', sans-serif;
 }
 
+/* Uydu tile'larına canlılık ver */
+.leaflet-tile-pane {
+  filter: saturate(1.3) contrast(1.08) brightness(1.02);
+}
+
 /* District labels on Leaflet map (satellite) */
 .district-leaflet-label {
   background: transparent !important;
