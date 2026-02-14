@@ -49,7 +49,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Akçakale': {
     name: 'Akçakale',
     center: [36.7113, 38.9495],
-    svgLabelPos: [420, 435],
+    svgLabelPos: [430, 455],
     color: '#0984e3',
     hospitals: [],
     ilceSM: ['Akçakale İlçe Sağlık Müd.'],
@@ -59,7 +59,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Birecik': {
     name: 'Birecik',
     center: [37.0356, 37.9853],
-    svgLabelPos: [115, 345],
+    svgLabelPos: [98, 345],
     color: '#e74c3c',
     hospitals: ['Birecik Devlet Hastanesi'],
     ilceSM: ['Birecik İlçe Sağlık Müd.'],
@@ -69,7 +69,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Bozova': {
     name: 'Bozova',
     center: [37.3688, 38.5256],
-    svgLabelPos: [180, 290],
+    svgLabelPos: [188, 250],
     color: '#f39c12',
     hospitals: ['Bozova Devlet Hastanesi'],
     ilceSM: ['Bozova İlçe Sağlık Müd.'],
@@ -79,7 +79,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Ceylanpınar': {
     name: 'Ceylanpınar',
     center: [36.8431, 40.0474],
-    svgLabelPos: [660, 360],
+    svgLabelPos: [698, 374],
     color: '#00b894',
     hospitals: ['Ceylanpınar Devlet Hastanesi'],
     ilceSM: ['Ceylanpınar İlçe Sağlık Müd.'],
@@ -89,7 +89,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Eyyübiye': {
     name: 'Eyyübiye',
     center: [36.887, 38.7983],
-    svgLabelPos: [430, 345],
+    svgLabelPos: [310, 355],
     color: '#a29bfe',
     hospitals: ['Eyyübiye Devlet Hastanesi'],
     ilceSM: ['Eyyübiye İlçe Sağlık Müd.'],
@@ -99,7 +99,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Halfeti': {
     name: 'Halfeti',
     center: [37.2387, 37.8655],
-    svgLabelPos: [110, 265],
+    svgLabelPos: [68, 270],
     color: '#6c5ce7',
     hospitals: [],
     ilceSM: ['Halfeti İlçe Sağlık Müd.'],
@@ -109,7 +109,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Haliliye': {
     name: 'Haliliye',
     center: [37.1508, 38.7791],
-    svgLabelPos: [460, 260],
+    svgLabelPos: [418, 288],
     color: '#fdcb6e',
     hospitals: ['Mehmet Akif İnan EAH', 'Şanlıurfa EAH'],
     ilceSM: ['Haliliye İlçe Sağlık Müd.'],
@@ -119,7 +119,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Harran': {
     name: 'Harran',
     center: [36.8625, 39.0207],
-    svgLabelPos: [480, 425],
+    svgLabelPos: [433, 422],
     color: '#e17055',
     hospitals: ['Harran Üniversitesi Araştırma Has.'],
     ilceSM: ['Harran İlçe Sağlık Müd.'],
@@ -129,7 +129,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Hilvan': {
     name: 'Hilvan',
     center: [37.5768, 38.9498],
-    svgLabelPos: [310, 200],
+    svgLabelPos: [413, 190],
     color: '#e74c3c',
     hospitals: ['Hilvan Devlet Hastanesi'],
     ilceSM: ['Hilvan İlçe Sağlık Müd.'],
@@ -139,7 +139,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Karaköprü': {
     name: 'Karaköprü',
     center: [37.2068, 38.6867],
-    svgLabelPos: [260, 230],
+    svgLabelPos: [313, 260],
     color: '#00cec9',
     hospitals: ['Karaköprü Devlet Hastanesi'],
     ilceSM: ['Karaköprü İlçe Sağlık Müd.'],
@@ -149,7 +149,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Siverek': {
     name: 'Siverek',
     center: [37.7486, 39.3225],
-    svgLabelPos: [550, 180],
+    svgLabelPos: [541, 151],
     color: '#fd79a8',
     hospitals: ['Siverek Devlet Hastanesi'],
     ilceSM: ['Siverek İlçe Sağlık Müd.'],
@@ -159,7 +159,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Suruç': {
     name: 'Suruç',
     center: [36.9642, 38.4247],
-    svgLabelPos: [185, 395],
+    svgLabelPos: [176, 365],
     color: '#ff6b6b',
     hospitals: ['Suruç Devlet Hastanesi'],
     ilceSM: ['Suruç İlçe Sağlık Müd.'],
@@ -169,7 +169,7 @@ export const DISTRICTS: Record<string, DistrictData> = {
   'Viranşehir': {
     name: 'Viranşehir',
     center: [37.2296, 39.7646],
-    svgLabelPos: [645, 345],
+    svgLabelPos: [634, 258],
     color: '#0984e3',
     hospitals: ['Viranşehir Devlet Hastanesi'],
     ilceSM: ['Viranşehir İlçe Sağlık Müd.'],
