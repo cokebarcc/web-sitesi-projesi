@@ -126,7 +126,7 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
   ];
 
   return (
-    <div className="w-full h-full overflow-y-auto p-4">
+    <div className="w-full h-full overflow-y-auto p-6 pl-8">
       {/* Baslik */}
       {!mapExpanded && (<>
       <div className="mb-3 flex items-center justify-between">
@@ -212,16 +212,16 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
       </div>
       </>)}
 
-      {/* Ana Icerik: Harita */}
+      {/* Ana Icerik: Harita + Sag Panel */}
       <div className="flex gap-4" style={{ height: mapExpanded ? 'calc(100vh - 80px)' : 'calc(100vh - 195px)', minHeight: '500px', transition: 'height 0.3s ease' }}>
-        {/* Harita Karti */}
+        {/* Harita Karti — sol taraf %60 */}
         <div
           className={[
-            'rounded-2xl border overflow-hidden flex flex-col w-full',
+            'rounded-2xl border overflow-hidden flex flex-col',
             isDark ? 'border-white/[0.06]' : 'border-slate-200',
             editMode ? (isDark ? 'ring-1 ring-amber-500/30' : 'ring-1 ring-amber-300') : '',
           ].join(' ')}
-          style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff' }}
+          style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff', flex: '0 0 60%', maxWidth: '60%' }}
         >
           {/* Harita Kart Basligi */}
           <div className={`flex items-center justify-between px-5 py-3 border-b shrink-0 ${
@@ -304,6 +304,20 @@ const MapDashboard: React.FC<MapDashboardProps> = ({ theme, userName, userEmail,
                 )}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Sag Panel — KPI alanı */}
+        <div className="flex-1 flex flex-col gap-3 min-w-0">
+          {/* Placeholder — buraya KPI kartları eklenecek */}
+          <div className={`flex-1 rounded-2xl border flex items-center justify-center ${
+            isDark
+              ? 'bg-white/[0.02] border-white/[0.06]'
+              : 'bg-white border-slate-200'
+          }`}>
+            <span className={`text-sm ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+              KPI alanı
+            </span>
           </div>
         </div>
       </div>
