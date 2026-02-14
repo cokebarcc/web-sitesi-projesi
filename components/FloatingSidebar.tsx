@@ -188,7 +188,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         </svg>
       ),
       view: 'comparison-wizard',
-      hasAccess: true
+      hasAccess: isAdmin || hasModuleAccess('detailedSchedule') || hasModuleAccess('physicianData')
     },
     {
       id: 'pdf-viewer',
@@ -199,7 +199,7 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
         </svg>
       ),
       view: 'pdf-viewer',
-      hasAccess: true
+      hasAccess: isAdmin || hasModuleAccess('presentation')
     }
   ];
 
