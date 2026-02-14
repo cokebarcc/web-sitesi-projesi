@@ -435,10 +435,11 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
             );
           })}
 
-          {/* Divider */}
+          {/* Support - only if user has access to any support item or is admin */}
+          {(supportItems.some(item => item.hasAccess) || isAdmin) && (
+          <>
           <div className="h-px my-3" style={{ background: 'var(--border-2)' }} />
 
-          {/* Support */}
           <div className="space-y-1">
             {isExpanded && (
               <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
@@ -491,6 +492,8 @@ const FloatingSidebar: React.FC<FloatingSidebarProps> = ({
               </button>
             )}
           </div>
+          </>
+          )}
         </nav>
 
         {/* Footer */}

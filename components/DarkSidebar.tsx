@@ -346,10 +346,11 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
           );
         })}
 
-        {/* Divider */}
+        {/* Divider + Support Section - only if user has access to any support item or is admin */}
+        {(supportItems.some(item => item.hasAccess) || isAdmin) && (
+        <>
         <div className="h-px my-4" style={{ background: 'var(--border-2)' }} />
 
-        {/* Support Section */}
         <div className="space-y-1">
           <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
             Destek
@@ -422,6 +423,8 @@ const DarkSidebar: React.FC<DarkSidebarProps> = ({
             </>
           )}
         </div>
+        </>
+        )}
       </nav>
 
       {/* Footer - User & Settings */}
