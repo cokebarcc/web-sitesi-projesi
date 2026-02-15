@@ -1139,7 +1139,14 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     <div className="space-y-4">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+        <div
+          className="fixed top-10 right-10 z-[500] px-8 py-4 rounded-[20px] border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 text-white"
+          style={{
+            background: toast.type === 'success' ? 'var(--accent, #059669)' : '#e11d48',
+            borderColor: toast.type === 'success' ? 'var(--accent, #059669)' : '#e11d48',
+            boxShadow: 'var(--card-shadow, 0 25px 50px -12px rgba(0, 0, 0, 0.25))',
+          }}
+        >
           {toast.message}
         </div>
       )}
@@ -1148,7 +1155,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold status-highlight">Aktif Talep Analizi</h1>
-          <p style={{ color: 'var(--text-3)' }} className="mt-1">Hastanelerin branş bazlı aktif talep verileri</p>
+          <p style={{ color: 'var(--text-muted)' }} className="mt-1">Hastanelerin branş bazlı aktif talep verileri</p>
         </div>
         {summary && (
           <div className="flex items-center gap-2">
@@ -1190,19 +1197,19 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           <div className="flex flex-wrap gap-4 items-end">
             {/* Hastane Seçimi - Custom Dropdown */}
             <div className="flex flex-col gap-1.5" ref={uploadDropdownRef}>
-              <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Hastane</label>
+              <label style={{ color: 'var(--text-muted)' }} className="text-sm font-medium">Hastane</label>
               <div className="relative">
                 <button
                   ref={uploadTriggerRef}
                   type="button"
                   onClick={() => setUploadHospitalDropdownOpen(!uploadHospitalDropdownOpen)}
-                  style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)' }}
-                  className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[200px] text-left"
+                  style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)' }}
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] min-w-[200px] text-left"
                 >
                   <span style={{ color: uploadHospitalId ? 'var(--text-1)' : 'var(--text-muted)' }}>
                     {uploadHospitalId || 'Hastane seçiniz...'}
                   </span>
-                  <svg style={{ color: 'var(--text-3)' }} className={`w-4 h-4 transition-transform ${uploadHospitalDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{ color: 'var(--text-muted)' }} className={`w-4 h-4 transition-transform ${uploadHospitalDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -1210,8 +1217,8 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                 {uploadHospitalDropdownOpen && ReactDOM.createPortal(
                   <div
                     ref={uploadDropdownPortalRef}
-                    style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border-light)', top: uploadDropdownPos.top, left: uploadDropdownPos.left, minWidth: uploadDropdownPos.width }}
-                    className="fixed z-[9999] border rounded-xl shadow-xl max-h-[280px] overflow-y-auto backdrop-blur-xl"
+                    style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)', top: uploadDropdownPos.top, left: uploadDropdownPos.left, minWidth: uploadDropdownPos.width, boxShadow: 'var(--card-shadow)' }}
+                    className="fixed z-[9999] border rounded-xl max-h-[280px] overflow-y-auto backdrop-blur-xl"
                   >
                     {uploadHospitalOptions.map(opt => (
                       <button
@@ -1248,7 +1255,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
             {/* Upload Button */}
             <div className="flex flex-col gap-2">
-              <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Excel Dosyası</label>
+              <label style={{ color: 'var(--text-muted)' }} className="text-sm font-medium">Excel Dosyası</label>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -1282,8 +1289,8 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           </div>
 
           {/* Excel format info */}
-          <div style={{ background: 'var(--surface-3)' }} className="mt-4 p-4 rounded-xl">
-            <p style={{ color: 'var(--text-3)' }} className="text-xs">
+          <div style={{ background: 'var(--surface-2)' }} className="mt-4 p-4 rounded-xl">
+            <p style={{ color: 'var(--text-muted)' }} className="text-xs">
               <span className="font-semibold">Excel Formatı:</span> Tek sütun - "Klinik Adı" (her satır 1 talep, aynı branş tekrarlanıyorsa talep sayısı artar)
             </p>
           </div>
@@ -1335,15 +1342,15 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           {/* Aktif Ay Seçimi (birden fazla ay seçiliyse göster) */}
           {selectedMonths.length > 1 && (
             <div className="flex flex-col gap-1.5">
-              <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Takvim Ayı</label>
+              <label style={{ color: 'var(--text-muted)' }} className="text-sm font-medium">Takvim Ayı</label>
               <select
                 value={activeMonth || ''}
                 onChange={(e) => {
                   setActiveMonth(Number(e.target.value));
                   setDateRange({ start: null, end: null });
                 }}
-                style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
-                className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[140px]"
+                style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)', color: 'var(--text-1)' }}
+                className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] min-w-[140px]"
               >
                 {selectedMonths.map(month => (
                   <option key={month} value={month}>{MONTH_NAMES[month]}</option>
@@ -1404,7 +1411,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   setDateRange({ start: null, end: null });
                   setSelectedHospitals([]);
                 }}
-                style={{ color: 'var(--text-3)' }}
+                style={{ color: 'var(--text-muted)' }}
                 className="text-xs hover:opacity-70 font-medium flex items-center gap-1"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1418,7 +1425,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
         {/* Hastane seçimi uyarısı */}
         {allowedHospitals.length > 0 && selectedHospitals.length === 0 && (
-          <div className="mt-4 p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
+          <div className="mt-4 p-3 rounded-xl border" style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
             <p className="text-sm status-warning flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1451,7 +1458,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                 {/* İndirme ikonu */}
                 <button
                   onClick={() => handleExportComponent(kpi1Ref, 'toplam-talep')}
-                  style={{ background: 'var(--surface-3)' }}
+                  style={{ background: 'var(--surface-hover)' }}
                   className="absolute top-3 right-3 w-7 h-7 hover:bg-orange-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
                   title="PNG İndir"
                 >
@@ -1485,7 +1492,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                 {/* İndirme ikonu */}
                 <button
                   onClick={() => handleExportComponent(kpi2Ref, 'en-yuksek-brans')}
-                  style={{ background: 'var(--surface-3)' }}
+                  style={{ background: 'var(--surface-hover)' }}
                   className="absolute top-3 right-3 w-7 h-7 hover:bg-purple-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
                   title="PNG İndir"
                 >
@@ -1504,7 +1511,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     <p className="text-lg font-bold status-accent">
                       {summary.branchTotals[0]?.branchName || '-'}
                     </p>
-                    <p style={{ color: 'var(--text-3)' }} className="text-sm">
+                    <p style={{ color: 'var(--text-muted)' }} className="text-sm">
                       {summary.branchTotals[0]?.demandCount.toLocaleString('tr-TR') || 0} talep
                     </p>
                   </div>
@@ -1521,7 +1528,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
               {/* İndirme ikonu */}
               <button
                 onClick={() => handleExportComponent(donutChartRef, 'hastane-dagilimi')}
-                style={{ background: 'var(--surface-3)' }}
+                style={{ background: 'var(--surface-hover)' }}
                 className="absolute top-3 right-3 w-7 h-7 hover:bg-emerald-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
                 title="PNG İndir"
               >
@@ -1583,8 +1590,8 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                             .slice(0, 5) || [];
 
                           return (
-                            <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="border rounded-lg p-3 shadow-xl min-w-[200px]">
-                              <div className="flex items-center gap-2 mb-2 pb-2 border-b" style={{ borderColor: 'var(--border-2)' }}>
+                            <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)', boxShadow: 'var(--card-shadow)' }} className="border rounded-xl p-3 min-w-[200px]">
+                              <div className="flex items-center gap-2 mb-2 pb-2 border-b" style={{ borderColor: 'var(--border-1)' }}>
                                 <div className="w-3 h-3 rounded" style={{ backgroundColor: color }} />
                                 <p className="font-semibold" style={{ color: 'var(--text-1)' }}>{hospitalName}</p>
                               </div>
@@ -1593,7 +1600,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                               </p>
                               {topBranches.length > 0 && (
                                 <>
-                                  <p className="text-xs mb-1" style={{ color: 'var(--text-3)' }}>En Yüksek Talepler:</p>
+                                  <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>En Yüksek Talepler:</p>
                                   <div className="space-y-0.5">
                                     {topBranches.map((b, i) => (
                                       <div key={i} className="flex justify-between text-xs">
@@ -1617,7 +1624,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   {(summary.totalHospitals === 1 ? summary.hospitalSummaries : summary.hospitalSummaries.filter(item => item.totalDemand >= 100))
                     .sort((a, b) => b.totalDemand - a.totalDemand)
                     .map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-2 py-1 px-1.5 rounded transition-colors" style={{ cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-3)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <div key={idx} className="flex items-center gap-2 py-1 px-1.5 rounded transition-colors" style={{ cursor: 'default' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         <div
                           className="w-3 h-3 rounded flex-shrink-0"
                           style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
@@ -1637,7 +1644,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
               {/* İndirme ikonu */}
               <button
                 onClick={() => handleExportComponent(barChartRef, 'brans-dagilimi')}
-                style={{ background: 'var(--surface-3)' }}
+                style={{ background: 'var(--surface-hover)' }}
                 className="absolute top-3 right-3 w-7 h-7 hover:bg-blue-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
                 title="PNG İndir"
               >
@@ -1653,12 +1660,12 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     layout="vertical"
                     margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-2)" horizontal={false} />
-                    <XAxis type="number" stroke="var(--text-3)" tick={{ fontSize: 10, fill: 'var(--text-3)' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-1)" horizontal={false} />
+                    <XAxis type="number" stroke="var(--text-muted)" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} />
                     <YAxis
                       type="category"
                       dataKey="branchName"
-                      stroke="var(--text-3)"
+                      stroke="var(--text-muted)"
                       tick={{ fontSize: 10, fill: 'var(--text-2)' }}
                       width={150}
                     />
@@ -1678,14 +1685,14 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                           .sort((a, b) => (b?.count || 0) - (a?.count || 0)) as { name: string; count: number }[];
 
                         return (
-                          <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="border rounded-lg p-3 shadow-xl max-w-[280px]">
-                            <p className="font-semibold mb-2 border-b pb-2" style={{ color: 'var(--text-1)', borderColor: 'var(--border-2)' }}>
+                          <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)', boxShadow: 'var(--card-shadow)' }} className="border rounded-xl p-3 max-w-[280px]">
+                            <p className="font-semibold mb-2 border-b pb-2" style={{ color: 'var(--text-1)', borderColor: 'var(--border-1)' }}>
                               {branchName}
                             </p>
                             <p className="status-highlight font-bold mb-3">
                               Toplam: {totalDemand.toLocaleString('tr-TR')} talep
                             </p>
-                            <p className="text-xs mb-1" style={{ color: 'var(--text-3)' }}>Hastane Dağılımı:</p>
+                            <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Hastane Dağılımı:</p>
                             <div className="space-y-1 max-h-[200px] overflow-y-auto">
                               {hospitalDetails.map((h, i) => (
                                 <div key={i} className="flex justify-between text-sm">
@@ -1716,7 +1723,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           <div ref={page2Ref} style={{ background: 'var(--bg-app)' }} className="space-y-4 p-4 rounded-2xl">
             <div className="flex items-center justify-between">
               <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold">Hastane Bazlı Talep Detayları</h3>
-              <p style={{ color: 'var(--text-3)' }} className="text-sm">Tarih: {getDateRangeDisplay()}</p>
+              <p style={{ color: 'var(--text-muted)' }} className="text-sm">Tarih: {getDateRangeDisplay()}</p>
             </div>
 
             {/* İl Toplamı Özet Kartı */}
@@ -1764,7 +1771,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     {/* İndirme ikonu */}
                     <button
                       onClick={() => handleExportHospitalCard(idx, getShortName(hospital.hospitalName))}
-                      style={{ background: 'var(--surface-3)' }}
+                      style={{ background: 'var(--surface-hover)' }}
                       className="absolute top-2 right-2 w-6 h-6 hover:bg-orange-500 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
                       title="PNG İndir"
                     >
@@ -1773,7 +1780,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                       </svg>
                     </button>
                     {/* Hastane Başlığı */}
-                    <div className="px-4 py-3 border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+                    <div className="px-4 py-3 border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)' }}>
                       <div className="flex items-center justify-between">
                         <h4 className="font-semibold" style={{ color: 'var(--text-1)' }}>{getShortName(hospital.hospitalName)}</h4>
                         <span className="text-lg font-bold status-highlight">{hospital.totalDemand.toLocaleString('tr-TR')}</span>
@@ -1785,17 +1792,17 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                       <table className="w-full">
                         <thead>
                           <tr>
-                            <th className="text-left text-xs font-medium pb-2" style={{ color: 'var(--text-3)' }}>Branş</th>
-                            <th className="text-right text-xs font-medium pb-2" style={{ color: 'var(--text-3)' }}>Talep</th>
+                            <th className="sticky top-0 backdrop-blur-xl text-left text-[10px] font-semibold uppercase tracking-wider pb-2 pt-1" style={{ color: 'var(--text-muted)', background: 'var(--surface-1)' }}>Branş</th>
+                            <th className="sticky top-0 backdrop-blur-xl text-right text-[10px] font-semibold uppercase tracking-wider pb-2 pt-1" style={{ color: 'var(--text-muted)', background: 'var(--surface-1)' }}>Talep</th>
                           </tr>
                         </thead>
                         <tbody>
                           {hospital.branches
                             .sort((a, b) => b.demandCount - a.demandCount)
                             .map((branch, bIdx) => (
-                            <tr key={bIdx} style={bIdx % 2 === 0 ? { background: 'var(--table-row-alt-bg)' } : {}}>
-                              <td className="py-1.5 px-2 text-sm rounded-l" style={{ color: 'var(--text-2)' }}>{branch.branchName}</td>
-                              <td className="py-1.5 px-2 text-sm text-right font-medium rounded-r" style={{ color: 'var(--text-1)' }}>{branch.demandCount.toLocaleString('tr-TR')}</td>
+                            <tr key={bIdx} className="min-h-[44px] border-b" style={{ background: bIdx % 2 === 0 ? 'var(--surface-2)' : 'transparent', borderColor: 'var(--border-1)' }}>
+                              <td className="py-2.5 px-2 text-sm rounded-l" style={{ color: 'var(--text-2)' }}>{branch.branchName}</td>
+                              <td className="py-2.5 px-2 text-sm text-right font-medium rounded-r" style={{ color: 'var(--text-1)' }}>{branch.demandCount.toLocaleString('tr-TR')}</td>
                             </tr>
                           ))}
                         </tbody>

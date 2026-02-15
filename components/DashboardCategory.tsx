@@ -226,11 +226,11 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
 
         <GlassCard isDark={isDark} hover={false} padding="p-12">
           <div className="text-center">
-            <svg className={`w-14 h-14 mx-auto mb-4 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-14 h-14 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <h2 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Erişim Yok</h2>
-            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text-1)' }}>Erişim Yok</h2>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
               Bu kategorideki modüllere erişim yetkiniz bulunmamaktadır.
             </p>
           </div>
@@ -256,7 +256,7 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
         >
           Dashboard'a Dön
         </GlassButton>
-        <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-1)' }}>
           {CATEGORY_TITLES[category]}
         </h1>
         <div className="w-[160px]"></div>
@@ -274,23 +274,20 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
             className="group cursor-pointer"
           >
             <div className="flex items-start gap-4">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                isDark ? 'bg-sky-500/10 text-sky-400 group-hover:bg-sky-500/20' : 'bg-sky-50 text-sky-600 group-hover:bg-sky-100'
-              }`}>
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors" style={{ background: 'color-mix(in srgb, var(--accent) 10%, transparent)', color: 'var(--accent)' }}>
                 {tab.icon}
               </div>
               <div className="flex-1">
-                <h3 className={`font-semibold text-sm mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className="font-semibold text-sm mb-1" style={{ color: 'var(--text-1)' }}>
                   {tab.label}
                 </h3>
-                <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   Modülü görüntülemek için tıklayın
                 </p>
               </div>
               <svg
-                className={`w-5 h-5 shrink-0 mt-1 group-hover:translate-x-1 transition-all ${
-                  isDark ? 'text-slate-600 group-hover:text-sky-400' : 'text-slate-300 group-hover:text-sky-500'
-                }`}
+                className="w-5 h-5 shrink-0 mt-1 group-hover:translate-x-1 transition-all"
+                style={{ color: 'var(--text-muted)' }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

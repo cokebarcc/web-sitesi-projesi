@@ -588,7 +588,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   return (
     <div className="space-y-4 pb-20 animate-in fade-in duration-700">
       {toast && (
-        <div className={`fixed top-10 right-10 z-[100] px-6 py-4 rounded-2xl shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-right-10 ${
+        <div className={`fixed top-10 right-10 z-[100] px-6 py-4 rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl font-bold flex items-center gap-3 animate-in slide-in-from-right-10 ${
           toast.type === 'success' ? 'bg-emerald-600 text-white' :
           toast.type === 'error' ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white'
         }`}>
@@ -620,12 +620,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-[var(--text-3)]">Eski Sürüm</label>
               <div className="flex gap-1">
-                <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="px-3 py-2 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 min-w-[150px] h-[38px]">
+                <select value={baselineLabel} onChange={(e) => setBaselineLabel(e.target.value)} className="px-3 py-2 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 min-w-[150px] h-[38px]">
                   <option value="" className="bg-[var(--surface-1)]">Eski Sürüm Seçiniz</option>
                   {availableVersions.map(v => <option key={v} value={v} className="bg-[var(--surface-1)]">{v}</option>)}
                 </select>
                 {isAdmin && baselineLabel && (
-                  <button onClick={() => handleDeleteVersion(baselineLabel)} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-all border border-rose-500/30" title="Sürümü Sil">
+                  <button onClick={() => handleDeleteVersion(baselineLabel)} className="p-2 bg-rose-500/20 text-rose-400 rounded-xl hover:bg-rose-500/30 transition-all border border-rose-500/30" title="Sürümü Sil">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 )}
@@ -636,12 +636,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-rose-400">Yeni Sürüm</label>
               <div className="flex gap-1">
-                <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="px-3 py-2 rounded-lg border border-rose-500/30 bg-[var(--input-bg)] text-rose-300 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/50 min-w-[150px] h-[38px]">
+                <select value={updatedLabel} onChange={(e) => setUpdatedLabel(e.target.value)} className="px-3 py-2 rounded-xl border border-rose-500/30 bg-[var(--surface-2)] text-rose-300 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/50 min-w-[150px] h-[38px]">
                   <option value="" className="bg-[var(--surface-1)] text-[var(--text-1)]">Yeni Sürüm Seçiniz</option>
                   {availableVersions.map(v => <option key={v} value={v} className="bg-[var(--surface-1)] text-[var(--text-1)]">{v}</option>)}
                 </select>
                 {isAdmin && updatedLabel && (
-                  <button onClick={() => handleDeleteVersion(updatedLabel)} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-all border border-rose-500/30" title="Sürümü Sil">
+                  <button onClick={() => handleDeleteVersion(updatedLabel)} className="p-2 bg-rose-500/20 text-rose-400 rounded-xl hover:bg-rose-500/30 transition-all border border-rose-500/30" title="Sürümü Sil">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 )}
@@ -651,13 +651,13 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             {/* Sürüm Yükleme Butonları */}
             {canUpload && (
               <>
-                <label htmlFor="oldVersionUpload" className="px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer active:scale-95 flex items-center gap-2 transition-all hover:opacity-80" style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-1)' }}>
+                <label htmlFor="oldVersionUpload" className="px-3 py-2 h-[38px] rounded-xl font-semibold text-xs cursor-pointer active:scale-95 flex items-center gap-2 transition-all hover:opacity-80 bg-[var(--surface-2)] text-[var(--text-1)] border border-[var(--border-1)]">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                   Eski Yükle
                 </label>
                 <input id="oldVersionUpload" type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} disabled={isProcessing} />
 
-                <label htmlFor="newVersionUpload" className="bg-indigo-600 text-white px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer hover:bg-indigo-700 active:scale-95 flex items-center gap-2 transition-all">
+                <label htmlFor="newVersionUpload" className="bg-[var(--accent-primary)] text-white px-3 py-2 h-[38px] rounded-xl font-semibold text-xs cursor-pointer hover:bg-[var(--accent-primary-hover)] active:scale-95 flex items-center gap-2 transition-all">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                   Yeni Yükle
                 </label>
@@ -665,7 +665,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
               </>
             )}
             {comparison && (
-              <button onClick={handleExportPowerPoint} className="bg-amber-600 text-white px-3 py-2 h-[38px] rounded-lg font-semibold text-xs shadow-sm cursor-pointer hover:bg-amber-700 active:scale-95 flex items-center gap-2 transition-all">
+              <button onClick={handleExportPowerPoint} className="bg-amber-600 text-white px-3 py-2 h-[38px] rounded-xl font-semibold text-xs cursor-pointer hover:bg-amber-700 active:scale-95 flex items-center gap-2 transition-all">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 Sunumu İndir
               </button>
@@ -684,7 +684,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       {comparison && !isProcessing && (
         <div className="space-y-12 animate-in slide-in-from-bottom-6 duration-700">
           {/* Dashboard Summary Bar */}
-          <div className="p-12 rounded-[56px] shadow-2xl flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden" style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-1)', border: '1px solid var(--border-2)' }}>
+          <div className="p-12 rounded-[20px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden" style={{ backgroundColor: 'var(--surface-1)', color: 'var(--text-1)', border: '1px solid var(--border-1)' }}>
             <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full -mr-48 -mt-48 blur-3xl"></div>
             <div className="text-center md:text-left relative z-10">
               <p className="font-black text-[10px] uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--text-muted)' }}>BAŞLANGIÇ TOPLAMI ({baselineLabel})</p>
@@ -692,7 +692,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             </div>
             <div className="text-center relative z-10">
               {/* Fix: Ensured number type for subtraction using Number() for robustness. */}
-              <div className={`px-10 py-6 rounded-[32px] border-2 ${(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 status-success' : 'bg-rose-500/10 border-rose-500/30 status-danger'}`}>
+              <div className={`px-10 py-6 rounded-[20px] border-2 ${(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 status-success' : 'bg-rose-500/10 border-rose-500/30 status-danger'}`}>
                 <p className="font-black text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--text-3)' }}>NET FARK</p>
                 <h3 className="text-5xl font-black tracking-tighter" style={{ color: 'inherit' }}>
                   {(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)) > 0 ? '+' : ''}{(Number(comparison.totalUpdCap) - Number(comparison.totalBaseCap)).toLocaleString('tr-TR')}
@@ -771,25 +771,25 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-[var(--table-header-bg)]">
+                <thead className="sticky top-0 z-10 backdrop-blur-xl bg-[var(--table-header-bg)] border-b border-[var(--border-1)]">
                   <tr>
-                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Hekim & Branş</th>
-                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Kap</th>
-                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Kap</th>
-                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
-                    <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon Değişimleri (GÜN)</th>
-                    <th className="px-10 py-5"></th>
+                    <th className="px-10 py-4 min-h-[44px] text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Hekim & Branş</th>
+                    <th className="px-10 py-4 min-h-[44px] text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Kap</th>
+                    <th className="px-10 py-4 min-h-[44px] text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Kap</th>
+                    <th className="px-10 py-4 min-h-[44px] text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
+                    <th className="px-10 py-4 min-h-[44px] text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon Değişimleri (GÜN)</th>
+                    <th className="px-10 py-4 min-h-[44px]"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--table-border)]">
-                  {comparison.phys_compare.map((p: any) => {
+                  {comparison.phys_compare.map((p: any, pIdx: number) => {
                     const sortedDeltas = Object.entries(p.action_deltas).sort((a, b) => Math.abs(Number(b[1])) - Math.abs(Number(a[1])));
                     const displayedDeltas = sortedDeltas.slice(0, 3);
                     const remainingCount = sortedDeltas.length - 3;
 
                     return (
                       <React.Fragment key={p.id}>
-                        <tr className={`hover:bg-[var(--table-row-hover)] cursor-pointer transition-colors group ${expandedDoc === p.id ? 'bg-indigo-500/10' : ''}`} onClick={() => setExpandedDoc(expandedDoc === p.id ? null : p.id)}>
+                        <tr className={`min-h-[44px] hover:bg-[var(--table-row-hover)] cursor-pointer transition-colors group ${expandedDoc === p.id ? 'bg-indigo-500/10' : pIdx % 2 === 1 ? 'bg-[var(--surface-2)]' : ''}`} onClick={() => setExpandedDoc(expandedDoc === p.id ? null : p.id)}>
                           <td className="px-10 py-6">
                             <p className="font-black text-[var(--text-1)] uppercase text-xs tracking-tight">{p.name}</p>
                             <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-1 tracking-tighter">{p.branch}</p>
@@ -825,18 +825,18 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                           <tr className="bg-[var(--surface-2)] animate-in slide-in-from-top-2 duration-300">
                             <td colSpan={6} className="px-12 py-10">
                               <div className="space-y-8">
-                                <div className="bg-[var(--surface-1)] p-8 rounded-[24px] border border-[var(--border-1)]">
+                                <div className="bg-[var(--surface-1)] p-8 rounded-[20px] border border-[var(--border-1)]">
                                   <h5 className="text-[11px] font-black text-[var(--text-1)] uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                                     <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
                                     Aksiyon Kıyas Tablosu
                                   </h5>
                                   <table className="w-full text-left">
-                                    <thead>
-                                      <tr className="border-b-2 border-[var(--border-1)]">
-                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon</th>
-                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Gün</th>
-                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Gün</th>
-                                        <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
+                                    <thead className="sticky top-0 z-10 backdrop-blur-xl bg-[var(--table-header-bg)]">
+                                      <tr className="border-b border-[var(--border-1)]">
+                                        <th className="py-3 min-h-[44px] text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon</th>
+                                        <th className="py-3 min-h-[44px] text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Gün</th>
+                                        <th className="py-3 min-h-[44px] text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Gün</th>
+                                        <th className="py-3 min-h-[44px] text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
                                       </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[var(--border-1)]">
@@ -862,24 +862,24 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                                   </table>
                                 </div>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                  <div className="p-8 rounded-[32px] shadow-sm" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
-                                    <p className="text-[10px] font-black uppercase mb-4 tracking-widest" style={{ color: 'var(--text-3)' }}>BAŞLANGIÇ OTURUMLARI ({baselineLabel})</p>
-                                    <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-2xl" style={{ border: '1px solid var(--border-2)' }}>
+                                  <div className="p-8 rounded-[20px] shadow-sm" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-1)' }}>
+                                    <p className="text-[10px] font-black uppercase mb-4 tracking-widest text-[var(--text-muted)]">BAŞLANGIÇ OTURUMLARI ({baselineLabel})</p>
+                                    <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-xl" style={{ border: '1px solid var(--border-1)' }}>
                                       <table className="w-full text-[10px] text-left">
-                                        <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
-                                        <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
-                                          {p.bPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:opacity-80" style={{ borderColor: 'var(--border-2)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
+                                        <thead className="sticky top-0 z-10 backdrop-blur-xl bg-[var(--table-header-bg)]"><tr><th className="p-3 text-[var(--text-2)] font-black">TARİH</th><th className="p-3 text-[var(--text-2)] font-black">AKSİYON</th><th className="p-3 text-center text-[var(--text-2)] font-black">KAP</th></tr></thead>
+                                        <tbody style={{ borderColor: 'var(--border-1)' }} className="divide-y">
+                                          {p.bPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-1)]" style={{ borderColor: 'var(--border-1)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>
                                       </table>
                                     </div>
                                   </div>
-                                  <div className="p-8 rounded-[32px] shadow-sm" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
+                                  <div className="p-8 rounded-[20px] shadow-sm" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-1)' }}>
                                     <p className="text-[10px] font-black status-danger uppercase mb-4 tracking-widest">GÜNCEL OTURUMLAR ({updatedLabel})</p>
-                                    <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-2xl" style={{ border: '1px solid var(--border-2)' }}>
+                                    <div className="max-h-56 overflow-y-auto custom-scrollbar rounded-xl" style={{ border: '1px solid var(--border-1)' }}>
                                       <table className="w-full text-[10px] text-left">
-                                        <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--surface-3)' }}><tr><th className="p-3">TARİH</th><th className="p-3">AKSİYON</th><th className="p-3 text-center">KAP</th></tr></thead>
-                                        <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
-                                          {p.uPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:opacity-80" style={{ borderColor: 'var(--border-2)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
+                                        <thead className="sticky top-0 z-10 backdrop-blur-xl bg-[var(--table-header-bg)]"><tr><th className="p-3 text-[var(--text-2)] font-black">TARİH</th><th className="p-3 text-[var(--text-2)] font-black">AKSİYON</th><th className="p-3 text-center text-[var(--text-2)] font-black">KAP</th></tr></thead>
+                                        <tbody style={{ borderColor: 'var(--border-1)' }} className="divide-y">
+                                          {p.uPhys?.rawRows?.map((r: any, rowIdx: number) => <tr key={rowIdx} className="hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-1)]" style={{ borderColor: 'var(--border-1)' }}><td className="p-3 font-bold">{r.startDate}</td><td className="p-3 uppercase">{r.action}</td><td className="p-3 text-center font-black">{r.capacity}</td></tr>)}
                                         </tbody>
                                       </table>
                                     </div>
@@ -900,8 +900,8 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       )}
 
       {!comparison && !isProcessing && (
-        <GlassCard isDark={isDark} hover={false} padding="p-32" className="border-4 border-dashed text-center flex flex-col items-center gap-8 shadow-inner animate-in fade-in duration-1000">
-           <div className="w-24 h-24 bg-[var(--surface-2)] rounded-[40px] flex items-center justify-center text-[var(--text-muted)] shadow-inner group">
+        <GlassCard isDark={isDark} hover={false} padding="p-32" className="border border-dashed border-[var(--border-1)] text-center flex flex-col items-center gap-8 animate-in fade-in duration-1000">
+           <div className="w-24 h-24 bg-[var(--surface-2)] rounded-[20px] flex items-center justify-center text-[var(--text-muted)] group">
              <svg className="w-12 h-12 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
            </div>
            <div>

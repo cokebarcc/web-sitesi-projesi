@@ -26,7 +26,7 @@ import { GorenDataEntry } from './common/GorenDataEntry';
 import GorenSummaryCards from './common/GorenSummaryCards';
 import GorenIndicatorTable from './common/GorenIndicatorTable';
 import MultiSelectDropdown, { DropdownOption } from '../MultiSelectDropdown';
-import { GlassCard } from '../ui';
+import { GlassCard, GlassSection } from '../ui';
 
 // Ay isimleri
 const MONTHS = [
@@ -184,10 +184,10 @@ export const GorenManuelHesaplama: React.FC<GorenManuelHesaplamaProps> = ({ them
 
       {/* Bildirim */}
       {notification && (
-        <div className={`p-4 rounded-xl flex items-center gap-3 ${
-          notification.type === 'success' ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300' :
-          notification.type === 'error' ? 'bg-rose-500/20 border border-rose-500/30 text-rose-300' :
-          'bg-blue-500/20 border border-blue-500/30 text-blue-300'
+        <div className={`p-4 rounded-2xl backdrop-blur-xl flex items-center gap-3 border ${
+          notification.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' :
+          notification.type === 'error' ? 'bg-rose-500/20 border-rose-500/30 text-rose-300' :
+          'bg-blue-500/20 border-blue-500/30 text-blue-300'
         }`}>
           {notification.type === 'success' && (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,7 +199,7 @@ export const GorenManuelHesaplama: React.FC<GorenManuelHesaplamaProps> = ({ them
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           )}
-          <span className="font-medium">{notification.message}</span>
+          <span className="font-medium text-sm">{notification.message}</span>
         </div>
       )}
 
@@ -256,7 +256,7 @@ export const GorenManuelHesaplama: React.FC<GorenManuelHesaplamaProps> = ({ them
 
           {/* Sağ taraf - Gösterge bilgisi */}
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-xs text-emerald-400 font-medium bg-emerald-500/20 px-3 py-1.5 rounded-full border border-emerald-500/30">
+            <span className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ color: 'var(--accent)', background: 'color-mix(in srgb, var(--accent) 15%, transparent)', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)' }}>
               {INSTITUTION_TYPE_LABELS[institutionType]} • {indicatorCount} Gösterge
             </span>
           </div>

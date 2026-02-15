@@ -67,9 +67,9 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
   const completedCount = definitions.filter(isIndicatorComplete).length;
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] overflow-hidden">
+    <div className="bg-[var(--surface-1)] backdrop-blur-xl rounded-[20px] border border-[var(--border-1)] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
       {/* Başlık */}
-      <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between">
+      <div className="px-6 py-4 border-b border-[var(--border-1)] flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-[var(--text-1)]">
             Manuel Veri Girişi
@@ -81,17 +81,17 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={handleClearAll}
-            className="px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-rose-400 hover:bg-rose-500/10 rounded-full transition-colors"
           >
             Tümünü Temizle
           </button>
           <button
             onClick={onCalculateAll}
             disabled={isLoading || completedCount === 0}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${
+            className={`px-4 py-2 text-xs font-bold rounded-full transition-colors ${
               isLoading || completedCount === 0
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                ? 'bg-[var(--text-muted)] text-[var(--surface-1)] cursor-not-allowed'
+                : 'bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white'
             }`}
           >
             {isLoading ? 'Hesaplanıyor...' : 'Tümünü Hesapla'}
@@ -100,8 +100,8 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
       </div>
 
       {/* İlerleme Çubuğu */}
-      <div className="px-6 py-2 bg-[var(--bg-2)]">
-        <div className="w-full h-2 bg-[var(--bg-3)] rounded-full overflow-hidden">
+      <div className="px-6 py-2 bg-[var(--surface-2)]">
+        <div className="w-full h-2 bg-[var(--border-1)] rounded-full overflow-hidden">
           <div
             className="h-full bg-indigo-500 rounded-full transition-all duration-300"
             style={{ width: `${(completedCount / definitions.length) * 100}%` }}
@@ -110,25 +110,25 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
       </div>
 
       {/* Gösterge Listesi */}
-      <div className="divide-y divide-[var(--glass-border)]">
+      <div className="divide-y divide-[var(--border-1)]">
         {definitions.map((def) => {
           const values = currentValues[def.code] || {};
           const isComplete = isIndicatorComplete(def);
           const isExpanded = expandedIndicator === def.code;
 
           return (
-            <div key={def.code} className="bg-[var(--bg-1)]">
+            <div key={def.code} className="bg-[var(--surface-1)]">
               {/* Gösterge Başlığı */}
               <button
                 onClick={() => setExpandedIndicator(isExpanded ? null : def.code)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-[var(--bg-2)] transition-colors"
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-[var(--surface-hover)] transition-colors"
               >
                 <div className="flex items-center gap-4">
                   {/* Durum İkonu */}
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center ${
                     isComplete
                       ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-gray-500/20 text-gray-400'
+                      : 'bg-[var(--surface-2)] text-[var(--text-muted)]'
                   }`}>
                     {isComplete ? (
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -155,10 +155,10 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
                   {/* Kısa Parametre Özeti */}
                   <div className="hidden md:flex items-center gap-2 text-xs text-[var(--text-muted)]">
                     {def.parameters.slice(0, 3).map((p) => (
-                      <span key={p.key} className={`px-2 py-1 rounded ${
+                      <span key={p.key} className={`px-2 py-1 rounded-full ${
                         values[p.key] !== null && values[p.key] !== undefined
                           ? 'bg-indigo-500/10 text-indigo-400'
-                          : 'bg-[var(--bg-3)]'
+                          : 'bg-[var(--surface-2)]'
                       }`}>
                         {p.key}:{' '}
                         {values[p.key] !== null && values[p.key] !== undefined
@@ -184,7 +184,7 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
 
               {/* Genişletilmiş Parametre Girişi */}
               {isExpanded && (
-                <div className="px-6 pb-4 pt-2 bg-[var(--bg-2)]">
+                <div className="px-6 pb-4 pt-2 bg-[var(--surface-2)]">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {def.parameters.map((param) => (
                       <div key={param.key}>
@@ -198,7 +198,7 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
                           value={values[param.key] ?? ''}
                           onChange={(e) => handleValueChange(def.code, param.key, e.target.value)}
                           placeholder={param.label.length > 30 ? param.label.slice(0, 30) + '...' : param.label}
-                          className="w-full px-3 py-2 bg-[var(--bg-1)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--text-1)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full px-3 py-2 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                         />
                       </div>
                     ))}
@@ -220,7 +220,7 @@ export const GorenDataEntry: React.FC<GorenDataEntryProps> = ({
       </div>
 
       {/* Alt Bilgi */}
-      <div className="px-6 py-3 border-t border-[var(--glass-border)] bg-[var(--bg-2)]">
+      <div className="px-6 py-3 border-t border-[var(--border-1)] bg-[var(--surface-2)]">
         <p className="text-xs text-[var(--text-muted)]">
           <span className="text-rose-400">*</span> işaretli alanlar zorunludur. Göstergeye tıklayarak detaylı giriş yapabilirsiniz.
         </p>

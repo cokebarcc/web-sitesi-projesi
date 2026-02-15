@@ -82,6 +82,24 @@
   --shadow-lg: 0 10px 20px -3px rgba(0, 0, 0, 0.4), 0 4px 8px -4px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 20px 30px -5px rgba(0, 0, 0, 0.45), 0 8px 12px -6px rgba(0, 0, 0, 0.35);
   --shadow-glow: 0 0 25px rgba(91, 156, 255, 0.15);
+
+  /* Apple Design System — Radius */
+  --radius-card: 20px;
+  --radius-panel: 24px;
+  --radius-pill: 9999px;
+  --radius-input: 12px;
+
+  /* Apple Design System — Card Shadow */
+  --card-shadow: 0 10px 40px rgba(0,0,0,.55), 0 2px 12px rgba(0,0,0,.35);
+  --card-border: 1px solid rgba(255,255,255,.10);
+
+  /* Apple Design System — Table */
+  --table-row-min-height: 44px;
+  --table-cell-px: 16px;
+  --table-cell-py: 12px;
+  --table-zebra: rgba(255,255,255,0.03);
+  --table-separator: rgba(255,255,255,0.04);
+  --table-header-blur: 12px;
 }
 
 /* ===== LIGHT THEME OVERRIDES — PREMIUM ===== */
@@ -156,6 +174,14 @@
   --shadow-lg: 0 8px 24px rgba(99, 102, 241, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 16px 48px rgba(99, 102, 241, 0.1), 0 8px 16px rgba(0, 0, 0, 0.04);
   --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.12);
+
+  /* Apple Design System — Card Shadow (Light: kartlar arka plandan NET ayrılacak) */
+  --card-shadow: 0 2px 12px rgba(0,0,0,.05), 0 18px 40px rgba(0,0,0,.08);
+  --card-border: 1px solid rgba(15,23,42,.10);
+
+  /* Apple Design System — Table */
+  --table-zebra: rgba(15,23,42,0.02);
+  --table-separator: rgba(15,23,42,0.06);
 }
 
 [data-theme="light"] body {

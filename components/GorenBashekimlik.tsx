@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { GlassCard } from './ui';
+import { GlassCard, GlassSection } from './ui';
 
 interface CityScore {
   city: string;
@@ -123,7 +123,7 @@ const GorenBashekimlik: React.FC<GorenBashekimlikProps> = ({ theme = 'dark' }) =
           <h2 className="text-3xl font-black tracking-tighter uppercase" style={{ color: 'var(--text-1)' }}>GÖREN Başarı Sıralaması</h2>
           <p className="font-bold uppercase text-[10px] tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>İller Arası Stratejik Performans Kıyaslama</p>
         </div>
-        <label className="text-white px-10 py-5 rounded-3xl font-black text-xs shadow-xl cursor-pointer transition-all active:scale-95 flex items-center gap-3" style={{ background: 'var(--bg-app)' }}>
+        <label className="text-white px-10 py-5 rounded-2xl font-black text-xs shadow-xl cursor-pointer transition-all active:scale-95 flex items-center gap-3" style={{ background: 'var(--accent)' }}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
           MATRİS EXCEL YÜKLE
           <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
@@ -143,44 +143,45 @@ const GorenBashekimlik: React.FC<GorenBashekimlikProps> = ({ theme = 'dark' }) =
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Sol: Liderlik Tablosu */}
             <GlassCard isDark={isDark} hover={false} padding="p-0" className="lg:col-span-7">
-              <div className="p-8 border-b flex justify-between items-center" style={{ borderColor: 'var(--border-2)', background: 'var(--surface-3)' }}>
+              <div className="p-8 flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-1)', background: 'var(--surface-2)' }}>
                 <h3 className="text-xl font-black uppercase" style={{ color: 'var(--text-1)' }}>Tüm İller Sıralaması</h3>
-                <span className="text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest" style={{ background: 'var(--bg-app)' }}>{cityResults.length} İL ANALİZ EDİLDİ</span>
+                <span className="text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest" style={{ background: 'var(--accent)' }}>{cityResults.length} İL ANALİZ EDİLDİ</span>
               </div>
               <div className="overflow-y-auto max-h-[700px] custom-scrollbar">
                 <table className="w-full text-left">
-                  <thead className="sticky top-0 z-10" style={{ background: 'var(--surface-3)' }}>
+                  <thead className="sticky top-0 z-10 backdrop-blur-xl" style={{ background: 'var(--surface-2)' }}>
                     <tr>
-                      <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-3)' }}>SIRA</th>
-                      <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>İL ADI</th>
-                      <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-3)' }}>TOPLAM PUAN</th>
-                      <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-3)' }}>BAŞARI %</th>
+                      <th className="px-8 py-4 min-h-[44px] text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-1)' }}>SIRA</th>
+                      <th className="px-8 py-4 min-h-[44px] text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-1)' }}>İL ADI</th>
+                      <th className="px-8 py-4 min-h-[44px] text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-1)' }}>TOPLAM PUAN</th>
+                      <th className="px-8 py-4 min-h-[44px] text-[10px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-1)' }}>BAŞARI %</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y" style={{ borderColor: 'var(--border-2)' }}>
+                  <tbody>
                     {cityResults.map((res) => (
                       <tr
                         key={res.city}
                         onClick={() => setSelectedCityName(res.city)}
-                        className={`cursor-pointer transition-all ${selectedCityName === res.city ? 'bg-blue-50/50' : ''}`}
-                        onMouseEnter={(e) => { if (selectedCityName !== res.city) e.currentTarget.style.background = 'var(--surface-3)' }}
+                        className={`cursor-pointer transition-all min-h-[44px] ${selectedCityName === res.city ? 'bg-blue-50/50' : ''}`}
+                        style={{ borderBottom: '1px solid var(--border-1)' }}
+                        onMouseEnter={(e) => { if (selectedCityName !== res.city) e.currentTarget.style.background = 'var(--surface-hover)' }}
                         onMouseLeave={(e) => { if (selectedCityName !== res.city) e.currentTarget.style.background = '' }}
                       >
-                        <td className="px-8 py-5 text-center">
+                        <td className="px-8 py-4 text-center">
                           <span
                             className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs"
                             style={res.rank! <= 3
-                              ? { background: 'var(--bg-app)', color: '#fff' }
-                              : { background: 'var(--surface-2)', color: 'var(--text-3)' }}
+                              ? { background: 'var(--accent)', color: '#fff' }
+                              : { background: 'var(--surface-2)', color: 'var(--text-muted)' }}
                           >
                             {res.rank}
                           </span>
                         </td>
-                        <td className="px-8 py-5">
+                        <td className="px-8 py-4">
                           <p className="font-black uppercase text-sm" style={{ color: 'var(--text-1)' }}>{res.city}</p>
                         </td>
-                        <td className="px-8 py-5 text-center font-bold" style={{ color: 'var(--text-2)' }}>{res.totalScore}</td>
-                        <td className="px-8 py-5 text-center">
+                        <td className="px-8 py-4 text-center font-bold" style={{ color: 'var(--text-2)' }}>{res.totalScore}</td>
+                        <td className="px-8 py-4 text-center">
                           <div className="flex flex-col items-center gap-1">
                              <span className={`text-xs font-black ${res.achievementRate >= 80 ? 'text-emerald-600' : res.achievementRate >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>
                                %{res.achievementRate}
@@ -200,7 +201,7 @@ const GorenBashekimlik: React.FC<GorenBashekimlikProps> = ({ theme = 'dark' }) =
             {/* Sağ: Detaylı Analiz Kartı */}
             <div className="lg:col-span-5 space-y-8">
               {selectedCity ? (
-                <GlassCard isDark={isDark} hover={false} padding="p-12" variant="elevated" className="relative sticky top-10" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
+                <GlassCard isDark={isDark} hover={false} padding="p-12" variant="elevated" className="relative sticky top-10" style={{ background: 'var(--accent)', color: 'var(--text-1)' }}>
                   <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
 
                   <div className="relative z-10">
@@ -278,12 +279,12 @@ const GorenBashekimlik: React.FC<GorenBashekimlikProps> = ({ theme = 'dark' }) =
              <div className="h-[500px]">
                 <ResponsiveContainer width="100%" height="100%">
                    <BarChart data={cityResults.slice(0, 30)} margin={{ bottom: 100 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="city" angle={-45} textAnchor="end" fontSize={10} fontWeight={900} interval={0} tick={{fill: '#475569'}} />
-                      <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-1, #334155)" />
+                      <XAxis dataKey="city" angle={-45} textAnchor="end" fontSize={10} fontWeight={900} interval={0} tick={{fill: 'var(--text-muted, #64748b)'}} />
+                      <YAxis fontSize={10} axisLine={false} tickLine={false} stroke="var(--text-muted, #64748b)" />
                       <Tooltip
-                        cursor={{fill: '#f8fafc'}}
-                        contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
+                        cursor={{fill: 'var(--surface-hover, rgba(255,255,255,0.05))'}}
+                        contentStyle={{ borderRadius: '16px', border: '1px solid var(--border-1)', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)', background: 'var(--surface-1)', color: 'var(--text-1)' }}
                       />
                       <Bar name="Toplam Puan" dataKey="totalScore" radius={[10, 10, 0, 0]} barSize={40}>
                         {cityResults.slice(0, 30).map((entry, index) => (
@@ -297,7 +298,7 @@ const GorenBashekimlik: React.FC<GorenBashekimlikProps> = ({ theme = 'dark' }) =
         </div>
       ) : (
         <GlassCard isDark={isDark} hover={false} padding="p-32" variant="outlined" className="text-center flex flex-col items-center gap-8">
-           <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-inner" style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }}>
+           <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-inner" style={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
            </div>
            <div>
@@ -313,7 +314,7 @@ const GorenBashekimlik: React.FC<GorenBashekimlikProps> = ({ theme = 'dark' }) =
 const PodiumCard = ({ rank, data, color, cardStyle, isWinner }: { rank: number; data: CityScore; color: string; cardStyle?: React.CSSProperties; isWinner?: boolean }) => {
   if (!data) return null;
   return (
-    <div className={`relative flex flex-col items-center p-8 rounded-[48px] shadow-lg border transition-all hover:scale-105 ${isWinner ? 'scale-110 ring-4 ring-amber-400/30' : ''} ${color}`} style={cardStyle}>
+    <div className={`relative flex flex-col items-center p-8 rounded-2xl shadow-lg border transition-all hover:scale-105 ${isWinner ? 'scale-110 ring-4 ring-amber-400/30' : ''} ${color}`} style={cardStyle}>
        <div
          className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl mb-4 shadow-inner ${isWinner ? 'bg-amber-400 text-white' : 'bg-white'}`}
          style={!isWinner ? { color: 'var(--text-3)' } : undefined}

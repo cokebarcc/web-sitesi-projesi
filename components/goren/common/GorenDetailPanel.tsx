@@ -82,9 +82,9 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-[var(--bg-1)] border-l border-[var(--glass-border)] shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-[var(--surface-1)] border-l border-[var(--border-1)] shadow-2xl z-50 overflow-y-auto backdrop-blur-xl">
         {/* Başlık */}
-        <div className="sticky top-0 bg-[var(--bg-1)] px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-[var(--surface-1)] backdrop-blur-xl px-6 py-4 border-b border-[var(--border-1)] flex items-center justify-between z-10">
           <div>
             <p className="text-xs font-mono text-indigo-400 font-bold">
               {definition.code}
@@ -95,7 +95,7 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[var(--text-muted)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)] rounded-lg transition-colors"
+            className="p-2 text-[var(--text-muted)] hover:text-[var(--text-1)] hover:bg-[var(--surface-hover)] rounded-xl transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -106,17 +106,17 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
         <div className="p-6 space-y-6">
           {/* Özet Bilgiler */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-[var(--glass-bg)] rounded-2xl p-4 border border-[var(--glass-border)]">
+            <div className="bg-[var(--surface-2)] rounded-[20px] p-4 border border-[var(--border-1)]">
               <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Maks Puan</p>
               <p className="text-xl font-black text-purple-400 mt-1">{definition.maxPoints}</p>
             </div>
-            <div className="bg-[var(--glass-bg)] rounded-2xl p-4 border border-[var(--glass-border)]">
+            <div className="bg-[var(--surface-2)] rounded-[20px] p-4 border border-[var(--border-1)]">
               <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">GD</p>
               <p className="text-xl font-black text-[var(--text-1)] mt-1">
                 {result?.gdFormatted || '-'}
               </p>
             </div>
-            <div className="bg-[var(--glass-bg)] rounded-2xl p-4 border border-[var(--glass-border)]">
+            <div className="bg-[var(--surface-2)] rounded-[20px] p-4 border border-[var(--border-1)]">
               <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">GP</p>
               <p className={`text-xl font-black mt-1 ${
                 result?.status === 'success'
@@ -140,7 +140,7 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
               </svg>
               Formül
             </h4>
-            <div className="bg-[var(--bg-2)] rounded-xl p-4 font-mono text-sm">
+            <div className="bg-[var(--surface-2)] rounded-xl p-4 font-mono text-sm">
               <p className="text-indigo-400">
                 <span className="text-[var(--text-muted)]">GD = </span>
                 {definition.gdFormula}
@@ -178,7 +178,7 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
                     onChange={(e) => handleValueChange(param.key, e.target.value)}
                     disabled={readonly}
                     placeholder={param.description || `${param.key} değerini girin`}
-                    className={`w-full px-4 py-3 bg-[var(--bg-2)] border border-[var(--glass-border)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    className={`w-full px-4 py-3 bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl text-sm text-[var(--text-1)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                       readonly ? 'opacity-60 cursor-not-allowed' : ''
                     }`}
                   />
@@ -196,13 +196,13 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={handleSave}
-                  className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors"
+                  className="flex-1 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-sm font-bold rounded-full transition-colors"
                 >
                   Hesapla
                 </button>
                 <button
                   onClick={handleReset}
-                  className="px-4 py-2 bg-[var(--bg-3)] hover:bg-[var(--bg-2)] text-[var(--text-2)] text-sm font-medium rounded-xl transition-colors"
+                  className="px-4 py-2 bg-[var(--surface-2)] hover:bg-[var(--surface-hover)] text-[var(--text-2)] text-sm font-medium rounded-full transition-colors"
                 >
                   Sıfırla
                 </button>
@@ -219,10 +219,10 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
                 </svg>
                 Puanlama Eşikleri
               </h4>
-              <div className="bg-[var(--bg-2)] rounded-xl overflow-hidden">
+              <div className="bg-[var(--surface-2)] rounded-xl overflow-hidden border border-[var(--border-1)]">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-[var(--bg-3)]">
+                    <tr className="bg-[var(--surface-2)] sticky top-0 backdrop-blur-xl">
                       <th className="px-4 py-2 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase">
                         Koşul
                       </th>
@@ -237,7 +237,7 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
                       return (
                         <tr
                           key={idx}
-                          className={`border-t border-[var(--glass-border)] ${
+                          className={`border-t border-[var(--border-1)] min-h-[44px] ${
                             isMatched ? 'bg-indigo-500/10' : ''
                           }`}
                         >
@@ -281,7 +281,7 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
                   </svg>
                   Notlar
                 </h4>
-                <p className="text-sm text-[var(--text-2)] bg-[var(--bg-2)] rounded-xl p-4">
+                <p className="text-sm text-[var(--text-2)] bg-[var(--surface-2)] rounded-xl p-4">
                   {definition.notes}
                 </p>
               </div>
@@ -297,7 +297,7 @@ export const GorenDetailPanel: React.FC<GorenDetailPanelProps> = ({
                   <span className={`ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     definition.hbysCalculable
                       ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-gray-500/20 text-gray-400'
+                      : 'bg-[var(--surface-2)] text-[var(--text-muted)]'
                   }`}>
                     {definition.hbysCalculable ? 'HBYS Hesaplayabilir' : 'Manuel Giriş'}
                   </span>

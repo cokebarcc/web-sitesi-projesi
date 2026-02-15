@@ -33,14 +33,14 @@ const CustomizedAxisTick = (props: any) => {
   const { x, y, payload } = props;
   return (
     <g transform={`translate(${x},${y})`}>
-      <text 
-        x={0} 
-        y={0} 
-        dy={4} 
-        textAnchor="end" 
-        fill="#475569" 
-        fontSize={10} 
-        fontWeight={800} 
+      <text
+        x={0}
+        y={0}
+        dy={4}
+        textAnchor="end"
+        fill="var(--text-2)"
+        fontSize={10}
+        fontWeight={800}
         transform="rotate(-90)"
         className="uppercase"
       >
@@ -566,8 +566,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   const PngButton = ({ onClick, label = "PNG", className = "" }: { onClick: () => void, label?: string, className?: string }) => (
     <button
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`no-print flex items-center gap-1.5 bg-white/95 hover:bg-white px-3.5 py-2 rounded-xl text-[10px] font-black border-2 shadow-md transition-all active:scale-95 ${className}`}
-      style={{ color: 'var(--text-2)', borderColor: 'var(--border-2)' }}
+      className={`no-print flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[10px] font-black border shadow-md transition-all active:scale-95 ${className}`}
+      style={{ background: 'var(--surface-1)', color: 'var(--text-2)', borderColor: 'var(--border-1)' }}
       title="Görsel Olarak İndir"
     >
       <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h14a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -596,10 +596,10 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
               </p>
             </div>
             <div className="flex items-center gap-2 p-1.5 rounded-2xl border no-print" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
-               <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="px-4 py-2.5 rounded-xl text-[10px] font-black border outline-none uppercase cursor-pointer" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
+               <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="px-4 py-2.5 rounded-xl text-[10px] font-black border outline-none uppercase cursor-pointer" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)', color: 'var(--text-1)' }}>
                  {MONTHS.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
                </select>
-               <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="px-4 py-2.5 rounded-xl text-[10px] font-black outline-none cursor-pointer" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
+               <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))} className="px-4 py-2.5 rounded-xl text-[10px] font-black border outline-none cursor-pointer" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)', color: 'var(--text-1)' }}>
                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                </select>
             </div>
@@ -633,29 +633,29 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="95%">
               <BarChart data={capacityUsageData} margin={{ bottom: 120 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-1)" />
                 <XAxis dataKey="name" interval={0} height={120} tick={<CustomizedAxisTick />} />
-                <YAxis fontSize={10} axisLine={false} tickLine={false} stroke="#94a3b8" />
+                <YAxis fontSize={10} axisLine={false} tickLine={false} stroke="var(--text-muted)" />
                 <Tooltip 
-                  cursor={{fill: '#f8fafc'}} 
+                  cursor={{fill: 'var(--surface-hover)'}} 
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-white p-6 rounded-[32px] shadow-2xl border min-w-[200px]" style={{ borderColor: 'var(--border-2)' }}>
+                        <div className="p-6 rounded-[20px] shadow-2xl border min-w-[200px] backdrop-blur-xl" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }}>
                           <p className="font-black text-sm mb-1 uppercase leading-normal" style={{ color: 'var(--text-1)' }}>{label}</p>
                           <p className="text-[10px] font-black text-indigo-600 uppercase mb-4 tracking-widest leading-normal">{data.specialty}</p>
-                          <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--border-2)' }}>
+                          <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--border-1)' }}>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Planlanan:</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Planlanan:</span>
                               <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.PlanMuayene}</span>
                             </div>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Gerçekleşen:</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Gerçekleşen:</span>
                               <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.GercekMuayene}</span>
                             </div>
-                            <div className="mt-2 pt-2 border-t flex justify-between items-center" style={{ borderColor: 'var(--border-2)' }}>
-                              <span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-3)' }}>Verim:</span>
+                            <div className="mt-2 pt-2 border-t flex justify-between items-center" style={{ borderColor: 'var(--border-1)' }}>
+                              <span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-muted)' }}>Verim:</span>
                               <span className={`text-sm font-black ${data.UsageRate >= 1.2 ? 'text-emerald-600' : data.UsageRate < 1.0 ? 'text-rose-600' : 'text-amber-600'}`}>
                                 %{data.UsageRatePercent}
                               </span>
@@ -668,7 +668,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                   }} 
                 />
                 <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{paddingBottom: '20px', fontSize: '10px', fontWeight: 'bold'}} />
-                <Bar name="Cetvel Kapasitesi" dataKey="PlanMuayene" fill="#e2e8f0" radius={[6, 6, 0, 0]} barSize={20} />
+                <Bar name="Cetvel Kapasitesi" dataKey="PlanMuayene" fill="var(--border-1)" radius={[6, 6, 0, 0]} barSize={20} />
                 <Bar name="Gerçekleşen Muayene" dataKey="GercekMuayene" radius={[8, 8, 0, 0]} barSize={20}>
                   {capacityUsageData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={getCapacityColor(entry.UsageRate)} />
@@ -699,30 +699,30 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="95%">
               <ComposedChart data={surgeryEfficiencyData} margin={{ bottom: 120 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-1)" />
                 <XAxis dataKey="name" interval={0} height={120} tick={<CustomizedAxisTick />} />
-                <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} stroke="#94a3b8" />
+                <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} stroke="var(--text-muted)" />
                 <YAxis yAxisId="right" orientation="right" fontSize={10} axisLine={false} tickLine={false} stroke="#ef4444" />
                 <Tooltip 
-                  cursor={{fill: '#f0fdf4'}} 
+                  cursor={{fill: 'var(--surface-hover)'}} 
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-white p-6 rounded-[32px] shadow-2xl border min-w-[200px]" style={{ borderColor: 'var(--border-2)' }}>
+                        <div className="p-6 rounded-[20px] shadow-2xl border min-w-[200px] backdrop-blur-xl" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }}>
                           <p className="font-black text-sm mb-1 uppercase leading-normal" style={{ color: 'var(--text-1)' }}>{label}</p>
                           <p className="text-[10px] font-black text-emerald-600 uppercase mb-4 tracking-widest leading-normal">{data.specialty}</p>
-                          <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--border-2)' }}>
+                          <div className="space-y-2 border-t pt-4" style={{ borderColor: 'var(--border-1)' }}>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Planlanan Gün:</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Planlanan Gün:</span>
                               <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.PlanSurgeryDays} G</span>
                             </div>
                             <div className="flex justify-between items-center gap-4">
-                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-3)' }}>Vaka Sayısı:</span>
+                              <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Vaka Sayısı:</span>
                               <span className="text-xs font-black" style={{ color: 'var(--text-2)' }}>{data.ActualSurgeryABC}</span>
                             </div>
-                            <div className="mt-2 pt-2 border-t flex justify-between items-center" style={{ borderColor: 'var(--border-2)' }}>
-                              <span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-3)' }}>Günlük Ort:</span>
+                            <div className="mt-2 pt-2 border-t flex justify-between items-center" style={{ borderColor: 'var(--border-1)' }}>
+                              <span className="text-[10px] font-black uppercase" style={{ color: 'var(--text-muted)' }}>Günlük Ort:</span>
                               <span className={`text-sm font-black ${data.SurgeryEfficiency < hospitalSurgeryAverage ? 'text-rose-600' : 'text-emerald-600'}`}>
                                 {data.SurgeryEfficiency}
                               </span>
@@ -779,18 +779,18 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left table-auto">
-                <thead className="border-b" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
+                <thead className="sticky top-0 z-10 border-b backdrop-blur-xl" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)' }}>
                   <tr>
-                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Hekim Adı</th>
-                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Branş</th>
-                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-3)' }}>Poliklinik Farkı</th>
-                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-3)' }}>Ameliyat Farkı</th>
-                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Analiz Özeti</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Hekim Adı</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Branş</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)' }}>Poliklinik Farkı</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest text-center" style={{ color: 'var(--text-muted)' }}>Ameliyat Farkı</th>
+                    <th className="px-10 py-6 text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Analiz Özeti</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y" style={{ borderColor: 'var(--border-2)' }}>
+                <tbody className="divide-y" style={{ borderColor: 'var(--border-1)' }}>
                   {changedProposals.map((prop, idx) => (
-                    <tr key={idx} className="hover:bg-indigo-50/20 transition-colors">
+                    <tr key={idx} className="transition-colors min-h-[44px]" style={{ background: idx % 2 === 0 ? 'transparent' : 'var(--surface-hover)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'} onMouseLeave={(e) => e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'var(--surface-hover)'}>
                       <td className="px-10 py-6"><p className="font-black uppercase text-sm leading-normal" style={{ color: 'var(--text-1)' }}>{prop.doctorName}</p></td>
                       <td className="px-10 py-6"><p className="text-[10px] font-bold uppercase leading-normal" style={{ color: 'var(--text-muted)' }}>{prop.specialty}</p></td>
                       <td className="px-10 py-6 text-center">
@@ -824,7 +824,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         {pastAnalysis ? (
           <div className="space-y-12">
             {/* Özet Siyah Bar */}
-            <div ref={hospitalSummaryRef} className="relative group/hsummary bg-[#0f172a] text-white p-16 rounded-[64px] shadow-2xl overflow-hidden flex flex-col md:flex-row justify-between items-center gap-12 border" style={{ borderColor: 'var(--border-2)' }}>
+            <div ref={hospitalSummaryRef} className="relative group/hsummary p-16 rounded-[20px] shadow-2xl overflow-hidden flex flex-col md:flex-row justify-between items-center gap-12 border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)', color: 'var(--text-1)' }}>
               <PngButton 
                 onClick={() => downloadAsPng(hospitalSummaryRef, 'Hastane_Kapasite_Ozet_Bar')} 
                 className="absolute top-8 right-8 opacity-0 group-hover/hsummary:opacity-100 z-20" 
@@ -855,7 +855,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                   </h3>
                   <PngButton onClick={() => downloadAsPng(branchGridRef, 'Brans_Bazli_Kapasite_Degisimleri')} label="GRİDİ İNDİR" />
                 </div>
-                <div ref={branchGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 bg-[#F8FAFC] p-4">
+                <div ref={branchGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-4" style={{ background: 'var(--surface-1)' }}>
                 {pastAnalysis.branchResults.map((br, idx) => (
                     <GlassCard key={idx} isDark={isDark} hover={true} padding="p-12 pt-14" className="relative group">
                     <div className="flex justify-between items-start mb-8">
@@ -928,7 +928,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                           <span>{doc.capacity.initial} → {doc.capacity.final}</span>
                         </div>
                         <div className="w-full h-2.5 rounded-full overflow-hidden border" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
-                          <div className="bg-[#0f172a] h-full rounded-full transition-all duration-1000" style={{ width: `${(doc.capacity.final / doc.capacity.initial) * 100}%` }}></div>
+                          <div className="h-full rounded-full transition-all duration-1000" style={{ background: 'var(--text-1)', width: `${(doc.capacity.final / doc.capacity.initial) * 100}%` }}></div>
                         </div>
                       </div>
                       <div className="pt-4 border-t" style={{ borderColor: 'var(--border-2)' }}>
@@ -958,12 +958,12 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                  </h3>
                  <div className="flex flex-wrap gap-4">
                    <PngButton onClick={() => downloadAsPng(consolidatedTableRef, 'Konsolide_Degisim_Listesi')} label="TABLOYU PNG İNDİR" />
-                   <button onClick={onClearPastChanges} className="px-8 py-5 rounded-[24px] text-[11px] font-black text-[#e11d48] hover:bg-rose-50 border-2 border-rose-100 transition-all uppercase tracking-[0.2em]">Veriyi Sıfırla</button>
-                   <button onClick={handleDownloadExcelGlobal} className="flex items-center gap-3 bg-emerald-600 text-white px-8 py-5 rounded-[24px] font-black text-xs shadow-2xl hover:bg-emerald-700 transition-all active:scale-95 uppercase tracking-widest">
+                   <button onClick={onClearPastChanges} className="px-8 py-5 rounded-xl text-[11px] font-black text-[#e11d48] hover:bg-rose-50 border-2 border-rose-100 transition-all uppercase tracking-[0.2em]">Veriyi Sıfırla</button>
+                   <button onClick={handleDownloadExcelGlobal} className="flex items-center gap-3 bg-emerald-600 text-white px-8 py-5 rounded-xl font-black text-xs shadow-2xl hover:bg-emerald-700 transition-all active:scale-95 uppercase tracking-widest">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       EXCEL OLARAK İNDİR
                    </button>
-                   <button onClick={handleDownloadPdfGlobal} disabled={isExporting} className="text-white px-10 py-5 rounded-[24px] font-black text-xs shadow-2xl transition-all disabled:opacity-50 uppercase tracking-widest" style={{ background: 'var(--bg-app)' }}>
+                   <button onClick={handleDownloadPdfGlobal} disabled={isExporting} className="px-10 py-5 rounded-xl font-black text-xs shadow-2xl transition-all disabled:opacity-50 uppercase tracking-widest" style={{ background: 'var(--surface-2)', color: 'var(--text-1)' }}>
                      {isExporting ? 'HAZIRLANIYOR...' : 'TABLOYU PDF İNDİR'}
                    </button>
                  </div>
@@ -972,19 +972,19 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
               <GlassCard isDark={isDark} hover={false} padding="p-0" className="overflow-hidden" variant="elevated">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left table-auto">
-                    <thead className="border-b" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
+                    <thead className="sticky top-0 z-10 border-b backdrop-blur-xl" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)' }}>
                       <tr>
-                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-3)' }}>Hekim Adı</th>
-                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-3)' }}>Branş</th>
-                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-3)' }}>Eski Kap</th>
-                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-3)' }}>Yeni Kap</th>
-                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-3)' }}>Fark</th>
-                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-3)' }}>Aksiyon Değişimleri</th>
+                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-muted)' }}>Hekim Adı</th>
+                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-muted)' }}>Branş</th>
+                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-muted)' }}>Eski Kap</th>
+                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-muted)' }}>Yeni Kap</th>
+                        <th className="px-10 py-8 text-[12px] font-black uppercase tracking-[0.2em] text-center leading-normal" style={{ color: 'var(--text-muted)' }}>Fark</th>
+                        <th className="px-12 py-8 text-[12px] font-black uppercase tracking-[0.2em] leading-normal" style={{ color: 'var(--text-muted)' }}>Aksiyon Değişimleri</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y" style={{ borderColor: 'var(--border-2)' }}>
+                    <tbody className="divide-y" style={{ borderColor: 'var(--border-1)' }}>
                       {allDroppedDoctorsTableData.map((row, idx) => (
-                        <tr key={idx} className="transition-colors" style={{ cursor: 'default' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--table-row-hover)'} onMouseLeave={(e) => e.currentTarget.style.background = ''}>
+                        <tr key={idx} className="transition-colors min-h-[44px]" style={{ cursor: 'default', background: idx % 2 === 0 ? 'transparent' : 'var(--surface-hover)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover)'} onMouseLeave={(e) => e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'var(--surface-hover)'}>
                           <td className="px-12 py-8 font-black uppercase text-sm leading-normal" style={{ color: 'var(--text-1)' }}>{row.name}</td>
                           <td className="px-12 py-8 text-[11px] font-bold uppercase leading-normal" style={{ color: 'var(--text-muted)' }}>{row.branch}</td>
                           <td className="px-10 py-8 text-center text-xs font-bold leading-normal" style={{ color: 'var(--text-3)' }}>{row.initial}</td>
@@ -1013,7 +1013,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                  <button 
                    onClick={runFullAIAnalysis}
                    disabled={isAnalyzing}
-                   className="group relative bg-[#0f172a] text-white px-16 py-8 rounded-[48px] font-black text-xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_60px_rgba(79,70,229,0.2)] hover:scale-105 transition-all active:scale-95 disabled:opacity-50 overflow-hidden"
+                   className="group relative px-16 py-8 rounded-[20px] font-black text-xl hover:scale-105 transition-all active:scale-95 disabled:opacity-50 overflow-hidden"
+                   style={{ background: 'var(--surface-2)', color: 'var(--text-1)', boxShadow: '0 20px 50px rgba(0,0,0,0.15)' }}
                  >
                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                    <div className="relative flex items-center gap-4">
@@ -1037,7 +1038,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                       onClick={() => downloadAsPng(aiAnalysisBoxRef, 'AI_Stratejik_Rapor_Gorseli')} 
                       className="absolute top-10 right-10 z-20 opacity-0 group-hover/aireport:opacity-100" 
                     />
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-50 rounded-full -mr-48 -mt-48 blur-3xl opacity-60"></div>
+                    <div className="absolute top-0 right-0 w-96 h-96 rounded-full -mr-48 -mt-48 blur-3xl opacity-60" style={{ background: 'var(--accent-primary)', opacity: 0.08 }}></div>
                     <div className="relative z-10">
                       <div className="flex items-center gap-6 mb-12">
                         <div className="w-20 h-20 bg-indigo-600 rounded-[32px] flex items-center justify-center font-black text-3xl text-white shadow-2xl shadow-indigo-200">AI</div>
@@ -1071,7 +1072,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                            )}
                            SUNUM OLARAK İNDİR (.PPTX)
                          </button>
-                         <button onClick={() => window.print()} className="text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all" style={{ background: 'var(--bg-app)' }}>RAPORU YAZDIR</button>
+                         <button onClick={() => window.print()} className="px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all" style={{ background: 'var(--surface-2)', color: 'var(--text-1)' }}>RAPORU YAZDIR</button>
                       </div>
                     </div>
                  </GlassCard>
@@ -1104,7 +1105,7 @@ const StatCard = ({ title, value, color, subtitle }: any) => {
     return '';
   };
   return (
-    <div className="bg-white p-10 rounded-[40px] shadow-sm border flex flex-col justify-between hover:shadow-xl transition-all group" style={{ borderColor: 'var(--border-2)' }}>
+    <div className="p-10 rounded-[20px] border flex flex-col justify-between hover:shadow-xl transition-all group" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
       <div>
         <p className="text-[11px] font-black uppercase tracking-[0.2em] mb-2 transition-colors leading-normal" style={{ color: 'var(--text-3)' }}>{title}</p>
         <h3 className={`text-4xl font-black tracking-tighter leading-none ${getLabelColor(color)}`} style={!getLabelColor(color) ? { color: 'var(--text-1)' } : undefined}>{value.toLocaleString('tr-TR')}</h3>

@@ -694,9 +694,9 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
           <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">AKSİYON GÜN DAĞILIMI</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Hastane genelinde aksiyonların toplam gün sayısı (AM/PM yarım gün esaslı)</p></div>
           {isPeriodSelected && (
             <div className="flex flex-wrap items-center gap-3 bg-[var(--surface-2)] p-2 rounded-2xl border border-[var(--border-1)]">
-              <div className="flex items-center gap-2 px-3"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">BRANŞ:</span><select value={actionDaysBranchFilter} onChange={(e) => setActionDaysBranchFilter(e.target.value)} className="bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none min-w-[140px]"><option value="ALL">Tüm Hastane</option>{availableBranches.map((br:string) => <option key={br} value={br}>{br}</option>)}</select></div>
+              <div className="flex items-center gap-2 px-3"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">BRANŞ:</span><select value={actionDaysBranchFilter} onChange={(e) => setActionDaysBranchFilter(e.target.value)} className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none min-w-[140px]"><option value="ALL">Tüm Hastane</option>{availableBranches.map((br:string) => <option key={br} value={br}>{br}</option>)}</select></div>
               <div className="border-l border-[var(--border-2)] pl-3">
-                <button onClick={handleExportActionDaysPptx} disabled={isExportingPptx || actionDaysChartData.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all active:scale-95 shadow-sm">
+                <button onClick={handleExportActionDaysPptx} disabled={isExportingPptx || actionDaysChartData.length === 0} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
                   {isExportingPptx ? (
                     <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>OLUŞTURULUYOR...</>
                   ) : (
@@ -941,28 +941,28 @@ const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allAc
       </div>
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left min-w-[600px]">
-          <thead>
-            <tr className="border-b-2 border-[var(--border-1)]">
-              <th className="py-3 px-3 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest sticky left-0 bg-[var(--surface-2)] z-10 min-w-[160px]">
+          <thead className="sticky top-0 z-20 backdrop-blur-xl">
+            <tr className="border-b border-[var(--table-separator)]">
+              <th className="py-3 px-3 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest sticky left-0 bg-[var(--surface-2)] z-10 min-w-[160px] min-h-[44px]">
                 {labelKey === 'branch' ? 'BRANŞ' : 'HEKİM'}
               </th>
-              {labelKey === 'doctorName' && <th className="py-3 px-2 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest min-w-[120px]">BRANŞ</th>}
+              {labelKey === 'doctorName' && <th className="py-3 px-2 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest min-w-[120px] min-h-[44px]">BRANŞ</th>}
               {allActions.map(act => (
-                <th key={act} className="py-3 px-2 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-w-[80px]">
+                <th key={act} className="py-3 px-2 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-w-[80px] min-h-[44px]">
                   <span className="block truncate max-w-[80px]" title={act}>{act.length > 12 ? act.substring(0, 10) + '…' : act}</span>
                 </th>
               ))}
-              <th className="py-3 px-3 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-w-[80px] bg-[var(--surface-2)]">TOPLAM</th>
+              <th className="py-3 px-3 text-[9px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-w-[80px] bg-[var(--surface-2)] min-h-[44px]">TOPLAM</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border-1)]">
+          <tbody className="divide-y divide-[var(--table-separator)]">
             {rows.map((row, idx) => {
               const isExpanded = expandedRows.has(idx);
               const label = row[labelKey] || '';
               return (
                 <React.Fragment key={idx}>
-                  <tr className="hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group" onClick={() => hasPrevData && toggleRow(idx)}>
-                    <td className="py-2.5 px-3 sticky left-0 bg-[var(--surface-2)] group-hover:bg-[var(--surface-hover)] z-10">
+                  <tr className={`hover:bg-[var(--surface-hover)] transition-colors cursor-pointer group min-h-[44px] ${idx % 2 === 1 ? 'bg-[var(--table-zebra)]' : ''}`} onClick={() => hasPrevData && toggleRow(idx)}>
+                    <td className={`py-2.5 px-3 sticky left-0 z-10 ${idx % 2 === 1 ? 'bg-[var(--table-zebra)]' : 'bg-[var(--surface-2)]'} group-hover:bg-[var(--surface-hover)]`}>
                       <div className="flex items-center gap-2">
                         {hasPrevData && (
                           <svg className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
@@ -984,7 +984,7 @@ const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allAc
                         </td>
                       );
                     })}
-                    <td className="py-2.5 px-3 text-center bg-[var(--surface-2)] group-hover:bg-[var(--surface-hover)]">
+                    <td className={`py-2.5 px-3 text-center ${idx % 2 === 1 ? 'bg-[var(--table-zebra)]' : 'bg-[var(--surface-2)]'} group-hover:bg-[var(--surface-hover)]`}>
                       <span className="text-[10px] font-black text-indigo-400">{fmtDay(row.totalCurrent)}</span>
                       {hasPrevData && row.totalDelta !== 0 && (
                         <span className={`block text-[8px] font-black ${row.totalDelta > 0 ? 'text-emerald-400' : 'status-danger'}`}>{fmtDelta(row.totalDelta)}</span>
@@ -1017,8 +1017,8 @@ const ActionChangeTable = ({ title, subtitle, rows, labelKey, hasPrevData, allAc
           </tbody>
           {rows.length > 1 && (
             <tfoot>
-              <tr className="border-t-2 border-[var(--border-1)] bg-[var(--surface-2)]">
-                <td className="py-3 px-3 sticky left-0 bg-[var(--surface-2)] z-10 text-[10px] font-black text-[var(--text-1)] uppercase" colSpan={labelKey === 'doctorName' ? 2 : 1}>TOPLAM</td>
+              <tr className="border-t border-[var(--table-separator)] bg-[var(--surface-2)]">
+                <td className="py-3 px-3 sticky left-0 bg-[var(--surface-2)] z-10 text-[10px] font-black text-[var(--text-1)] uppercase min-h-[44px]" colSpan={labelKey === 'doctorName' ? 2 : 1}>TOPLAM</td>
                 {allActions.map(act => {
                   const total = rows.reduce((s, r) => s + (r.actions[act]?.current || 0), 0);
                   const totalDelta = rows.reduce((s, r) => s + (r.actions[act]?.delta || 0), 0);
@@ -1068,8 +1068,8 @@ const KpiCard = ({ title, value, subtitle, source, accent, isEmpty, isWarning, w
 
 const LocalFilters = ({ value, onChange, limit, onLimitChange, currentPage, totalPages, onPageChange, branches }: any) => (
   <div className="flex flex-wrap items-center gap-3 bg-[var(--surface-2)] p-2 rounded-2xl border border-[var(--border-1)]">
-    <div className="flex items-center gap-2 px-3 border-r border-[var(--border-2)]"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">BRANŞ:</span><select value={value} onChange={(e) => { onChange(e.target.value); onPageChange(1); }} className="bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none min-w-[140px]"><option value="ALL">Tüm Hastane</option>{branches.map((br:string) => <option key={br} value={br}>{br}</option>)}</select></div>
-    <div className="flex items-center gap-2 px-3"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">GÖSTER:</span><select value={limit} onChange={(e) => { const val = e.target.value === 'ALL' ? 'ALL' : Number(e.target.value); onLimitChange(val); onPageChange(1); }} className="bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none"><option value={12}>12</option><option value={25}>25</option><option value={50}>50</option><option value="ALL">Tümü</option></select></div>
+    <div className="flex items-center gap-2 px-3 border-r border-[var(--border-2)]"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">BRANŞ:</span><select value={value} onChange={(e) => { onChange(e.target.value); onPageChange(1); }} className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none min-w-[140px]"><option value="ALL">Tüm Hastane</option>{branches.map((br:string) => <option key={br} value={br}>{br}</option>)}</select></div>
+    <div className="flex items-center gap-2 px-3"><span className="text-[9px] font-black text-[var(--text-muted)] uppercase">GÖSTER:</span><select value={limit} onChange={(e) => { const val = e.target.value === 'ALL' ? 'ALL' : Number(e.target.value); onLimitChange(val); onPageChange(1); }} className="bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-1)] rounded-xl px-3 py-1.5 text-[10px] font-black outline-none"><option value={12}>12</option><option value={25}>25</option><option value={50}>50</option><option value="ALL">Tümü</option></select></div>
     {limit !== 'ALL' && totalPages > 1 && <div className="flex items-center gap-2 border-l border-[var(--border-2)] pl-3 pr-1"><button onClick={() => onPageChange((p:number) => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-1.5 hover:bg-[var(--surface-hover)] text-[var(--text-2)] rounded-lg disabled:opacity-30"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg></button><span className="text-[9px] font-black text-[var(--text-muted)] min-w-[50px] text-center uppercase">SAYFA {currentPage} / {totalPages}</span><button onClick={() => onPageChange((p:number) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-1.5 hover:bg-[var(--surface-hover)] text-[var(--text-2)] rounded-lg disabled:opacity-30"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg></button></div>}
   </div>
 );
@@ -1218,7 +1218,7 @@ const DoctorDetailModal = ({
               <p className="text-sm font-black text-indigo-400 uppercase tracking-widest">{periodMonth} {periodYear}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-4 bg-[var(--surface-3)] border border-[var(--border-2)] rounded-full hover:bg-[var(--surface-hover)] transition-all shadow-sm group">
+          <button onClick={onClose} className="p-4 bg-[var(--surface-3)] border border-[var(--border-2)] rounded-full hover:bg-[var(--surface-hover)] transition-all shadow-[0_2px_8px_rgba(0,0,0,0.08)] group">
             <svg className="w-6 h-6 text-[var(--text-muted)] group-hover:text-[var(--text-1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
@@ -1259,7 +1259,7 @@ const DoctorDetailModal = ({
               <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
               Aylık Faaliyet Analiz Raporu
             </h4>
-            <div className="bg-[var(--surface-2)] rounded-[40px] border border-[var(--border-1)] overflow-hidden shadow-sm">
+            <div className="bg-[var(--surface-2)] rounded-[40px] border border-[var(--border-1)] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 divide-x divide-y divide-[var(--border-1)]">
                 {Object.entries(activitySummary).length > 0 ? Object.entries(activitySummary).map(([act, days]) => (
                   <div key={act} className="p-6 flex flex-col items-center justify-center text-center hover:bg-[var(--surface-hover)] transition-colors">
@@ -1334,15 +1334,15 @@ const DoctorDetailModal = ({
                     </p>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
-                        <thead>
-                          <tr className="border-b-2 border-[var(--border-1)]">
-                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon</th>
-                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Eski Gün</th>
-                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Yeni Gün</th>
-                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">Fark</th>
+                        <thead className="sticky top-0 z-20 backdrop-blur-xl">
+                          <tr className="border-b border-[var(--table-separator)]">
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest min-h-[44px]">Aksiyon</th>
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-h-[44px]">Eski Gün</th>
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-h-[44px]">Yeni Gün</th>
+                            <th className="py-3 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center min-h-[44px]">Fark</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-[var(--border-1)]">
+                        <tbody className="divide-y divide-[var(--table-separator)]">
                           {Array.from(new Set([...Object.keys(physicianChangeData.baseline_action_days || {}), ...Object.keys(physicianChangeData.updated_action_days || {})])).sort().map(act => {
                             const oldD = physicianChangeData.baseline_action_days?.[act] || 0;
                             const newD = physicianChangeData.updated_action_days?.[act] || 0;
@@ -1375,10 +1375,10 @@ const DoctorDetailModal = ({
                         <p className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-4 tracking-widest">ESKİ OTURUMLAR (İLK CETVEL)</p>
                         <div className="max-h-48 overflow-y-auto custom-scrollbar border border-[var(--border-1)] rounded-xl">
                           <table className="w-full text-[10px] text-left">
-                            <thead className="bg-[var(--surface-2)] sticky top-0"><tr><th className="p-2">TARİH</th><th className="p-2">AKSİYON</th><th className="p-2 text-center">KAP</th></tr></thead>
-                            <tbody className="divide-y divide-[var(--border-1)]">
+                            <thead className="bg-[var(--surface-2)] sticky top-0 backdrop-blur-xl"><tr className="border-b border-[var(--table-separator)]"><th className="p-2 min-h-[44px]">TARİH</th><th className="p-2 min-h-[44px]">AKSİYON</th><th className="p-2 text-center min-h-[44px]">KAP</th></tr></thead>
+                            <tbody className="divide-y divide-[var(--table-separator)]">
                               {physicianChangeData.bPhys?.rawRows?.map((r: any, rowIdx: number) => (
-                                <tr key={rowIdx} className="hover:bg-[var(--surface-hover)]">
+                                <tr key={rowIdx} className={`hover:bg-[var(--surface-hover)] ${rowIdx % 2 === 1 ? 'bg-[var(--table-zebra)]' : ''}`}>
                                   <td className="p-2 font-bold text-[var(--text-1)]">{r.startDate}</td>
                                   <td className="p-2 uppercase text-[var(--text-muted)]">{r.action}</td>
                                   <td className="p-2 text-center font-black text-[var(--text-1)]">{r.capacity}</td>
@@ -1392,10 +1392,10 @@ const DoctorDetailModal = ({
                         <p className="text-[10px] font-black status-danger uppercase mb-4 tracking-widest">YENİ OTURUMLAR (SON CETVEL)</p>
                         <div className="max-h-48 overflow-y-auto custom-scrollbar border border-rose-500/20 rounded-xl">
                           <table className="w-full text-[10px] text-left">
-                            <thead className="bg-rose-500/10 sticky top-0"><tr><th className="p-2">TARİH</th><th className="p-2">AKSİYON</th><th className="p-2 text-center">KAP</th></tr></thead>
+                            <thead className="bg-rose-500/10 sticky top-0 backdrop-blur-xl"><tr className="border-b border-rose-500/20"><th className="p-2 min-h-[44px]">TARİH</th><th className="p-2 min-h-[44px]">AKSİYON</th><th className="p-2 text-center min-h-[44px]">KAP</th></tr></thead>
                             <tbody className="divide-y divide-rose-500/10">
                               {physicianChangeData.uPhys?.rawRows?.map((r: any, rowIdx: number) => (
-                                <tr key={rowIdx} className="hover:bg-rose-500/5">
+                                <tr key={rowIdx} className={`hover:bg-rose-500/5 ${rowIdx % 2 === 1 ? 'bg-rose-500/[0.03]' : ''}`}>
                                   <td className="p-2 font-bold text-[var(--text-1)]">{r.startDate}</td>
                                   <td className="p-2 uppercase text-[var(--text-muted)]">{r.action}</td>
                                   <td className="p-2 text-center font-black text-[var(--text-1)]">{r.capacity}</td>
@@ -1425,7 +1425,7 @@ const DoctorDetailModal = ({
         <div className="p-8 border-t border-[var(--border-1)] bg-[var(--surface-2)] flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="bg-[var(--surface-1)] text-[var(--text-1)] border border-[var(--border-2)] px-12 py-5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-[var(--surface-hover)] transition-all active:scale-95"
+            className="bg-[var(--surface-1)] text-[var(--text-1)] border border-[var(--border-2)] px-12 py-5 rounded-[20px] font-black text-xs uppercase tracking-widest shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:bg-[var(--surface-hover)] transition-all active:scale-95"
           >
             KAPAT
           </button>

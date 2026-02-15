@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { DetailedScheduleData } from '../types';
 import { MONTHS, YEARS } from '../constants';
 import DataFilterPanel from './common/DataFilterPanel';
-import { GlassCard } from './ui';
+import { GlassCard, GlassSection } from './ui';
 
 interface DetailedScheduleProps {
   data: DetailedScheduleData[];
@@ -237,7 +237,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
               <label className="text-xs font-medium text-[var(--text-3)]">Ara</label>
               <input
                 type="text" placeholder="Hekim adı..."
-                className="px-3 py-2 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 w-[140px] h-[38px] placeholder-[var(--text-placeholder)]"
+                className="px-3 py-2 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 w-[140px] h-[38px] placeholder-[var(--text-muted)]"
                 value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
@@ -245,9 +245,9 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
             {/* Görünüm Modu */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-[var(--text-3)]">Görünüm</label>
-              <div className="flex bg-[var(--surface-2)] p-0.5 rounded-lg border border-[var(--border-1)] h-[38px]">
-                <button onClick={() => setViewMode('summary')} className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${viewMode === 'summary' ? 'bg-[var(--surface-1)] text-emerald-400 shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-2)]'}`}>Özet</button>
-                <button onClick={() => setViewMode('list')} className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${viewMode === 'list' ? 'bg-[var(--surface-1)] text-emerald-400 shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-2)]'}`}>Detay</button>
+              <div className="flex bg-[var(--surface-2)] p-0.5 rounded-xl border border-[var(--border-1)] h-[38px]">
+                <button onClick={() => setViewMode('summary')} className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'summary' ? 'bg-[var(--surface-1)] text-emerald-400 shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-2)]'}`}>Özet</button>
+                <button onClick={() => setViewMode('list')} className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'list' ? 'bg-[var(--surface-1)] text-emerald-400 shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-2)]'}`}>Detay</button>
               </div>
             </div>
 
@@ -277,7 +277,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
 
       {viewMode === 'summary' ? (
         <GlassCard isDark={isDark} hover={false} padding="p-0">
-          <div className="p-8 border-b border-[var(--border-1)] bg-[var(--surface-2)]">
+          <div className="p-8 border-b border-[var(--table-separator)] bg-[var(--surface-2)]">
             <h4 className="text-xl font-black text-[var(--text-1)] uppercase italic underline decoration-indigo-500 decoration-4 underline-offset-8 leading-relaxed">
               {periodText} Analiz Raporu
             </h4>
@@ -287,18 +287,18 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-[var(--table-header-bg)] border-b border-[var(--table-border)]">
-                <tr>
-                  <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest sticky left-0 bg-[var(--table-header-bg)] shadow-[2px_0_5px_rgba(0,0,0,0.1)]">Hekim Ad Soyad</th>
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[var(--surface-2)] backdrop-blur-xl border-b border-[var(--table-separator)]">
+                  <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest sticky left-0 bg-[var(--surface-2)] backdrop-blur-xl shadow-[2px_0_5px_rgba(0,0,0,0.1)]">Hekim Ad Soyad</th>
                   <th className="px-10 py-5 text-[11px] font-black text-sky-500 uppercase tracking-widest text-center bg-sky-500/10">TOPLAM KAPASİTE</th>
                   {activeActions.map(action => (
-                    <th key={action} className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center border-l border-[var(--table-border)]">{action} (GÜN)</th>
+                    <th key={action} className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest text-center border-l border-[var(--table-separator)]">{action} (GÜN)</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--table-border)]">
+              <tbody className="divide-y divide-[var(--table-separator)]">
                 {Object.entries(summaryData).length > 0 ? Object.entries(summaryData).map(([name, stats]: [string, DoctorSummary]) => (
-                  <tr key={name} className="hover:bg-[var(--table-row-hover)] transition-colors">
+                  <tr key={name} className="hover:bg-[var(--surface-hover)] transition-colors min-h-[44px]">
                     <td className="px-10 py-5 sticky left-0 bg-[var(--surface-1)] z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)]">
                       <p className="font-black text-[var(--text-1)] uppercase text-sm leading-normal">{name}</p>
                       {stats.branch && <p className="text-[10px] font-medium text-[var(--text-muted)] mt-0.5">{stats.branch}</p>}
@@ -309,7 +309,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                     {activeActions.map(action => {
                       const dayCount = stats.actionDays[action] || 0;
                       return (
-                        <td key={action} className={`px-10 py-5 text-center font-black border-l border-[var(--table-border)] ${dayCount > 0 ? 'text-[var(--text-1)]' : 'text-[var(--text-muted)]'}`}>
+                        <td key={action} className={`px-10 py-5 text-center font-black border-l border-[var(--table-separator)] ${dayCount > 0 ? 'text-[var(--text-1)]' : 'text-[var(--text-muted)]'}`}>
                           {dayCount % 1 === 0 ? dayCount : dayCount.toFixed(1)}
                         </td>
                       );
@@ -328,8 +328,8 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
         <GlassCard isDark={isDark} hover={false} padding="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-[var(--table-header-bg)] border-b border-[var(--table-border)]">
-                <tr>
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[var(--surface-2)] backdrop-blur-xl border-b border-[var(--table-separator)]">
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon Tarihi</th>
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Hekim Ad Soyad</th>
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest">Aksiyon</th>
@@ -338,13 +338,13 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
                   <th className="px-8 py-5 text-[10px] font-black text-[var(--text-2)] uppercase tracking-widest text-center">İşlem</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--table-border)]">
+              <tbody className="divide-y divide-[var(--table-separator)]">
                 {filteredData.length > 0 ? filteredData.slice(0, 1000).map((item) => (
-                  <tr key={item.id} className="hover:bg-[var(--table-row-hover)] transition-colors group">
+                  <tr key={item.id} className="hover:bg-[var(--surface-hover)] transition-colors group min-h-[44px]">
                     <td className="px-8 py-4 font-bold text-[var(--text-3)] text-xs">{item.startDate}</td>
                     <td className="px-8 py-4 font-black text-[var(--text-1)] uppercase text-xs">{item.doctorName}</td>
                     <td className="px-8 py-4">
-                      <span className="text-[10px] font-black uppercase text-[var(--text-2)] bg-[var(--surface-3)] px-3 py-1 rounded-lg border border-[var(--border-1)]">{item.action}</span>
+                      <span className="text-[10px] font-black uppercase text-[var(--text-2)] bg-[var(--surface-2)] px-3 py-1 rounded-xl border border-[var(--border-1)]">{item.action}</span>
                     </td>
                     <td className="px-8 py-4 text-center text-xs font-bold text-[var(--text-muted)]">
                       {item.startTime} - {item.endTime}

@@ -216,8 +216,8 @@ const VariantPodium: React.FC<{
           );
         })}
         {noData.map(entry => (
-          <div key={entry.institutionId} className="flex items-center gap-4 px-5 py-2.5 rounded-2xl opacity-50 dark:opacity-40">
-            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/[0.02] flex items-center justify-center">
+          <div key={entry.institutionId} className="flex items-center gap-4 px-5 py-2.5 rounded-[20px] opacity-50">
+            <div className="w-9 h-9 rounded-xl bg-[var(--surface-2)] flex items-center justify-center">
               <span className="text-base text-[var(--text-muted)]">-</span>
             </div>
             <span className="flex-1 text-base text-[var(--text-muted)]">{entry.institutionName}</span>
@@ -574,7 +574,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
 
   if (isLoading) {
     return (
-      <div className="g-section-card" style={{ padding: 'var(--g-space-8)', marginBottom: 'var(--g-space-6)' }}>
+      <div className="g-section-card rounded-[20px] backdrop-blur-xl" style={{ padding: 'var(--g-space-8)', marginBottom: 'var(--g-space-6)' }}>
         <div className="flex items-center justify-center gap-3 py-8">
           <div className="animate-spin w-6 h-6 border-2 border-t-transparent rounded-full" style={{ borderColor: 'var(--g-accent)', borderTopColor: 'transparent' }} />
           <span className="g-text-body" style={{ color: 'var(--g-accent)' }}>Kurum sıralaması yükleniyor...</span>
@@ -588,7 +588,7 @@ export const GorenHospitalRanking: React.FC<GorenHospitalRankingProps> = ({
   return (
     <>
       <AnimationStyles />
-      <div className="g-section-card" style={{ marginBottom: 'var(--g-space-6)' }}>
+      <div className="g-section-card rounded-[20px] backdrop-blur-xl" style={{ marginBottom: 'var(--g-space-6)' }}>
         {/* Baslik */}
         <div className="flex items-center justify-between" style={{ padding: 'var(--g-space-5) var(--g-space-8)' }}>
           <button

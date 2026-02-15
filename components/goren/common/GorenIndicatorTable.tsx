@@ -11,6 +11,7 @@ import {
   IndicatorDefinition,
   StatusIndicator
 } from '../types/goren.types';
+import { GlassCard } from '../../ui';
 
 interface GorenIndicatorTableProps {
   /** Hesaplama sonuçları */
@@ -92,26 +93,26 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] overflow-hidden">
+      <GlassCard isDark={true} hover={false} padding="p-0">
         <div className="p-6 animate-pulse">
-          <div className="h-4 bg-gray-300 rounded w-48 mb-4" />
+          <div className="h-4 rounded w-48 mb-4" style={{ background: 'var(--surface-2)' }} />
           {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="flex gap-4 py-3 border-b border-[var(--glass-border)]">
-              <div className="h-4 bg-gray-200 rounded w-24" />
-              <div className="h-4 bg-gray-200 rounded flex-1" />
-              <div className="h-4 bg-gray-200 rounded w-16" />
-              <div className="h-4 bg-gray-200 rounded w-16" />
+            <div key={i} className="flex gap-4 py-3" style={{ borderBottom: '1px solid var(--border-1)' }}>
+              <div className="h-4 rounded w-24" style={{ background: 'var(--surface-2)' }} />
+              <div className="h-4 rounded flex-1" style={{ background: 'var(--surface-2)' }} />
+              <div className="h-4 rounded w-16" style={{ background: 'var(--surface-2)' }} />
+              <div className="h-4 rounded w-16" style={{ background: 'var(--surface-2)' }} />
             </div>
           ))}
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] overflow-hidden">
+    <GlassCard isDark={true} hover={false} padding="p-0">
       {/* Başlık ve Filtreler */}
-      <div className="px-6 py-4 border-b border-[var(--glass-border)] flex items-center justify-between">
+      <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-1)' }}>
         <div>
           <h3 className="text-sm font-bold text-[var(--text-1)]">
             Gösterge Sonuçları
@@ -125,31 +126,38 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-2xl transition-colors ${
               filterStatus === 'all'
                 ? 'bg-indigo-500/20 text-indigo-400'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-3)]'
+                : 'text-[var(--text-muted)]'
             }`}
+            style={filterStatus !== 'all' ? {} : undefined}
+            onMouseEnter={(e) => { if (filterStatus !== 'all') e.currentTarget.style.background = 'var(--surface-hover)'; }}
+            onMouseLeave={(e) => { if (filterStatus !== 'all') e.currentTarget.style.background = ''; }}
           >
             Tümü
           </button>
           <button
             onClick={() => setFilterStatus('success')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-2xl transition-colors ${
               filterStatus === 'success'
                 ? 'bg-emerald-500/20 text-emerald-400'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-3)]'
+                : 'text-[var(--text-muted)]'
             }`}
+            onMouseEnter={(e) => { if (filterStatus !== 'success') e.currentTarget.style.background = 'var(--surface-hover)'; }}
+            onMouseLeave={(e) => { if (filterStatus !== 'success') e.currentTarget.style.background = ''; }}
           >
             Hesaplanan
           </button>
           <button
             onClick={() => setFilterStatus('incomplete')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-medium rounded-2xl transition-colors ${
               filterStatus === 'incomplete'
                 ? 'bg-rose-500/20 text-rose-400'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-3)]'
+                : 'text-[var(--text-muted)]'
             }`}
+            onMouseEnter={(e) => { if (filterStatus !== 'incomplete') e.currentTarget.style.background = 'var(--surface-hover)'; }}
+            onMouseLeave={(e) => { if (filterStatus !== 'incomplete') e.currentTarget.style.background = ''; }}
           >
             Eksik
           </button>
@@ -159,44 +167,44 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
       {/* Tablo */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead>
-            <tr className="bg-[var(--bg-2)]">
+          <thead className="sticky top-0 z-10">
+            <tr style={{ background: 'var(--surface-1)', backdropFilter: 'blur(16px)' }}>
               <th
                 onClick={() => handleSort('code')}
-                className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-1)]"
+                className="px-4 min-h-[44px] py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-1)]"
               >
                 <span className="flex items-center gap-1">
                   Kod
                   <SortIcon active={sortField === 'code'} direction={sortDirection} />
                 </span>
               </th>
-              <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+              <th className="px-4 py-3 min-h-[44px] text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 Gösterge Adı
               </th>
-              <th className="px-4 py-3 text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+              <th className="px-4 py-3 min-h-[44px] text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 A
               </th>
-              <th className="px-4 py-3 text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+              <th className="px-4 py-3 min-h-[44px] text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 B
               </th>
-              <th className="px-4 py-3 text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+              <th className="px-4 py-3 min-h-[44px] text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 GD
               </th>
               <th
                 onClick={() => handleSort('gp')}
-                className="px-4 py-3 text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-1)]"
+                className="px-4 py-3 min-h-[44px] text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-1)]"
               >
                 <span className="flex items-center justify-center gap-1">
                   GP
                   <SortIcon active={sortField === 'gp'} direction={sortDirection} />
                 </span>
               </th>
-              <th className="px-4 py-3 text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+              <th className="px-4 py-3 min-h-[44px] text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 Maks
               </th>
               <th
                 onClick={() => handleSort('achievement')}
-                className="px-4 py-3 text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-1)]"
+                className="px-4 py-3 min-h-[44px] text-center text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-1)]"
               >
                 <span className="flex items-center justify-center gap-1">
                   Durum
@@ -223,11 +231,13 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
                   <tr
                     key={result.code}
                     onClick={() => onRowClick(result.code)}
-                    className={`border-b border-[var(--glass-border)] cursor-pointer transition-colors ${
+                    className={`border-b border-[var(--border-1)] cursor-pointer transition-colors min-h-[44px] ${
                       isSelected
                         ? 'bg-indigo-500/10'
-                        : 'hover:bg-[var(--bg-2)]'
+                        : ''
                     }`}
+                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = ''; }}
                   >
                     {/* Kod */}
                     <td className="px-4 py-3">
@@ -314,13 +324,13 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
 
       {/* Alt Bilgi */}
       {sortedResults.length > 0 && (
-        <div className="px-6 py-3 border-t border-[var(--glass-border)] bg-[var(--bg-2)]">
+        <div className="px-6 py-3" style={{ borderTop: '1px solid var(--border-1)', background: 'var(--surface-2)' }}>
           <p className="text-xs text-[var(--text-muted)]">
             Satıra tıklayarak gösterge detaylarını görüntüleyin
           </p>
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 };
 

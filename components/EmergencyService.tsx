@@ -828,7 +828,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
     <div className="space-y-4">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
+        <div className={`fixed top-10 right-10 z-[500] px-8 py-4 rounded-[20px] shadow-[var(--card-shadow)] border border-white/10 animate-in slide-in-from-top-10 duration-300 font-bold flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`}>
           {toast.message}
         </div>
       )}
@@ -854,7 +854,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 value={uploadDate}
                 onChange={(e) => setUploadDate(e.target.value)}
                 style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
-                className="px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--input-border-focus)] focus:border-[var(--input-border-focus)]"
               />
             </div>
 
@@ -871,7 +871,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading || !uploadDate}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2.5 bg-[var(--accent-primary)] text-white rounded-xl font-semibold text-sm hover:bg-[var(--accent-primary-hover)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isUploading ? (
                   <>
@@ -952,7 +952,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 value={activeMonth || ''}
                 onChange={(e) => handleActiveMonthChange([Number(e.target.value)])}
                 style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
-                className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
+                className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--input-border-focus)] focus:border-[var(--input-border-focus)] min-w-[140px]"
               >
                 {selectedMonths.map(month => (
                   <option key={month} value={month}>{MONTH_NAMES[month]}</option>
@@ -977,7 +977,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
           <button
             onClick={handleLoadData}
             disabled={isLoading || getMatchingDates().length === 0 || (allowedHospitals.length > 0 && selectedHospitals.length === 0)}
-            className="px-6 py-2.5 h-[42px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
+            className="px-6 py-2.5 h-[42px] bg-[var(--accent-success)] text-white rounded-xl font-semibold text-sm hover:bg-[var(--accent-success-hover)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
           >
             {isLoading ? (
               <>
@@ -1026,7 +1026,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
         {/* Hastane seçimi uyarısı */}
         {allowedHospitals.length > 0 && selectedHospitals.length === 0 && (
-          <div className="mt-4 p-3 bg-status-warning border border-amber-500/50 rounded-xl">
+          <div className="mt-4 p-3 bg-status-warning border border-status-warning rounded-xl">
             <p className="text-sm status-warning flex items-center gap-2">
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1064,7 +1064,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </button>
             <button
               onClick={handleDownloadPdf}
-              className="px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center gap-2"
+              className="px-4 py-2.5 bg-[var(--accent-danger)] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
               aria-label="PDF olarak indir"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1210,7 +1210,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   value={tableActiveMonth || ''}
                   onChange={(e) => setTableActiveMonth(Number(e.target.value))}
                   style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}
-                  className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-w-[140px]"
+                  className="px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--input-border-focus)] focus:border-[var(--input-border-focus)] min-w-[140px]"
                 >
                   {tableSelectedMonths.map(month => (
                     <option key={month} value={month}>{MONTH_NAMES[month]}</option>
@@ -1235,7 +1235,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             <button
               onClick={handleLoadTableData}
               disabled={isTableLoading || getTableMatchingDates().length === 0 || (allowedHospitals.length > 0 && tableSelectedHospitals.length === 0)}
-              className="px-6 py-2.5 h-[42px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
+              className="px-6 py-2.5 h-[42px] bg-[var(--accent-success)] text-white rounded-xl font-semibold text-sm hover:bg-[var(--accent-success-hover)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 self-end"
             >
               {isTableLoading ? (
                 <>
@@ -1258,7 +1258,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
           {/* Hastane seçimi uyarısı */}
           {allowedHospitals.length > 0 && tableSelectedHospitals.length === 0 && (
-            <div className="mt-2 p-3 bg-status-warning border border-amber-500/50 rounded-xl">
+            <div className="mt-2 p-3 bg-status-warning border border-status-warning rounded-xl">
               <p className="text-sm status-warning flex items-center gap-2">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1331,7 +1331,7 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
   };
 
   return (
-    <GlassCard isDark={isDark} hover={false} padding="p-5" className={isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}>
+    <GlassCard isDark={isDark} hover={false} padding="p-5" className={isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-[var(--accent-success)]/50' : ''}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-status-success' : ''}`} style={!isIlGeneli ? { background: 'var(--surface-3)' } : undefined}>
@@ -1395,28 +1395,28 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
           {isExpanded && (
             <div className="mt-3 -mx-2 overflow-x-auto">
               <table className="w-full text-xs">
-                <thead className="sticky top-0 z-10">
+                <thead className="sticky top-0 z-10 backdrop-blur-xl">
                   <tr style={{ background: 'var(--surface-3)' }}>
-                    <th style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }} className="sticky left-0 z-20 px-2 py-1.5 text-left font-semibold whitespace-nowrap">Tarih</th>
-                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Yeşil Alan</th>
-                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Toplam</th>
-                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right font-semibold whitespace-nowrap">Oran</th>
+                    <th style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }} className="sticky left-0 z-20 px-2 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">Tarih</th>
+                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">Yeşil Alan</th>
+                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">Toplam</th>
+                    <th style={{ color: 'var(--text-2)' }} className="px-2 py-1.5 text-right text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">Oran</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedDetails.map((detail, idx) => (
-                    <tr key={detail.date} style={{ background: idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'transparent' }}>
-                      <td style={{ color: 'var(--text-2)' }} className="sticky left-0 bg-inherit px-2 py-1.5 font-medium whitespace-nowrap">
+                    <tr key={detail.date} className="min-h-[44px]" style={{ background: idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'transparent', borderBottom: '1px solid var(--border-1)' }}>
+                      <td style={{ color: 'var(--text-2)' }} className="sticky left-0 bg-inherit px-2 py-2 font-medium whitespace-nowrap">
                         {formatDate(detail.date)}
                       </td>
-                      <td style={{ color: 'var(--text-3)' }} className="px-2 py-1.5 text-right whitespace-nowrap">
+                      <td style={{ color: 'var(--text-3)' }} className="px-2 py-2 text-right whitespace-nowrap">
                         {detail.greenAreaCount.toLocaleString('tr-TR')}
                       </td>
-                      <td style={{ color: 'var(--text-3)' }} className="px-2 py-1.5 text-right whitespace-nowrap">
+                      <td style={{ color: 'var(--text-3)' }} className="px-2 py-2 text-right whitespace-nowrap">
                         {detail.totalCount.toLocaleString('tr-TR')}
                       </td>
-                      <td className="px-2 py-1.5 text-right whitespace-nowrap">
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${getRateColor(detail.greenAreaRate)}`}>
+                      <td className="px-2 py-2 text-right whitespace-nowrap">
+                        <span className={`inline-block px-1.5 py-0.5 rounded-full text-xs font-medium ${getRateColor(detail.greenAreaRate)}`}>
                           %{detail.greenAreaRate.toFixed(1)}
                         </span>
                       </td>

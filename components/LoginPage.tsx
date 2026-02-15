@@ -228,14 +228,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             {/* Card Header */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-2">Hoş Geldiniz</h2>
-              <p className="text-[#9AA8B5] text-sm">Devam etmek için giriş yapın</p>
+              <p className="text-[var(--text-2)] text-sm">Devam etmek için giriş yapın</p>
             </div>
 
             {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-5">
               {/* Email Field */}
               <div>
-                <label className="block text-[11px] font-semibold text-[#9AA8B5] mb-2 tracking-[0.1em] uppercase">
+                <label className="block text-[11px] font-semibold text-[var(--text-2)] mb-2 tracking-[0.1em] uppercase">
                   E-posta Adresi
                 </label>
                 <input
@@ -244,15 +244,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3.5 rounded-xl text-white placeholder-[#5A6A7A] outline-none transition-all duration-200"
                   style={{
-                    background: 'rgba(7, 17, 28, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)'
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border-1)'
                   }}
                   onFocus={(e) => {
                     e.target.style.border = '1px solid rgba(91, 156, 255, 0.4)';
                     e.target.style.boxShadow = '0 0 0 3px rgba(91, 156, 255, 0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+                    e.target.style.border = '1px solid var(--border-1)';
                     e.target.style.boxShadow = 'none';
                   }}
                   placeholder="ornek@saglik.gov.tr"
@@ -263,7 +263,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
               {/* Password Field */}
               <div>
-                <label className="block text-[11px] font-semibold text-[#9AA8B5] mb-2 tracking-[0.1em] uppercase">
+                <label className="block text-[11px] font-semibold text-[var(--text-2)] mb-2 tracking-[0.1em] uppercase">
                   Şifre
                 </label>
                 <input
@@ -272,15 +272,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3.5 rounded-xl text-white placeholder-[#5A6A7A] outline-none transition-all duration-200"
                   style={{
-                    background: 'rgba(7, 17, 28, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)'
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border-1)'
                   }}
                   onFocus={(e) => {
                     e.target.style.border = '1px solid rgba(91, 156, 255, 0.4)';
                     e.target.style.boxShadow = '0 0 0 3px rgba(91, 156, 255, 0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+                    e.target.style.border = '1px solid var(--border-1)';
                     e.target.style.boxShadow = 'none';
                   }}
                   placeholder="••••••••"
@@ -345,7 +345,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
-                className="w-full text-center text-[#9AA8B5] hover:text-[#5b9cff] text-sm font-medium transition-colors py-2"
+                className="w-full text-center text-[var(--text-2)] hover:text-[#5b9cff] text-sm font-medium transition-colors py-2"
               >
                 Şifremi Unuttum
               </button>
@@ -354,12 +354,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             {/* Secure Login Divider */}
             <div className="flex items-center gap-4 my-6">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-[10px] text-[#5A6A7A] font-medium tracking-[0.15em] uppercase">Güvenli Giriş</span>
+              <span className="text-[10px] text-[var(--text-muted)] font-medium tracking-[0.15em] uppercase">Güvenli Giriş</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
             {/* SSL Badge */}
-            <div className="flex items-center justify-center gap-2 text-[#5A6A7A]">
+            <div className="flex items-center justify-center gap-2 text-[var(--text-muted)]">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -369,7 +369,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
           {/* Footer Info */}
           <div className="mt-8 text-center">
-            <p className="text-[#5A6A7A] text-xs mb-2">
+            <p className="text-[var(--text-muted)] text-xs mb-2">
               T.C. Sağlık Bakanlığı - Şanlıurfa İl Sağlık Müdürlüğü
             </p>
             <div className="flex items-center justify-center gap-2">
@@ -391,13 +391,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           <div onClick={(e) => e.stopPropagation()}>
           <GlassCard isDark={isDark} variant="elevated" hover={false} padding="p-8" className="w-full max-w-md">
             <h2 className="text-xl font-bold text-white mb-2">Şifremi Unuttum</h2>
-            <p className="text-[#9AA8B5] text-sm mb-6">
+            <p className="text-[var(--text-2)] text-sm mb-6">
               E-posta adresinizi girin, şifre sıfırlama linki gönderelim.
             </p>
 
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-semibold text-[#9AA8B5] mb-2 tracking-[0.1em] uppercase">
+                <label className="block text-[11px] font-semibold text-[var(--text-2)] mb-2 tracking-[0.1em] uppercase">
                   E-posta Adresi
                 </label>
                 <input
@@ -406,15 +406,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3.5 rounded-xl text-white placeholder-[#5A6A7A] outline-none transition-all duration-200"
                   style={{
-                    background: 'rgba(7, 17, 28, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)'
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border-1)'
                   }}
                   onFocus={(e) => {
                     e.target.style.border = '1px solid rgba(91, 156, 255, 0.4)';
                     e.target.style.boxShadow = '0 0 0 3px rgba(91, 156, 255, 0.1)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+                    e.target.style.border = '1px solid var(--border-1)';
                     e.target.style.boxShadow = 'none';
                   }}
                   placeholder="ornek@saglik.gov.tr"
@@ -439,8 +439,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(false)}
-                  className="flex-1 py-3 rounded-xl font-medium text-[#9AA8B5] transition-all hover:bg-white/5"
-                  style={{ border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                  className="flex-1 py-3 rounded-xl font-medium transition-all"
+                  style={{ border: '1px solid var(--border-1)', color: 'var(--text-2)', background: 'var(--surface-2)' }}
                 >
                   İptal
                 </button>

@@ -101,7 +101,7 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
               <p className="text-sm font-black text-indigo-600 uppercase tracking-widest">{periodMonth} {periodYear}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-4 bg-white rounded-full transition-all shadow-sm group" style={{ border: '1px solid var(--border-2)' }}>
+          <button onClick={onClose} className="p-4 rounded-full transition-all shadow-sm group" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
             <svg className="w-6 h-6" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -115,19 +115,19 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
               Kapasite Kullanım Özeti
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-indigo-50 border border-indigo-100 rounded-[32px] p-8">
+              <div className="bg-indigo-50 border border-indigo-100 rounded-[20px] p-8">
                 <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">RANDEVU KAPASİTESİ</p>
                 <h5 className="text-4xl font-black text-indigo-600">{plannedCapacity.toLocaleString('tr-TR')}</h5>
                 <p className="text-[11px] font-bold text-indigo-400 mt-2">DÖNEMLİK TOPLAM SLOT</p>
               </div>
-              <div className="bg-emerald-50 border border-emerald-100 rounded-[32px] p-8">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-[20px] p-8">
                 <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">GERÇEKLEŞEN MUAYENE</p>
                 <h5 className="text-4xl font-black text-emerald-600">{muayeneMetrics.toplam.toLocaleString('tr-TR')}</h5>
                 <p className="text-[11px] font-bold text-emerald-400 mt-2">
                   MHRS: {muayeneMetrics.mhrs} • AYAKTAN: {muayeneMetrics.ayaktan}
                 </p>
               </div>
-              <div className={`rounded-[32px] p-8 border ${usageRate !== null && usageRate < 100 ? 'bg-rose-50 border-rose-100' : 'bg-blue-50 border-blue-100'}`}>
+              <div className={`rounded-[20px] p-8 border ${usageRate !== null && usageRate < 100 ? 'bg-rose-50 border-rose-100' : 'bg-blue-50 border-blue-100'}`}>
                 <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${usageRate !== null && usageRate < 100 ? 'text-rose-400' : 'text-blue-400'}`}>KAPASİTE VERİMLİLİĞİ</p>
                 <h5 className={`text-4xl font-black ${usageRate !== null && usageRate < 100 ? 'text-rose-600' : 'text-blue-600'}`}>
                   {usageRate !== null ? `%${usageRate.toFixed(1).replace('.', ',')}` : '—'}
@@ -269,16 +269,17 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
   const totalPages = viewLimit === 'ALL' ? 1 : Math.ceil(fullChartData.length / (Number(viewLimit) || 1));
 
   return (
-    <div className="h-full w-full bg-white p-8 flex flex-col">
+    <div className="h-full w-full p-8 flex flex-col" style={{ background: 'var(--surface-1)' }}>
       <div className="flex flex-col items-center mb-6 gap-4">
-        <h3 className="text-2xl font-black uppercase">{month} {year} KAPASİTE KULLANIM GRAFİĞİ</h3>
+        <h3 className="text-2xl font-black uppercase" style={{ color: 'var(--text-1)' }}>{month} {year} KAPASİTE KULLANIM GRAFİĞİ</h3>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-xs font-black uppercase" style={{ color: 'var(--text-muted)' }}>Branş:</label>
             <select
               value={branchFilter}
               onChange={(e) => { setBranchFilter(e.target.value); setCurrentPage(1); }}
-              className="border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 ring-indigo-500"
+              className="rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 ring-indigo-500"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)', color: 'var(--text-1)' }}
             >
               <option value="ALL">Tüm Branşlar</option>
               {availableBranches.map(br => <option key={br} value={br}>{br}</option>)}
@@ -289,7 +290,8 @@ const CapacityChartWidget: React.FC<CapacityChartWidgetProps> = ({
             <select
               value={viewLimit}
               onChange={(e) => { setViewLimit(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value)); setCurrentPage(1); }}
-              className="border rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 ring-indigo-500"
+              className="rounded-xl px-3 py-2 text-sm font-bold outline-none focus:ring-2 ring-indigo-500"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)', color: 'var(--text-1)' }}
             >
               <option value="12">12</option>
               <option value="24">24</option>
@@ -522,29 +524,29 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           const avgHoursPerSurgery = kpiData.totalAbcSurgeriesCount > 0 ? kpiData.totalScheduledSurgeryHours / kpiData.totalAbcSurgeriesCount : 0;
 
           return (
-            <div className="h-full w-full bg-white flex items-center justify-center p-8">
+            <div className="h-full w-full flex items-center justify-center p-8" style={{ background: 'var(--surface-1)' }}>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
-                <div className="text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center" style={{ background: 'var(--bg-app)' }}>
+                <div className="text-white p-8 rounded-[20px] text-center shadow-2xl flex flex-col justify-center" style={{ background: 'var(--bg-app)' }}>
                   <p className="text-xs font-black uppercase mb-2" style={{ color: 'var(--text-3)' }}>Toplam Kapasite Sayısı</p>
                   <h4 className="text-5xl font-black">{kpiData.totalCapacityCount.toLocaleString('tr-TR')}</h4>
                 </div>
-                <div className="bg-indigo-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                <div className="bg-indigo-600 text-white p-8 rounded-[20px] text-center shadow-2xl flex flex-col justify-center">
                   <p className="text-indigo-200 text-xs font-black uppercase mb-2">Toplam Muayene Sayısı</p>
                   <h4 className="text-5xl font-black">{kpiData.totalExamsCount.toLocaleString('tr-TR')}</h4>
                 </div>
-                <div className="bg-emerald-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                <div className="bg-emerald-600 text-white p-8 rounded-[20px] text-center shadow-2xl flex flex-col justify-center">
                   <p className="text-emerald-200 text-xs font-black uppercase mb-2">Randevulu Muayene Oranı</p>
                   <h4 className="text-5xl font-black">{appointmentRateVal.toFixed(1).replace('.', ',')}%</h4>
                 </div>
-                <div className="bg-purple-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                <div className="bg-purple-600 text-white p-8 rounded-[20px] text-center shadow-2xl flex flex-col justify-center">
                   <p className="text-purple-200 text-xs font-black uppercase mb-2">Planlanan Ameliyat Gün</p>
                   <h4 className="text-5xl font-black">{kpiData.totalSurgeryDays.toLocaleString('tr-TR')}</h4>
                 </div>
-                <div className="bg-rose-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                <div className="bg-rose-600 text-white p-8 rounded-[20px] text-center shadow-2xl flex flex-col justify-center">
                   <p className="text-rose-200 text-xs font-black uppercase mb-2">Toplam A+B+C Ameliyat</p>
                   <h4 className="text-5xl font-black">{kpiData.totalAbcSurgeriesCount.toLocaleString('tr-TR')}</h4>
                 </div>
-                <div className="bg-amber-600 text-white p-8 rounded-[40px] text-center shadow-2xl flex flex-col justify-center">
+                <div className="bg-amber-600 text-white p-8 rounded-[20px] text-center shadow-2xl flex flex-col justify-center">
                   <p className="text-amber-200 text-xs font-black uppercase mb-2">Ameliyat Cetvel Verimi</p>
                   <h4 className="text-4xl font-black">{avgHoursPerSurgery.toFixed(2).replace('.', ',')}</h4>
                   <p className="text-amber-200 text-[10px] font-black uppercase mt-1">SAAT / AMELİYAT</p>
@@ -691,7 +693,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                 </div>
               </div>
               <div
-                className="flex-1 rounded-[32px] shadow-2xl flex flex-col gap-4 p-4 overflow-y-auto"
+                className="flex-1 rounded-[20px] shadow-2xl flex flex-col gap-4 p-4 overflow-y-auto"
                 style={{ background: 'var(--bg-app)', aspectRatio: '16/9' }}
               >
                 {slides.find(s=>s.id===activeSlideId)?.widgets.map(w => (
@@ -721,7 +723,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
               <div
                 key={s.id}
                 onClick={() => setActiveSlideId(s.id)}
-                className={`p-6 rounded-[28px] border-2 transition-all cursor-pointer ${
+                className={`p-6 rounded-[20px] border-2 transition-all cursor-pointer ${
                   activeSlideId === s.id
                     ? 'bg-indigo-600 border-indigo-400 shadow-xl scale-105'
                     : 'bg-white/5 border-transparent hover:bg-white/10'
@@ -740,10 +742,10 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
               setSlides([...slides, {id, title:'YENİ SLAYT', widgets:[]}]);
               setActiveSlideId(id);
             }}
-            className="mt-8 bg-white w-full py-5 rounded-[28px] font-black uppercase text-xs transition-all"
-            style={{ color: 'var(--text-1)' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-3)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'white')}
+            className="mt-8 w-full py-5 rounded-[20px] font-black uppercase text-xs transition-all"
+            style={{ background: 'var(--surface-1)', color: 'var(--text-1)' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}
           >
             + YENİ SLAYT EKLE
           </button>
@@ -804,8 +806,8 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                       <button
                         key={widget.type}
                         onClick={() => addWidgetToSlide(activeSlideId, widget.type)}
-                        className="hover:bg-indigo-50 border-2 hover:border-indigo-300 rounded-2xl p-6 text-left transition-all hover:scale-105 hover:shadow-lg group"
-                        style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}
+                        className="hover:bg-indigo-50 border-2 hover:border-indigo-300 rounded-[20px] p-6 text-left transition-all hover:scale-105 hover:shadow-lg group"
+                        style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)' }}
                       >
                         <div className="text-4xl mb-3">{widget.icon}</div>
                         <div className="text-sm font-black group-hover:text-indigo-600 transition-colors" style={{ color: 'var(--text-1)' }}>
@@ -832,7 +834,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
             controlsTimerRef.current=window.setTimeout(()=>setShowControls(false),3000);
           }}
         >
-          <div className="flex-1 relative bg-white flex flex-col gap-4 p-4 overflow-y-auto">
+          <div className="flex-1 relative flex flex-col gap-4 p-4 overflow-y-auto" style={{ background: 'var(--surface-1)' }}>
             {slides[currentSlideIndex].widgets.map(w => <WidgetMirror key={w.id} widget={w} isPresentation />)}
             <div className={`absolute top-10 right-10 flex gap-4 transition-opacity duration-500 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
               <button onClick={exitPresentation} className="bg-rose-600 text-white p-5 rounded-2xl shadow-2xl hover:scale-110 transition-all" title="Tam Ekrandan Çık">

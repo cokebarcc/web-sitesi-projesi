@@ -195,7 +195,7 @@ const PeriodFilterBlock: React.FC<{
         <select
           value={period.year?.toString() || ''}
           onChange={handleYearChange}
-          className="w-[90px] bg-[var(--input-bg)] border border-[var(--input-border)] text-[var(--text-1)] rounded-lg px-2 py-2 text-xs font-semibold outline-none focus:border-[var(--accent)] transition-colors cursor-pointer appearance-none"
+          className="w-[90px] bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-1)] rounded-xl px-2 py-2 text-xs font-semibold outline-none focus:border-[var(--accent)] transition-colors cursor-pointer appearance-none"
           style={{ WebkitAppearance: 'menulist' }}
         >
           <option value="">Yıl</option>
@@ -209,7 +209,7 @@ const PeriodFilterBlock: React.FC<{
           value={period.month || ''}
           onChange={handleMonthChange}
           disabled={isMonthDisabled}
-          className={`w-[110px] bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg px-2 py-2 text-xs font-semibold outline-none transition-colors appearance-none ${
+          className={`w-[110px] bg-[var(--surface-2)] border border-[var(--border-1)] rounded-xl px-2 py-2 text-xs font-semibold outline-none transition-colors appearance-none ${
             isMonthDisabled
               ? 'text-[var(--text-muted)] cursor-not-allowed opacity-60'
               : 'text-[var(--text-1)] cursor-pointer focus:border-[var(--accent)]'
@@ -236,8 +236,8 @@ const SchedulePlanningFiltersRow: React.FC<{
   availableMonthsA: string[];
   availableMonthsB: string[];
 }> = ({ periodA, periodB, onPeriodAChange, onPeriodBChange, availableYears, availableMonthsA, availableMonthsB }) => (
-  <div className="grid grid-cols-6 bg-[var(--surface-2)] border-x border-[var(--border-1)]">
-    <div className="p-3 border-r border-[var(--border-1)]">
+  <div className="grid grid-cols-6 sticky top-0 z-10 backdrop-blur-xl bg-[var(--surface-2)] border-x border-b border-[var(--table-separator)]">
+    <div className="p-3 min-h-[44px] border-r border-[var(--table-separator)]">
       <PeriodFilterBlock
         label="Dönem 1"
         period={periodA}
@@ -248,7 +248,7 @@ const SchedulePlanningFiltersRow: React.FC<{
       />
     </div>
 
-    <div className="p-3 border-r border-[var(--border-1)]">
+    <div className="p-3 min-h-[44px] border-r border-[var(--table-separator)]">
       <PeriodFilterBlock
         label="Dönem 2"
         period={periodB}
@@ -259,17 +259,17 @@ const SchedulePlanningFiltersRow: React.FC<{
       />
     </div>
 
-    <div className="p-4 border-r border-[var(--border-1)] flex items-center justify-center">
-      <span className="text-xs font-bold text-[var(--text-1)] text-center leading-tight">Hekim Sayısı</span>
+    <div className="p-4 min-h-[44px] border-r border-[var(--table-separator)] flex items-center justify-center">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] text-center leading-tight">Hekim Sayısı</span>
     </div>
-    <div className="p-4 border-r border-[var(--border-1)] flex items-center justify-center">
-      <span className="text-xs font-bold text-[var(--text-1)] text-center leading-tight">Günlük Açılan<br/>Kapasite</span>
+    <div className="p-4 min-h-[44px] border-r border-[var(--table-separator)] flex items-center justify-center">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] text-center leading-tight">Günlük Açılan<br/>Kapasite</span>
     </div>
-    <div className="p-4 border-r border-[var(--border-1)] flex items-center justify-center">
-      <span className="text-xs font-bold text-[var(--text-1)] text-center leading-tight">Günlük Açılan<br/>Ortalama<br/>poliklinik sayısı</span>
+    <div className="p-4 min-h-[44px] border-r border-[var(--table-separator)] flex items-center justify-center">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] text-center leading-tight">Günlük Açılan<br/>Ortalama<br/>poliklinik sayısı</span>
     </div>
-    <div className="p-4 flex items-center justify-center">
-      <span className="text-xs font-bold text-[var(--text-1)] text-center leading-tight">Aktif Talep Sayısı</span>
+    <div className="p-4 min-h-[44px] flex items-center justify-center">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] text-center leading-tight">Aktif Talep Sayısı</span>
     </div>
   </div>
 );
@@ -313,31 +313,33 @@ const SchedulePlanningTable: React.FC<{
       {rows.map((row, index) => (
         <div
           key={row.id}
-          className={`grid grid-cols-6 transition-colors hover:bg-[var(--surface-hover)] ${
-            index !== rows.length - 1 ? 'border-b border-[var(--border-1)]' : ''
+          className={`grid grid-cols-6 min-h-[44px] transition-colors duration-150 hover:bg-[var(--surface-hover)] ${
+            index % 2 === 1 ? 'bg-[var(--table-zebra)]' : ''
+          } ${
+            index !== rows.length - 1 ? 'border-b border-[var(--table-separator)]' : ''
           }`}
         >
-          <div className="p-4 border-r border-[var(--border-1)] bg-[var(--surface-1)]">
-            <span className="text-sm font-medium text-[var(--text-2)]">{row.period1}</span>
+          <div className="px-4 py-3 border-r border-[var(--table-separator)]">
+            <span className="text-[13px] font-medium text-[var(--text-2)]">{row.period1}</span>
           </div>
-          <div className="p-4 border-r border-[var(--border-1)] bg-[var(--surface-1)]">
-            <span className="text-sm font-medium text-[var(--text-2)]">{row.period2}</span>
+          <div className="px-4 py-3 border-r border-[var(--table-separator)]">
+            <span className="text-[13px] font-medium text-[var(--text-2)]">{row.period2}</span>
           </div>
-          <div className="p-4 border-r border-[var(--border-1)] bg-[var(--surface-1)] text-right">
-            <span className="text-sm font-bold text-[var(--text-1)] tabular-nums">
+          <div className="px-4 py-3 border-r border-[var(--table-separator)] text-right">
+            <span className="text-[13px] font-bold text-[var(--text-1)] tabular-nums">
               {typeof row.hekimSayisi === 'number' ? row.hekimSayisi : row.hekimSayisi}
             </span>
           </div>
-          <div className="p-4 border-r border-[var(--border-1)] bg-[var(--surface-1)] text-right">
-            <span className="text-sm font-bold text-[var(--text-1)] tabular-nums">
+          <div className="px-4 py-3 border-r border-[var(--table-separator)] text-right">
+            <span className="text-[13px] font-bold text-[var(--text-1)] tabular-nums">
               {typeof row.gunlukKapasite === 'number' ? row.gunlukKapasite.toLocaleString('tr-TR') : row.gunlukKapasite}
             </span>
           </div>
-          <div className="p-4 border-r border-[var(--border-1)] bg-[var(--surface-1)] text-right">
-            <span className="text-sm font-bold text-[var(--text-1)] tabular-nums">{row.gunlukOrtalama}</span>
+          <div className="px-4 py-3 border-r border-[var(--table-separator)] text-right">
+            <span className="text-[13px] font-bold text-[var(--text-1)] tabular-nums">{row.gunlukOrtalama}</span>
           </div>
-          <div className="p-4 bg-[var(--surface-1)] text-right">
-            <span className="text-sm font-bold text-[var(--text-1)] tabular-nums">{row.aktifTalep}</span>
+          <div className="px-4 py-3 text-right">
+            <span className="text-[13px] font-bold text-[var(--text-1)] tabular-nums">{row.aktifTalep}</span>
           </div>
         </div>
       ))}
