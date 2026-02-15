@@ -17,11 +17,13 @@ import type { ExtractedRulesMetadata } from '../src/types/complianceTypes';
 import { exportResultsToExcel, IslemSatiriLike, KurumBilgisiLike } from '../src/services/complianceEngine';
 import type { ComplianceWorkerResponse, SerializedRulesMaster } from '../src/workers/workerProtocol';
 import ComplianceDetailModal from './ComplianceDetailModal';
+import { GlassCard, GlassSection } from './ui';
 
 interface ComplianceAnalysisPanelProps {
   tableData: IslemSatiriLike[];
   kurumBilgisi: KurumBilgisiLike | undefined;
   extraColumnKeys?: string[];
+  theme?: 'dark' | 'light';
 }
 
 const PAGE_SIZES = [50, 100, 250, 500];
@@ -290,7 +292,8 @@ function formatNumber(val: number, decimals = 0): string {
   return val.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ tableData, kurumBilgisi, extraColumnKeys }) => {
+const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ tableData, kurumBilgisi, extraColumnKeys, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [ruleLoadStatus, setRuleLoadStatus] = useState<RuleLoadStatus | null>(null);
   const [rulesMaster, setRulesMaster] = useState<Map<string, RuleMasterEntry> | null>(null);
   const [results, setResults] = useState<ComplianceResult[]>([]);
@@ -735,7 +738,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
     <div className="space-y-4">
 
       {/* Kural Yükleme Durumu */}
-      <div className="backdrop-blur-xl rounded-2xl border p-5" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 status-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -844,10 +847,10 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             </div>
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* Analiz Kontrol */}
-      <div className="backdrop-blur-xl rounded-2xl border p-5" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-5">
         <div className="flex items-center gap-3">
           <button onClick={handleStartAnalysis} disabled={!canAnalyze} className="px-6 py-2.5 text-sm font-black bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:from-amber-500 hover:to-orange-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
@@ -894,24 +897,24 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
         {!rulesMaster && !isLoading && (
           <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Önce kuralları yükleyin, sonra analiz başlatın.</p>
         )}
-      </div>
+      </GlassCard>
 
       {/* Özet Dashboard */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          <SummaryCard label="Toplam Analiz" value={formatNumber(summary.toplamAnaliz)} color="--text-1" />
-          <SummaryCard label="Uygun" value={formatNumber(summary.uygunSayisi)} color="status-success" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunSayisi / summary.toplamAnaliz * 100) : 0}`} />
-          <SummaryCard label="Uygunsuz" value={formatNumber(summary.uygunsuzSayisi)} color="status-danger" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunsuzSayisi / summary.toplamAnaliz * 100) : 0}`} />
-          <SummaryCard label="Manuel İnceleme" value={formatNumber(summary.manuelIncelemeSayisi)} color="status-warning" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.manuelIncelemeSayisi / summary.toplamAnaliz * 100) : 0}`} />
-          <SummaryCard label="Eşleşen" value={formatNumber(summary.eslesenSayisi)} color="status-info" />
-          <SummaryCard label="Eşleşmeyen" value={formatNumber(summary.eslesemeyenSayisi)} color="--text-3" />
-          <SummaryCard label="Muaf İşlem" value={formatNumber(summary.muafIslemSayisi)} color="status-accent" />
+          <SummaryCard label="Toplam Analiz" value={formatNumber(summary.toplamAnaliz)} color="--text-1" isDark={isDark} />
+          <SummaryCard label="Uygun" value={formatNumber(summary.uygunSayisi)} color="status-success" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunSayisi / summary.toplamAnaliz * 100) : 0}`} isDark={isDark} />
+          <SummaryCard label="Uygunsuz" value={formatNumber(summary.uygunsuzSayisi)} color="status-danger" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.uygunsuzSayisi / summary.toplamAnaliz * 100) : 0}`} isDark={isDark} />
+          <SummaryCard label="Manuel İnceleme" value={formatNumber(summary.manuelIncelemeSayisi)} color="status-warning" sub={`%${summary.toplamAnaliz > 0 ? Math.round(summary.manuelIncelemeSayisi / summary.toplamAnaliz * 100) : 0}`} isDark={isDark} />
+          <SummaryCard label="Eşleşen" value={formatNumber(summary.eslesenSayisi)} color="status-info" isDark={isDark} />
+          <SummaryCard label="Eşleşmeyen" value={formatNumber(summary.eslesemeyenSayisi)} color="--text-3" isDark={isDark} />
+          <SummaryCard label="Muaf İşlem" value={formatNumber(summary.muafIslemSayisi)} color="status-accent" isDark={isDark} />
         </div>
       )}
 
       {/* Full Audit Sonuçları */}
       {auditResult && (
-        <div className="backdrop-blur-xl rounded-2xl border border-violet-500/30 p-5 space-y-4" style={{ background: 'var(--surface-1)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-5" className="border-violet-500/30 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 status-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
@@ -1022,12 +1025,12 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               </div>
             </div>
           )}
-        </div>
+        </GlassCard>
       )}
 
       {/* Filtre Bar */}
       {results.length > 0 && (
-        <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-wrap gap-3 items-center" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-4" className="flex flex-wrap gap-3 items-center">
           <div className="flex items-center gap-2">
             <label className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Durum:</label>
             <select value={filterDurum} onChange={e => { setFilterDurum(e.target.value as any); setCurrentPage(1); }} className="border text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }}>
@@ -1072,13 +1075,13 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
             <input type="text" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} placeholder="GİL kodu, doktor, hasta..." className="flex-1 border text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50" style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)', color: 'var(--input-text)' }} />
           </div>
           <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>{filteredResults.length.toLocaleString('tr-TR')} sonuç</span>
-        </div>
+        </GlassCard>
       )}
 
       {/* Sonuç Tablosu */}
       {results.length > 0 && (
         <>
-          <div className="backdrop-blur-xl rounded-t-2xl border border-b-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+          <GlassCard isDark={isDark} hover={false} padding="px-5 py-3" className="rounded-t-2xl rounded-b-none border-b-0 flex items-center justify-between">
             <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{filteredResults.length.toLocaleString('tr-TR')} sonuç / {results.length.toLocaleString('tr-TR')} toplam</span>
             <div className="flex items-center gap-2">
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Göster:</span>
@@ -1086,7 +1089,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                 {PAGE_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-          </div>
+          </GlassCard>
 
           <div ref={tableRef} className="border overflow-auto max-h-[500px] custom-scrollbar-compliance" style={{ background: 'var(--bg-app)', borderColor: 'var(--border-2)' }}>
             <table className="w-full text-sm border-collapse">
@@ -1179,7 +1182,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
           {/* Sayfalama */}
           {totalPages > 1 && (
-            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="px-5 py-3" className="rounded-b-2xl rounded-t-none border-t-0 flex items-center justify-between">
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{((currentPage - 1) * pageSize + 1).toLocaleString('tr-TR')} - {Math.min(currentPage * pageSize, filteredResults.length).toLocaleString('tr-TR')} / {filteredResults.length.toLocaleString('tr-TR')} sonuç</p>
               <div className="flex items-center gap-1">
                 <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }} aria-label="İlk sayfa">{'««'}</button>
@@ -1197,9 +1200,9 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                 <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }} aria-label="Sonraki sayfa">{'»'}</button>
                 <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }} aria-label="Son sayfa">{'»»'}</button>
               </div>
-            </div>
+            </GlassCard>
           )}
-          {totalPages <= 1 && <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 h-2" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} />}
+          {totalPages <= 1 && <GlassCard isDark={isDark} hover={false} padding="p-0" className="rounded-b-2xl rounded-t-none border-t-0 h-2">{' '}</GlassCard>}
         </>
       )}
 
@@ -1209,7 +1212,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
       {uygunsuzIslemler.length > 0 && (
         <div className="space-y-0">
           {/* Başlık + Kontroller */}
-          <div className="backdrop-blur-xl rounded-t-2xl border border-b-0 border-red-500/20 p-5" style={{ background: 'var(--surface-1)' }}>
+          <GlassCard isDark={isDark} hover={false} padding="p-5" className="rounded-t-2xl rounded-b-none border-b-0 border-red-500/20">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center">
@@ -1266,7 +1269,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
               </div>
               <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>{filteredUygunsuz.length.toLocaleString('tr-TR')} sonuç</span>
             </div>
-          </div>
+          </GlassCard>
 
           {/* Tablo */}
           <div ref={uygunsuzTableRef} className="border border-red-500/20 border-t-0 overflow-auto max-h-[500px] custom-scrollbar-compliance" style={{ background: 'var(--bg-app)' }}>
@@ -1325,7 +1328,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
 
           {/* Sayfalama */}
           {uygunsuzTotalPages > 1 && (
-            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="px-5 py-3" className="rounded-b-2xl rounded-t-none border-t-0 border-red-500/20 flex items-center justify-between">
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {((uygunsuzCurrentPage - 1) * uygunsuzPageSize + 1).toLocaleString('tr-TR')} - {Math.min(uygunsuzCurrentPage * uygunsuzPageSize, filteredUygunsuz.length).toLocaleString('tr-TR')} / {filteredUygunsuz.length.toLocaleString('tr-TR')} sonuç
               </p>
@@ -1345,13 +1348,13 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                 <button onClick={() => goToUygunsuzPage(uygunsuzCurrentPage + 1)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }} aria-label="Sonraki sayfa">{'»'}</button>
                 <button onClick={() => goToUygunsuzPage(uygunsuzTotalPages)} disabled={uygunsuzCurrentPage === uygunsuzTotalPages} className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all" style={{ color: 'var(--text-3)' }} aria-label="Son sayfa">{'»»'}</button>
               </div>
-            </div>
+            </GlassCard>
           )}
-          {uygunsuzTotalPages <= 1 && <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 border-red-500/20 h-2" style={{ background: 'var(--surface-1)' }} />}
+          {uygunsuzTotalPages <= 1 && <GlassCard isDark={isDark} hover={false} padding="p-0" className="rounded-b-2xl rounded-t-none border-t-0 border-red-500/20 h-2">{' '}</GlassCard>}
 
           {/* Doktor Bazlı Özet Kartları */}
           {doktorListesi.length > 0 && (
-            <div className="backdrop-blur-xl rounded-2xl border border-red-500/20 p-5 mt-3" style={{ background: 'var(--surface-1)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-5" className="border-red-500/20 mt-3">
               <h4 className="text-xs font-bold status-danger uppercase tracking-wider mb-3">Hekimlere Göre Uygunsuz İşlem Dağılımı</h4>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                 {doktorListesi.slice(0, 20).map(([dr, count]) => (
@@ -1371,7 +1374,7 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
                   </button>
                 ))}
               </div>
-            </div>
+            </GlassCard>
           )}
         </div>
       )}
@@ -1389,16 +1392,16 @@ const ComplianceAnalysisPanel: React.FC<ComplianceAnalysisPanelProps> = ({ table
   );
 };
 
-const SummaryCard: React.FC<{ label: string; value: string; color: string; sub?: string }> = ({ label, value, color, sub }) => {
+const SummaryCard: React.FC<{ label: string; value: string; color: string; sub?: string; isDark?: boolean }> = ({ label, value, color, sub, isDark = true }) => {
   const isVar = color.startsWith('--');
   return (
-    <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+    <GlassCard isDark={isDark} hover={false} padding="p-3">
       <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
       <div className="flex items-baseline gap-1.5">
         <p className={`text-lg font-black ${isVar ? '' : color}`} style={isVar ? { color: `var(${color})` } : undefined}>{value}</p>
         {sub && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{sub}</span>}
       </div>
-    </div>
+    </GlassCard>
   );
 };
 

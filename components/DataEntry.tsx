@@ -3,14 +3,17 @@ import React, { useState } from 'react';
 import { PerformanceData } from '../types';
 // Import constants for month and year selection
 import { MONTHS, YEARS } from '../constants';
+import { GlassCard } from './ui';
 
 interface DataEntryProps {
   onAdd: (data: PerformanceData) => void;
   selectedHospital: string;
   departments: string[];
+  theme?: 'dark' | 'light';
 }
 
-const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departments }) => {
+const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departments, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [formData, setFormData] = useState({
     doctorName: '',
     specialty: '',
@@ -81,7 +84,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-white p-8 rounded-3xl shadow-sm border" style={{ borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-8">
         <div className="flex justify-between items-start mb-8">
            <div>
               <h2 className="text-2xl font-black mb-2" style={{ color: 'var(--text-1)' }}>Hekim Performans Veri Girişi</h2>
@@ -94,7 +97,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
 
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Temel Bilgiler */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl" style={{ background: 'var(--surface-3)' }}>
+          <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-6" className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Hekim Ad Soyad</label>
               <input 
@@ -141,7 +144,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
-          </div>
+          </GlassCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Poliklinik */}
@@ -219,7 +222,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onAdd, selectedHospital, departme
             </button>
           </div>
         </form>
-      </div>
+      </GlassCard>
     </div>
   );
 };

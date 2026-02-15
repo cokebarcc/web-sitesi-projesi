@@ -12,6 +12,7 @@ import { MONTHS, YEARS } from '../constants';
 import { saveVersionAsJson, loadAllChangeAnalysisVersions, loadSingleVersionData, saveExcelFileToStorage } from '../src/services/changeAnalysisStorage';
 import { auth } from '../firebase';
 import DataFilterPanel from './common/DataFilterPanel';
+import { GlassCard, GlassSection } from './ui';
 
 interface ChangeAnalysisProps {
   versions: Record<string, Record<string, ScheduleVersion>>;
@@ -35,6 +36,8 @@ interface ChangeAnalysisProps {
   isAdmin: boolean;
   // Upload permission
   canUpload?: boolean;
+  // Theme
+  theme?: 'dark' | 'light';
   // Loaded full versions (global state - persists across module changes)
   loadedFullVersions: Record<string, ScheduleVersion>;
   setLoadedFullVersions: React.Dispatch<React.SetStateAction<Record<string, ScheduleVersion>>>;
@@ -59,10 +62,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   setUpdatedLabel,
   isAdmin,
   canUpload = false,
+  theme = 'dark',
   loadedFullVersions,
   setLoadedFullVersions,
   onPhysCompareUpdate
 }) => {
+  const isDark = theme === 'dark';
   // versions ve loadedFullVersions artık App.tsx'ten geliyor - modül değişiminde korunur
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -670,10 +675,10 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
       />
 
       {isProcessing && (
-        <div className="p-32 text-center bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] border border-dashed border-indigo-500/30 animate-in fade-in zoom-in-95">
+        <GlassCard isDark={isDark} hover={false} padding="p-32" className="text-center border-dashed border-indigo-500/30 animate-in fade-in zoom-in-95">
            <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
            <p className="font-black text-xl text-[var(--text-1)] uppercase tracking-tighter">Excel Verisi Analiz Ediliyor...</p>
-        </div>
+        </GlassCard>
       )}
 
       {comparison && !isProcessing && (
@@ -701,7 +706,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-[24px] border border-[var(--glass-border)] shadow-lg flex flex-col">
+            <GlassCard isDark={isDark} hover={false} padding="p-6" className="flex flex-col">
               <div className="flex items-center justify-between mb-6 px-2">
                 <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-tighter flex items-center gap-2">
                   <div className="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
@@ -726,9 +731,9 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
+            </GlassCard>
 
-            <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-[24px] border border-[var(--glass-border)] shadow-lg flex flex-col">
+            <GlassCard isDark={isDark} hover={false} padding="p-6" className="flex flex-col">
               <div className="flex items-center justify-between mb-6 px-2">
                 <h3 className="text-sm font-black text-[var(--text-1)] uppercase tracking-tighter flex items-center gap-2">
                   <div className="w-1.5 h-4 bg-rose-500 rounded-full"></div>
@@ -756,10 +761,10 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
+            </GlassCard>
           </div>
 
-          <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+          <GlassCard isDark={isDark} hover={false} padding="p-0" className="overflow-hidden">
             <div className="p-8 border-b border-[var(--border-1)] flex justify-between items-center bg-[var(--surface-2)]">
                <h4 className="text-xl font-black text-[var(--text-1)] uppercase italic">Hekim Bazlı Değişim Detayları</h4>
                <div className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest" style={{ backgroundColor: 'var(--surface-3)', color: 'var(--text-1)' }}>{comparison.phys_compare.length} HEKİMDE DEĞİŞİM</div>
@@ -890,12 +895,12 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
                 </tbody>
               </table>
             </div>
-          </div>
+          </GlassCard>
         </div>
       )}
 
       {!comparison && !isProcessing && (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-32 rounded-[56px] border-4 border-dashed border-[var(--glass-border)] text-center flex flex-col items-center gap-8 shadow-inner animate-in fade-in duration-1000">
+        <GlassCard isDark={isDark} hover={false} padding="p-32" className="border-4 border-dashed text-center flex flex-col items-center gap-8 shadow-inner animate-in fade-in duration-1000">
            <div className="w-24 h-24 bg-[var(--surface-2)] rounded-[40px] flex items-center justify-center text-[var(--text-muted)] shadow-inner group">
              <svg className="w-12 h-12 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
            </div>
@@ -903,7 +908,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
              <h4 className="text-2xl font-black text-[var(--text-2)] uppercase tracking-[0.2em]">KIYASLANACAK VERİ BULUNAMADI</h4>
              <p className="text-[var(--text-muted)] font-medium max-w-md mx-auto mt-3 italic">Lütfen önce hastane, yıl ve ay seçip "Yükle" butonuna tıklayın, ardından eski ve yeni sürüm seçin.</p>
            </div>
-        </div>
+        </GlassCard>
       )}
     </div>
   );

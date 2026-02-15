@@ -7,6 +7,7 @@ import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
 import GreenAreaDailyRateTable, { GreenAreaDailyRateTableRef } from './GreenAreaDailyRateTable';
 import { HOSPITALS } from '../constants';
 import EmptyState from './common/EmptyState';
+import { GlassCard, GlassSection } from './ui';
 
 // Günlük tablo için veri yapısı
 interface DailyData {
@@ -27,6 +28,7 @@ interface EmergencyServiceProps {
   onHospitalChange: (hospital: string) => void;
   // Upload permission
   canUpload?: boolean;
+  theme?: 'dark' | 'light';
 }
 
 // Hastane kısa adları mapping
@@ -98,7 +100,10 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
   allowedHospitals,
   onHospitalChange,
   canUpload = false,
+  theme = 'dark',
 }) => {
+  const isDark = theme === 'dark';
+
   // Upload için tarih
   const [uploadDate, setUploadDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
@@ -838,7 +843,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
 
       {/* Veri Yükleme Bölümü - Sadece yükleme izni varsa göster */}
       {canUpload && (
-        <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6">
+        <GlassCard isDark={isDark} hover={false} padding="p-6">
           <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold mb-4">Veri Yükleme</h3>
           <div className="flex flex-wrap gap-4 items-end">
             {/* Yükleme için Tarih Picker */}
@@ -894,11 +899,11 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
               <span className="font-semibold">Excel Formatı:</span> Kurum Adı | Yeşil Alan Muayene Sayısı | Toplam Muayene Sayısı
             </p>
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Filtreler */}
-      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="sticky-filter-panel rounded-2xl shadow-sm border p-4">
+      <GlassCard isDark={isDark} hover={false} padding="p-4" className="sticky-filter-panel">
         {/* Filtreler + Durum bilgisi tek satırda */}
         <div className="flex flex-wrap gap-3 items-end">
           {/* Hastane Seçimi - En başta */}
@@ -1030,7 +1035,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </p>
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* No Data Message */}
       {!data && (
@@ -1069,7 +1074,8 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </button>
           </div>
 
-          <div ref={cardsContainerRef} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="p-8 rounded-2xl border shadow-lg">
+          <div ref={cardsContainerRef}>
+          <GlassCard isDark={isDark} hover={false} padding="p-8">
             {/* Header for PNG */}
             <div style={{ borderColor: 'var(--border-2)' }} className="flex items-center justify-between mb-8 pb-4 border-b">
               <div className="flex items-center gap-4">
@@ -1095,6 +1101,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 <HospitalCard
                   data={ilGeneli}
                   isIlGeneli={true}
+                  isDark={isDark}
                   dailyDetails={
                     // İl geneli için tüm hastanelerin günlük toplamları
                     selectedDatesForDisplay.map(date => {
@@ -1118,6 +1125,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                   key={index}
                   data={hospital}
                   isIlGeneli={false}
+                  isDark={isDark}
                   dailyDetails={
                     dailyData
                       .filter(d => d.hospitalName === hospital.hospitalName)
@@ -1145,13 +1153,14 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
                 )}
               </div>
             </div>
+          </GlassCard>
           </div>
 
         </>
       )}
 
       {/* Bağımsız Günlük Oran Tablosu Bölümü */}
-      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-4 mt-6">
+      <GlassCard isDark={isDark} hover={false} padding="p-4" className="mt-6">
         <div className="flex flex-col gap-3">
           {/* Kompakt Filtre Paneli (başlık kaldırıldı — sticky çakışma önlenir) */}
           <div style={{ background: 'var(--surface-3)' }} className="flex flex-wrap items-end gap-3 p-3 rounded-xl">
@@ -1278,7 +1287,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
             </div>
           </div>
         )}
-      </div>
+      </GlassCard>
     </div>
   );
 };
@@ -1295,9 +1304,10 @@ interface HospitalCardProps {
   data: GreenAreaData;
   isIlGeneli: boolean;
   dailyDetails?: HospitalDailyDetail[];
+  isDark?: boolean;
 }
 
-const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDetails = [] }) => {
+const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDetails = [], isDark = true }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const shortName = isIlGeneli ? data.hospitalName : getShortName(data.hospitalName);
   const progressColor = getProgressColor(data.greenAreaRate);
@@ -1321,7 +1331,7 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
   };
 
   return (
-    <div style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }} className={`rounded-2xl shadow-sm border p-5 ${isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}`}>
+    <GlassCard isDark={isDark} hover={false} padding="p-5" className={isIlGeneli ? 'col-span-1 md:col-span-2 lg:col-span-1 ring-2 ring-emerald-500/50' : ''}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isIlGeneli ? 'bg-status-success' : ''}`} style={!isIlGeneli ? { background: 'var(--surface-3)' } : undefined}>
@@ -1418,7 +1428,7 @@ const HospitalCard: React.FC<HospitalCardProps> = ({ data, isIlGeneli, dailyDeta
           )}
         </div>
       )}
-    </div>
+    </GlassCard>
   );
 };
 

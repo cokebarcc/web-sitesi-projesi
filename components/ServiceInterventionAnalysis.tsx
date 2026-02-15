@@ -2,18 +2,21 @@
 import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { SUTServiceData } from '../types';
+import { GlassCard } from './ui';
 
 interface ServiceInterventionAnalysisProps {
   sutData: SUTServiceData[];
   onImportSUT: (files: FileList | null) => void;
   aiAnalysis: string | null;
   setAiAnalysis: (a: string | null) => void;
+  theme?: 'dark' | 'light';
 }
 
 type SortKey = 'hospital' | 'name' | 'count' | 'avg' | 'percentage' | 'ratio';
 type SortDirection = 'asc' | 'desc';
 
-const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = ({ sutData, onImportSUT, aiAnalysis, setAiAnalysis }) => {
+const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = ({ sutData, onImportSUT, aiAnalysis, setAiAnalysis, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState<string>('');
   
@@ -160,7 +163,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
   if (sutData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-8 animate-in fade-in duration-700">
-        <div className="bg-white p-20 rounded-[48px] border-2 border-dashed text-center max-w-2xl shadow-sm" style={{ borderColor: 'var(--border-2)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-20" className="border-dashed text-center max-w-2xl">
           <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -173,7 +176,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
             SUT VERİSİ YÜKLE
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
           </label>
-        </div>
+        </GlassCard>
       </div>
     );
   }
@@ -206,7 +209,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-10 rounded-[48px] shadow-xl" style={{ border: '1px solid var(--border-2)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-10">
           <h3 className="text-xl font-black mb-8 tracking-tight uppercase" style={{ color: 'var(--text-1)' }}>Hastaneler Arası Toplam Hacim</h3>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -219,9 +222,9 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="bg-white p-10 rounded-[48px] shadow-xl" style={{ border: '1px solid var(--border-2)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-10">
           <div className="flex justify-between items-start mb-8">
             <h3 className="text-xl font-black tracking-tight uppercase" style={{ color: 'var(--text-1)' }}>İşlem Bazlı Yoğunluk</h3>
             <select value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)} className="rounded-xl px-4 py-2 text-xs font-black text-blue-600 outline-none" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
@@ -239,11 +242,11 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       {aiAnalysis && (
-        <div className="p-12 rounded-[56px] shadow-2xl animate-in slide-in-from-top-10 duration-700 relative overflow-hidden" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-12" variant="elevated" className="animate-in slide-in-from-top-10 duration-700" style={{ color: 'var(--text-1)' }}>
           <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full -mr-48 -mt-48 blur-3xl"></div>
           <div className="flex items-center gap-5 mb-10 relative z-10">
              <div className="w-14 h-14 bg-rose-600 rounded-3xl flex items-center justify-center font-black text-xl shadow-xl border border-rose-400/30">AI</div>
@@ -261,12 +264,12 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
               );
             })}
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Gelişmiş Riskli İşlemler Tablosu */}
-      <div className="bg-white p-10 rounded-[48px] shadow-xl border-2 border-rose-50 overflow-hidden">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+      <GlassCard isDark={isDark} hover={false} padding="p-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 px-10 pt-10">
            <div>
              <div className="flex items-center gap-3 mb-1">
                <div className="w-3 h-8 bg-rose-600 rounded-full"></div>
@@ -346,7 +349,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
             </tbody>
           </table>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 };

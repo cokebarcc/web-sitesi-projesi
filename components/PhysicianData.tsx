@@ -7,6 +7,7 @@ import { normalizeDoctorName, getPeriodKey } from '../utils/formatters';
 import { uploadMuayeneFile, uploadAmeliyatFile } from '../src/services/physicianDataStorage';
 import { auth } from '../firebase';
 import DataFilterPanel from './common/DataFilterPanel';
+import { GlassCard, GlassButton } from './ui';
 
 interface PhysicianDataProps {
   data: DetailedScheduleData[];
@@ -33,6 +34,7 @@ interface PhysicianDataProps {
   onLoadPeriodData: (hospital: string, year: number, month: string) => Promise<void>;
   // Upload permission
   canUpload?: boolean;
+  theme?: 'dark' | 'light';
 }
 
 interface MergedPhysician {
@@ -63,8 +65,10 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   allowedHospitals,
   onHospitalChange,
   onLoadPeriodData,
-  canUpload = false
+  canUpload = false,
+  theme = 'dark'
 }) => {
+  const isDark = theme === 'dark';
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<keyof MergedPhysician>('name');
@@ -294,113 +298,130 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
 
       {/* Yüklü dosya bilgileri */}
       {(activeMuayeneFile || activeAmeliyatFile) && (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-4">
-          <div className="flex gap-4">
+        <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-4">
+          <div className="flex gap-3">
             {activeMuayeneFile && (
-              <div className="flex items-center gap-2 bg-indigo-500/20 px-4 py-2 rounded-xl border border-indigo-500/30">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isDark ? 'bg-indigo-500/10 border border-indigo-500/20' : 'bg-indigo-50 border border-indigo-200/50'}`}>
                 <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-tight">Muayene: {activeMuayeneFile.fileName}</span>
+                <span className={`text-[10px] font-semibold ${isDark ? 'text-indigo-300' : 'text-indigo-600'}`}>Muayene: {activeMuayeneFile.fileName}</span>
               </div>
             )}
             {activeAmeliyatFile && (
-              <div className="flex items-center gap-2 bg-emerald-500/20 px-4 py-2 rounded-xl border border-emerald-500/30">
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200/50'}`}>
                 <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-tight">Ameliyat: {activeAmeliyatFile.fileName}</span>
+                <span className={`text-[10px] font-semibold ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>Ameliyat: {activeAmeliyatFile.fileName}</span>
               </div>
             )}
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {rosterForPeriod.length > 0 ? (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
-          <div className="p-8 border-b border-[var(--border-1)] bg-[var(--surface-2)] flex justify-between items-center">
+        <GlassCard isDark={isDark} hover={false} padding="p-0">
+          <div className={`px-6 py-5 flex justify-between items-center border-b ${isDark ? 'border-white/[0.06]' : 'border-black/[0.06]'}`}>
             <div>
-              <h4 className="text-xl font-black text-[var(--text-1)] uppercase italic">Performans Listesi: {selectedMonth} {selectedYear}</h4>
-              <p className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-widest mt-2">Dönem hekim kadrosu detaylı cetvellerden otomatik oluşturulmuştur.</p>
+              <h4 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Performans Listesi: {selectedMonth} {selectedYear}</h4>
+              <p className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Dönem hekim kadrosu detaylı cetvellerden otomatik oluşturulmuştur.</p>
             </div>
-            <div className="flex gap-4">
-               <div className="bg-[var(--surface-1)] px-6 py-3 rounded-2xl border border-[var(--border-2)] text-center">
-                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Toplam Hekim</p>
-                  <p className="text-xl font-black text-[var(--text-1)]">{rosterForPeriod.length}</p>
+            <div className="flex gap-3">
+               <div className={`px-4 py-2 rounded-xl text-center ${isDark ? 'bg-white/[0.04] border border-white/[0.08]' : 'bg-slate-50 border border-black/[0.05]'}`}>
+                  <p className={`text-[9px] font-semibold uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Toplam Hekim</p>
+                  <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{rosterForPeriod.length}</p>
                </div>
-               <div className="bg-[var(--surface-1)] px-6 py-3 rounded-2xl border border-[var(--border-2)] text-center">
-                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Aktif Branş</p>
-                  <p className="text-xl font-black text-[var(--text-1)]">{new Set(rosterForPeriod.map(m => normalizeDoctorName(m.branch))).size}</p>
+               <div className={`px-4 py-2 rounded-xl text-center ${isDark ? 'bg-white/[0.04] border border-white/[0.08]' : 'bg-slate-50 border border-black/[0.05]'}`}>
+                  <p className={`text-[9px] font-semibold uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Aktif Branş</p>
+                  <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{new Set(rosterForPeriod.map(m => normalizeDoctorName(m.branch))).size}</p>
                </div>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-[var(--table-header-bg)] border-b border-[var(--table-border)]">
-                <tr>
-                  <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest cursor-pointer hover:text-blue-400 transition-colors" onClick={() => { setSortKey('name'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
-                    <div className="flex items-center gap-2">Hekim Ad Soyad {sortKey === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
+            <table className="w-full text-left" style={{ borderSpacing: 0 }}>
+              <thead className="sticky top-0 z-10">
+                <tr className={isDark ? 'bg-white/[0.04]' : 'bg-slate-50/80'}>
+                  <th className={`px-5 py-3 text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-slate-400 border-b border-white/[0.06]' : 'text-slate-500 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('name'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                    <div className="flex items-center gap-1.5">Hekim Ad Soyad {sortKey === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Branş</th>
-                  <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-indigo)' }} onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
-                     <div className="flex items-center justify-center gap-2">MHRS Muayene {sortKey === 'mhrsMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
+                  <th className={`px-5 py-3 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap ${isDark ? 'text-slate-400 border-b border-white/[0.06]' : 'text-slate-500 border-b border-black/[0.06]'}`}>Branş</th>
+                  <th className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-indigo-400 border-b border-white/[0.06]' : 'text-indigo-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                     <div className="flex items-center justify-center gap-1.5">MHRS Muayene {sortKey === 'mhrsMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-indigo)' }} onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
-                     <div className="flex items-center justify-center gap-2">Ayaktan Muayene {sortKey === 'ayaktanMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
+                  <th className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-indigo-400 border-b border-white/[0.06]' : 'text-indigo-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                     <div className="flex items-center justify-center gap-1.5">Ayaktan Muayene {sortKey === 'ayaktanMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-indigo)' }} onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
-                     <div className="flex items-center justify-center gap-2">Toplam Muayene {sortKey === 'toplamMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
+                  <th className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-indigo-400 border-b border-white/[0.06]' : 'text-indigo-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                     <div className="flex items-center justify-center gap-1.5">Toplam Muayene {sortKey === 'toplamMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-10 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-emerald)' }} onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
-                    <div className="flex items-center justify-center gap-2">A+B+C Ameliyat {sortKey === 'ameliyatCount' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
+                  <th className={`px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-emerald-400 border-b border-white/[0.06]' : 'text-emerald-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                    <div className="flex items-center justify-center gap-1.5">A+B+C Ameliyat {sortKey === 'ameliyatCount' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--table-border)]">
+              <tbody>
                 {processedList.length > 0 ? processedList.map((p, idx) => (
-                  <tr key={idx} className="hover:bg-[var(--table-row-hover)] transition-colors group">
-                    <td className="px-10 py-5"><p className="font-black text-[var(--text-1)] uppercase text-sm">{p.name}</p></td>
-                    <td className="px-10 py-5"><span className="text-xs font-bold text-[var(--text-3)] uppercase">{p.branch}</span></td>
-                    <td className="px-6 py-5 text-center">
-                      <span className="inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border" style={p.mhrsMuayene > 0 ? { background: 'var(--badge-indigo-bg)', color: 'var(--badge-indigo-text)', borderColor: 'var(--badge-indigo-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
+                  <tr key={idx} className={`transition-colors duration-150 ${
+                    idx % 2 === 1 ? (isDark ? 'bg-white/[0.015]' : 'bg-black/[0.015]') : ''
+                  } ${isDark ? 'hover:bg-white/[0.04] border-b border-white/[0.04]' : 'hover:bg-sky-50/50 border-b border-black/[0.04]'}`}>
+                    <td className={`px-5 py-3 text-[13px] font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.name}</td>
+                    <td className={`px-5 py-3 text-[13px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{p.branch}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-lg font-semibold text-xs ${
+                        p.mhrsMuayene > 0
+                          ? isDark ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20' : 'bg-indigo-50 text-indigo-600 border border-indigo-200/50'
+                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                      }`}>
                         {p.mhrsMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-center">
-                      <span className="inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border" style={p.ayaktanMuayene > 0 ? { background: 'var(--badge-indigo-bg)', color: 'var(--badge-indigo-text)', borderColor: 'var(--badge-indigo-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-lg font-semibold text-xs ${
+                        p.ayaktanMuayene > 0
+                          ? isDark ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20' : 'bg-indigo-50 text-indigo-600 border border-indigo-200/50'
+                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                      }`}>
                         {p.ayaktanMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-center">
-                      <span className="inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border" style={p.toplamMuayene > 0 ? { background: 'var(--badge-indigo-strong-bg)', color: 'var(--badge-indigo-strong-text)', borderColor: 'var(--badge-indigo-strong-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-lg font-bold text-xs ${
+                        p.toplamMuayene > 0
+                          ? isDark ? 'bg-indigo-500/15 text-indigo-200 border border-indigo-500/25' : 'bg-indigo-100 text-indigo-700 border border-indigo-300/50'
+                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                      }`}>
                         {p.toplamMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
-                    <td className="px-10 py-5 text-center">
-                      <span className="inline-block min-w-[80px] px-4 py-2 rounded-xl font-black text-sm border" style={p.ameliyatCount > 0 ? { background: 'var(--badge-emerald-bg)', color: 'var(--badge-emerald-text)', borderColor: 'var(--badge-emerald-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
+                    <td className="px-5 py-3 text-center">
+                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-lg font-bold text-sm ${
+                        p.ameliyatCount > 0
+                          ? isDark ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border border-emerald-200/50'
+                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                      }`}>
                         {p.ameliyatCount.toLocaleString('tr-TR')}
                       </span>
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={6} className="px-12 py-32 text-center text-[var(--text-muted)] font-black uppercase tracking-widest text-lg italic">Kayıtlı hekim veya arama sonucu bulunamadı</td></tr>
+                  <tr><td colSpan={6} className={`px-8 py-16 text-center text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Kayıtlı hekim veya arama sonucu bulunamadı</td></tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+        </GlassCard>
       ) : (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-24 rounded-[24px] border border-dashed border-[var(--border-2)] text-center flex flex-col items-center gap-8 animate-in fade-in duration-500">
-           <div className="w-24 h-24 bg-rose-500/10 rounded-[24px] flex items-center justify-center text-rose-400/50 border border-rose-500/20">
-             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-           </div>
-           <div>
-             <h4 className="text-2xl font-black text-[var(--text-muted)] uppercase tracking-widest">BU DÖNEM İÇİN KADRO BULUNAMADI</h4>
-             <p className="text-[var(--text-muted)] font-medium max-w-md mx-auto mt-2 italic">Lütfen önce <strong className="text-[var(--text-2)]">Detaylı Cetveller</strong> modülünden {selectedMonth} {selectedYear} dönemine ait verileri yükleyiniz.</p>
-           </div>
-           <button
-             onClick={onNavigateToDetailed}
-             className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-500/20 active:scale-95"
-           >
-             CETVELLERE GİT
-           </button>
-        </div>
+        <GlassCard isDark={isDark} hover={false} padding="p-16">
+          <div className="text-center flex flex-col items-center gap-6">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isDark ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-200/50'}`}>
+              <svg className={`w-8 h-8 ${isDark ? 'text-rose-400/50' : 'text-rose-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div>
+              <h4 className={`text-lg font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Bu Dönem İçin Kadro Bulunamadı</h4>
+              <p className={`text-sm max-w-md mx-auto mt-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Lütfen önce <strong className={isDark ? 'text-slate-300' : 'text-slate-600'}>Detaylı Cetveller</strong> modülünden {selectedMonth} {selectedYear} dönemine ait verileri yükleyiniz.</p>
+            </div>
+            <GlassButton isDark={isDark} variant="primary" size="md" onClick={onNavigateToDetailed}>
+              Cetvellere Git
+            </GlassButton>
+          </div>
+        </GlassCard>
       )}
     </div>
   );

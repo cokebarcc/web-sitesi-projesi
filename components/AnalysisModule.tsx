@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { AppointmentData, HBYSData, ScheduleProposal } from '../types';
 import { MONTHS, YEARS } from '../constants';
+import { GlassCard, GlassSection } from './ui';
 
 interface AnalysisModuleProps {
   appointmentData: AppointmentData[];
@@ -19,6 +20,7 @@ interface AnalysisModuleProps {
   pastChangesFinalData: { [key: string]: any[] } | null;
   onClearPastChanges: () => void;
   selectedHospital: string;
+  theme?: 'dark' | 'light';
 }
 
 interface ActionDiff {
@@ -48,15 +50,17 @@ const CustomizedAxisTick = (props: any) => {
   );
 };
 
-const AnalysisModule: React.FC<AnalysisModuleProps> = ({ 
-  appointmentData, 
-  hbysData, 
+const AnalysisModule: React.FC<AnalysisModuleProps> = ({
+  appointmentData,
+  hbysData,
   selectedHospital,
   planningProposals,
   pastChangesInitialData,
   pastChangesFinalData,
-  onClearPastChanges
+  onClearPastChanges,
+  theme = 'dark'
 }) => {
+  const isDark = theme === 'dark';
   const [selectedMonth, setSelectedMonth] = useState<string>('Aralık');
   const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [isExporting, setIsExporting] = useState(false);
@@ -580,7 +584,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
            <PngButton onClick={() => downloadAsPng(consolidatedPanelRef, 'Konsolide_Analiz_Paneli')} label="PANELİ PNG İNDİR" />
         </div>
         
-        <div className="bg-white p-8 rounded-[40px] shadow-sm border-2 border-indigo-100 mb-8">
+        <GlassCard isDark={isDark} hover={false} padding="p-8" className="mb-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
               <h2 className="text-3xl font-black tracking-tight flex items-center gap-3 uppercase leading-normal" style={{ color: 'var(--text-1)' }}>
@@ -600,7 +604,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                </select>
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         <div ref={statsGridRef} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <StatCard title="PLANLANAN MHRS" value={totalCapacity} color="blue" subtitle="Cetvel Kapasitesi" />
@@ -612,7 +616,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
 
       {/* 2. SEKSİYON: DASHBOARD GRAFİKLERİ */}
       <div className="grid grid-cols-1 gap-12">
-        <div ref={chart1Ref} className="relative bg-white p-12 rounded-[48px] shadow-sm border flex flex-col h-[700px] group/chart1" style={{ borderColor: 'var(--border-2)' }}>
+        <div ref={chart1Ref} className="group/chart1">
+        <GlassCard isDark={isDark} hover={false} padding="p-12" className="relative flex flex-col h-[700px]">
           <PngButton 
             onClick={() => downloadAsPng(chart1Ref, 'Kapasite_Kullanim_Analizi')} 
             className="absolute top-8 right-8 opacity-0 group-hover/chart1:opacity-100 z-20" 
@@ -672,9 +677,11 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </GlassCard>
         </div>
 
-        <div ref={chart2Ref} className="relative bg-white p-12 rounded-[48px] shadow-sm border h-[750px] flex flex-col group/chart2" style={{ borderColor: 'var(--border-2)' }}>
+        <div ref={chart2Ref} className="group/chart2">
+        <GlassCard isDark={isDark} hover={false} padding="p-12" className="relative h-[750px] flex flex-col">
           <PngButton 
             onClick={() => downloadAsPng(chart2Ref, 'Cerrahi_Verimlilik_Matrisi')} 
             className="absolute top-8 right-8 opacity-0 group-hover/chart2:opacity-100 z-20" 
@@ -743,12 +750,14 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
               </ComposedChart>
             </ResponsiveContainer>
           </div>
+        </GlassCard>
         </div>
       </div>
 
       {/* 3. SEKSİYON: AI PLANLAMA ÖZET DEĞİŞİM TABLOSU */}
       {changedProposals.length > 0 && (
-        <div ref={aiPlanningTableRef} className="relative bg-white rounded-[48px] shadow-xl border overflow-hidden animate-in slide-in-from-bottom-8 group/planning" style={{ borderColor: 'var(--border-2)' }}>
+        <div ref={aiPlanningTableRef} className="group/planning">
+        <GlassCard isDark={isDark} hover={false} padding="p-0" className="relative overflow-hidden animate-in slide-in-from-bottom-8">
             <PngButton 
               onClick={() => downloadAsPng(aiPlanningTableRef, 'AI_Planlama_Ozet_Tablo')} 
               className="absolute top-10 right-48 z-20 opacity-0 group-hover/planning:opacity-100" 
@@ -800,6 +809,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 </tbody>
               </table>
             </div>
+        </GlassCard>
         </div>
       )}
 
@@ -847,7 +857,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 </div>
                 <div ref={branchGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 bg-[#F8FAFC] p-4">
                 {pastAnalysis.branchResults.map((br, idx) => (
-                    <div key={idx} className="bg-white p-12 pt-14 rounded-[48px] shadow-sm border transition-all duration-500 hover:shadow-2xl relative overflow-hidden group" style={{ borderColor: 'var(--border-2)' }}>
+                    <GlassCard key={idx} isDark={isDark} hover={true} padding="p-12 pt-14" className="relative group">
                     <div className="flex justify-between items-start mb-8">
                         <h4 className="text-sm font-black uppercase tracking-tighter line-clamp-1 pr-12 leading-relaxed" style={{ color: 'var(--text-1)' }}>{br.name}</h4>
                         <span className={`absolute top-8 right-8 text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg ${br.capacity.diff >= 0 ? 'bg-emerald-600 shadow-emerald-200' : 'bg-[#e11d48] shadow-rose-200'}`}>
@@ -860,11 +870,11 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                             <span className={br.capacity.diff >= 0 ? 'text-emerald-600' : 'text-[#e11d48]'}>%{Math.round((br.capacity.final / (br.capacity.initial || 1)) * 100 - 100)}</span>
                         </div>
                         <div className="w-full h-2.5 rounded-full overflow-hidden border" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
-                            <div className={`h-full transition-all duration-1000 ${br.capacity.diff >= 0 ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#e11d48] to-[#fb7185]'}`} 
+                            <div className={`h-full transition-all duration-1000 ${br.capacity.diff >= 0 ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#e11d48] to-[#fb7185]'}`}
                                 style={{ width: `${Math.min(100, (br.capacity.final / (br.capacity.initial || 1)) * 100)}%` }}></div>
                         </div>
                     </div>
-                    </div>
+                    </GlassCard>
                 ))}
                 </div>
             </div>
@@ -888,10 +898,11 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 {pastAnalysis.branchResults.flatMap(br => 
                   br.doctors.map((doc: any) => ({ ...doc, branchName: br.name }))
                 ).map((doc, idx) => (
-                  <div id={`doc-card-${idx}`} key={idx} className="relative bg-white rounded-[40px] shadow-sm border border-rose-50 overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-500">
-                    <PngButton 
-                      onClick={() => downloadElementByIdAsPng(`doc-card-${idx}`, `Hekim_Karti_${normalizeStr(doc.doctorName)}`)} 
-                      className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 border-white/20 bg-black/40 text-white hover:bg-black/60" 
+                  <div id={`doc-card-${idx}`} key={idx}>
+                  <GlassCard isDark={isDark} hover={true} padding="p-0" className="relative flex flex-col group">
+                    <PngButton
+                      onClick={() => downloadElementByIdAsPng(`doc-card-${idx}`, `Hekim_Karti_${normalizeStr(doc.doctorName)}`)}
+                      className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 border-white/20 bg-black/40 text-white hover:bg-black/60"
                     />
                     <div className="p-6 flex justify-between items-center" style={{ background: 'var(--bg-app)' }}>
                       <div className="truncate pr-4">
@@ -932,6 +943,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                         </div>
                       </div>
                     </div>
+                  </GlassCard>
                   </div>
                 ))}
               </div>
@@ -956,7 +968,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                    </button>
                  </div>
               </div>
-              <div ref={consolidatedTableRef} className="bg-white rounded-[56px] shadow-2xl border overflow-hidden" style={{ borderColor: 'var(--border-2)' }}>
+              <div ref={consolidatedTableRef}>
+              <GlassCard isDark={isDark} hover={false} padding="p-0" className="overflow-hidden" variant="elevated">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left table-auto">
                     <thead className="border-b" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
@@ -990,9 +1003,10 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                     </tbody>
                   </table>
                 </div>
+              </GlassCard>
               </div>
             </div>
-            
+
             {/* AI STRATEJİK ANALİZ BUTONU VE SONUÇ ALANI */}
             <div className="mt-20 space-y-10 no-print">
                <div className="flex flex-col items-center gap-6">
@@ -1017,7 +1031,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                </div>
 
                {aiReport && (
-                 <div ref={aiAnalysisBoxRef} className="relative group/aireport bg-white p-12 rounded-[64px] shadow-2xl border-4 border-indigo-50 animate-in slide-in-from-bottom-10 duration-700 overflow-hidden">
+                 <div ref={aiAnalysisBoxRef} className="group/aireport">
+                 <GlassCard isDark={isDark} hover={false} padding="p-12" className="relative animate-in slide-in-from-bottom-10 duration-700" variant="elevated">
                     <PngButton 
                       onClick={() => downloadAsPng(aiAnalysisBoxRef, 'AI_Stratejik_Rapor_Gorseli')} 
                       className="absolute top-10 right-10 z-20 opacity-0 group-hover/aireport:opacity-100" 
@@ -1059,12 +1074,13 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                          <button onClick={() => window.print()} className="text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all" style={{ background: 'var(--bg-app)' }}>RAPORU YAZDIR</button>
                       </div>
                     </div>
+                 </GlassCard>
                  </div>
                )}
             </div>
           </div>
         ) : (
-          <div className="bg-white p-32 rounded-[64px] border-2 border-dashed text-center flex flex-col items-center gap-10" style={{ borderColor: 'var(--border-2)' }}>
+          <GlassCard isDark={isDark} hover={false} padding="p-32" className="text-center flex flex-col items-center gap-10" variant="outlined">
              <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-inner" style={{ background: 'var(--surface-3)', color: 'var(--text-muted)' }}>
                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
              </div>
@@ -1072,7 +1088,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                <h4 className="text-2xl font-black uppercase tracking-[0.3em] leading-normal" style={{ color: 'var(--text-3)' }}>Karşılaştırmalı Veri Bekleniyor</h4>
                <p className="font-medium max-w-xl mx-auto mt-4 italic leading-relaxed text-sm" style={{ color: 'var(--text-3)' }}>Analiz yapmak için lütfen "Geçmiş Dönem Değişimleri" sekmesinden ilk ve son cetvelleri yükleyiniz. Veriler buraya otomatik yansıyacaktır.</p>
              </div>
-          </div>
+          </GlassCard>
         )}
       </div>
     </div>

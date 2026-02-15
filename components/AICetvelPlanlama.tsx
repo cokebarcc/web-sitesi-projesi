@@ -5,6 +5,7 @@ import { DetailedScheduleData } from '../types';
 import { MONTHS, YEARS, HOSPITALS } from '../constants';
 import { getPeriodKey, normalizeDoctorName } from '../utils/formatters';
 import DataFilterPanel from './common/DataFilterPanel';
+import { GlassCard } from './ui';
 import { KURUM_LISTESI } from './HekimIslemListesiModule';
 
 interface AICetvelPlanlamaProps {
@@ -24,6 +25,7 @@ interface AICetvelPlanlamaProps {
   onCentralDataLoad: (hospital: string, years: number[], months: number[]) => Promise<void>;
   onLoadPeriodData: (hospital: string, year: number, month: string, silent?: boolean) => Promise<void>;
   isLoading?: boolean;
+  theme?: 'dark' | 'light';
 }
 
 const SURGERY_ACTIONS = ['AMELİYAT', 'AMELİYATTA', 'SURGERY', 'AMELİYATHANE'];
@@ -142,7 +144,9 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
   onCentralDataLoad,
   onLoadPeriodData,
   isLoading = false,
+  theme = 'dark',
 }) => {
+  const isDark = theme === 'dark';
   // --- Çift ay seçimi state ---
   const [referansMonthIdx, setReferansMonthIdx] = useState<number | null>(null);
   const [hedefMonthIdx, setHedefMonthIdx] = useState<number | null>(null);
@@ -841,30 +845,35 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           value={isPeriodSelected ? kpiStats.surgicalDoctorCount : null}
           accent="capacity"
           isEmpty={!isPeriodSelected}
+          isDark={isDark}
         />
         <KpiCard
           title={`Ameliyat Günü ${referansMonth || '—'}`}
           value={isPeriodSelected ? kpiStats.totalSurgeryDays : null}
           accent="surgeryDay"
           isEmpty={!isPeriodSelected}
+          isDark={isDark}
         />
         <KpiCard
           title={`Ameliyat Günü ${hedefMonth || '—'}`}
           value={isPeriodSelected ? totalHedefSurgeryDays : null}
           accent="surgeryDay"
           isEmpty={!isPeriodSelected}
+          isDark={isDark}
         />
         <KpiCard
           title="Toplam ABC Ameliyat"
           value={isPeriodSelected ? kpiStats.totalABC : null}
           accent="surgeryCount"
           isEmpty={!isPeriodSelected}
+          isDark={isDark}
         />
         <KpiCard
           title="Ort. Verimlilik (ABC/Gün)"
           value={isPeriodSelected ? formatNum(kpiStats.avgEfficiency) : null}
           accent="ratio"
           isEmpty={!isPeriodSelected}
+          isDark={isDark}
         />
         <KpiCard
           title="Önerilen Azaltım"
@@ -872,11 +881,12 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           subtitle={totalCapacityGain > 0 ? `~${totalCapacityGain} kapasite kazanımı` : undefined}
           accent="visits"
           isEmpty={!isPeriodSelected || totalReduction === 0}
+          isDark={isDark}
         />
       </div>
 
       {/* Hekim Verimlilik Tablosu */}
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-6">
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-6">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
           <div>
             <h3 className="text-xl font-black text-[var(--text-1)] uppercase">
@@ -989,11 +999,11 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
             </table>
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* Oneri Tablosu */}
       {isPeriodSelected && proposals.length > 0 && (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-6">
+        <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-6">
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
             <div>
               <h3 className="text-xl font-black text-[var(--text-1)] uppercase">
@@ -1059,7 +1069,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
               </tbody>
             </table>
           </div>
-        </div>
+        </GlassCard>
       )}
     </div>
   );
@@ -1113,7 +1123,8 @@ const KpiCard: React.FC<{
   accent: string;
   isEmpty: boolean;
   subtitle?: string;
-}> = ({ title, value, accent, isEmpty, subtitle }) => {
+  isDark?: boolean;
+}> = ({ title, value, accent, isEmpty, subtitle, isDark = true }) => {
   const accentColors: Record<string, string> = {
     capacity: 'from-indigo-500 to-blue-600',
     visits: 'from-emerald-500 to-teal-600',
@@ -1124,7 +1135,7 @@ const KpiCard: React.FC<{
   const gradient = accentColors[accent] || accentColors.capacity;
 
   return (
-    <div className="relative overflow-hidden bg-[var(--glass-bg)] backdrop-blur-xl rounded-[20px] p-6 border border-[var(--glass-border)] shadow-lg group hover:shadow-xl transition-all duration-300">
+    <GlassCard isDark={isDark} hover={false} padding="p-6" className="relative overflow-hidden group">
       <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}`} />
       <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] mb-3">{title}</p>
       {isEmpty ? (
@@ -1137,7 +1148,7 @@ const KpiCard: React.FC<{
           {subtitle && <p className="text-[9px] font-bold text-[var(--text-muted)] mt-1 uppercase">{subtitle}</p>}
         </>
       )}
-    </div>
+    </GlassCard>
   );
 };
 

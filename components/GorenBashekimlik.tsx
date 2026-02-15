@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { GlassCard } from './ui';
 
 interface CityScore {
   city: string;
@@ -17,7 +18,12 @@ interface IndicatorMeta {
   average: number;
 }
 
-const GorenBashekimlik: React.FC = () => {
+interface GorenBashekimlikProps {
+  theme?: 'dark' | 'light';
+}
+
+const GorenBashekimlik: React.FC<GorenBashekimlikProps> = ({ theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [cityResults, setCityResults] = useState<CityScore[]>([]);
   const [indicatorMeta, setIndicatorMeta] = useState<IndicatorMeta[]>([]);
   const [activeTab, setActiveTab] = useState<'ranking' | 'comparison'>('ranking');
@@ -112,7 +118,7 @@ const GorenBashekimlik: React.FC = () => {
   return (
     <div className="space-y-4 animate-in fade-in duration-700 pb-24">
       {/* Üst Panel: Başlık ve Yükleme */}
-      <div className="bg-white p-10 rounded-[48px] shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6" style={{ borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-10" className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
           <h2 className="text-3xl font-black tracking-tighter uppercase" style={{ color: 'var(--text-1)' }}>GÖREN Başarı Sıralaması</h2>
           <p className="font-bold uppercase text-[10px] tracking-[0.2em] mt-1" style={{ color: 'var(--text-muted)' }}>İller Arası Stratejik Performans Kıyaslama</p>
@@ -122,7 +128,7 @@ const GorenBashekimlik: React.FC = () => {
           MATRİS EXCEL YÜKLE
           <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
         </label>
-      </div>
+      </GlassCard>
 
       {cityResults.length > 0 ? (
         <div className="space-y-12">
@@ -136,7 +142,7 @@ const GorenBashekimlik: React.FC = () => {
           {/* Ana İçerik Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Sol: Liderlik Tablosu */}
-            <div className="lg:col-span-7 bg-white rounded-[48px] shadow-xl border overflow-hidden" style={{ borderColor: 'var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-0" className="lg:col-span-7">
               <div className="p-8 border-b flex justify-between items-center" style={{ borderColor: 'var(--border-2)', background: 'var(--surface-3)' }}>
                 <h3 className="text-xl font-black uppercase" style={{ color: 'var(--text-1)' }}>Tüm İller Sıralaması</h3>
                 <span className="text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest" style={{ background: 'var(--bg-app)' }}>{cityResults.length} İL ANALİZ EDİLDİ</span>
@@ -189,14 +195,14 @@ const GorenBashekimlik: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </GlassCard>
 
             {/* Sağ: Detaylı Analiz Kartı */}
             <div className="lg:col-span-5 space-y-8">
               {selectedCity ? (
-                <div className="p-12 rounded-[56px] shadow-2xl relative overflow-hidden sticky top-10" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
+                <GlassCard isDark={isDark} hover={false} padding="p-12" variant="elevated" className="relative sticky top-10" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
                   <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-                  
+
                   <div className="relative z-10">
                     <div className="flex justify-between items-start mb-10">
                       <div>
@@ -245,17 +251,17 @@ const GorenBashekimlik: React.FC = () => {
                        </div>
                     </div>
                   </div>
-                </div>
+                </GlassCard>
               ) : (
-                <div className="bg-white p-20 rounded-[48px] border-2 border-dashed text-center" style={{ borderColor: 'var(--border-2)' }}>
+                <GlassCard isDark={isDark} hover={false} padding="p-20" variant="outlined" className="text-center">
                   <p className="font-bold italic" style={{ color: 'var(--text-3)' }}>Detaylı analiz için sıralamadan bir il seçiniz.</p>
-                </div>
+                </GlassCard>
               )}
             </div>
           </div>
 
           {/* Görsel Kıyaslama Grafiği */}
-          <div className="bg-white p-12 rounded-[56px] shadow-xl border" style={{ borderColor: 'var(--border-2)' }}>
+          <GlassCard isDark={isDark} hover={false} padding="p-12" variant="elevated">
              <div className="flex justify-between items-center mb-10">
                 <h3 className="text-xl font-black uppercase" style={{ color: 'var(--text-1)' }}>İL BAZLI GENEL BAŞARI DAĞILIMI</h3>
                 <div className="flex gap-4">
@@ -275,7 +281,7 @@ const GorenBashekimlik: React.FC = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                       <XAxis dataKey="city" angle={-45} textAnchor="end" fontSize={10} fontWeight={900} interval={0} tick={{fill: '#475569'}} />
                       <YAxis fontSize={10} axisLine={false} tickLine={false} />
-                      <Tooltip 
+                      <Tooltip
                         cursor={{fill: '#f8fafc'}}
                         contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}
                       />
@@ -287,10 +293,10 @@ const GorenBashekimlik: React.FC = () => {
                    </BarChart>
                 </ResponsiveContainer>
              </div>
-          </div>
+          </GlassCard>
         </div>
       ) : (
-        <div className="bg-white p-32 rounded-[56px] border-2 border-dashed text-center flex flex-col items-center gap-8" style={{ borderColor: 'var(--border-2)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-32" variant="outlined" className="text-center flex flex-col items-center gap-8">
            <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-inner" style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }}>
              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
            </div>
@@ -298,7 +304,7 @@ const GorenBashekimlik: React.FC = () => {
              <h4 className="text-2xl font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Matris Verisi Bekleniyor</h4>
              <p className="font-medium max-w-md mx-auto mt-2 italic" style={{ color: 'var(--text-3)' }}>Görselde paylaştığınız; İllerin satırlarda, göstergelerin sütunlarda olduğu Excel tablosunu yükleyiniz.</p>
            </div>
-        </div>
+        </GlassCard>
       )}
     </div>
   );

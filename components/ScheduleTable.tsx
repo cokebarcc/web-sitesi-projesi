@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { AppointmentData } from '../types';
 import { MONTHS, YEARS } from '../constants';
+import { GlassCard } from './ui';
 
 interface ScheduleTableProps {
   data: AppointmentData[];
@@ -9,9 +10,11 @@ interface ScheduleTableProps {
   onImportExcel: (files: FileList | null, month: string, year: number) => void;
   onDelete: (id: string) => void;
   onClearMonth: (month: string, year: number) => void;
+  theme?: 'dark' | 'light';
 }
 
-const ScheduleTable: React.FC<ScheduleTableProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearMonth }) => {
+const ScheduleTable: React.FC<ScheduleTableProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearMonth, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [selectedMonth, setSelectedMonth] = useState<string>('Kasım');
   const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -40,7 +43,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ data, selectedBranch, onI
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-8 rounded-[32px] shadow-sm border flex flex-col lg:flex-row justify-between items-center gap-6" style={{ borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-8" className="flex flex-col lg:flex-row justify-between items-center gap-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
           <div className="flex flex-col gap-1 w-full sm:w-auto">
             <label className="text-[10px] font-black uppercase tracking-widest ml-1" style={{ color: 'var(--text-3)' }}>DÖNEM AYI</label>
@@ -63,18 +66,18 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ data, selectedBranch, onI
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => { if(e.target.files) onImportExcel(e.target.files, selectedMonth, selectedYear); e.target.value = ''; }} />
           </label>
         </div>
-      </div>
-      
-      <div className="bg-white rounded-[40px] shadow-xl border overflow-hidden" style={{ borderColor: 'var(--border-2)' }}>
-        <div className="p-10 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white gap-4" style={{ borderColor: 'var(--border-2)' }}>
+      </GlassCard>
+
+      <GlassCard isDark={isDark} hover={false} padding="" className="overflow-hidden">
+        <div className="p-10 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" style={{ borderColor: 'var(--border-2)' }}>
           <div>
             <h4 className="text-2xl font-black tracking-tight uppercase" style={{ color: 'var(--text-1)' }}>Çalışma Cetveli: {selectedMonth} {selectedYear}</h4>
             <p className="text-xs mt-1 font-bold tracking-wide" style={{ color: 'var(--text-3)' }}>Hekimlerin {selectedMonth} {selectedYear} dönemine ait tüm faaliyetleri aşağıda listelenmiştir.</p>
           </div>
-          <div className="text-right p-6 rounded-3xl shadow-sm border min-w-[140px] flex flex-col items-center" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
+          <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-6" className="text-right min-w-[140px] flex flex-col items-center">
             <span className="text-4xl font-black text-blue-600 leading-none">{sortedData.length}</span>
             <p className="text-[10px] font-black uppercase tracking-widest mt-2" style={{ color: 'var(--text-3)' }}>Toplam Kayıt</p>
-          </div>
+          </GlassCard>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -141,7 +144,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({ data, selectedBranch, onI
             </tbody>
           </table>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 };

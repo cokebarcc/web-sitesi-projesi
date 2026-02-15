@@ -12,6 +12,7 @@ import {
 import type { IslemSatiri, ParseResult } from '../src/services/excelParseHekim';
 import { turkishLower } from '../src/services/excelParseHekim';
 import type { ExcelParseWorkerResponse } from '../src/workers/workerProtocol';
+import { GlassCard } from './ui';
 
 // Kurum, Rol Grubu ve Basamak tanımları
 export interface KurumBilgisi {
@@ -229,7 +230,12 @@ function buildSubKey(kurum: string, years: number[], months: number[], brans: st
 // Sayfa boyutu seçenekleri
 const PAGE_SIZES = [50, 100, 250, 500];
 
-const HekimIslemListesiModule: React.FC = () => {
+interface HekimIslemListesiModuleProps {
+  theme?: 'dark' | 'light';
+}
+
+const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [selectedKurum, setSelectedKurum] = useState<string>('');
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
@@ -503,7 +509,7 @@ const HekimIslemListesiModule: React.FC = () => {
       </div>
 
       {/* Veri Yükleme Filtre Paneli */}
-      <div className="backdrop-blur-xl rounded-2xl border p-5 mb-6 relative z-[100]" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-5" className="mb-6 relative z-[100]">
         <div className="flex items-center gap-2 mb-4">
           <svg className="w-4 h-4 status-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -678,7 +684,7 @@ const HekimIslemListesiModule: React.FC = () => {
             )}
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* Tab Navigasyonu */}
       {tableData.length > 0 && (
@@ -720,7 +726,7 @@ const HekimIslemListesiModule: React.FC = () => {
 
       {/* İçerik Alanı */}
       {tableData.length === 0 ? (
-        <div className="backdrop-blur-xl rounded-2xl border p-12 text-center" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-12" className="text-center">
           {savedFileInfo ? (
             <>
               <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -771,7 +777,7 @@ const HekimIslemListesiModule: React.FC = () => {
               </p>
             </>
           )}
-        </div>
+        </GlassCard>
       ) : activeTab === 'analiz' ? (
         <ComplianceAnalysisPanel
           tableData={tableData}
@@ -783,72 +789,74 @@ const HekimIslemListesiModule: React.FC = () => {
           {/* Özet Kartları */}
           {summary && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              <GlassCard isDark={isDark} hover={false} padding="p-3" variant="flat">
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Satır</p>
                 <p className="text-lg font-black" style={{ color: 'var(--text-1)' }}>{summary.toplamSatir.toLocaleString('tr-TR')}</p>
-              </div>
-              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              </GlassCard>
+              <GlassCard isDark={isDark} hover={false} padding="p-3" variant="flat">
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Hekim Sayısı</p>
                 <p className="text-lg font-black text-emerald-400">{summary.hekimSayisi}</p>
-              </div>
-              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              </GlassCard>
+              <GlassCard isDark={isDark} hover={false} padding="p-3" variant="flat">
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Hasta Sayısı</p>
                 <p className="text-lg font-black status-info">{summary.hastaSayisi.toLocaleString('tr-TR')}</p>
-              </div>
-              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              </GlassCard>
+              <GlassCard isDark={isDark} hover={false} padding="p-3" variant="flat">
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Miktar</p>
                 <p className="text-lg font-black text-cyan-400">{summary.toplamMiktar.toLocaleString('tr-TR')}</p>
-              </div>
-              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              </GlassCard>
+              <GlassCard isDark={isDark} hover={false} padding="p-3" variant="flat">
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Puan</p>
                 <p className="text-lg font-black status-accent">{formatNumber(summary.toplamPuan)}</p>
-              </div>
-              <div className="backdrop-blur-xl rounded-xl border p-3" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+              </GlassCard>
+              <GlassCard isDark={isDark} hover={false} padding="p-3" variant="flat">
                 <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Toplam Tutar</p>
                 <p className="text-lg font-black status-warning">{formatNumber(summary.toplamTutar)} ₺</p>
-              </div>
+              </GlassCard>
             </div>
           )}
 
           {/* Tablo Üst Bar */}
-          <div className="backdrop-blur-xl rounded-t-2xl border border-b-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-2)' }}>{fileName}</span>
+          <GlassCard isDark={isDark} hover={false} padding="p-0" className="rounded-b-none border-b-0">
+            <div className="px-5 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-2)' }}>{fileName}</span>
+                </div>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {tableData.length.toLocaleString('tr-TR')} kayıt
+                </span>
               </div>
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {tableData.length.toLocaleString('tr-TR')} kayıt
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* Sayfa boyutu */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Göster:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                  className="text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                  style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
+              <div className="flex items-center gap-3">
+                {/* Sayfa boyutu */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Göster:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                    style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
+                  >
+                    {PAGE_SIZES.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={handleClearData}
+                  className="text-xs status-danger hover:text-red-300 font-medium flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition-all"
                 >
-                  {PAGE_SIZES.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Veriyi Temizle
+                </button>
               </div>
-              <button
-                onClick={handleClearData}
-                className="text-xs status-danger hover:text-red-300 font-medium flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-red-500/10 transition-all"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Veriyi Temizle
-              </button>
             </div>
-          </div>
+          </GlassCard>
 
           {/* Tablo */}
           <div
@@ -909,89 +917,91 @@ const HekimIslemListesiModule: React.FC = () => {
 
           {/* Sayfalama */}
           {totalPages > 1 && (
-            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 px-5 py-3 flex items-center justify-between" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {((currentPage - 1) * pageSize + 1).toLocaleString('tr-TR')} - {Math.min(currentPage * pageSize, tableData.length).toLocaleString('tr-TR')} / {tableData.length.toLocaleString('tr-TR')} kayıt
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => goToPage(1)}
-                  disabled={currentPage === 1}
-                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  style={{ color: 'var(--text-3)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
-                >
-                  ««
-                </button>
-                <button
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  style={{ color: 'var(--text-3)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
-                >
-                  «
-                </button>
+            <GlassCard isDark={isDark} hover={false} padding="p-0" className="rounded-t-none border-t-0">
+              <div className="px-5 py-3 flex items-center justify-between">
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {((currentPage - 1) * pageSize + 1).toLocaleString('tr-TR')} - {Math.min(currentPage * pageSize, tableData.length).toLocaleString('tr-TR')} / {tableData.length.toLocaleString('tr-TR')} kayıt
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => goToPage(1)}
+                    disabled={currentPage === 1}
+                    className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    style={{ color: 'var(--text-3)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    ««
+                  </button>
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    style={{ color: 'var(--text-3)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    «
+                  </button>
 
-                {/* Sayfa numaraları */}
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let page: number;
-                  if (totalPages <= 5) {
-                    page = i + 1;
-                  } else if (currentPage <= 3) {
-                    page = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    page = totalPages - 4 + i;
-                  } else {
-                    page = currentPage - 2 + i;
-                  }
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => goToPage(page)}
-                      className={`px-2.5 py-1 text-xs rounded transition-all ${
-                        currentPage === page
-                          ? 'bg-amber-600 text-white font-bold'
-                          : ''
-                      }`}
-                      style={currentPage !== page ? { color: 'var(--text-3)' } : undefined}
-                      onMouseEnter={e => { if (currentPage !== page) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
-                      onMouseLeave={e => { if (currentPage !== page) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
+                  {/* Sayfa numaraları */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let page: number;
+                    if (totalPages <= 5) {
+                      page = i + 1;
+                    } else if (currentPage <= 3) {
+                      page = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      page = totalPages - 4 + i;
+                    } else {
+                      page = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`px-2.5 py-1 text-xs rounded transition-all ${
+                          currentPage === page
+                            ? 'bg-amber-600 text-white font-bold'
+                            : ''
+                        }`}
+                        style={currentPage !== page ? { color: 'var(--text-3)' } : undefined}
+                        onMouseEnter={e => { if (currentPage !== page) { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; } }}
+                        onMouseLeave={e => { if (currentPage !== page) { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; } }}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
 
-                <button
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  style={{ color: 'var(--text-3)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
-                >
-                  »
-                </button>
-                <button
-                  onClick={() => goToPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                  className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  style={{ color: 'var(--text-3)' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
-                >
-                  »»
-                </button>
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    style={{ color: 'var(--text-3)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    »
+                  </button>
+                  <button
+                    onClick={() => goToPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="px-2 py-1 text-xs rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    style={{ color: 'var(--text-3)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-1)'; e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-3)'; e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    »»
+                  </button>
+                </div>
               </div>
-            </div>
+            </GlassCard>
           )}
 
           {/* Sayfalama yoksa alt border */}
           {totalPages <= 1 && (
-            <div className="backdrop-blur-xl rounded-b-2xl border border-t-0 h-2" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} />
+            <GlassCard isDark={isDark} hover={false} padding="p-0" className="rounded-t-none border-t-0 h-2" />
           )}
         </>
       )}

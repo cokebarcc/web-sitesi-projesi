@@ -19,12 +19,14 @@ import DateRangeCalendar, { DateRange } from './DateRangeCalendar';
 import SingleDatePicker from './SingleDatePicker';
 import { HOSPITALS } from '../constants';
 import EmptyState from './common/EmptyState';
+import { GlassCard, GlassSection } from './ui';
 
 interface ActiveDemandProps {
   selectedHospital: string;
   allowedHospitals: string[];
   onHospitalChange: (hospital: string) => void;
   canUpload?: boolean;
+  theme?: 'dark' | 'light';
 }
 
 const MONTH_NAMES = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
@@ -93,7 +95,10 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
   allowedHospitals,
   onHospitalChange,
   canUpload = false,
+  theme = 'dark',
 }) => {
+  const isDark = theme === 'dark';
+
   // Upload için state'ler
   const [uploadDate, setUploadDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [uploadHospitalId, setUploadHospitalId] = useState<string>('');
@@ -1143,7 +1148,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
       {/* Veri Yükleme Bölümü */}
       {canUpload && (
-        <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6">
+        <GlassCard isDark={isDark} hover={false} padding="p-6">
           <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold mb-4">Veri Yükleme</h3>
           <div className="flex flex-wrap gap-4 items-end">
             {/* Hastane Seçimi - Custom Dropdown */}
@@ -1239,11 +1244,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
               <span className="font-semibold">Excel Formatı:</span> Tek sütun - "Klinik Adı" (her satır 1 talep, aynı branş tekrarlanıyorsa talep sayısı artar)
             </p>
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Filtreler */}
-      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="sticky-filter-panel rounded-2xl shadow-sm border p-4">
+      <GlassCard isDark={isDark} hover={false} padding="p-4" className="sticky-filter-panel">
         {/* Filtreler + Durum bilgisi tek satırda */}
         <div className="flex flex-wrap gap-3 items-end">
           {/* Hastane Seçimi - Sadece belirli hastanelere yetkisi varsa göster */}
@@ -1379,7 +1384,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
             </p>
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* Veri Yok Mesajı */}
       {!summary && (
@@ -1398,73 +1403,78 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
           {/* KPI Kartları */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Toplam Talep */}
-            <div ref={kpi1Ref} style={{ background: 'var(--surface-1)' }} className="rounded-2xl border-2 border-orange-500/50 p-6 shadow-lg shadow-orange-500/10 relative group">
-              {/* İndirme ikonu */}
-              <button
-                onClick={() => handleExportComponent(kpi1Ref, 'toplam-talep')}
-                style={{ background: 'var(--surface-3)' }}
-                className="absolute top-3 right-3 w-7 h-7 hover:bg-orange-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
-                title="PNG İndir"
-              >
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/30">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <div ref={kpi1Ref}>
+              <GlassCard isDark={isDark} hover={false} padding="p-6" className="border-2 border-orange-500/50 shadow-lg shadow-orange-500/10 relative group">
+                {/* İndirme ikonu */}
+                <button
+                  onClick={() => handleExportComponent(kpi1Ref, 'toplam-talep')}
+                  style={{ background: 'var(--surface-3)' }}
+                  className="absolute top-3 right-3 w-7 h-7 hover:bg-orange-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
+                  title="PNG İndir"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/30">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium status-highlight">
+                      {summary.totalHospitals === 1
+                        ? getShortName(summary.hospitalSummaries[0]?.hospitalName || '')
+                        : hasAllHospitalsAccess
+                          ? 'İl Toplam Talep'
+                          : 'Seçili Toplam Talep'}
+                    </p>
+                    <p className="text-3xl font-bold status-highlight">{summary.totalProvinceDemand.toLocaleString('tr-TR')}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium status-highlight">
-                    {summary.totalHospitals === 1
-                      ? getShortName(summary.hospitalSummaries[0]?.hospitalName || '')
-                      : hasAllHospitalsAccess
-                        ? 'İl Toplam Talep'
-                        : 'Seçili Toplam Talep'}
-                  </p>
-                  <p className="text-3xl font-bold status-highlight">{summary.totalProvinceDemand.toLocaleString('tr-TR')}</p>
-                </div>
-              </div>
+              </GlassCard>
             </div>
 
             {/* En Yüksek Branş */}
-            <div ref={kpi2Ref} style={{ background: 'var(--surface-1)' }} className="rounded-2xl border-2 border-purple-500/50 p-6 shadow-lg shadow-purple-500/10 relative group">
-              {/* İndirme ikonu */}
-              <button
-                onClick={() => handleExportComponent(kpi2Ref, 'en-yuksek-brans')}
-                style={{ background: 'var(--surface-3)' }}
-                className="absolute top-3 right-3 w-7 h-7 hover:bg-purple-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
-                title="PNG İndir"
-              >
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </button>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center shadow-md shadow-purple-500/30">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            <div ref={kpi2Ref}>
+              <GlassCard isDark={isDark} hover={false} padding="p-6" className="border-2 border-purple-500/50 shadow-lg shadow-purple-500/10 relative group">
+                {/* İndirme ikonu */}
+                <button
+                  onClick={() => handleExportComponent(kpi2Ref, 'en-yuksek-brans')}
+                  style={{ background: 'var(--surface-3)' }}
+                  className="absolute top-3 right-3 w-7 h-7 hover:bg-purple-500 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
+                  title="PNG İndir"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-purple-500 rounded-xl flex items-center justify-center shadow-md shadow-purple-500/30">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium status-accent">En Yüksek Talep</p>
+                    <p className="text-lg font-bold status-accent">
+                      {summary.branchTotals[0]?.branchName || '-'}
+                    </p>
+                    <p style={{ color: 'var(--text-3)' }} className="text-sm">
+                      {summary.branchTotals[0]?.demandCount.toLocaleString('tr-TR') || 0} talep
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium status-accent">En Yüksek Talep</p>
-                  <p className="text-lg font-bold status-accent">
-                    {summary.branchTotals[0]?.branchName || '-'}
-                  </p>
-                  <p style={{ color: 'var(--text-3)' }} className="text-sm">
-                    {summary.branchTotals[0]?.demandCount.toLocaleString('tr-TR') || 0} talep
-                  </p>
-                </div>
-              </div>
+              </GlassCard>
             </div>
           </div>
 
           {/* Grafikler - Yan yana */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Hastane Bazlı Donut Chart */}
-            <div ref={donutChartRef} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6 relative group">
+            <div ref={donutChartRef}>
+              <GlassCard isDark={isDark} hover={false} padding="p-6" className="relative group">
               {/* İndirme ikonu */}
               <button
                 onClick={() => handleExportComponent(donutChartRef, 'hastane-dagilimi')}
@@ -1575,10 +1585,12 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     ))}
                 </div>
               </div>
+              </GlassCard>
             </div>
 
             {/* Branş Bazlı Yatay Bar Chart */}
-            <div ref={barChartRef} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-sm border p-6 relative group">
+            <div ref={barChartRef}>
+              <GlassCard isDark={isDark} hover={false} padding="p-6" className="relative group">
               {/* İndirme ikonu */}
               <button
                 onClick={() => handleExportComponent(barChartRef, 'brans-dagilimi')}
@@ -1651,6 +1663,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              </GlassCard>
             </div>
           </div>
           </div>
@@ -1665,7 +1678,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
             {/* İl Toplamı Özet Kartı */}
             {hasAllHospitalsAccess && (
-              <div style={{ background: 'var(--surface-1)' }} className="rounded-2xl border-2 border-orange-500/50 p-5 shadow-lg shadow-orange-500/10">
+              <GlassCard isDark={isDark} hover={false} padding="p-5" className="border-2 border-orange-500/50 shadow-lg shadow-orange-500/10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/30">
@@ -1689,7 +1702,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     <p style={{ color: 'var(--text-2)' }} className="text-sm font-medium">{summary.branchTotals.length} Branş</p>
                   </div>
                 </div>
-              </div>
+              </GlassCard>
             )}
 
             {/* Her hastane için ayrı tablo */}
@@ -1703,49 +1716,49 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                     if (el) hospitalCardRefs.current.set(idx, el);
                     else hospitalCardRefs.current.delete(idx);
                   }}
-                  style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}
-                  className="rounded-xl border overflow-hidden relative group"
                 >
-                  {/* İndirme ikonu */}
-                  <button
-                    onClick={() => handleExportHospitalCard(idx, getShortName(hospital.hospitalName))}
-                    style={{ background: 'var(--surface-3)' }}
-                    className="absolute top-2 right-2 w-6 h-6 hover:bg-orange-500 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
-                    title="PNG İndir"
-                  >
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  </button>
-                  {/* Hastane Başlığı */}
-                  <div className="px-4 py-3 border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold" style={{ color: 'var(--text-1)' }}>{getShortName(hospital.hospitalName)}</h4>
-                      <span className="text-lg font-bold status-highlight">{hospital.totalDemand.toLocaleString('tr-TR')}</span>
+                  <GlassCard isDark={isDark} hover={false} padding="p-0" className="overflow-hidden relative group">
+                    {/* İndirme ikonu */}
+                    <button
+                      onClick={() => handleExportHospitalCard(idx, getShortName(hospital.hospitalName))}
+                      style={{ background: 'var(--surface-3)' }}
+                      className="absolute top-2 right-2 w-6 h-6 hover:bg-orange-500 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md z-10"
+                      title="PNG İndir"
+                    >
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    </button>
+                    {/* Hastane Başlığı */}
+                    <div className="px-4 py-3 border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold" style={{ color: 'var(--text-1)' }}>{getShortName(hospital.hospitalName)}</h4>
+                        <span className="text-lg font-bold status-highlight">{hospital.totalDemand.toLocaleString('tr-TR')}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Branş Listesi */}
-                  <div className="p-3">
-                    <table className="w-full">
-                      <thead>
-                        <tr>
-                          <th className="text-left text-xs font-medium pb-2" style={{ color: 'var(--text-3)' }}>Branş</th>
-                          <th className="text-right text-xs font-medium pb-2" style={{ color: 'var(--text-3)' }}>Talep</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {hospital.branches
-                          .sort((a, b) => b.demandCount - a.demandCount)
-                          .map((branch, bIdx) => (
-                          <tr key={bIdx} style={bIdx % 2 === 0 ? { background: 'var(--table-row-alt-bg)' } : {}}>
-                            <td className="py-1.5 px-2 text-sm rounded-l" style={{ color: 'var(--text-2)' }}>{branch.branchName}</td>
-                            <td className="py-1.5 px-2 text-sm text-right font-medium rounded-r" style={{ color: 'var(--text-1)' }}>{branch.demandCount.toLocaleString('tr-TR')}</td>
+                    {/* Branş Listesi */}
+                    <div className="p-3">
+                      <table className="w-full">
+                        <thead>
+                          <tr>
+                            <th className="text-left text-xs font-medium pb-2" style={{ color: 'var(--text-3)' }}>Branş</th>
+                            <th className="text-right text-xs font-medium pb-2" style={{ color: 'var(--text-3)' }}>Talep</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {hospital.branches
+                            .sort((a, b) => b.demandCount - a.demandCount)
+                            .map((branch, bIdx) => (
+                            <tr key={bIdx} style={bIdx % 2 === 0 ? { background: 'var(--table-row-alt-bg)' } : {}}>
+                              <td className="py-1.5 px-2 text-sm rounded-l" style={{ color: 'var(--text-2)' }}>{branch.branchName}</td>
+                              <td className="py-1.5 px-2 text-sm text-right font-medium rounded-r" style={{ color: 'var(--text-1)' }}>{branch.demandCount.toLocaleString('tr-TR')}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </GlassCard>
                 </div>
               ))}
             </div>

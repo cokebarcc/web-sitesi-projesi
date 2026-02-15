@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { HBYSData, DetailedScheduleData } from '../types';
 import { MONTHS, YEARS } from '../constants';
 import DataFilterPanel from './common/DataFilterPanel';
+import { GlassCard } from './ui';
 
 interface HBYSPerformanceProps {
   data: HBYSData[];
@@ -11,9 +12,11 @@ interface HBYSPerformanceProps {
   onImportHBYSSurgeries: (files: FileList | null, month: string, year: number) => void;
   onDelete: (id: string) => void;
   onClearMonth: (month: string, year: number) => void;
+  theme?: 'dark' | 'light';
 }
 
-const HBYSPerformance: React.FC<HBYSPerformanceProps> = ({ data, detailedScheduleData, onImportHBYSExams, onImportHBYSSurgeries, onDelete, onClearMonth }) => {
+const HBYSPerformance: React.FC<HBYSPerformanceProps> = ({ data, detailedScheduleData, onImportHBYSExams, onImportHBYSSurgeries, onDelete, onClearMonth, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [selectedYears, setSelectedYears] = useState<number[]>([2025]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([12]); // 12 = Aralık
   const [appliedYears, setAppliedYears] = useState<number[]>([2025]);
@@ -146,7 +149,7 @@ const HBYSPerformance: React.FC<HBYSPerformanceProps> = ({ data, detailedSchedul
         }
       />
       
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[40px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+      <GlassCard isDark={isDark} hover={false} padding="p-0" className="overflow-hidden">
         <div className="p-10 border-b border-[var(--border-1)] flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[var(--surface-2)] gap-4">
           <div>
             <h4 className="text-2xl font-black text-[var(--text-1)] tracking-tight uppercase">Hekim Verileri: {periodText}</h4>
@@ -207,7 +210,7 @@ const HBYSPerformance: React.FC<HBYSPerformanceProps> = ({ data, detailedSchedul
             </tbody>
           </table>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 };

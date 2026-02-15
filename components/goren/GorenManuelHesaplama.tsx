@@ -26,6 +26,7 @@ import { GorenDataEntry } from './common/GorenDataEntry';
 import GorenSummaryCards from './common/GorenSummaryCards';
 import GorenIndicatorTable from './common/GorenIndicatorTable';
 import MultiSelectDropdown, { DropdownOption } from '../MultiSelectDropdown';
+import { GlassCard } from '../ui';
 
 // Ay isimleri
 const MONTHS = [
@@ -42,7 +43,13 @@ const YEARS = Array.from(
 // Tüm kurum türleri
 const ALL_INSTITUTION_TYPES: InstitutionType[] = ['ILSM', 'ILCESM', 'BH', 'ADSH', 'ASH'];
 
-export const GorenManuelHesaplama: React.FC = () => {
+interface GorenManuelHesaplamaProps {
+  theme?: 'dark' | 'light';
+}
+
+export const GorenManuelHesaplama: React.FC<GorenManuelHesaplamaProps> = ({ theme = 'dark' }) => {
+  const isDark = theme === 'dark';
+
   // State
   const [institutionType, setInstitutionType] = useState<InstitutionType>('ILSM');
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -197,7 +204,7 @@ export const GorenManuelHesaplama: React.FC = () => {
       )}
 
       {/* Filtre Paneli */}
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-5 relative z-[100]">
+      <GlassCard isDark={isDark} hover={false} padding="p-5" className="relative z-[100]">
         <div className="flex flex-wrap gap-3 items-end">
           {/* Kurum Türü */}
           <MultiSelectDropdown
@@ -254,7 +261,7 @@ export const GorenManuelHesaplama: React.FC = () => {
             </span>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Sonuç Özeti */}
       {summary && (

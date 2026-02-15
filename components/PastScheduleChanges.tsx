@@ -1,18 +1,20 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { 
-  DetailedScheduleData, 
-  ScheduleVersion, 
+import {
+  DetailedScheduleData,
+  ScheduleVersion,
   ProcessedPhysicianSummary,
   SessionActionStats
 } from '../types';
 import { MONTHS, YEARS } from '../constants';
+import { GlassCard } from './ui';
 
 interface PastScheduleChangesProps {
   versions: Record<string, Record<string, ScheduleVersion>>;
   setVersions: React.Dispatch<React.SetStateAction<Record<string, Record<string, ScheduleVersion>>>>;
   selectedBranch: string | null;
+  theme?: 'dark' | 'light';
 }
 
 const AM_WINDOW = { start: 8 * 60, end: 12 * 60 };
@@ -20,7 +22,8 @@ const PM_WINDOW = { start: 13 * 60, end: 17 * 60 };
 const MIN_MINUTES_THRESHOLD = 30; 
 const MIN_DOMINANCE_RATIO = 0.4;  
 
-const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, setVersions, selectedBranch }) => {
+const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, setVersions, selectedBranch, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [selectedMonth, setSelectedMonth] = useState<string>('Aralık');
   const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [baselineLabel, setBaselineLabel] = useState<string>('');
@@ -346,7 +349,7 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
 
   return (
     <div className="space-y-4 pb-20 animate-in fade-in duration-700">
-      <div className="bg-white p-8 lg:p-12 rounded-[48px] shadow-xl border relative overflow-hidden" style={{ borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-8 lg:p-12" className="relative">
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50 rounded-full -mr-40 -mt-40 blur-3xl opacity-60"></div>
         
         <div className="relative z-10 grid grid-cols-1 xl:grid-cols-12 gap-8 items-center">
@@ -406,10 +409,10 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
              </label>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {isProcessing && (
-        <div className="bg-white p-24 rounded-[48px] shadow-sm border flex flex-col items-center gap-8 animate-in zoom-in-95" style={{ borderColor: 'var(--border-2)' }}>
+        <GlassCard isDark={isDark} hover={false} padding="p-24" className="flex flex-col items-center gap-8 animate-in zoom-in-95">
            <div className="relative">
              <div className="w-20 h-20 border-4 border-indigo-600/10 rounded-full"></div>
              <div className="w-20 h-20 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0 shadow-lg shadow-indigo-200"></div>
@@ -418,7 +421,7 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
              <p className="font-black text-xl uppercase tracking-tight italic" style={{ color: 'var(--text-1)' }}>Dosya Analiz Ediliyor...</p>
              <p className="font-bold text-sm" style={{ color: 'var(--text-3)' }}>Hekim bazlı kapasite ve aksiyon verileri işleniyor.</p>
            </div>
-        </div>
+        </GlassCard>
       )}
 
       {comparison && !isProcessing && (
@@ -446,7 +449,7 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-             <div className="bg-white p-10 rounded-[48px] shadow-sm border" style={{ borderColor: 'var(--border-2)' }}>
+             <GlassCard isDark={isDark} hover={false} padding="p-10">
                 <h3 className="text-lg font-black uppercase mb-8 flex items-center gap-3" style={{ color: 'var(--text-1)' }}>
                   <div className="w-2.5 h-6 bg-indigo-600 rounded-full"></div>
                   En Çok Etkilenen Branşlar
@@ -469,9 +472,9 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
                      </div>
                    ))}
                 </div>
-             </div>
+             </GlassCard>
 
-             <div className="bg-white p-10 rounded-[48px] shadow-sm border relative" style={{ borderColor: 'var(--border-2)' }}>
+             <GlassCard isDark={isDark} hover={false} padding="p-10" className="relative">
                 <h3 className="text-lg font-black uppercase mb-8 flex items-center gap-3" style={{ color: 'var(--text-1)' }}>
                   <div className="w-2.5 h-6 bg-rose-600 rounded-full"></div>
                   Kapasite Değişim Driverları
@@ -502,10 +505,10 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
                       </div>
                     ))}
                 </div>
-             </div>
+             </GlassCard>
           </div>
 
-          <div className="bg-white rounded-[48px] shadow-2xl border overflow-hidden" style={{ borderColor: 'var(--border-2)' }}>
+          <GlassCard isDark={isDark} variant="elevated" hover={false} padding="p-0">
             <div className="p-10 border-b flex justify-between items-center" style={{ borderColor: 'var(--border-2)', background: 'var(--surface-3)' }}>
                <div>
                   <h4 className="text-xl font-black uppercase italic" style={{ color: 'var(--text-1)' }}>Hekim Bazlı Değişim Detayları</h4>
@@ -616,12 +619,12 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
                  </tbody>
                </table>
             </div>
-          </div>
+          </GlassCard>
         </div>
       )}
 
       {availableVersions.length < 1 && !isProcessing && (
-        <div className="bg-white p-32 rounded-[56px] border-2 border-dashed text-center flex flex-col items-center gap-8 shadow-inner" style={{ borderColor: 'var(--border-2)' }}>
+        <GlassCard isDark={isDark} variant="outlined" hover={false} padding="p-32" className="text-center flex flex-col items-center gap-8">
            <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-inner" style={{ background: 'var(--surface-3)', color: 'var(--text-2)' }}>
              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
            </div>
@@ -629,7 +632,7 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
              <h4 className="text-2xl font-black uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>KIYASLANACAK VERİ BULUNAMADI</h4>
              <p className="font-medium max-w-md mx-auto mt-2 italic" style={{ color: 'var(--text-3)' }}>Lütfen sağ taraftaki butondan "Sürüm 1" ve "Sürüm 2" olarak iki farklı cetvel yükleyiniz.</p>
            </div>
-        </div>
+        </GlassCard>
       )}
     </div>
   );

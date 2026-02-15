@@ -16,6 +16,7 @@ import DetailedSchedule from './DetailedSchedule';
 import PhysicianData from './PhysicianData';
 import AnalysisModule from './AnalysisModule';
 import { normalizeDoctorName, getPeriodKey } from '../utils/formatters';
+import { GlassCard } from './ui';
 
 // Doctor Detail Modal Component (imported from EfficiencyAnalysis pattern)
 interface DoctorDetailModalProps {
@@ -90,7 +91,7 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
   return (
     <div className="fixed inset-0 z-[600] flex items-center justify-center p-4 lg:p-8">
       <div className="absolute inset-0 backdrop-blur-md" style={{ background: 'var(--bg-app)', opacity: 0.6 }} onClick={onClose}></div>
-      <div className="relative w-full max-w-[1200px] max-h-[90vh] bg-white rounded-[48px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+      <GlassCard isDark={false} hover={false} padding="p-0" className="relative w-full max-w-[1200px] max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300">
         <div className="p-10 flex justify-between items-start" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--surface-3)' }}>
           <div>
             <h3 className="text-3xl font-black uppercase tracking-tight" style={{ color: 'var(--text-1)' }}>{doctor.doctorName}</h3>
@@ -143,7 +144,7 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
               <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
               Aylık Faaliyet Analiz Raporu
             </h4>
-            <div className="bg-white rounded-[40px] overflow-hidden shadow-sm" style={{ border: '1px solid var(--border-2)' }}>
+            <GlassCard isDark={false} hover={false} padding="p-0" className="overflow-hidden">
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 divide-x divide-y" style={{ '--tw-divide-opacity': 1, '--tw-divide-color': 'var(--border-2)' } as React.CSSProperties}>
                 {Object.entries(activitySummary).length > 0 ? (
                   Object.entries(activitySummary).map(([act, days]) => (
@@ -159,10 +160,10 @@ const DoctorDetailModal: React.FC<DoctorDetailModalProps> = ({
                   </div>
                 )}
               </div>
-            </div>
+            </GlassCard>
           </div>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 };
@@ -364,6 +365,7 @@ interface PresentationModuleProps {
   selectedHospital: string;
   slides: PresentationSlide[];
   setSlides: React.Dispatch<React.SetStateAction<PresentationSlide[]>>;
+  theme?: 'dark' | 'light';
 }
 
 const WIDGET_LIBRARY: { type: PresentationTarget; label: string; icon: string; category: string }[] = [
@@ -374,8 +376,9 @@ const WIDGET_LIBRARY: { type: PresentationTarget; label: string; icon: string; c
 ];
 
 const PresentationModule: React.FC<PresentationModuleProps> = ({
-  detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, versions, selectedHospital, slides, setSlides
+  detailedScheduleData, muayeneByPeriod, ameliyatByPeriod, versions, selectedHospital, slides, setSlides, theme = 'dark'
 }) => {
+  const isDark = theme === 'dark';
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
   const [isPresenting, setIsPresenting] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
@@ -585,8 +588,12 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           )}
 
           {isEditing && slideId && !isPresentation && (
-            <div
-              className="absolute inset-x-0 bottom-0 bg-white border-t-4 border-indigo-600 p-6 shadow-2xl rounded-t-3xl z-20"
+            <GlassCard
+              isDark={isDark}
+              variant="elevated"
+              hover={false}
+              padding="p-6"
+              className="absolute inset-x-0 bottom-0 border-t-4 border-indigo-600 !rounded-b-none z-20"
             >
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-black uppercase text-sm" style={{ color: 'var(--text-1)' }}>Widget Ayarları</h4>
@@ -635,7 +642,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                   </select>
                 </div>
               </div>
-            </div>
+            </GlassCard>
           )}
         </div>
       </div>
@@ -662,7 +669,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 no-print">
         <div className="lg:col-span-8">
           {activeSlideId ? (
-            <div className="bg-white p-10 rounded-[48px] shadow-sm min-h-[600px] flex flex-col" style={{ border: '1px solid var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-10" className="min-h-[600px] flex flex-col">
               <div className="flex justify-between items-center border-b pb-8 mb-8">
                 <input
                   value={slides.find(s=>s.id===activeSlideId)?.title}
@@ -700,14 +707,14 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                   </div>
                 )}
               </div>
-            </div>
+            </GlassCard>
           ) : (
-            <div className="p-20 rounded-[48px] border-2 border-dashed text-center font-black text-2xl uppercase" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)', color: 'var(--text-muted)' }}>
+            <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-20" className="text-center font-black text-2xl uppercase border-dashed" style={{ color: 'var(--text-muted)' }}>
               DÜZENLEMEK İÇİN SOLDAKİ LİSTEDEN BİR SLAYT SEÇİN
-            </div>
+            </GlassCard>
           )}
         </div>
-        <div className="lg:col-span-4 rounded-[48px] p-10 text-white min-h-[600px] flex flex-col" style={{ background: 'var(--bg-app)' }}>
+        <GlassCard isDark={true} variant="elevated" hover={false} padding="p-10" className="lg:col-span-4 text-white min-h-[600px] flex flex-col" style={{ background: 'var(--bg-app)' }}>
           <h3 className="text-xl font-black uppercase mb-8 italic">Slayt Akışı</h3>
           <div className="flex-1 space-y-4 overflow-auto custom-scrollbar">
             {slides.map((s, idx) => (
@@ -740,7 +747,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           >
             + YENİ SLAYT EKLE
           </button>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Widget Gallery Modal */}
@@ -757,10 +764,16 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
           }}
         >
           <div
-            className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden"
             onMouseDown={(e) => {
               e.stopPropagation();
             }}
+          >
+          <GlassCard
+            isDark={isDark}
+            variant="elevated"
+            hover={false}
+            padding="p-0"
+            className="w-full max-w-4xl"
           >
             <div className="p-10" style={{ borderBottom: '1px solid var(--border-2)' }}>
               <div className="flex justify-between items-center">
@@ -804,6 +817,7 @@ const PresentationModule: React.FC<PresentationModuleProps> = ({
                 </div>
               ))}
             </div>
+          </GlassCard>
           </div>
         </div>
       )}

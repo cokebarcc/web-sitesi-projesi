@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { uploadFinansalFile, getFinansalFileMetadata, downloadFinansalFile, deleteFinansalFile } from '../src/services/finansalStorage';
+import { GlassCard } from './ui';
 
 export interface GilExcelData {
   headers: string[];
@@ -98,9 +99,11 @@ export function parseGilExcel(arrayBuffer: ArrayBuffer, fileName: string): GilEx
 
 interface GilModuleProps {
   canUpload?: boolean;
+  theme?: 'dark' | 'light';
 }
 
-const GilModule: React.FC<GilModuleProps> = ({ canUpload = false }) => {
+const GilModule: React.FC<GilModuleProps> = ({ canUpload = false, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [data, setData] = useState<GilExcelData | null>(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -201,34 +204,36 @@ const GilModule: React.FC<GilModuleProps> = ({ canUpload = false }) => {
       {!data ? (
         <div className="space-y-4">
           {canUpload ? (
-            <label className={`backdrop-blur-xl rounded-2xl p-12 cursor-pointer hover:border-lime-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
-              <div className="w-16 h-16 bg-lime-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
-                {loading ? (
-                  <div className="w-8 h-8 border-2 border-lime-400/30 border-t-lime-400 rounded-full animate-spin"></div>
-                ) : (
-                  <svg className="w-8 h-8 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                )}
-              </div>
-              <h3 className="text-lg font-semibold group-hover:text-lime-300 transition-colors mb-1" style={{ color: 'var(--text-1)' }}>
-                {loading ? 'Dosya İşleniyor...' : 'GİL Excel Dosyasını Yükleyin'}
-              </h3>
-              <p className="text-sm text-center max-w-md" style={{ color: 'var(--text-3)' }}>
-                .xlsx formatında Genel Tıbbi İşlemler Listesi dosyasını yükleyin.
-              </p>
-              <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
-            </label>
+            <GlassCard isDark={isDark} hover={false} padding="p-0">
+              <label className={`p-12 cursor-pointer hover:border-lime-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="w-16 h-16 bg-lime-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
+                  {loading ? (
+                    <div className="w-8 h-8 border-2 border-lime-400/30 border-t-lime-400 rounded-full animate-spin"></div>
+                  ) : (
+                    <svg className="w-8 h-8 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold group-hover:text-lime-300 transition-colors mb-1" style={{ color: 'var(--text-1)' }}>
+                  {loading ? 'Dosya İşleniyor...' : 'GİL Excel Dosyasını Yükleyin'}
+                </h3>
+                <p className="text-sm text-center max-w-md" style={{ color: 'var(--text-3)' }}>
+                  .xlsx formatında Genel Tıbbi İşlemler Listesi dosyasını yükleyin.
+                </p>
+                <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
+              </label>
+            </GlassCard>
           ) : (
-            <div className="backdrop-blur-xl rounded-2xl p-12 flex flex-col items-center justify-center" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-12" className="flex flex-col items-center justify-center">
               <p className="text-sm" style={{ color: 'var(--text-3)' }}>GİL verisi yüklenmemiş. Veri yükleme yetkiniz bulunmamaktadır.</p>
-            </div>
+            </GlassCard>
           )}
         </div>
       ) : (
         <div className="space-y-4">
           {/* Üst Bar */}
-          <div className="backdrop-blur-xl rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+          <GlassCard isDark={isDark} hover={false} padding="p-4" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-lime-500/10 rounded-lg flex items-center justify-center">
                 <svg className="w-4 h-4 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,10 +259,10 @@ const GilModule: React.FC<GilModuleProps> = ({ canUpload = false }) => {
                 Temizle
               </button>
             </div>
-          </div>
+          </GlassCard>
 
           {/* Tablo */}
-          <div className="backdrop-blur-xl rounded-2xl overflow-hidden" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+          <GlassCard isDark={isDark} hover={false} padding="p-0">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
@@ -287,7 +292,7 @@ const GilModule: React.FC<GilModuleProps> = ({ canUpload = false }) => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </GlassCard>
         </div>
       )}
     </div>
