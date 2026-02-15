@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 
 export interface DateRange {
   start: string | null; // YYYY-MM-DD
@@ -34,7 +35,10 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
   const [hoverDate, setHoverDate] = useState<string | null>(null);
   const [viewYear, setViewYear] = useState<number>(activeYear || new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(activeMonth || new Date().getMonth() + 1);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   // Aktif yıl/ay değişince takvim görünümünü güncelle
   useEffect(() => {
@@ -44,10 +48,45 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
     }
   }, [activeYear, activeMonth]);
 
+  // Popover pozisyonunu hesapla (trigger'ın üstünde)
+  const updatePopoverPosition = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPopoverPos({
+        top: rect.top - 4, // trigger'ın üstünde, bottom-full gibi
+        left: rect.left,
+      });
+    }
+  }, []);
+
+  // Açıldığında pozisyon hesapla
+  useEffect(() => {
+    if (isOpen) {
+      updatePopoverPosition();
+    }
+  }, [isOpen, updatePopoverPosition]);
+
+  // Scroll/resize'da pozisyon güncelle
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScrollOrResize = () => updatePopoverPosition();
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [isOpen, updatePopoverPosition]);
+
   // Dışarı tıklandığında kapat
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        popoverRef.current && !popoverRef.current.contains(target)
+      ) {
         setIsOpen(false);
         setHoverDate(null);
       }
@@ -218,12 +257,163 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
 
   const isDisabled = disabled || !activeYear || !activeMonth;
 
+  // Portal ile render edilen takvim popover
+  const renderPopover = () => {
+    if (!isOpen) return null;
+
+    const popover = (
+      <div
+        ref={popoverRef}
+        className="fixed z-[9999] border rounded-xl shadow-2xl p-4 min-w-[300px] max-h-[400px] overflow-y-auto"
+        style={{
+          background: 'var(--surface-1)',
+          borderColor: 'var(--border-2)',
+          bottom: `${window.innerHeight - popoverPos.top}px`,
+          left: popoverPos.left,
+        }}
+      >
+        {/* Header - Ay/Yıl Navigasyonu */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={() => changeMonth(-1)}
+            className="p-1.5 rounded-lg transition-colors"
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
+            <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div className="font-semibold" style={{ color: 'var(--text-1)' }}>
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </div>
+          <button
+            type="button"
+            onClick={() => changeMonth(1)}
+            className="p-1.5 rounded-lg transition-colors"
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
+            <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Gün İsimleri */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {DAY_NAMES.map(day => (
+            <div key={day} className="text-center text-xs font-medium py-1" style={{ color: 'var(--text-3)' }}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Günler */}
+        <div className="grid grid-cols-7 gap-1">
+          {calendarDays.map((day, index) => {
+            if (day === null) {
+              return <div key={`empty-${index}`} className="h-9" />;
+            }
+
+            const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isAvailable = availableDatesSet.has(dateStr);
+            const isSelected = selectedDates.has(dateStr);
+            const isInHoverRange = hoverRange.has(dateStr);
+            const isStart = value.start === dateStr;
+            const isEnd = value.end === dateStr;
+            const isToday = dateStr === new Date().toISOString().split('T')[0];
+
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => handleDateClick(day)}
+                disabled={!isAvailable}
+                className={`
+                  h-9 w-full rounded-lg text-sm font-medium transition-all relative
+                  ${!isAvailable
+                    ? 'cursor-not-allowed'
+                    : isStart || isEnd
+                      ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                      : isSelected
+                        ? 'bg-emerald-500/20 status-success'
+                        : isInHoverRange
+                          ? 'bg-emerald-500/10 status-success'
+                          : isToday
+                            ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                            : ''
+                  }
+                `}
+                style={
+                  !isAvailable
+                    ? { color: 'var(--border-2)' }
+                    : isStart || isEnd || isSelected || isInHoverRange || isToday
+                      ? undefined
+                      : { color: 'var(--text-2)' }
+                }
+                onMouseEnter={e => {
+                  if (isAvailable) {
+                    setHoverDate(dateStr);
+                    if (!isStart && !isEnd && !isSelected && !isInHoverRange && !isToday) {
+                      e.currentTarget.style.background = 'var(--surface-hover)';
+                    }
+                  }
+                }}
+                onMouseLeave={e => {
+                  setHoverDate(null);
+                  if (!isStart && !isEnd && !isSelected && !isInHoverRange && !isToday) {
+                    e.currentTarget.style.background = '';
+                  }
+                }}
+              >
+                {day}
+                {isToday && !isSelected && !isStart && !isEnd && (
+                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-400 rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-4 pt-3 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-2)' }}>
+          <div className="text-xs" style={{ color: 'var(--text-3)' }}>
+            {value.start && value.end ? (
+              <span className="status-success font-medium">{getSelectedDayCount()} gün seçili</span>
+            ) : value.start ? (
+              <span>Bitiş tarihi seçin</span>
+            ) : (
+              <span>Başlangıç tarihi seçin</span>
+            )}
+          </div>
+          {value.start && (
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="text-xs font-medium"
+              style={{ color: 'var(--text-3)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-2)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+            >
+              Temizle
+            </button>
+          )}
+        </div>
+      </div>
+    );
+
+    return ReactDOM.createPortal(popover, document.body);
+  };
+
   return (
     <div className="flex flex-col gap-1.5" ref={containerRef}>
       <label className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>{label}</label>
       <div className="relative">
         {/* Trigger Button */}
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => !isDisabled && setIsOpen(!isOpen)}
           onKeyDown={handleKeyDown}
@@ -278,140 +468,8 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({
           </svg>
         </button>
 
-        {/* Calendar Popover */}
-        {isOpen && (
-          <div className="absolute left-0 bottom-full z-50 mb-1 border rounded-xl shadow-lg p-4 min-w-[300px] max-h-[400px] overflow-y-auto" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
-            {/* Header - Ay/Yıl Navigasyonu */}
-            <div className="flex items-center justify-between mb-4">
-              <button
-                type="button"
-                onClick={() => changeMonth(-1)}
-                className="p-1.5 rounded-lg transition-colors"
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="font-semibold" style={{ color: 'var(--text-1)' }}>
-                {MONTH_NAMES[viewMonth]} {viewYear}
-              </div>
-              <button
-                type="button"
-                onClick={() => changeMonth(1)}
-                className="p-1.5 rounded-lg transition-colors"
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Gün İsimleri */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {DAY_NAMES.map(day => (
-                <div key={day} className="text-center text-xs font-medium py-1" style={{ color: 'var(--text-3)' }}>
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Günler */}
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, index) => {
-                if (day === null) {
-                  return <div key={`empty-${index}`} className="h-9" />;
-                }
-
-                const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const isAvailable = availableDatesSet.has(dateStr);
-                const isSelected = selectedDates.has(dateStr);
-                const isInHoverRange = hoverRange.has(dateStr);
-                const isStart = value.start === dateStr;
-                const isEnd = value.end === dateStr;
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
-
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => handleDateClick(day)}
-                    disabled={!isAvailable}
-                    className={`
-                      h-9 w-full rounded-lg text-sm font-medium transition-all relative
-                      ${!isAvailable
-                        ? 'cursor-not-allowed'
-                        : isStart || isEnd
-                          ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                          : isSelected
-                            ? 'bg-emerald-500/20 status-success'
-                            : isInHoverRange
-                              ? 'bg-emerald-500/10 status-success'
-                              : isToday
-                                ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
-                                : ''
-                      }
-                    `}
-                    style={
-                      !isAvailable
-                        ? { color: 'var(--border-2)' }
-                        : isStart || isEnd || isSelected || isInHoverRange || isToday
-                          ? undefined
-                          : { color: 'var(--text-2)' }
-                    }
-                    onMouseEnter={e => {
-                      if (isAvailable) {
-                        setHoverDate(dateStr);
-                        if (!isStart && !isEnd && !isSelected && !isInHoverRange && !isToday) {
-                          e.currentTarget.style.background = 'var(--surface-hover)';
-                        }
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      setHoverDate(null);
-                      if (!isStart && !isEnd && !isSelected && !isInHoverRange && !isToday) {
-                        e.currentTarget.style.background = '';
-                      }
-                    }}
-                  >
-                    {day}
-                    {isToday && !isSelected && !isStart && !isEnd && (
-                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-400 rounded-full" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div className="mt-4 pt-3 border-t flex items-center justify-between" style={{ borderColor: 'var(--border-2)' }}>
-              <div className="text-xs" style={{ color: 'var(--text-3)' }}>
-                {value.start && value.end ? (
-                  <span className="status-success font-medium">{getSelectedDayCount()} gün seçili</span>
-                ) : value.start ? (
-                  <span>Bitiş tarihi seçin</span>
-                ) : (
-                  <span>Başlangıç tarihi seçin</span>
-                )}
-              </div>
-              {value.start && (
-                <button
-                  type="button"
-                  onClick={clearSelection}
-                  className="text-xs font-medium"
-                  style={{ color: 'var(--text-3)' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-2)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
-                >
-                  Temizle
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Calendar Popover - Portal ile body'ye render */}
+        {renderPopover()}
       </div>
     </div>
   );

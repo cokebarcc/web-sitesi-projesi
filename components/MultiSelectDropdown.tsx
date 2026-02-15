@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 
 export interface DropdownOption {
   value: string | number;
@@ -35,19 +36,58 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Filtrelenmiş seçenekler
   const filteredOptions = options.filter(opt =>
     opt.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Dropdown pozisyonunu hesapla
+  const updateDropdownPosition = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: Math.max(rect.width, 200)
+      });
+    }
+  }, []);
+
+  // Açıldığında pozisyon hesapla
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+    }
+  }, [isOpen, updateDropdownPosition]);
+
+  // Scroll/resize'da pozisyon güncelle
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScrollOrResize = () => updateDropdownPosition();
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [isOpen, updateDropdownPosition]);
+
   // Dışarı tıklandığında kapat
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
         setSearchTerm('');
         setFocusedIndex(-1);
@@ -209,12 +249,141 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     );
   };
 
+  // Portal ile render edilen dropdown menü
+  const renderDropdown = () => {
+    if (!isOpen) return null;
+
+    const dropdown = (
+      <div
+        ref={dropdownRef}
+        className="fixed z-[9999] min-w-[200px] w-max max-w-[480px] border border-[var(--glass-border-light)] rounded-xl shadow-2xl overflow-hidden"
+        style={{
+          background: 'var(--bg-app)',
+          top: dropdownPos.top,
+          left: dropdownPos.left,
+          minWidth: dropdownPos.width,
+        }}
+        role="listbox"
+        aria-multiselectable="true"
+      >
+        {/* Search Input */}
+        {showSearch && options.length > 5 && (
+          <div className="p-2" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--bg-app)' }}>
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setFocusedIndex(-1);
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Ara..."
+                className="w-full pl-9 pr-3 py-2 text-sm rounded-lg text-[var(--text-1)] placeholder-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50"
+                style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)' }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Select All / Clear All - Sadece çoklu seçimde göster */}
+        {!singleSelect && filteredOptions.length > 0 && (
+          <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
+            <button
+              type="button"
+              onClick={selectAll}
+              className="text-xs font-medium multiselect-select-all"
+            >
+              Tümünü Seç
+            </button>
+            {selectedValues.length > 0 && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text-2)] font-medium"
+              >
+                Temizle
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Options List */}
+        <div
+          ref={listRef}
+          className="max-h-[240px] overflow-y-auto"
+          style={{ background: 'var(--bg-app)' }}
+        >
+          {filteredOptions.length === 0 ? (
+            <div className="px-3 py-4 text-sm text-[var(--text-muted)] text-center" style={{ background: 'var(--bg-app)' }}>
+              {emptyMessage}
+            </div>
+          ) : (
+            filteredOptions.map((option, index) => {
+              const isSelected = selectedValues.includes(option.value);
+              const isFocused = focusedIndex === index;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => toggleOption(option.value)}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors
+                    ${isSelected ? 'multiselect-selected-text' : 'text-[var(--text-2)]'}
+                  `}
+                  style={{
+                    background: isSelected
+                      ? 'var(--multiselect-selected-bg, rgba(16, 185, 129, 0.2))'
+                      : isFocused
+                        ? 'var(--surface-hover)'
+                        : 'var(--bg-app)'
+                  }}
+                  onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                  onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = isFocused ? 'var(--surface-hover)' : 'var(--bg-app)'; }}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <div className={`
+                    w-4 h-4 ${singleSelect ? 'rounded-full' : 'rounded'} border flex items-center justify-center flex-shrink-0 transition-colors
+                    ${isSelected
+                      ? 'bg-emerald-500 border-emerald-500'
+                      : 'border-[var(--border-2)]'
+                    }
+                  `}>
+                    {isSelected && (
+                      singleSelect ? (
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      ) : (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )
+                    )}
+                  </div>
+                  <span className="whitespace-nowrap font-medium">{option.label}</span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+
+    return ReactDOM.createPortal(dropdown, document.body);
+  };
+
   return (
     <div className={`flex flex-col ${compact ? 'gap-1' : 'gap-1.5'}`} ref={containerRef}>
       <label className={`${compact ? 'text-xs' : 'text-sm'} font-medium text-[var(--text-3)]`}>{label}</label>
       <div className="relative">
         {/* Trigger Button */}
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           onKeyDown={handleKeyDown}
@@ -245,121 +414,8 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           </svg>
         </button>
 
-        {/* Dropdown Menu */}
-        {isOpen && (
-          <div
-            className="absolute z-[9999] mt-1 min-w-full w-max max-w-[480px] border border-[var(--glass-border-light)] rounded-xl shadow-2xl overflow-hidden"
-            style={{ background: 'var(--bg-app)' }}
-            role="listbox"
-            aria-multiselectable="true"
-          >
-            {/* Search Input */}
-            {showSearch && options.length > 5 && (
-              <div className="p-2" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--bg-app)' }}>
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setFocusedIndex(-1);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ara..."
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg text-[var(--text-1)] placeholder-[var(--text-placeholder)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50"
-                    style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)' }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Select All / Clear All - Sadece çoklu seçimde göster */}
-            {!singleSelect && filteredOptions.length > 0 && (
-              <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid var(--border-2)', background: 'var(--surface-2)' }}>
-                <button
-                  type="button"
-                  onClick={selectAll}
-                  className="text-xs font-medium multiselect-select-all"
-                >
-                  Tümünü Seç
-                </button>
-                {selectedValues.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={clearAll}
-                    className="text-xs text-[var(--text-muted)] hover:text-[var(--text-2)] font-medium"
-                  >
-                    Temizle
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Options List */}
-            <div
-              ref={listRef}
-              className="max-h-[240px] overflow-y-auto"
-              style={{ background: 'var(--bg-app)' }}
-            >
-              {filteredOptions.length === 0 ? (
-                <div className="px-3 py-4 text-sm text-[var(--text-muted)] text-center" style={{ background: 'var(--bg-app)' }}>
-                  {emptyMessage}
-                </div>
-              ) : (
-                filteredOptions.map((option, index) => {
-                  const isSelected = selectedValues.includes(option.value);
-                  const isFocused = focusedIndex === index;
-
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => toggleOption(option.value)}
-                      className={`
-                        w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors
-                        ${isSelected ? 'multiselect-selected-text' : 'text-[var(--text-2)]'}
-                      `}
-                      style={{
-                        background: isSelected
-                          ? 'var(--multiselect-selected-bg, rgba(16, 185, 129, 0.2))'
-                          : isFocused
-                            ? 'var(--surface-hover)'
-                            : 'var(--bg-app)'
-                      }}
-                      onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'var(--surface-hover)'; }}
-                      onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = isFocused ? 'var(--surface-hover)' : 'var(--bg-app)'; }}
-                      role="option"
-                      aria-selected={isSelected}
-                    >
-                      <div className={`
-                        w-4 h-4 ${singleSelect ? 'rounded-full' : 'rounded'} border flex items-center justify-center flex-shrink-0 transition-colors
-                        ${isSelected
-                          ? 'bg-emerald-500 border-emerald-500'
-                          : 'border-[var(--border-2)]'
-                        }
-                      `}>
-                        {isSelected && (
-                          singleSelect ? (
-                            <div className="w-2 h-2 rounded-full bg-white" />
-                          ) : (
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )
-                        )}
-                      </div>
-                      <span className="whitespace-nowrap font-medium">{option.label}</span>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
+        {/* Dropdown Menu - Portal ile body'ye render */}
+        {renderDropdown()}
       </div>
     </div>
   );

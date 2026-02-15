@@ -903,7 +903,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       )}
 
       {/* Filtreler */}
-      <GlassCard isDark={isDark} hover={false} padding="p-4" className="sticky-filter-panel">
+      <GlassCard isDark={isDark} hover={false} padding="p-4" className="sticky-filter-panel" overflowVisible>
         {/* Filtreler + Durum bilgisi tek satırda */}
         <div className="flex flex-wrap gap-3 items-end">
           {/* Hastane Seçimi - En başta */}
@@ -1160,7 +1160,7 @@ const EmergencyService: React.FC<EmergencyServiceProps> = ({
       )}
 
       {/* Bağımsız Günlük Oran Tablosu Bölümü */}
-      <GlassCard isDark={isDark} hover={false} padding="p-4" className="mt-6">
+      <GlassCard isDark={isDark} hover={false} padding="p-4" className="mt-6" overflowVisible>
         <div className="flex flex-col gap-3">
           {/* Kompakt Filtre Paneli (başlık kaldırıldı — sticky çakışma önlenir) */}
           <div style={{ background: 'var(--surface-3)' }} className="flex flex-wrap items-end gap-3 p-3 rounded-xl">

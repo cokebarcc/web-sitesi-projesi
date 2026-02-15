@@ -1148,7 +1148,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
 
       {/* Veri Yükleme Bölümü */}
       {canUpload && (
-        <GlassCard isDark={isDark} hover={false} padding="p-6">
+        <GlassCard isDark={isDark} hover={false} padding="p-6" overflowVisible>
           <h3 style={{ color: 'var(--text-1)' }} className="text-lg font-semibold mb-4">Veri Yükleme</h3>
           <div className="flex flex-wrap gap-4 items-end">
             {/* Hastane Seçimi - Custom Dropdown */}
@@ -1248,7 +1248,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
       )}
 
       {/* Filtreler */}
-      <GlassCard isDark={isDark} hover={false} padding="p-4" className="sticky-filter-panel">
+      <GlassCard isDark={isDark} hover={false} padding="p-4" className="sticky-filter-panel" overflowVisible>
         {/* Filtreler + Durum bilgisi tek satırda */}
         <div className="flex flex-wrap gap-3 items-end">
           {/* Hastane Seçimi - Sadece belirli hastanelere yetkisi varsa göster */}
