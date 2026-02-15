@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { GlassCard, GlassButton } from './ui';
 import { ViewType } from '../types';
 
 interface DashboardCategoryProps {
@@ -6,6 +7,7 @@ interface DashboardCategoryProps {
   onBack: () => void;
   hasModuleAccess: (module: string) => boolean;
   onModuleSelect: (moduleId: string) => void;
+  theme?: 'dark' | 'light';
 }
 
 interface ModuleDefinition {
@@ -184,8 +186,10 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
   category,
   onBack,
   hasModuleAccess,
-  onModuleSelect
+  onModuleSelect,
+  theme = 'dark'
 }) => {
+  const isDark = theme === 'dark';
   // Erişilebilir tab'ları filtrele
   const availableTabs = useMemo(() => {
     return CATEGORY_MODULES[category].filter(module => {
@@ -204,87 +208,98 @@ const DashboardCategory: React.FC<DashboardCategoryProps> = ({
 
   if (availableTabs.length === 0) {
     return (
-      <div className="p-8">
-        <button
+      <div>
+        <GlassButton
+          isDark={isDark}
+          variant="secondary"
+          size="sm"
           onClick={onBack}
-          className="flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm uppercase transition-all mb-6"
-          style={{ backgroundColor: 'var(--surface-2)' }}
+          className="mb-6"
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          }
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
           Dashboard'a Dön
-        </button>
+        </GlassButton>
 
-        <div className="rounded-[32px] p-12 text-center shadow-sm" style={{ backgroundColor: 'var(--surface-1)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-2)' }}>
-          <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-3)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <h2 className="text-2xl font-black mb-2" style={{ color: 'var(--text-1)' }}>Erişim Yok</h2>
-          <p className="font-medium" style={{ color: 'var(--text-3)' }}>
-            Bu kategorideki modüllere erişim yetkiniz bulunmamaktadır.
-          </p>
-        </div>
+        <GlassCard isDark={isDark} hover={false} padding="p-12">
+          <div className="text-center">
+            <svg className={`w-14 h-14 mx-auto mb-4 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Erişim Yok</h2>
+            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              Bu kategorideki modüllere erişim yetkiniz bulunmamaktadır.
+            </p>
+          </div>
+        </GlassCard>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <button
+        <GlassButton
+          isDark={isDark}
+          variant="secondary"
+          size="sm"
           onClick={onBack}
-          className="flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm uppercase transition-all"
-          style={{ backgroundColor: 'var(--surface-2)' }}
+          icon={
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          }
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
           Dashboard'a Dön
-        </button>
-        <h1 className="text-3xl font-black uppercase tracking-tight" style={{ color: 'var(--text-1)' }}>
+        </GlassButton>
+        <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
           {CATEGORY_TITLES[category]}
         </h1>
-        <div className="w-[200px]"></div> {/* Spacer for centering */}
+        <div className="w-[160px]"></div>
       </div>
 
-      {/* Tab Navigation & Content */}
-      <div className="rounded-[32px] overflow-hidden shadow-sm" style={{ backgroundColor: 'var(--surface-1)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-2)' }}>
-        {/* Module Cards */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {availableTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab.id)}
-              className="group hover:border-blue-500 border-2 rounded-2xl p-6 text-left transition-all hover:shadow-lg"
-              style={{ backgroundColor: 'var(--surface-1)', borderColor: 'var(--border-2)' }}
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-blue-50 group-hover:bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 transition-all shrink-0">
-                  {tab.icon}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-black text-sm uppercase mb-2" style={{ color: 'var(--text-1)' }}>
-                    {tab.label}
-                  </h3>
-                  <p className="text-xs font-medium" style={{ color: 'var(--text-3)' }}>
-                    Modülü görüntülemek için tıklayın
-                  </p>
-                </div>
-                <svg
-                  className="w-5 h-5 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"
-                  style={{ color: 'var(--text-3)' }}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
+      {/* Module Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {availableTabs.map(tab => (
+          <GlassCard
+            key={tab.id}
+            isDark={isDark}
+            hover={true}
+            padding="p-5"
+            onClick={() => handleTabClick(tab.id)}
+            className="group cursor-pointer"
+          >
+            <div className="flex items-start gap-4">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                isDark ? 'bg-sky-500/10 text-sky-400 group-hover:bg-sky-500/20' : 'bg-sky-50 text-sky-600 group-hover:bg-sky-100'
+              }`}>
+                {tab.icon}
               </div>
-            </button>
-          ))}
-        </div>
+              <div className="flex-1">
+                <h3 className={`font-semibold text-sm mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  {tab.label}
+                </h3>
+                <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Modülü görüntülemek için tıklayın
+                </p>
+              </div>
+              <svg
+                className={`w-5 h-5 shrink-0 mt-1 group-hover:translate-x-1 transition-all ${
+                  isDark ? 'text-slate-600 group-hover:text-sky-400' : 'text-slate-300 group-hover:text-sky-500'
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </GlassCard>
+        ))}
       </div>
     </div>
   );

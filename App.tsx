@@ -56,6 +56,7 @@ import { useUserPermissions } from './src/hooks/useUserPermissions';
 import { ADMIN_EMAIL } from './src/types/user';
 import SessionManagement from './src/components/SessionManagement';
 import { registerSession, logoutSession } from './src/services/sessionService';
+import { ModuleLayout } from './components/ui';
 
 // Logolar
 import sbLogo from './logo/sb logo.png';
@@ -918,6 +919,7 @@ const App: React.FC = () => {
                     setView(`dashboard-${cat}` as ViewType);
                   }}
                   userPermissions={userPermissions}
+                  theme={theme}
                 />
               );
 
@@ -940,6 +942,7 @@ const App: React.FC = () => {
                       // Modül ID'sine göre view'i değiştir
                       setView(moduleId as ViewType);
                     }}
+                    theme={theme}
                   />
                 </div>
               );
@@ -966,6 +969,7 @@ const App: React.FC = () => {
                   onHospitalChange={setSelectedHospital}
                   onLoadPeriodData={handleLoadPeriodData}
                   canUpload={canUploadData('physicianData')}
+                  theme={theme}
                 />
               );
             case 'efficiency-analysis':
@@ -991,6 +995,7 @@ const App: React.FC = () => {
                   // Merkezi veri yükleme fonksiyonu
                   onCentralDataLoad={handleCentralDataLoad}
                   isLoading={isLoading}
+                  theme={theme}
                 />
               );
             case 'ai-cetvel-planlama':
@@ -1012,6 +1017,7 @@ const App: React.FC = () => {
                   onCentralDataLoad={handleCentralDataLoad}
                   onLoadPeriodData={handleLoadPeriodData}
                   isLoading={isLoading}
+                  theme={theme}
                 />
               );
             case 'detailed-schedule':
@@ -1028,6 +1034,7 @@ const App: React.FC = () => {
                   onHospitalChange={setSelectedHospital}
                   onLoadData={handleLoadDetailedScheduleData}
                   canUpload={canUploadData('detailedSchedule')}
+                  theme={theme}
                 />
               );
 
@@ -1053,6 +1060,7 @@ const App: React.FC = () => {
                   loadedFullVersions={changeAnalysisLoadedVersions}
                   setLoadedFullVersions={setChangeAnalysisLoadedVersions}
                   onPhysCompareUpdate={setChangeAnalysisPhysCompare}
+                  theme={theme}
                 />
               );
 
@@ -1065,24 +1073,24 @@ const App: React.FC = () => {
                     allowedHospitals={allowedHospitals}
                     showHospitalFilter={true}
                   />
-                  <ServiceInterventionAnalysis sutData={sutServiceData} onImportSUT={(f) => {}} aiAnalysis={sutRiskAnalysis} setAiAnalysis={setSutRiskAnalysis} />
+                  <ServiceInterventionAnalysis sutData={sutServiceData} onImportSUT={(f) => {}} aiAnalysis={sutRiskAnalysis} setAiAnalysis={setSutRiskAnalysis} theme={theme} />
                 </>
               );
 
             case 'etik-kurul':
-              return <EtikKurulModule />;
+              return <EtikKurulModule theme={theme} />;
 
             case 'hekim-islem-listesi':
-              return <HekimIslemListesiModule />;
+              return <HekimIslemListesiModule theme={theme} />;
 
             case 'ek-liste-tanimlama':
-              return <EkListeTanimlama canUpload={canUploadData('ekListeTanimlama')} />;
+              return <EkListeTanimlama canUpload={canUploadData('ekListeTanimlama')} theme={theme} />;
 
             case 'sut-mevzuati':
               return <SutMevzuati />;
 
             case 'gil':
-              return <GilModule canUpload={canUploadData('gil')} />;
+              return <GilModule canUpload={canUploadData('gil')} theme={theme} />;
 
             case 'ai-chatbot':
               return (
@@ -1110,7 +1118,7 @@ const App: React.FC = () => {
                     allowedHospitals={allowedHospitals}
                     showHospitalFilter={true}
                   />
-                  <GorenBashekimlik />
+                  <GorenBashekimlik theme={theme} />
                 </>
               );
 
@@ -1123,10 +1131,10 @@ const App: React.FC = () => {
                     allowedHospitals={allowedHospitals}
                     showHospitalFilter={true}
                   />
-                  <AnalysisModule appointmentData={appointmentData} hbysData={hbysData} planningProposals={[]} pastChangesInitialData={null} pastChangesFinalData={null} onClearPastChanges={() => {}} selectedHospital={selectedHospital} />
+                  <AnalysisModule appointmentData={appointmentData} hbysData={hbysData} planningProposals={[]} pastChangesInitialData={null} pastChangesFinalData={null} onClearPastChanges={() => {}} selectedHospital={selectedHospital} theme={theme} />
                 </>
               );
-            case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} />;
+            case 'presentation': return <PresentationModule slides={slides} setSlides={setSlides} detailedScheduleData={filteredDetailedScheduleData} muayeneByPeriod={muayeneByPeriod} ameliyatByPeriod={ameliyatByPeriod} versions={scheduleVersions} selectedHospital={selectedHospital} theme={theme} />;
             case 'admin': return <AdminPanel currentUserEmail={user?.email || ''} onNavigate={setView} />;
             case 'session-management': return <SessionManagement currentUserEmail={user?.email || ''} />;
             case 'emergency-service':
@@ -1140,6 +1148,7 @@ const App: React.FC = () => {
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
                   canUpload={canUploadData('emergencyService')}
+                  theme={theme}
                 />
               );
             case 'schedule-planning':
@@ -1150,6 +1159,7 @@ const App: React.FC = () => {
                   onHospitalChange={setSelectedHospital}
                   selectedBranch={selectedBranch}
                   detailedScheduleData={detailedScheduleData}
+                  theme={theme}
                 />
               );
             case 'active-demand':
@@ -1159,10 +1169,11 @@ const App: React.FC = () => {
                   allowedHospitals={allowedHospitals}
                   onHospitalChange={setSelectedHospital}
                   canUpload={canUploadData('activeDemand')}
+                  theme={theme}
                 />
               );
             case 'goren-manuel':
-              return <GorenManuelHesaplama />;
+              return <GorenManuelHesaplama theme={theme} />;
             case 'goren-ilsm':
               return (
                 <GorenModule
@@ -1300,11 +1311,16 @@ const App: React.FC = () => {
   // Welcome ekranı — Şanlıurfa İlçe Haritası
   if (view === 'welcome') {
     return (
-      <div className={`flex h-screen font-['Inter'] ${
+      <div className={`flex h-screen overflow-hidden font-['Inter'] ${
         theme === 'dark'
-          ? 'text-slate-200 bg-[#0f1729]'
-          : 'text-slate-800 bg-[#f5f6fb]'
-      }`}>
+          ? 'text-slate-200'
+          : 'text-slate-800'
+      }`}
+        style={{
+          background: theme === 'dark'
+            ? 'radial-gradient(circle at 20% 20%, rgba(59,130,246,0.25), transparent 40%), radial-gradient(circle at 80% 30%, rgba(14,165,233,0.2), transparent 40%), #0b1220'
+            : 'radial-gradient(circle at 20% 20%, rgba(59,130,246,0.15), transparent 40%), radial-gradient(circle at 80% 30%, rgba(14,165,233,0.1), transparent 40%), #f1f5f9',
+        }}>
         <CommandPalette
           isOpen={isCommandPaletteOpen}
           onClose={() => setIsCommandPaletteOpen(false)}
@@ -1343,58 +1359,62 @@ const App: React.FC = () => {
           theme={theme}
           onToggleTheme={toggleTheme}
         />
-        <div className="flex-1 ml-[72px] flex flex-col overflow-hidden">
-          {/* Sticky Breadcrumb Header — floating glass bar */}
-          <header
-            className={`shrink-0 z-[200] px-8 pt-3 pb-2 flex justify-between items-center no-print backdrop-blur-2xl border-b transition-colors duration-500 ${
-              theme === 'dark'
-                ? 'bg-[#0f1729]/60 border-white/[0.06]'
-                : 'bg-[#f5f6fb]/70 border-black/[0.04]'
-            }`}
-          >
+        {/* ── Glass Top Bar — full-width, sits above content area ── */}
+        <header className={`fixed top-0 left-0 right-0 z-[200] h-12 no-print border-b backdrop-blur-md ${
+          theme === 'dark'
+            ? 'bg-[rgba(12,18,35,0.50)] border-white/[0.06]'
+            : 'bg-white/[0.55] border-black/[0.06]'
+        }`}>
+          <div className="w-full h-full pl-[96px] pr-5 flex justify-between items-center relative">
             <nav className="flex items-center gap-2 text-sm">
-              <button className="text-[#5b9cff] transition-colors flex items-center gap-1.5">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all duration-200 ${
+                theme === 'dark'
+                  ? 'text-sky-400 hover:bg-white/[0.06]'
+                  : 'text-sky-600 hover:bg-black/[0.04]'
+              }`}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <span>Ana Sayfa</span>
+                <span className="font-medium text-[13px]">Ana Sayfa</span>
               </button>
             </nav>
             <div className="flex items-center gap-2">
               {/* Sticky Notes Button */}
               <button
                 onClick={() => setIsStickyNotesOpen(prev => !prev)}
-                className={`relative p-2.5 rounded-xl transition-all duration-200 ${
+                className={`relative p-1.5 rounded-lg transition-all duration-200 ${
                   isStickyNotesOpen
                     ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                     : theme === 'dark'
-                      ? 'text-slate-400 hover:text-amber-400 hover:bg-[#131d33]/80 border border-transparent hover:border-[#2d4163]/30'
-                      : 'text-slate-500 hover:text-amber-500 hover:bg-white/80 border border-transparent hover:border-slate-200/60'
+                      ? 'text-slate-400 hover:text-amber-400 hover:bg-white/[0.06] border border-transparent'
+                      : 'text-slate-500 hover:text-amber-500 hover:bg-black/[0.04] border border-transparent'
                 }`}
                 title="Hızlı Notlar"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                 </svg>
               </button>
-              {/* Sağlık Bakanlığı Logo ve Yazı - Sağda */}
-              <div className={`flex items-center gap-3 backdrop-blur-xl px-4 py-2 rounded-2xl border transition-colors duration-500 ${
+              {/* Sağlık Bakanlığı Logo ve Yazı — Glass Pill (same surface language as cards) */}
+              <div className={`flex items-center gap-2.5 backdrop-blur-xl px-3.5 py-1 rounded-full border transition-all duration-300 ${
                 theme === 'dark'
-                  ? 'bg-[#131d33]/80 border-[#2d4163]/30'
-                  : 'bg-white/80 border-slate-200/60 shadow-sm'
+                  ? 'bg-white/[0.04] border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.2)]'
+                  : 'bg-white/[0.70] border-black/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.05)]'
               }`}>
                 <img
                   src={sbLogo}
                   alt="T.C. Sağlık Bakanlığı"
-                  className={`h-8 w-auto object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
+                  className={`h-6 w-auto object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
                 />
                 <div className="text-left">
-                  <p className={`text-[9px] font-bold tracking-wide ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>T.C. SAĞLIK BAKANLIĞI</p>
-                  <p className={`text-[9px] font-semibold ${theme === 'dark' ? 'text-white/70' : 'text-slate-500'}`}>ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
+                  <p className={`text-[8px] font-bold tracking-wide leading-tight ${theme === 'dark' ? 'text-slate-100' : 'text-slate-900'}`}>T.C. SAĞLIK BAKANLIĞI</p>
+                  <p className={`text-[8px] font-semibold leading-tight ${theme === 'dark' ? 'text-white/50' : 'text-slate-500'}`}>ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
                 </div>
               </div>
             </div>
-          </header>
+          </div>
+        </header>
+        <div className="flex-1 ml-[72px] mt-12 flex flex-col overflow-hidden relative">
           <div className="flex-1 min-h-0">
             <MapDashboard
               theme={theme}
@@ -1709,10 +1729,10 @@ const App: React.FC = () => {
             </div>
         </header>
 
-        {/* Content Area */}
-        <div className="w-full px-8 pb-6 pt-2">
+        {/* Content Area — ModuleLayout: max-w-[1600px] centered, tutarlı padding */}
+        <ModuleLayout isDark={theme === 'dark'}>
           <section key={view} className="view-transition">{renderView()}</section>
-        </div>
+        </ModuleLayout>
       </main>
     </div>
   );

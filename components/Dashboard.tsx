@@ -4,11 +4,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { AppointmentData, HBYSData } from '../types';
 import { MONTHS, YEARS } from '../constants';
 import DataFilterPanel from './common/DataFilterPanel';
+import { GlassCard, GlassSection, GlassKpiCard } from './ui';
 
 interface DashboardProps {
   selectedBranch: string | null;
   appointmentData: AppointmentData[];
   hbysData: HBYSData[];
+  theme?: 'dark' | 'light';
 }
 
 const CustomizedAxisTick = (props: any) => {
@@ -31,7 +33,8 @@ const CustomizedAxisTick = (props: any) => {
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, hbysData }) => {
+const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, hbysData, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [selectedYears, setSelectedYears] = useState<number[]>([2025]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([12]); // 12 = Aralık
   const [appliedYears, setAppliedYears] = useState<number[]>([2025]);
@@ -168,10 +171,10 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, 
   // Eğer hiç veri yoksa gösterilecek boş ekran
   if (appointmentData.length === 0) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-20 rounded-[40px] border-2 border-dashed border-[var(--border-2)] text-center">
-        <h3 className="text-2xl font-black text-[var(--text-1)] tracking-tight italic">Analiz İçin Veri Bekleniyor</h3>
-        <p className="text-[var(--text-muted)] mt-2 max-w-sm mx-auto">Lütfen önce Cetveller modülünden plânlanmış çalışma verilerini yükleyiniz.</p>
-      </div>
+      <GlassCard isDark={isDark} hover={false} padding="p-16" className="text-center">
+        <h3 className={`text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Analiz İçin Veri Bekleniyor</h3>
+        <p className={`mt-2 max-w-sm mx-auto text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Lütfen önce Cetveller modülünden plânlanmış çalışma verilerini yükleyiniz.</p>
+      </GlassCard>
     );
   }
 
@@ -203,32 +206,32 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, 
         selectionLabel="dönem seçili"
       />
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-          <h2 className="text-2xl font-black text-[var(--text-1)] tracking-tight flex items-center gap-3">
-             <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
+          <h2 className={`text-xl font-bold tracking-tight flex items-center gap-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+             <span className="w-1.5 h-6 bg-sky-500 rounded-full"></span>
              {selectedBranch ? `${selectedBranch} Analiz Raporu` : 'Tüm Hastane Analiz Raporu'}
           </h2>
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">
-            {periodText} DÖNEMİ • {capacityUsageData.length} HEKİM TAKİBİ
+          <p className={`text-[10px] font-semibold uppercase tracking-wider mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            {periodText} Dönemi &bull; {capacityUsageData.length} Hekim Takibi
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="PLANLANAN MHRS" value={totalCapacity} color="blue" subtitle={`${selectedMonth} ${selectedYear} Toplam`} />
-        <StatCard title="GERÇEKLEŞEN MUAYENE" value={totalActualExams} color="amber" subtitle={`Hastane Verimliliği: %${totalCapacity > 0 ? Math.round((totalActualExams/totalCapacity)*100) : 0}`} />
-        <StatCard title="PLAN. AMELİYAT GÜN" value={totalSurgeryDays} color="purple" subtitle="Tahsis Edilen Blok Günler" />
-        <StatCard title="TOPLAM ABC VAKA" value={totalSurgeryABC} color="emerald" subtitle={`Cerrahi Ort: ${branchSurgeryAverage.toFixed(1)} vaka/gün`} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <GlassKpiCard isDark={isDark} title="Planlanan MHRS" value={totalCapacity} subtitle={`${selectedMonth} ${selectedYear} Toplam`} color="blue" />
+        <GlassKpiCard isDark={isDark} title="Gerçekleşen Muayene" value={totalActualExams} subtitle={`Verimlilik: %${totalCapacity > 0 ? Math.round((totalActualExams/totalCapacity)*100) : 0}`} color="amber" />
+        <GlassKpiCard isDark={isDark} title="Plan. Ameliyat Gün" value={totalSurgeryDays} subtitle="Tahsis Edilen Blok Günler" color="purple" />
+        <GlassKpiCard isDark={isDark} title="Toplam ABC Vaka" value={totalSurgeryABC} subtitle={`Cerrahi Ort: ${branchSurgeryAverage.toFixed(1)} vaka/gün`} color="emerald" />
       </div>
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[40px] shadow-xl border border-[var(--glass-border)] h-[700px]">
-         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-           <h4 className="text-xl font-black text-[var(--text-1)] uppercase">Kapasite Kullanım Analizi</h4>
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="h-[700px]">
+         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+           <h4 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Kapasite Kullanım Analizi</h4>
            <div className="flex items-center gap-4 flex-wrap justify-center">
-             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#e11d48] rounded"></div><span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Kapasite Altı</span></div>
-             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#f59e0b] rounded"></div><span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Beklenen</span></div>
-             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#059669] rounded"></div><span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Kapasite Üstü</span></div>
+             <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-rose-500 rounded-sm"></div><span className={`text-[10px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Kapasite Altı</span></div>
+             <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-amber-500 rounded-sm"></div><span className={`text-[10px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Beklenen</span></div>
+             <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></div><span className={`text-[10px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Kapasite Üstü</span></div>
            </div>
          </div>
          <ResponsiveContainer width="100%" height="90%">
@@ -278,18 +281,18 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, 
              </Bar>
            </BarChart>
          </ResponsiveContainer>
-      </div>
+      </GlassCard>
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[40px] shadow-xl border border-[var(--glass-border)] h-[750px]">
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="h-[750px]">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
           <div>
-            <h4 className="text-xl font-black text-[var(--text-1)] uppercase tracking-tight">Cerrahi Verimlilik Matrisi</h4>
-            <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase tracking-widest">Kurum Ortalaması: {branchSurgeryAverage.toFixed(1)} Vaka/Gün</p>
+            <h4 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Cerrahi Verimlilik Matrisi</h4>
+            <p className={`text-[10px] font-medium mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Kurum Ortalaması: {branchSurgeryAverage.toFixed(1)} Vaka/Gün</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#3b82f6] rounded"></div><span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Plan Dışı Giriş</span></div>
-             <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-[#ef4444] rounded"></div><span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Ortalama Altı</span></div>
-             <div className="bg-emerald-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">Performans Kıyas</div>
+             <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div><span className={`text-[10px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Plan Dışı Giriş</span></div>
+             <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-red-500 rounded-sm"></div><span className={`text-[10px] font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Ortalama Altı</span></div>
+             <span className={`px-3 py-1 rounded-full text-[10px] font-semibold ${isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>Performans Kıyas</span>
           </div>
         </div>
         <ResponsiveContainer width="100%" height="90%">
@@ -349,24 +352,7 @@ const Dashboard: React.FC<DashboardProps> = ({ selectedBranch, appointmentData, 
             />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
-    </div>
-  );
-};
-
-const StatCard = ({ title, value, color, subtitle }: any) => {
-  const getLabelColor = (c: string) => {
-    if (c === 'blue') return 'status-info';
-    if (c === 'amber') return 'status-warning';
-    if (c === 'purple') return 'status-accent';
-    if (c === 'emerald') return 'status-success';
-    return 'text-[var(--text-1)]';
-  };
-  return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-8 rounded-3xl shadow-sm border border-[var(--glass-border)]">
-      <p className="text-[var(--text-muted)] text-[10px] font-black uppercase tracking-widest mb-1">{title}</p>
-      <h3 className={`text-3xl font-black ${getLabelColor(color)}`}>{value.toLocaleString('tr-TR')}</h3>
-      <p className="text-[10px] font-bold text-[var(--text-muted)] mt-2">{subtitle}</p>
+      </GlassCard>
     </div>
   );
 };

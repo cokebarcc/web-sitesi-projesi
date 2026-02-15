@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { DetailedScheduleData } from '../types';
 import { MONTHS, YEARS } from '../constants';
 import DataFilterPanel from './common/DataFilterPanel';
+import { GlassCard } from './ui';
 
 interface DetailedScheduleProps {
   data: DetailedScheduleData[];
@@ -19,6 +20,7 @@ interface DetailedScheduleProps {
   onLoadData: (hospital: string, month: string, year: number) => Promise<void>;
   // Upload permission
   canUpload?: boolean;
+  theme?: 'dark' | 'light';
 }
 
 interface DoctorSummary {
@@ -32,7 +34,8 @@ const PM_WINDOW = { start: 13 * 60, end: 17 * 60 };
 const MIN_SESSION_THRESHOLD = 30;
 const EXCLUDED_DAY_COUNT_ACTIONS = ["SONUÇ/KONTROL MUAYENE", "SONUÇ/KONTROL MUAYENESİ"];
 
-const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth, selectedHospital, allowedHospitals, onHospitalChange, onLoadData, canUpload = false }) => {
+const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranch, onImportExcel, onDelete, onClearAll, onRemoveMonth, selectedHospital, allowedHospitals, onHospitalChange, onLoadData, canUpload = false, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
   const [appliedYears, setAppliedYears] = useState<number[]>([]);
@@ -273,7 +276,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
       />
 
       {viewMode === 'summary' ? (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+        <GlassCard isDark={isDark} hover={false} padding="p-0">
           <div className="p-8 border-b border-[var(--border-1)] bg-[var(--surface-2)]">
             <h4 className="text-xl font-black text-[var(--text-1)] uppercase italic underline decoration-indigo-500 decoration-4 underline-offset-8 leading-relaxed">
               {periodText} Analiz Raporu
@@ -320,9 +323,9 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
               </tbody>
             </table>
           </div>
-        </div>
+        </GlassCard>
       ) : (
-        <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+        <GlassCard isDark={isDark} hover={false} padding="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-[var(--table-header-bg)] border-b border-[var(--table-border)]">
@@ -362,7 +365,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
               </tbody>
             </table>
           </div>
-        </div>
+        </GlassCard>
       )}
     </div>
   );

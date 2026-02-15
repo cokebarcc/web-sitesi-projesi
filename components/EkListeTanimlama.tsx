@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { uploadFinansalFile, getFinansalModuleFiles, downloadFinansalFile, deleteFinansalFile } from '../src/services/finansalStorage';
+import { GlassCard } from './ui';
 
 export interface ExcelData {
   headers: string[];
@@ -238,9 +239,11 @@ const parsers: Record<string, (ab: ArrayBuffer, fn: string) => ExcelData | null>
 
 interface EkListeTanimlamaProps {
   canUpload?: boolean;
+  theme?: 'dark' | 'light';
 }
 
-const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }) => {
+const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [ek2aData, setEk2aData] = useState<ExcelData | null>(null);
   const [ek2a2Data, setEk2a2Data] = useState<ExcelData | null>(null);
   const [ek2bData, setEk2bData] = useState<ExcelData | null>(null);
@@ -464,7 +467,7 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
         {/* EK-2A Tablosu */}
         {ek2aData && (
           <div className="space-y-4">
-            <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-6" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -479,22 +482,22 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                 {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a')} /></label>}
                 <button onClick={() => handleClear('ek2a')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
-            </div>
-            <div className="backdrop-blur-xl rounded-2xl border overflow-hidden" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            </GlassCard>
+            <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2aData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
                   <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2aData.rows.map((row, ri) => (<tr key={ri} className="transition-colors" style={{ borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--table-row-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{ri + 1}</td>{ek2aData.headers.map((_, ci) => (<td key={ci} className="px-4 py-2.5 text-xs" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--border-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>))}</tbody>
                 </table>
               </div>
-            </div>
+            </GlassCard>
           </div>
         )}
 
         {/* EK-2A-2 Tablosu */}
         {ek2a2Data && (
           <div className="space-y-4">
-            <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-6" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -509,22 +512,22 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                 {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a2')} /></label>}
                 <button onClick={() => handleClear('ek2a2')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
-            </div>
-            <div className="backdrop-blur-xl rounded-2xl border overflow-hidden" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            </GlassCard>
+            <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2a2Data.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
                   <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2a2Data.rows.map((row, ri) => (<tr key={ri} className="transition-colors" style={{ borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--table-row-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{ri + 1}</td>{ek2a2Data.headers.map((_, ci) => (<td key={ci} className="px-4 py-2.5 text-xs" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--border-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>))}</tbody>
                 </table>
               </div>
-            </div>
+            </GlassCard>
           </div>
         )}
 
         {/* EK-2B Tablosu */}
         {ek2bData && (
           <div className="space-y-4">
-            <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-6" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -539,8 +542,8 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                 {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2b')} /></label>}
                 <button onClick={() => handleClear('ek2b')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
-            </div>
-            <div className="backdrop-blur-xl rounded-2xl border overflow-hidden" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            </GlassCard>
+            <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2bData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
@@ -550,14 +553,14 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                   })}</tbody>
                 </table>
               </div>
-            </div>
+            </GlassCard>
           </div>
         )}
 
         {/* EK-2C Tablosu */}
         {ek2cData && (
           <div className="space-y-4">
-            <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-6" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -572,8 +575,8 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                 {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2c')} /></label>}
                 <button onClick={() => handleClear('ek2c')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
-            </div>
-            <div className="backdrop-blur-xl rounded-2xl border overflow-hidden" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            </GlassCard>
+            <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2cData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
@@ -583,14 +586,14 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                   })}</tbody>
                 </table>
               </div>
-            </div>
+            </GlassCard>
           </div>
         )}
 
         {/* EK-2Ç Tablosu */}
         {ek2cdData && (
           <div className="space-y-4">
-            <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            <GlassCard isDark={isDark} hover={false} padding="p-6" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-rose-500/10 rounded-lg flex items-center justify-center">
                   <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -605,8 +608,8 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                 {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2cd')} /></label>}
                 <button onClick={() => handleClear('ek2cd')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
-            </div>
-            <div className="backdrop-blur-xl rounded-2xl border overflow-hidden" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+            </GlassCard>
+            <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2cdData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
@@ -616,7 +619,7 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false }
                   })}</tbody>
                 </table>
               </div>
-            </div>
+            </GlassCard>
           </div>
         )}
       </div>

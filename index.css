@@ -940,11 +940,11 @@ body::after {
   opacity: 0.02;
 }
 
-/* Hero area vignette — subtle edge darkening */
+/* Hero area vignette — 25% opacity max */
 .hero-vignette {
-  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.06) 100%);
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.025) 100%);
 }
 
 [data-theme="light"] .hero-vignette {
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(120,130,160,0.08) 100%);
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(120,130,160,0.03) 100%);
 }

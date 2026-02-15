@@ -7,6 +7,7 @@ import { getPeriodKey, normalizeDoctorName } from '../utils/formatters';
 import DataFilterPanel from './common/DataFilterPanel';
 import EmptyStateCommon from './common/EmptyState';
 import pptxgen from 'pptxgenjs';
+import { GlassCard, GlassSection, GlassKpiCard } from './ui';
 
 interface EfficiencyAnalysisProps {
   detailedScheduleData: DetailedScheduleData[];
@@ -34,6 +35,7 @@ interface EfficiencyAnalysisProps {
   overrideMonth?: string;
   overrideYear?: number;
   overrideBranch?: string;
+  theme?: 'dark' | 'light';
 }
 
 const EXCLUDED_SCHEDULE_ACTION_LABELS = ["HAFTA SONU TATİLİ", "HAFTASONU TATİLİ"];
@@ -74,8 +76,10 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   isLoading = false,
   overrideMonth,
   overrideYear,
-  overrideBranch
+  overrideBranch,
+  theme = 'dark'
 }) => {
+  const isDark = theme === 'dark';
   // Uygulanan filtrelerden ilk değerleri al (geriye uyumluluk için)
   const selectedMonth = overrideMonth || (globalAppliedMonths.length > 0 ? MONTHS[globalAppliedMonths[0] - 1] : '');
   const selectedYear = overrideYear ? String(overrideYear) : (globalAppliedYears.length > 0 ? String(globalAppliedYears[0]) : '');
@@ -653,39 +657,39 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        <KpiCard title="Toplam Kapasite Sayısı" value={isPeriodSelected ? stats.totalCapacityCount : null} source="Detaylı Cetveller" accent="capacity" isEmpty={!isPeriodSelected} />
-        <KpiCard title="Toplam Muayene Sayısı" value={isPeriodSelected ? stats.totalExamsCount : null} source="Hekim Verileri" accent="visits" isEmpty={!isPeriodSelected} />
-        <KpiCard title="Randevulu Muayene Oranı" value={appointmentRate !== null ? `${appointmentRate.toFixed(1).replace('.', ',')}%` : null} source="Hekim Verileri" accent="ratio" subtitle="(MHRS / TOPLAM)" isEmpty={!isPeriodSelected || stats.totalExamsCount === 0} />
-        <KpiCard title="MHRS'de Planlanan Ameliyat Gün Sayısı" value={isPeriodSelected ? stats.totalSurgeryDays : null} source="Detaylı Cetveller" accent="surgeryDay" isEmpty={!isPeriodSelected} />
-        <KpiCard title="Yapılan Toplam A+B+C Grubu Ameliyat Sayısı" value={isPeriodSelected ? stats.totalAbcSurgeriesCount : null} source="Hekim Verileri" accent="surgeryCount" isEmpty={!isPeriodSelected} />
-        <KpiCard title="Ameliyat Başına Düşen Saat" value={isPeriodSelected ? avgHoursPerSurgery.toFixed(2).replace('.', ',') : null} source="Cetvel + Hekim Verileri" accent="surgeryHour" subtitle="SAAT / AMELİYAT" isEmpty={!isPeriodSelected || stats.totalAbcSurgeriesCount === 0} />
+        <KpiCard title="Toplam Kapasite Sayısı" value={isPeriodSelected ? stats.totalCapacityCount : null} source="Detaylı Cetveller" accent="capacity" isEmpty={!isPeriodSelected} isDark={isDark} />
+        <KpiCard title="Toplam Muayene Sayısı" value={isPeriodSelected ? stats.totalExamsCount : null} source="Hekim Verileri" accent="visits" isEmpty={!isPeriodSelected} isDark={isDark} />
+        <KpiCard title="Randevulu Muayene Oranı" value={appointmentRate !== null ? `${appointmentRate.toFixed(1).replace('.', ',')}%` : null} source="Hekim Verileri" accent="ratio" subtitle="(MHRS / TOPLAM)" isEmpty={!isPeriodSelected || stats.totalExamsCount === 0} isDark={isDark} />
+        <KpiCard title="MHRS'de Planlanan Ameliyat Gün Sayısı" value={isPeriodSelected ? stats.totalSurgeryDays : null} source="Detaylı Cetveller" accent="surgeryDay" isEmpty={!isPeriodSelected} isDark={isDark} />
+        <KpiCard title="Yapılan Toplam A+B+C Grubu Ameliyat Sayısı" value={isPeriodSelected ? stats.totalAbcSurgeriesCount : null} source="Hekim Verileri" accent="surgeryCount" isEmpty={!isPeriodSelected} isDark={isDark} />
+        <KpiCard title="Ameliyat Başına Düşen Saat" value={isPeriodSelected ? avgHoursPerSurgery.toFixed(2).replace('.', ',') : null} source="Cetvel + Hekim Verileri" accent="surgeryHour" subtitle="SAAT / AMELİYAT" isEmpty={!isPeriodSelected || stats.totalAbcSurgeriesCount === 0} isDark={isDark} />
       </div>
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
           <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">KAPASİTE KULLANIM GRAFİĞİ</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Hekim bazında kapasite ve muayene karşılaştırması</p></div>
           {isPeriodSelected && <LocalFilters value={chartBranchFilter} onChange={setChartBranchFilter} limit={viewLimit} onLimitChange={setViewLimit} currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} branches={availableBranches} />}
         </div>
         {!isPeriodSelected ? <EmptyState /> : <CapacityUsageChart data={paginatedChartData} onClick={handleBarClick} />}
-      </div>
+      </GlassCard>
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
           <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">CERRAHİ VERİMLİLİK GRAFİĞİ</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Planlanan ameliyat günleri ve gerçekleşen vaka sayısı</p></div>
           {isPeriodSelected && <LocalFilters value={surgBranchFilter} onChange={setSurgBranchFilter} limit={surgViewLimit} onLimitChange={setSurgViewLimit} currentPage={surgCurrentPage} totalPages={totalSurgPages} onPageChange={setSurgCurrentPage} branches={eligibleSurgicalBranches} />}
         </div>
         {!isPeriodSelected ? <EmptyState /> : <SurgicalEfficiencyChart data={paginatedSurgData} />}
-      </div>
+      </GlassCard>
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
           <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">AMELİYAT BAŞINA DÜŞEN CETVEL SÜRESİ</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Vaka başına düşen ortalama cetvel saati</p></div>
           {isPeriodSelected && <LocalFilters value={hoursBranchFilter} onChange={setHoursBranchFilter} limit={hoursViewLimit} onLimitChange={setHoursViewLimit} currentPage={hoursCurrentPage} totalPages={totalHoursPages} onPageChange={setHoursCurrentPage} branches={availableBranches} />}
         </div>
         {!isPeriodSelected ? <EmptyState /> : <SurgHoursChart data={paginatedHoursData} />}
-      </div>
+      </GlassCard>
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-10 rounded-[24px] shadow-lg border border-[var(--glass-border)] space-y-8">
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-8">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
           <div><h3 className="text-xl font-black text-[var(--text-1)] uppercase">AKSİYON GÜN DAĞILIMI</h3><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Hastane genelinde aksiyonların toplam gün sayısı (AM/PM yarım gün esaslı)</p></div>
           {isPeriodSelected && (
@@ -724,7 +728,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
             return <ActionChangeTable title="HEKİM BAZLI AKSİYON DEĞİŞİM TABLOSU" subtitle={`Hekim bazında aksiyon gün dağılımı${hasPrev ? ' ve bir önceki ayla karşılaştırma' : ''}`} rows={doctorActionChangeData} labelKey="doctorName" hasPrevData={hasPrev} allActions={allDoctorActions} />;
           })()}
         </>}
-      </div>
+      </GlassCard>
 
       {isDetailModalOpen && createPortal(
         <DoctorDetailModal
@@ -1047,7 +1051,7 @@ const CustomizedXAxisTick = ({ x, y, payload, onClick }: any) => {
   return <g transform={`translate(${x},${y})`} className="cursor-pointer group" onClick={() => onClick?.({ doctorName: l })}><text x={0} y={0} dy={16} textAnchor="end" fill="#64748b" fontSize={9} fontWeight={800} transform="rotate(-45)" className="group-hover:fill-blue-600">{t}</text></g>;
 };
 
-const KpiCard = ({ title, value, subtitle, source, accent, isEmpty, isWarning, warningText }: any) => {
+const KpiCard = ({ title, value, subtitle, source, accent, isEmpty, isWarning, warningText, isDark = true }: any) => {
   const colorMap: Record<string, string> = {
     capacity: 'border-t-sky-400 text-sky-300 bg-sky-400',
     visits: 'border-t-cyan-400 text-cyan-300 bg-cyan-400',
@@ -1059,7 +1063,7 @@ const KpiCard = ({ title, value, subtitle, source, accent, isEmpty, isWarning, w
   };
   const p = colorMap[accent] || colorMap.capacity;
   const [b, t, d] = p.split(' ');
-  return <div className={`bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] border-t-[3px] ${b} rounded-[20px] p-6 shadow-lg flex flex-col justify-between h-[180px] transition-all hover:shadow-xl group relative overflow-hidden`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-[var(--text-2)] uppercase tracking-wide leading-tight">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black status-danger uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-[var(--text-muted)] mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-[var(--border-1)] pt-3 relative z-10"><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.08] group-hover:opacity-[0.15] transition-opacity blur-2xl`}></div></div>;
+  return <GlassCard isDark={isDark} hover={true} padding="p-6" className={`border-t-[3px] ${b} flex flex-col justify-between h-[180px] group`}><div className="space-y-3 relative z-10"><div className="flex justify-between items-center"><span className="text-[11px] font-semibold text-[var(--text-2)] uppercase tracking-wide leading-tight">{title}</span>{isWarning && <div className="flex items-center gap-1.5 bg-rose-500/20 px-2 py-0.5 rounded-full border border-rose-500/30"><div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></div><span className="text-[8px] font-black status-danger uppercase tracking-tighter">{warningText}</span></div>}</div><div><h3 className={`text-3xl lg:text-4xl font-extrabold tabular-nums tracking-tight truncate ${t}`}>{isEmpty || value === null ? '—' : (typeof value === 'number' ? value.toLocaleString('tr-TR') : value)}</h3>{subtitle && <p className="text-[11px] font-medium text-[var(--text-muted)] mt-1 italic uppercase tracking-tighter leading-tight">{subtitle}</p>}</div></div><div className="border-t border-[var(--border-1)] pt-3 relative z-10"><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">KAYNAK: {source}</span></div><div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full ${d} opacity-[0.08] group-hover:opacity-[0.15] transition-opacity blur-2xl`}></div></GlassCard>;
 };
 
 const LocalFilters = ({ value, onChange, limit, onLimitChange, currentPage, totalPages, onPageChange, branches }: any) => (
@@ -1070,8 +1074,8 @@ const LocalFilters = ({ value, onChange, limit, onLimitChange, currentPage, tota
   </div>
 );
 
-const TooltipCard = ({ name, branch, metrics, footerLabel, footer, footerColor = "status-info" }: any) => (
-  <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-[var(--glass-border-light)] space-y-4 min-w-[240px]"><div><p className="font-black text-[var(--text-1)] uppercase text-xs leading-normal">{name}</p><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{branch}</p></div><div className="space-y-1.5 border-t border-[var(--border-1)] pt-3">{metrics.map((m:any, i:number) => <div key={i} className={`flex justify-between items-center gap-8`}><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{m.label}:</span><span className={`text-xs font-black ${m.color}`}>{m.val}</span></div>)}<div className="flex justify-between items-center gap-8 pt-1.5 mt-1.5 border-t border-[var(--border-2)]"><span className="text-[11px] font-black text-[var(--text-2)] uppercase">{footerLabel}:</span><span className={`text-sm font-black ${footerColor}`}>{footer}</span></div></div></div>
+const TooltipCard = ({ name, branch, metrics, footerLabel, footer, footerColor = "status-info", isDark = true }: any) => (
+  <GlassCard isDark={isDark} hover={false} padding="p-6" variant="elevated" className="space-y-4 min-w-[240px]"><div><p className="font-black text-[var(--text-1)] uppercase text-xs leading-normal">{name}</p><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{branch}</p></div><div className="space-y-1.5 border-t border-[var(--border-1)] pt-3">{metrics.map((m:any, i:number) => <div key={i} className={`flex justify-between items-center gap-8`}><span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{m.label}:</span><span className={`text-xs font-black ${m.color}`}>{m.val}</span></div>)}<div className="flex justify-between items-center gap-8 pt-1.5 mt-1.5 border-t border-[var(--border-2)]"><span className="text-[11px] font-black text-[var(--text-2)] uppercase">{footerLabel}:</span><span className={`text-sm font-black ${footerColor}`}>{footer}</span></div></div></GlassCard>
 );
 
 const EmptyState = () => <EmptyStateCommon icon="calendar" title="Dönem seçimi bekleniyor" />;
@@ -1204,7 +1208,7 @@ const DoctorDetailModal = ({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 lg:p-8">
       <div className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={() => canClose && onClose()}></div>
-      <div className="relative z-10 w-full max-w-[1200px] max-h-[90vh] bg-[var(--glass-bg)] backdrop-blur-xl rounded-[48px] shadow-2xl flex flex-col overflow-hidden border border-[var(--glass-border)]">
+      <GlassCard isDark={true} hover={false} padding="p-0" variant="elevated" className="relative z-10 w-full max-w-[1200px] max-h-[90vh] flex flex-col overflow-hidden">
         <div className="p-10 border-b border-[var(--border-1)] flex justify-between items-start bg-[var(--surface-2)]">
           <div>
             <h3 className="text-3xl font-black uppercase text-[var(--text-1)] tracking-tight">{doctor.doctorName}</h3>
@@ -1276,7 +1280,7 @@ const DoctorDetailModal = ({
               Değişim Analizleri
             </h4>
             {physicianChangeData ? (
-              <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-[24px] shadow-xl border border-[var(--glass-border)] overflow-hidden">
+              <GlassCard isDark={true} hover={false} padding="p-0" className="overflow-hidden">
                 {/* Özet Kartları */}
                 <div className="p-6 border-b border-[var(--border-1)] bg-[var(--surface-2)]">
                   <div className="flex items-center justify-between mb-4">
@@ -1404,7 +1408,7 @@ const DoctorDetailModal = ({
                     </div>
                   </div>
                 )}
-              </div>
+              </GlassCard>
             ) : (
               <div className="bg-[var(--surface-2)] border-2 border-dashed border-[var(--border-2)] rounded-[40px] p-16 text-center">
                 <p className="text-[var(--text-muted)] font-black uppercase tracking-[0.2em] text-sm">
@@ -1426,7 +1430,7 @@ const DoctorDetailModal = ({
             KAPAT
           </button>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 };

@@ -133,7 +133,7 @@ const SanliurfaSvgMap: React.FC<SanliurfaSvgMapProps> = ({
     return {
       fill: isDark ? '#1e293b' : '#e2e8f0',
       fillOpacity: isDark ? 0.7 : 0.6,
-      stroke: isDark ? '#334155' : '#94a3b8',
+      stroke: isDark ? '#334155' : '#64748b',
       strokeWidth: 1.2 * zoomScale,
       filter: 'none',
     };

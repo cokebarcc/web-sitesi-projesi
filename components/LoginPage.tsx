@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, sendPasswordResetEmail, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth } from '../firebase';
+import { GlassCard } from './ui';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+  const theme = 'dark';
+  const isDark = theme === 'dark';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -221,16 +224,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         {/* RIGHT LOGIN SECTION */}
         <div className="lg:w-[45%] flex flex-col justify-center items-center px-6 lg:px-12 py-12 lg:py-0">
           {/* Glass Card */}
-          <div
-            className="w-full max-w-md rounded-3xl p-8 lg:p-10 relative"
-            style={{
-              background: 'rgba(10, 20, 35, 0.55)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 100px rgba(91, 156, 255, 0.05)'
-            }}
-          >
+          <GlassCard isDark={isDark} hover={false} padding="p-8 lg:p-10" className="w-full max-w-md">
             {/* Card Header */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-2">Hoş Geldiniz</h2>
@@ -371,7 +365,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               </svg>
               <span className="text-xs">256-bit SSL ile korunmaktadır</span>
             </div>
-          </div>
+          </GlassCard>
 
           {/* Footer Info */}
           <div className="mt-8 text-center">
@@ -393,16 +387,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           style={{ background: 'rgba(5, 7, 11, 0.9)', backdropFilter: 'blur(8px)' }}
           onClick={() => setShowForgotPassword(false)}
         >
-          <div
-            className="w-full max-w-md rounded-2xl p-8 relative"
-            style={{
-              background: 'rgba(10, 20, 35, 0.8)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <div onClick={(e) => e.stopPropagation()}>
+          <GlassCard isDark={isDark} variant="elevated" hover={false} padding="p-8" className="w-full max-w-md">
             <h2 className="text-xl font-bold text-white mb-2">Şifremi Unuttum</h2>
             <p className="text-[#9AA8B5] text-sm mb-6">
               E-posta adresinizi girin, şifre sıfırlama linki gönderelim.
@@ -467,6 +454,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 </button>
               </div>
             </form>
+          </GlassCard>
           </div>
         </div>
       )}

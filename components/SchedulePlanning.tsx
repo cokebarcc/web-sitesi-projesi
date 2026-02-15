@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MONTHS, HOSPITALS } from '../constants';
 import { DetailedScheduleData } from '../types';
 import SearchableSelect, { SelectOption } from './common/SearchableSelect';
+import { GlassCard } from './ui';
 
 interface SchedulePlanningProps {
   selectedHospital: string;
@@ -9,6 +10,7 @@ interface SchedulePlanningProps {
   onHospitalChange: (hospital: string) => void;
   selectedBranch?: string;
   detailedScheduleData: DetailedScheduleData[];
+  theme?: 'dark' | 'light';
 }
 
 // Period filter type
@@ -457,8 +459,10 @@ const SchedulePlanning: React.FC<SchedulePlanningProps> = ({
   allowedHospitals,
   onHospitalChange: propOnHospitalChange,
   selectedBranch: propSelectedBranch,
-  detailedScheduleData
+  detailedScheduleData,
+  theme = 'dark'
 }) => {
+  const isDark = theme === 'dark';
   // Local state for filters
   const [localSelectedHospital, setLocalSelectedHospital] = useState<string | null>(propSelectedHospital || null);
   const [localSelectedBranch, setLocalSelectedBranch] = useState<string>('Tüm Branşlar');
@@ -705,14 +709,14 @@ const SchedulePlanning: React.FC<SchedulePlanningProps> = ({
   return (
     <div className="space-y-4 pb-20">
       {/* Başlık */}
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-8 rounded-[24px] border border-[var(--glass-border)] shadow-lg">
+      <GlassCard isDark={isDark} hover={false} padding="p-8">
         <h1 className="text-2xl font-black text-[var(--text-1)] uppercase tracking-tight">
           Cetvel Planlama
         </h1>
         <p className="text-sm text-[var(--text-muted)] mt-2">
           Hekim çalışma cetvellerini planlayın ve optimize edin.
         </p>
-      </div>
+      </GlassCard>
 
       {/* Info Bar */}
       <InfoBar />
@@ -732,7 +736,7 @@ const SchedulePlanning: React.FC<SchedulePlanningProps> = ({
       </div>
 
       {/* Tablo Container */}
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-6 rounded-[24px] border border-[var(--glass-border)] shadow-lg">
+      <GlassCard isDark={isDark} hover={false} padding="p-6">
         <div className="overflow-x-auto overflow-y-visible">
           <div className="min-w-[900px]">
             {/* Tablo Header (Hastane + Branş Selects) */}
@@ -764,7 +768,7 @@ const SchedulePlanning: React.FC<SchedulePlanningProps> = ({
             />
           </div>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 };

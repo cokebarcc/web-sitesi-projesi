@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import FloatingSidebar from './FloatingSidebar';
+import { GlassCard, GlassKpiCard, GlassButton } from './ui';
 import type { DetailedScheduleData, MuayeneMetrics, ScheduleVersion } from '../types';
 
 interface WelcomeDashboardProps {
@@ -118,9 +119,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      gradient: 'from-violet-500/20 to-indigo-500/20',
-      borderColor: 'border-violet-400/20',
-      iconColor: 'text-violet-400'
+      color: 'purple' as const,
     },
     {
       label: 'Toplam Muayene',
@@ -130,9 +129,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
       ),
-      gradient: 'from-cyan-500/20 to-sky-500/20',
-      borderColor: 'border-cyan-400/20',
-      iconColor: 'text-cyan-400'
+      color: 'sky' as const,
     },
     {
       label: 'Kapasite Kullanımı',
@@ -143,9 +140,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
       ),
-      gradient: 'from-emerald-500/20 to-teal-500/20',
-      borderColor: 'border-emerald-400/20',
-      iconColor: 'text-emerald-400'
+      color: 'emerald' as const,
     },
     {
       label: 'Yüklü Cetvel',
@@ -155,9 +150,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       ),
-      gradient: 'from-amber-500/20 to-orange-500/20',
-      borderColor: 'border-amber-400/20',
-      iconColor: 'text-amber-400'
+      color: 'amber' as const,
     }
   ];
 
@@ -171,11 +164,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
       ),
-      gradient: 'from-violet-500/15 to-blue-500/15',
-      borderColor: 'border-violet-400/20',
-      hoverBorder: 'hover:border-violet-400/50',
       badge: dataStatus.cetvel ? `${detailedScheduleData.length} kayıt` : null,
-      badgeColor: 'bg-violet-500/20 text-violet-300',
       onClick: () => onNavigate('detailed-schedule')
     },
     {
@@ -187,11 +176,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
-      gradient: 'from-cyan-500/15 to-sky-500/15',
-      borderColor: 'border-cyan-400/20',
-      hoverBorder: 'hover:border-cyan-400/50',
       badge: dataStatus.muayene ? 'Veri hazır' : null,
-      badgeColor: 'bg-cyan-500/20 text-cyan-300',
       onClick: () => onNavigate('efficiency-analysis')
     },
     {
@@ -203,11 +188,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
         </svg>
       ),
-      gradient: 'from-rose-500/15 to-pink-500/15',
-      borderColor: 'border-rose-400/20',
-      hoverBorder: 'hover:border-rose-400/50',
       badge: dataStatus.versions ? `${kpiData.versionCount} versiyon` : null,
-      badgeColor: 'bg-rose-500/20 text-rose-300',
       onClick: () => onNavigate('change-analysis')
     },
     {
@@ -219,11 +200,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ),
-      gradient: 'from-[#5b9cff]/15 to-[#38bdf8]/15',
-      borderColor: 'border-[#5b9cff]/20',
-      hoverBorder: 'hover:border-[#5b9cff]/50',
       badge: null,
-      badgeColor: 'bg-[#5b9cff]/20 text-[#5b9cff]',
       onClick: () => onNavigate('ai-chatbot')
     },
     {
@@ -235,11 +212,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       ),
-      gradient: 'from-amber-500/15 to-orange-500/15',
-      borderColor: 'border-amber-400/20',
-      hoverBorder: 'hover:border-amber-400/50',
       badge: null,
-      badgeColor: 'bg-amber-500/20 text-amber-300',
       onClick: () => onNavigate('presentation')
     },
     {
@@ -251,11 +224,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
         </svg>
       ),
-      gradient: 'from-emerald-500/15 to-teal-500/15',
-      borderColor: 'border-emerald-400/20',
-      hoverBorder: 'hover:border-emerald-400/50',
       badge: null,
-      badgeColor: 'bg-emerald-500/20 text-emerald-300',
       onClick: () => onNavigate('goren-bh')
     }
   ];
@@ -347,20 +316,14 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
         {kpiData.hasData && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 w-full max-w-4xl">
             {kpiCards.map((card, i) => (
-              <div
+              <GlassKpiCard
                 key={i}
-                className={`relative rounded-2xl p-5 bg-gradient-to-br ${card.gradient} border ${card.borderColor} backdrop-blur-xl transition-all duration-300 hover:scale-[1.03]`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`p-2 rounded-lg bg-white/5 ${card.iconColor}`}>
-                    {card.icon}
-                  </div>
-                </div>
-                <div className="text-3xl font-bold mb-1" style={{ color: 'var(--text-1)' }}>
-                  {formatNumber(card.value)}{card.suffix || ''}
-                </div>
-                <div className={`text-xs font-medium ${isDark ? 'text-[#7b8fad]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>{card.label}</div>
-              </div>
+                isDark={isDark}
+                title={card.label}
+                value={`${formatNumber(card.value)}${card.suffix || ''}`}
+                icon={card.icon}
+                color={card.color}
+              />
             ))}
           </div>
         )}
@@ -368,85 +331,65 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
         {/* No Data State */}
         {!kpiData.hasData && (
           <div className="mb-8 w-full max-w-4xl">
-            <div className={`rounded-2xl p-6 backdrop-blur-xl text-center border ${
-              isDark
-                ? 'bg-gradient-to-br from-[#5b9cff]/5 to-transparent border-[#5b9cff]/10'
-                : 'bg-white/60 border-blue-200/40 shadow-sm'
-            }`}>
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-[#5b9cff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className={`text-sm font-medium ${isDark ? 'text-[#a8b8d0]' : ''}`} style={!isDark ? { color: 'var(--text-2)' } : undefined}>Henüz veri yüklenmedi</span>
+            <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Henüz veri yüklenmedi</span>
+                </div>
+                <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Analiz yapabilmek için önce bir hastane seçip veri yükleyin
+                </p>
               </div>
-              <p className={`text-xs ${isDark ? 'text-[#556a85]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
-                Analiz yapabilmek için önce bir hastane seçip veri yükleyin
-              </p>
-            </div>
+            </GlassCard>
           </div>
         )}
 
         {/* Module Cards Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-10 w-full max-w-4xl">
           {moduleCards.map((card) => (
-            <button
+            <GlassCard
               key={card.id}
+              isDark={isDark}
+              hover={true}
+              padding="p-5"
               onClick={card.onClick}
-              className={`
-                group relative rounded-2xl text-left
-                bg-gradient-to-br ${card.gradient}
-                border ${card.borderColor} ${card.hoverBorder}
-                backdrop-blur-xl
-                transition-all duration-300 ease-out
-                hover:scale-[1.03] hover:-translate-y-0.5
-                overflow-hidden p-5
-              `}
+              className="group text-left cursor-pointer hover:scale-[1.02] hover:-translate-y-0.5"
             >
-              {/* Card glow on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-white/5 to-transparent" />
-
               {/* Content */}
               <div className="relative z-10 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <div className="transition-colors duration-300 module-card-icon" style={{ color: 'var(--text-2)' }}>
+                  <div className={`transition-colors duration-300 ${isDark ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-900'}`}>
                     {card.icon}
                   </div>
                   {card.badge && (
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${card.badgeColor}`}>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      isDark ? 'bg-sky-500/15 text-sky-400' : 'bg-sky-50 text-sky-600'
+                    }`}>
                       {card.badge}
                     </span>
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-base mb-0.5" style={{ color: 'var(--text-1)' }}>
+                  <h3 className={`font-semibold text-base mb-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {card.title}
                   </h3>
-                  <p className="text-xs leading-relaxed transition-colors line-clamp-2 module-card-subtitle" style={{ color: 'var(--text-3)' }}>
+                  <p className={`text-xs leading-relaxed line-clamp-2 ${isDark ? 'text-slate-500 group-hover:text-slate-400' : 'text-slate-400 group-hover:text-slate-500'}`}>
                     {card.subtitle}
                   </p>
                 </div>
               </div>
-
-              {/* Decorative corner */}
-              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full" />
-            </button>
+            </GlassCard>
           ))}
         </div>
 
         {/* Command Input */}
         <form onSubmit={handleCommandSubmit} className="w-full max-w-2xl mb-8">
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-[#5b9cff]/15 via-[#38bdf8]/10 to-[#5b9cff]/15 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-            <div
-              className={`relative flex items-center backdrop-blur-xl rounded-2xl border transition-all duration-300 ${
-                isDark
-                  ? 'bg-[#131d33]/80 border-[#2d4163]/40 group-hover:border-[#5b9cff]/30'
-                  : 'bg-white/80 group-hover:border-blue-300/50 shadow-sm'
-              }`}
-              style={!isDark ? { borderColor: 'var(--border-2)' } : undefined}
-            >
-              <div className={`pl-5 ${isDark ? 'text-[#556a85]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
+          <GlassCard isDark={isDark} padding="p-0" hover={false} className="group">
+            <div className="flex items-center">
+              <div className={`pl-5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -457,34 +400,42 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
                 value={commandInput}
                 onChange={(e) => setCommandInput(e.target.value)}
                 placeholder="Ne yapmak istiyorsunuz? (Örn: 'Ocak ayı yeşil alan oranlarını getir')"
-                className={`flex-1 bg-transparent px-4 py-4 outline-none text-sm command-input ${isDark ? 'text-[#e8edf5] placeholder-[#556a85]' : ''}`}
-                style={!isDark ? { color: 'var(--text-1)' } : undefined}
+                className={`flex-1 bg-transparent px-4 py-4 outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
               />
 
-              <button
+              <GlassButton
+                isDark={isDark}
+                variant="primary"
+                size="sm"
+                rounded="xl"
                 type="submit"
-                className="mr-3 p-2.5 bg-gradient-to-r from-[#5b9cff] to-[#38bdf8] rounded-xl text-white hover:from-[#4388f5] hover:to-[#2ea8e6] transition-all duration-300 hover:scale-105 shadow-lg shadow-[#5b9cff]/20"
+                className="mr-3"
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                }
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
+                Sor
+              </GlassButton>
             </div>
-          </div>
+          </GlassCard>
 
           <div className="flex items-center justify-center gap-4 mt-3">
-            <p className={`text-xs ${isDark ? 'text-[#3d5170]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
+            <p className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
               AI asistanı kullanarak hızlıca işlem yapabilirsiniz
             </p>
-            <span className={`text-xs ${isDark ? 'text-[#2d4163]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>|</span>
-            <p className={`text-xs ${isDark ? 'text-[#3d5170]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
-              <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-[#1e2d48]/60 border border-[#2d4163]/50 text-[#556a85]' : ''}`} style={!isDark ? { background: 'var(--surface-2)', border: '1px solid var(--border-2)', color: 'var(--text-3)' } : undefined}>Ctrl+K</kbd> ile hızlı arama
+            <span className={`text-xs ${isDark ? 'text-slate-700' : 'text-slate-300'}`}>|</span>
+            <p className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+              <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                isDark ? 'bg-white/[0.04] border border-white/[0.08] text-slate-500' : 'bg-slate-100 border border-slate-200 text-slate-400'
+              }`}>Ctrl+K</kbd> ile hızlı arama
             </p>
           </div>
         </form>
 
         {/* System Status Bar */}
-        <div className={`flex flex-wrap items-center justify-center gap-6 text-xs ${isDark ? 'text-[#556a85]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>
+        <div className={`flex flex-wrap items-center justify-center gap-6 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <span>Sistem Aktif</span>
@@ -546,18 +497,6 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-        }
-
-        .group:hover .module-card-icon {
-          color: var(--text-1) !important;
-        }
-
-        .group:hover .module-card-subtitle {
-          color: var(--text-2) !important;
-        }
-
-        .command-input::placeholder {
-          color: var(--text-3);
         }
       `}</style>
     </div>

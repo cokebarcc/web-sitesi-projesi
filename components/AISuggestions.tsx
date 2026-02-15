@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { analyzeScheduleWithAI, getSpecificOptimizations } from '../services/geminiService';
 import { AppointmentData, HBYSData, AISuggestion } from '../types';
+import { GlassCard } from './ui';
 
 interface AISuggestionsProps {
   data: AppointmentData[];
@@ -10,9 +11,11 @@ interface AISuggestionsProps {
   setReport: (r: string) => void;
   suggestions: AISuggestion[];
   setSuggestions: (s: AISuggestion[]) => void;
+  theme?: 'dark' | 'light';
 }
 
-const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, setReport, suggestions, setSuggestions }) => {
+const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, setReport, suggestions, setSuggestions, theme = 'dark' }) => {
+  const isDark = theme === 'dark';
   const [loading, setLoading] = useState<boolean>(false);
 
   const fetchData = async (force: boolean = false) => {
@@ -63,7 +66,7 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
   return (
     <div className="space-y-4 animate-in fade-in duration-700 pb-20">
       {/* Yönetici Özeti Bölümü */}
-      <div className="bg-white p-10 rounded-[48px] border shadow-xl relative overflow-hidden group" style={{ borderColor: 'var(--border-2)' }}>
+      <GlassCard isDark={isDark} hover={false} padding="p-10" className="relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full -mr-32 -mt-32 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 relative z-10 gap-6">
@@ -88,7 +91,7 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
-          <div className="lg:col-span-8 p-8 rounded-[32px] border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+          <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-8" className="lg:col-span-8">
             <h3 className="text-[10px] font-black uppercase tracking-widest mb-6 border-b pb-4" style={{ color: 'var(--text-3)' }}>Yönetici Özeti ve Kritik Tespitler</h3>
             <div className="prose max-w-none prose-p:font-medium prose-p:leading-relaxed" style={{ color: 'var(--text-2)' }}>
               {report ? report.split('\n').map((line, lineIdx) => (
@@ -100,8 +103,8 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
                 <p className="italic" style={{ color: 'var(--text-3)' }}>Analiz raporu henüz oluşturulmadı.</p>
               )}
             </div>
-          </div>
-          
+          </GlassCard>
+
           <div className="lg:col-span-4 space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: 'var(--text-3)' }}>Analiz Kapsamı</h3>
             <AnalysisTag label="Verimlilik (80-60-40)" active={true} />
@@ -109,24 +112,20 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
             <AnalysisTag label="Plan Dışı Cerrahi Potansiyel" active={true} />
             <AnalysisTag label="Kaynak Optimizasyonu" active={true} />
             
-            <div className="mt-8 p-6 rounded-[32px]" style={{ background: 'var(--bg-app)', color: 'var(--text-1)' }}>
+            <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-6" className="mt-8" style={{ color: 'var(--text-1)' }}>
               <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">AI NOTU</p>
               <p className="text-xs font-medium italic leading-relaxed">"Analiz sonuçları, cetvel planlarındaki aksiyonların HBYS'deki çıktıları ile doğrudan kıyaslanması sonucu üretilmiştir."</p>
-            </div>
+            </GlassCard>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Optimizasyon Kartları Bölümü */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {suggestions.map((sug, idx) => {
           const cat = (sug.category || '').toLowerCase();
           return (
-            <div key={idx} className={`bg-white p-8 rounded-[40px] shadow-xl border-2 transition-all hover:scale-[1.02] group ${
-              cat.includes('verimlilik') ? 'border-amber-50 hover:border-amber-200' :
-              cat.includes('kapasite') ? 'border-rose-50 hover:border-rose-200' :
-              cat.includes('cerrahi') ? 'border-emerald-50 hover:border-emerald-200' : ''
-            }`} style={!cat.includes('verimlilik') && !cat.includes('kapasite') && !cat.includes('cerrahi') ? { borderColor: 'var(--border-2)' } : undefined}>
+            <GlassCard key={idx} isDark={isDark} hover={false} padding="p-8" className={`transition-all hover:scale-[1.02] group`}>
               <div className="flex justify-between items-start mb-6">
                 <div className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${
                   sug.priority === 'High' ? 'bg-rose-600 text-white shadow-lg shadow-rose-200' : 
@@ -137,14 +136,14 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
                 <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--text-2)' }}>{sug.category}</span>
               </div>
               <h4 className="text-xl font-black mb-4 tracking-tight group-hover:text-blue-600 transition-colors" style={{ color: 'var(--text-1)' }}>{sug.title}</h4>
-              <div className="p-5 rounded-2xl border" style={{ background: 'var(--surface-3)', borderColor: 'var(--border-2)' }}>
+              <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-5">
                  <p className="text-sm leading-relaxed font-bold" style={{ color: 'var(--text-2)' }}>{sug.description}</p>
-              </div>
+              </GlassCard>
               <div className="mt-6 flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest cursor-pointer hover:gap-3 transition-all">
-                DETAYLI ANALİZİ GÖR 
+                DETAYLI ANALİZİ GÖR
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
               </div>
-            </div>
+            </GlassCard>
           );
         })}
       </div>
