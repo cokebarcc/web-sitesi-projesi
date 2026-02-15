@@ -179,7 +179,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
   }
 
   return (
-    <div className="space-y-12 pb-24 animate-in fade-in duration-700">
+    <div className="space-y-4 pb-24 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h2 className="text-3xl font-black tracking-tight uppercase" style={{ color: 'var(--text-1)' }}>Hizmet Girişim Analizi (SUT)</h2>

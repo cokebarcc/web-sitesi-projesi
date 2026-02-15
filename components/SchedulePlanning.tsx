@@ -703,7 +703,7 @@ const SchedulePlanning: React.FC<SchedulePlanningProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-4 pb-20">
       {/* Başlık */}
       <div className="bg-[var(--glass-bg)] backdrop-blur-xl p-8 rounded-[24px] border border-[var(--glass-border)] shadow-lg">
         <h1 className="text-2xl font-black text-[var(--text-1)] uppercase tracking-tight">

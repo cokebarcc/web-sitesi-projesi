@@ -106,7 +106,7 @@ const App: React.FC = () => {
   // Theme state
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('medis_theme');
-    return (saved === 'light') ? 'light' : 'dark';
+    return (saved === 'dark') ? 'dark' : 'light';
   });
   const toggleTheme = useCallback(() => {
     setTheme(prev => {
@@ -1303,7 +1303,7 @@ const App: React.FC = () => {
       <div className={`flex h-screen font-['Inter'] ${
         theme === 'dark'
           ? 'text-slate-200 bg-gradient-to-br from-[#0f1729] via-[#131d33] to-[#0f1729]'
-          : 'text-slate-800 bg-gradient-to-br from-[#f0f4f8] via-[#e8eef5] to-[#f0f4f8]'
+          : 'text-slate-800 bg-gradient-to-br from-[#e4eaf3] via-[#dce3ef] to-[#e4eaf3]'
       }`}>
         <CommandPalette
           isOpen={isCommandPaletteOpen}
@@ -1343,13 +1343,66 @@ const App: React.FC = () => {
           theme={theme}
           onToggleTheme={toggleTheme}
         />
-        <div className="flex-1 ml-[72px]">
-          <MapDashboard
-            theme={theme}
-            userName={userPermissions?.displayName || user?.email?.split('@')[0]}
-            userEmail={user?.email || ''}
-            isAdmin={isAdmin}
-          />
+        <div className="flex-1 ml-[72px] flex flex-col overflow-hidden">
+          {/* Sticky Breadcrumb Header — diğer modüllerle aynı */}
+          <header
+            className="shrink-0 z-[200] px-8 pt-3 pb-2 flex justify-between items-center no-print backdrop-blur-xl border-b transition-colors duration-500"
+            style={{
+              background: 'var(--sticky-bg)',
+              borderColor: 'var(--sticky-border)'
+            }}
+          >
+            <nav className="flex items-center gap-2 text-sm">
+              <button className="text-[#5b9cff] transition-colors flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Ana Sayfa</span>
+              </button>
+            </nav>
+            <div className="flex items-center gap-2">
+              {/* Sticky Notes Button */}
+              <button
+                onClick={() => setIsStickyNotesOpen(prev => !prev)}
+                className={`relative p-2.5 rounded-xl transition-all duration-200 ${
+                  isStickyNotesOpen
+                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    : theme === 'dark'
+                      ? 'text-slate-400 hover:text-amber-400 hover:bg-[#131d33]/80 border border-transparent hover:border-[#2d4163]/30'
+                      : 'text-slate-500 hover:text-amber-500 hover:bg-white/80 border border-transparent hover:border-slate-200/60'
+                }`}
+                title="Hızlı Notlar"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+              </button>
+              {/* Sağlık Bakanlığı Logo ve Yazı - Sağda */}
+              <div className={`flex items-center gap-3 backdrop-blur-xl px-4 py-2 rounded-2xl border transition-colors duration-500 ${
+                theme === 'dark'
+                  ? 'bg-[#131d33]/80 border-[#2d4163]/30'
+                  : 'bg-white/80 border-slate-200/60 shadow-sm'
+              }`}>
+                <img
+                  src={sbLogo}
+                  alt="T.C. Sağlık Bakanlığı"
+                  className={`h-8 w-auto object-contain ${theme === 'dark' ? 'brightness-0 invert' : ''}`}
+                />
+                <div className="text-left">
+                  <p className={`text-[9px] font-bold tracking-wide ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>T.C. SAĞLIK BAKANLIĞI</p>
+                  <p className={`text-[9px] font-semibold ${theme === 'dark' ? 'text-white/70' : 'text-slate-500'}`}>ŞANLIURFA İL SAĞLIK MÜDÜRLÜĞÜ</p>
+                </div>
+              </div>
+            </div>
+          </header>
+          <div className="flex-1 min-h-0">
+            <MapDashboard
+              theme={theme}
+              userName={userPermissions?.displayName || user?.email?.split('@')[0]}
+              userEmail={user?.email || ''}
+              isAdmin={isAdmin}
+            />
+          </div>
         </div>
       </div>
     );
@@ -1359,7 +1412,7 @@ const App: React.FC = () => {
     <div className={`flex h-screen relative font-['Inter'] transition-colors duration-500 ${
       theme === 'dark'
         ? 'text-slate-200 bg-gradient-to-br from-[#0f1729] via-[#131d33] to-[#0f1729]'
-        : 'text-slate-800 bg-gradient-to-br from-[#f0f4f8] via-[#e8eef5] to-[#f0f4f8]'
+        : 'text-slate-800 bg-gradient-to-br from-[#e4eaf3] via-[#dce3ef] to-[#e4eaf3]'
     }`}>
       {toast && (
         <div className={`fixed top-6 right-6 z-[500] px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl flex items-center gap-3 max-w-md transition-all duration-300 animate-in slide-in-from-right ${
@@ -1548,7 +1601,7 @@ const App: React.FC = () => {
       <main className="flex-1 min-w-0 overflow-y-auto w-full custom-scrollbar ml-[88px]">
         {/* Sticky Breadcrumb Header */}
         <header
-          className="sticky top-0 z-[200] px-8 pt-5 pb-3 flex justify-between items-center no-print backdrop-blur-xl border-b transition-colors duration-500"
+          className="sticky top-0 z-[200] px-8 pt-3 pb-2 flex justify-between items-center no-print backdrop-blur-xl border-b transition-colors duration-500"
           style={{
             background: 'var(--sticky-bg)',
             borderColor: 'var(--sticky-border)'
@@ -1657,7 +1710,7 @@ const App: React.FC = () => {
         </header>
 
         {/* Content Area */}
-        <div className="w-full px-8 pb-6 pt-4">
+        <div className="w-full px-8 pb-6 pt-2">
           <section key={view} className="view-transition">{renderView()}</section>
         </div>
       </main>

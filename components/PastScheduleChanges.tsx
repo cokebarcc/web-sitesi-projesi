@@ -345,7 +345,7 @@ const PastScheduleChanges: React.FC<PastScheduleChangesProps> = ({ versions, set
   }, [versions, monthKey, baselineLabel, updatedLabel, selectedBranch]);
 
   return (
-    <div className="space-y-10 pb-20 animate-in fade-in duration-700">
+    <div className="space-y-4 pb-20 animate-in fade-in duration-700">
       <div className="bg-white p-8 lg:p-12 rounded-[48px] shadow-xl border relative overflow-hidden" style={{ borderColor: 'var(--border-2)' }}>
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-50 rounded-full -mr-40 -mt-40 blur-3xl opacity-60"></div>
         

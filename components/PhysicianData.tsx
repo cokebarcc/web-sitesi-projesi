@@ -209,7 +209,7 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   const activeAmeliyatFile = ameliyatMetaByPeriod[periodKey];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-4 animate-in fade-in duration-700 pb-20">
       {toast && (
         <div className={`fixed top-10 right-10 z-[100] px-6 py-4 rounded-2xl shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-right-10 ${
           toast.type === 'success' ? 'bg-emerald-600 text-white' : 
@@ -338,16 +338,16 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
                     <div className="flex items-center gap-2">Hekim Ad Soyad {sortKey === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
                   <th className="px-10 py-5 text-[11px] font-black text-[var(--text-2)] uppercase tracking-widest">Branş</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-indigo-400 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-indigo)' }} onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-2">MHRS Muayene {sortKey === 'mhrsMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-6 py-5 text-[11px] font-black text-indigo-400 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-indigo)' }} onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-2">Ayaktan Muayene {sortKey === 'ayaktanMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-6 py-5 text-[11px] font-black text-indigo-300 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-6 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-indigo)' }} onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-2">Toplam Muayene {sortKey === 'toplamMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className="px-10 py-5 text-[11px] font-black text-emerald-400 uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-10 py-5 text-[11px] font-black uppercase tracking-widest text-center cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ color: 'var(--th-emerald)' }} onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                     <div className="flex items-center justify-center gap-2">A+B+C Ameliyat {sortKey === 'ameliyatCount' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
                 </tr>
@@ -358,22 +358,22 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
                     <td className="px-10 py-5"><p className="font-black text-[var(--text-1)] uppercase text-sm">{p.name}</p></td>
                     <td className="px-10 py-5"><span className="text-xs font-bold text-[var(--text-3)] uppercase">{p.branch}</span></td>
                     <td className="px-6 py-5 text-center">
-                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.mhrsMuayene > 0 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
+                      <span className="inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border" style={p.mhrsMuayene > 0 ? { background: 'var(--badge-indigo-bg)', color: 'var(--badge-indigo-text)', borderColor: 'var(--badge-indigo-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
                         {p.mhrsMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
                     <td className="px-6 py-5 text-center">
-                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.ayaktanMuayene > 0 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
+                      <span className="inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border" style={p.ayaktanMuayene > 0 ? { background: 'var(--badge-indigo-bg)', color: 'var(--badge-indigo-text)', borderColor: 'var(--badge-indigo-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
                         {p.ayaktanMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
                     <td className="px-6 py-5 text-center">
-                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border ${p.toplamMuayene > 0 ? 'bg-indigo-500/30 text-indigo-200 border-indigo-500/40 shadow-lg shadow-indigo-500/10' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
+                      <span className="inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-black text-xs border" style={p.toplamMuayene > 0 ? { background: 'var(--badge-indigo-strong-bg)', color: 'var(--badge-indigo-strong-text)', borderColor: 'var(--badge-indigo-strong-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
                         {p.toplamMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
                     <td className="px-10 py-5 text-center">
-                      <span className={`inline-block min-w-[80px] px-4 py-2 rounded-xl font-black text-sm border ${p.ameliyatCount > 0 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border-1)]'}`}>
+                      <span className="inline-block min-w-[80px] px-4 py-2 rounded-xl font-black text-sm border" style={p.ameliyatCount > 0 ? { background: 'var(--badge-emerald-bg)', color: 'var(--badge-emerald-text)', borderColor: 'var(--badge-emerald-border)' } : { background: 'var(--surface-3)', color: 'var(--text-muted)', borderColor: 'var(--border-1)' }}>
                         {p.ameliyatCount.toLocaleString('tr-TR')}
                       </span>
                     </td>

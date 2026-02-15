@@ -110,7 +110,7 @@ const GorenBashekimlik: React.FC = () => {
   }, [selectedCity, indicatorMeta]);
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-24">
+    <div className="space-y-4 animate-in fade-in duration-700 pb-24">
       {/* Üst Panel: Başlık ve Yükleme */}
       <div className="bg-white p-10 rounded-[48px] shadow-sm border flex flex-col md:flex-row justify-between items-center gap-6" style={{ borderColor: 'var(--border-2)' }}>
         <div>

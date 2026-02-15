@@ -767,7 +767,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-24">
+    <div className="space-y-4 animate-in fade-in duration-700 pb-24">
       {/* Filtre Paneli */}
       <DataFilterPanel
         title="AI Cetvel Planlama - Veri Seçimi"
