@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, forwardRef, useImperativeHandle, useState } from 'react';
+import React, { useMemo, useRef, forwardRef, useImperativeHandle, useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import Sparkline from './Sparkline';
 import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
@@ -85,6 +86,51 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
   const containerRef = useRef<HTMLDivElement>(null);
   const [localSelectedHospitals, setLocalSelectedHospitals] = useState<string[]>([]);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [filterDropdownPos, setFilterDropdownPos] = useState<{ top: number; right: number; }>({ top: 0, right: 0 });
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
+  const filterDropdownPortalRef = useRef<HTMLDivElement>(null);
+
+  // Filtre dropdown pozisyonunu hesapla
+  const updateFilterDropdownPos = useCallback(() => {
+    if (filterTriggerRef.current) {
+      const rect = filterTriggerRef.current.getBoundingClientRect();
+      setFilterDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isFilterDropdownOpen) updateFilterDropdownPos();
+  }, [isFilterDropdownOpen, updateFilterDropdownPos]);
+
+  useEffect(() => {
+    if (!isFilterDropdownOpen) return;
+    const handle = () => updateFilterDropdownPos();
+    window.addEventListener('scroll', handle, true);
+    window.addEventListener('resize', handle);
+    return () => {
+      window.removeEventListener('scroll', handle, true);
+      window.removeEventListener('resize', handle);
+    };
+  }, [isFilterDropdownOpen, updateFilterDropdownPos]);
+
+  // Filtre dropdown dışına tıklanınca kapat
+  useEffect(() => {
+    if (!isFilterDropdownOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        filterTriggerRef.current && !filterTriggerRef.current.contains(target) &&
+        filterDropdownPortalRef.current && !filterDropdownPortalRef.current.contains(target)
+      ) {
+        setIsFilterDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isFilterDropdownOpen]);
 
   // Dışarıya table element'i expose et
   useImperativeHandle(ref, () => ({
@@ -538,6 +584,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             {/* Kurum Filtresi */}
             <div className="relative">
               <button
+                ref={filterTriggerRef}
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors border ${
                   localSelectedHospitals.length > 0
@@ -560,9 +607,12 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                 </svg>
               </button>
 
-              {isFilterDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 rounded-xl shadow-xl z-50 overflow-hidden"
-                     style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border-light)', backdropFilter: 'blur(12px)' }}>
+              {isFilterDropdownOpen && ReactDOM.createPortal(
+                <div
+                  ref={filterDropdownPortalRef}
+                  className="fixed z-[9999] w-72 rounded-xl shadow-xl overflow-hidden"
+                  style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border-light)', backdropFilter: 'blur(12px)', top: filterDropdownPos.top, right: filterDropdownPos.right }}
+                >
                   <div className="p-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-1)' }}>
                     <span className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>Kurum Seçin</span>
                     <div className="flex items-center gap-2">
@@ -601,7 +651,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                       </label>
                     ))}
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
             </div>
             <button

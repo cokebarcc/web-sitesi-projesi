@@ -11,7 +11,7 @@
  * - ADSH: Memnuniyet, Randevu/Veri, Tedavi Kalitesi, Protez/Yer Tutucu, İdari, Finansal
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import {
   RadarChart,
@@ -344,6 +344,34 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [radarDropdownPos, setRadarDropdownPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+  const radarTriggerRef = useRef<HTMLButtonElement>(null);
+  const radarDropdownRef = useRef<HTMLDivElement>(null);
+
+  const updateRadarDropdownPos = useCallback(() => {
+    if (radarTriggerRef.current) {
+      const rect = radarTriggerRef.current.getBoundingClientRect();
+      setRadarDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isDropdownOpen) updateRadarDropdownPos();
+  }, [isDropdownOpen, updateRadarDropdownPos]);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    const handle = () => updateRadarDropdownPos();
+    window.addEventListener('scroll', handle, true);
+    window.addEventListener('resize', handle);
+    return () => {
+      window.removeEventListener('scroll', handle, true);
+      window.removeEventListener('resize', handle);
+    };
+  }, [isDropdownOpen, updateRadarDropdownPos]);
 
   // Filtrelenmiş kurum listesi (modül tipine göre dinamik)
   const filteredInstitutions = useMemo(() => {
@@ -449,6 +477,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
           <div className="flex items-center gap-2">
             <label className="text-xs whitespace-nowrap" style={{ color: 'var(--text-3)' }}>Karşılaştır:</label>
             <button
+              ref={radarTriggerRef}
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 min-w-[220px] hover:border-emerald-500/50 transition-all group"
               style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}
@@ -503,18 +532,18 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
           </div>
 
           {/* Dropdown Menu */}
-          {isDropdownOpen && (
+          {isDropdownOpen && ReactDOM.createPortal(
             <>
               {/* Backdrop */}
               <div
-                className="fixed inset-0 z-40"
+                className="fixed inset-0 z-[9998]"
                 onClick={() => {
                   setIsDropdownOpen(false);
                   setSearchQuery('');
                 }}
               />
               {/* Dropdown Content */}
-              <div className="absolute right-0 top-full mt-2 w-72 backdrop-blur-xl rounded-xl shadow-2xl z-50 overflow-hidden" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
+              <div ref={radarDropdownRef} className="fixed w-72 backdrop-blur-xl rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)', top: radarDropdownPos.top, right: radarDropdownPos.right }}>
                 {/* Search Input */}
                 <div className="p-3" style={{ borderBottom: '1px solid var(--border-2)' }}>
                   <div className="relative">
@@ -575,7 +604,8 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                   )}
                 </div>
               </div>
-            </>
+            </>,
+            document.body
           )}
         </div>
       </div>
