@@ -89,8 +89,8 @@
   --sticky-bg: rgba(228, 234, 243, 0.92);
   --sticky-border: rgba(99, 102, 241, 0.08);
 
-  --bg-app: #e4eaf3;
-  --bg-app-secondary: #dce3ef;
+  --bg-app: #f5f6fb;
+  --bg-app-secondary: #eef0f6;
 
   /* Surfaces — crisp white elevated cards */
   --surface-1: rgba(255, 255, 255, 0.97);
@@ -159,7 +159,7 @@
 }
 
 [data-theme="light"] body {
-  background: #e4eaf3;
+  background: #f5f6fb;
   color: #1e293b;
 }
 
@@ -920,4 +920,31 @@ code {
 /* Noise texture — subtle in light mode */
 [data-theme="light"] .premium-noise::after {
   opacity: 0.012;
+}
+
+/* ===== GLOBAL PREMIUM NOISE OVERLAY ===== */
+/* Very subtle grain texture across the entire page — premium feel */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+}
+
+[data-theme="light"] body::after {
+  opacity: 0.02;
+}
+
+/* Hero area vignette — subtle edge darkening */
+.hero-vignette {
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.06) 100%);
+}
+
+[data-theme="light"] .hero-vignette {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(120,130,160,0.08) 100%);
 }

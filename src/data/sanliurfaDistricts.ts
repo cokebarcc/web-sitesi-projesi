@@ -9,7 +9,10 @@ export type InstitutionType =
   | 'UNIVERSITE'    // Üniversite Hastanesi — mor bg, beyaz "H"
   | 'SEHIR'         // Şehir Hastanesi — kırmızı bg, beyaz "H" (büyük)
   | 'ILCE_SM'       // İlçe Sağlık Müdürlüğü — yeşil bg, beyaz "SM"
-  | 'ADSH';         // ADSH/ADSM — turuncu bg, beyaz "A"
+  | 'ADSH'          // ADSH/ADSM — turuncu bg, beyaz "A"
+  | 'ASHİ'          // Acil Sağlık Hizmetleri İstasyonu — kırmızı-turuncu bg, beyaz "112"
+  | 'ASM'           // Aile Sağlığı Merkezi — açık mavi bg, beyaz "+"
+  | 'SHM';          // Sağlıklı Hayat Merkezi — yeşil-mavi bg, beyaz "♥"
 
 export interface InstitutionMarker {
   id: string;
@@ -39,6 +42,9 @@ export const INSTITUTION_STYLES: Record<InstitutionType, { bg: string; label: st
   SEHIR:      { bg: '#ef4444', label: 'H',   size: 32 },
   ILCE_SM:    { bg: '#10b981', label: 'S',   size: 24 },
   ADSH:       { bg: '#f59e0b', label: 'A',   size: 24 },
+  ASHİ:       { bg: '#dc2626', label: '112', size: 22 },
+  ASM:        { bg: '#0ea5e9', label: 'ASM', size: 22 },
+  SHM:        { bg: '#14b8a6', label: 'SHM', size: 22 },
 };
 
 // Kurum pin verileri Firestore'dan yüklenir (appData/mapInstitutions)

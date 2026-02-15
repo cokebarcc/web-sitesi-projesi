@@ -10,6 +10,9 @@ const TYPE_OPTIONS: { value: InstitutionType; label: string }[] = [
   { value: 'SEHIR',     label: 'Sehir Hastanesi' },
   { value: 'ILCE_SM',   label: 'Ilce Saglik Mudurlugu' },
   { value: 'ADSH',      label: 'ADSH / ADSM' },
+  { value: 'ASHİ',      label: 'Acil Saglik Hizmetleri Istasyonu' },
+  { value: 'ASM',       label: 'Aile Sagligi Merkezi' },
+  { value: 'SHM',       label: 'Saglikli Hayat Merkezi' },
 ];
 
 interface PinEditorPanelProps {
@@ -150,7 +153,7 @@ const PinEditorPanel: React.FC<PinEditorPanelProps> = ({
             width: selectedStyle.size,
             height: selectedStyle.size,
             backgroundColor: selectedStyle.bg,
-            fontSize: type === 'ISM' || type === 'ILCE_SM' ? 9 : selectedStyle.size >= 32 ? 13 : 11,
+            fontSize: type === 'ISM' || type === 'ILCE_SM' ? 9 : (type === 'ASHİ' || type === 'ASM' || type === 'SHM') ? 8 : selectedStyle.size >= 32 ? 13 : 11,
           }}
         >
           {selectedStyle.label}

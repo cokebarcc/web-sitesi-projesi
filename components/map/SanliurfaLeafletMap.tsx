@@ -16,7 +16,8 @@ const FILL_MAX_ZOOM = 10;
 function createInstitutionIcon(marker: InstitutionMarker, isHighlighted?: boolean): L.DivIcon {
   const style = INSTITUTION_STYLES[marker.type];
   const s = style.size;
-  const fontSize = s >= 34 ? 15 : s >= 32 ? 14 : s >= 28 ? 13 : 12;
+  const baseFontSize = s >= 34 ? 15 : s >= 32 ? 14 : s >= 28 ? 13 : 12;
+  const fontSize = style.label.length > 2 ? Math.round(s * 0.34) : baseFontSize;
   const fontWeight = 800;
   const ring = isHighlighted ? `0 0 0 3px #facc15, 0 0 12px rgba(250,204,21,0.5),` : '';
 

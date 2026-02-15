@@ -1302,8 +1302,8 @@ const App: React.FC = () => {
     return (
       <div className={`flex h-screen font-['Inter'] ${
         theme === 'dark'
-          ? 'text-slate-200 bg-gradient-to-br from-[#0f1729] via-[#131d33] to-[#0f1729]'
-          : 'text-slate-800 bg-gradient-to-br from-[#e4eaf3] via-[#dce3ef] to-[#e4eaf3]'
+          ? 'text-slate-200 bg-[#0f1729]'
+          : 'text-slate-800 bg-[#f5f6fb]'
       }`}>
         <CommandPalette
           isOpen={isCommandPaletteOpen}
@@ -1344,13 +1344,13 @@ const App: React.FC = () => {
           onToggleTheme={toggleTheme}
         />
         <div className="flex-1 ml-[72px] flex flex-col overflow-hidden">
-          {/* Sticky Breadcrumb Header — diğer modüllerle aynı */}
+          {/* Sticky Breadcrumb Header — floating glass bar */}
           <header
-            className="shrink-0 z-[200] px-8 pt-3 pb-2 flex justify-between items-center no-print backdrop-blur-xl border-b transition-colors duration-500"
-            style={{
-              background: 'var(--sticky-bg)',
-              borderColor: 'var(--sticky-border)'
-            }}
+            className={`shrink-0 z-[200] px-8 pt-3 pb-2 flex justify-between items-center no-print backdrop-blur-2xl border-b transition-colors duration-500 ${
+              theme === 'dark'
+                ? 'bg-[#0f1729]/60 border-white/[0.06]'
+                : 'bg-[#f5f6fb]/70 border-black/[0.04]'
+            }`}
           >
             <nav className="flex items-center gap-2 text-sm">
               <button className="text-[#5b9cff] transition-colors flex items-center gap-1.5">
