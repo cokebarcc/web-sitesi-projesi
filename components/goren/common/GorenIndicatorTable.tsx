@@ -11,7 +11,7 @@ import {
   IndicatorDefinition,
   StatusIndicator
 } from '../types/goren.types';
-import { GlassCard } from '../../ui';
+
 
 interface GorenIndicatorTableProps {
   /** Hesaplama sonuçları */
@@ -93,7 +93,7 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <GlassCard isDark={true} hover={false} padding="p-0">
+      <div className="g-section-card">
         <div className="p-6 animate-pulse">
           <div className="h-4 rounded w-48 mb-4" style={{ background: 'var(--surface-2)' }} />
           {[1, 2, 3, 4, 5].map(i => (
@@ -105,12 +105,12 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
             </div>
           ))}
         </div>
-      </GlassCard>
+      </div>
     );
   }
 
   return (
-    <GlassCard isDark={true} hover={false} padding="p-0">
+    <div className="g-section-card">
       {/* Başlık ve Filtreler */}
       <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-1)' }}>
         <div>
@@ -330,7 +330,7 @@ export const GorenIndicatorTable: React.FC<GorenIndicatorTableProps> = ({
           </p>
         </div>
       )}
-    </GlassCard>
+    </div>
   );
 };
 

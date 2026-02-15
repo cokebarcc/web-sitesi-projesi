@@ -39,7 +39,7 @@ import {
 
 // Premium design system
 import './goren-premium.css';
-import { GlassCard } from '../ui';
+
 
 // Alt bileşenler
 import GorenFilterPanel from './common/GorenFilterPanel';
@@ -636,17 +636,17 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   if (definitions.length === 0) {
     return (
       <div className="goren-module p-8">
-        <GlassCard isDark={true} hover={false} padding="p-8" className="text-center" style={{ borderColor: 'var(--g-warning)', borderWidth: '1px' }}>
+        <div className="g-section-card p-8 text-center" style={{ borderColor: 'var(--g-warning)', borderWidth: '1px' }}>
           <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--g-warning)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--g-warning-text)' }}>
             {INSTITUTION_TYPE_LABELS[moduleType]} Modülü Yakında
           </h3>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-sm" style={{ color: 'var(--g-text-muted)' }}>
             Bu modül için gösterge tanımları henüz eklenmedi. Yakında aktif olacaktır.
           </p>
-        </GlassCard>
+        </div>
       </div>
     );
   }
@@ -710,7 +710,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
 
       {/* BH için Toplam Puan Büyük Kart */}
       {totalDirectGP !== null && (
-        <GlassCard isDark={true} variant="elevated" hover={false} padding="p-8" style={{ background: 'linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%)' }}>
+        <div className="g-hero-card">
           <div className="flex items-center justify-between relative z-10">
             <div>
               <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '8px' }}>
@@ -738,7 +738,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.6)', marginTop: '8px' }}>Başarı Oranı</p>
             </div>
           </div>
-        </GlassCard>
+        </div>
       )}
 
       {/* Özet Kartları */}
@@ -812,17 +812,17 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
           />
         )
       ) : (
-        <GlassCard isDark={true} hover={false} padding="p-12" variant="outlined" className="text-center">
-          <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="g-section-card p-12 text-center">
+          <svg className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--g-text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <h3 className="text-base font-semibold text-[var(--text-1)]" style={{ marginBottom: '8px' }}>
+          <h3 className="text-base font-semibold" style={{ color: 'var(--g-text)', marginBottom: '8px' }}>
             Kurum Seçin
           </h3>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-sm" style={{ color: 'var(--g-text-muted)' }}>
             Performans hesaplaması yapabilmek için yukarıdan bir kurum seçin ve "Uygula" butonuna tıklayın.
           </p>
-        </GlassCard>
+        </div>
       )}
 
       {/* Detay Paneli */}

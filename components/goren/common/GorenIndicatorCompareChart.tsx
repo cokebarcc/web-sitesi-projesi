@@ -19,7 +19,7 @@ import {
   Cell
 } from 'recharts';
 import { BHTableRow } from '../../../src/services/gorenStorage';
-import { GlassCard } from '../../ui';
+
 
 interface GorenIndicatorCompareChartProps {
   data: BHTableRow[];
@@ -35,9 +35,9 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
   // Yükleme durumu
   if (isLoading) {
     return (
-      <GlassCard isDark={true} hover={false} padding="p-6">
+      <div className="g-section-card p-6">
         <div className="h-96 flex items-center justify-center">
-          <div className="flex items-center gap-3 text-[var(--text-muted)]">
+          <div className="flex items-center gap-3 text-[var(--g-text-muted)]">
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -45,22 +45,22 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
             <span>Grafik yükleniyor...</span>
           </div>
         </div>
-      </GlassCard>
+      </div>
     );
   }
 
   // Veri yoksa
   if (!data || data.length === 0) {
     return (
-      <GlassCard isDark={true} hover={false} padding="p-6">
-        <div className="h-96 flex flex-col items-center justify-center text-[var(--text-muted)]">
+      <div className="g-section-card p-6">
+        <div className="h-96 flex flex-col items-center justify-center text-[var(--g-text-muted)]">
           <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           <p className="text-sm">Gösterge verisi bulunamadı</p>
           <p className="text-xs mt-1 opacity-70">Veri yükledikçe grafik oluşacak</p>
         </div>
-      </GlassCard>
+      </div>
     );
   }
 
@@ -101,9 +101,9 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
     if (active && payload && payload.length) {
       const dataPoint = payload[0]?.payload;
       return (
-        <div className="backdrop-blur-xl rounded-xl border p-4 shadow-xl max-w-xs" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
-          <p className="text-[var(--text-1)] font-bold text-sm mb-1">#{dataPoint?.sira}</p>
-          <p className="text-[var(--text-2)] text-xs mb-3">{dataPoint?.fullName}</p>
+        <div className="backdrop-blur-xl rounded-xl border p-4 shadow-xl max-w-xs" style={{ background: 'var(--g-surface)', borderColor: 'var(--g-border)' }}>
+          <p className="text-[var(--g-text)] font-bold text-sm mb-1">#{dataPoint?.sira}</p>
+          <p className="text-[var(--g-text-secondary)] text-xs mb-3">{dataPoint?.fullName}</p>
           <div className="space-y-2">
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex items-center justify-between gap-4">
@@ -112,16 +112,16 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-[var(--text-3)] text-xs">{entry.name}:</span>
+                  <span className="text-[var(--g-text-tertiary)] text-xs">{entry.name}:</span>
                 </div>
-                <span className="text-[var(--text-1)] font-bold text-sm">
+                <span className="text-[var(--g-text)] font-bold text-sm">
                   {entry.value !== null ? entry.value.toFixed(1) : '-'}
                 </span>
               </div>
             ))}
           </div>
           {dataPoint?.donemIci !== null && dataPoint?.trRolOrtalama !== null && (
-            <div className="mt-3 pt-2 border-t border-[var(--border-2)]">
+            <div className="mt-3 pt-2 border-t border-[var(--g-border)]">
               <div className="flex items-center gap-1 text-xs">
                 {dataPoint.isAboveAverage ? (
                   <>
@@ -163,12 +163,12 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
   }
 
   return (
-    <GlassCard isDark={true} hover={false} padding="p-6">
+    <div className="g-section-card p-6">
       {/* Başlık */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-bold text-[var(--text-1)]">Gösterge Karşılaştırması</h3>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
+          <h3 className="text-lg font-bold text-[var(--g-text)]">Gösterge Karşılaştırması</h3>
+          <p className="text-xs text-[var(--g-text-muted)] mt-1">
             Dönem İçi vs TR Rol Ortalaması ({displayData.length}/{chartData.length} gösterge)
           </p>
         </div>
@@ -178,9 +178,9 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
           <button
             onClick={() => setShowAll(!showAll)}
             className="px-4 py-2 rounded-2xl text-xs font-medium transition-all"
-            style={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--text-1)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text-2)'; }}
+            style={{ background: 'var(--g-surface-raised)', color: 'var(--g-text-secondary)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--g-surface-muted)'; e.currentTarget.style.color = 'var(--g-text)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--g-surface-raised)'; e.currentTarget.style.color = 'var(--g-text-secondary)'; }}
           >
             {showAll ? `İlk 15'i Göster` : `Tümünü Göster (${chartData.length})`}
           </button>
@@ -196,23 +196,23 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
             barGap={2}
             barCategoryGap="20%"
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-1, #334155)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
             <XAxis
               dataKey="name"
-              stroke="var(--text-muted, #64748b)"
+              stroke="#64748b"
               fontSize={10}
               tickLine={false}
-              axisLine={{ stroke: 'var(--border-1, #334155)' }}
+              axisLine={{ stroke: '#e2e8f0' }}
               angle={-45}
               textAnchor="end"
               height={60}
               interval={0}
             />
             <YAxis
-              stroke="var(--text-muted, #64748b)"
+              stroke="#64748b"
               fontSize={11}
               tickLine={false}
-              axisLine={{ stroke: 'var(--border-1, #334155)' }}
+              axisLine={{ stroke: '#e2e8f0' }}
               domain={[Math.max(0, yMin), yMax]}
               ticks={yTicks}
             />
@@ -220,7 +220,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
             <Legend
               wrapperStyle={{ paddingTop: '20px' }}
               formatter={(value: string) => (
-                <span className="text-[var(--text-2)] text-xs">{value}</span>
+                <span className="text-[var(--g-text-secondary)] text-xs">{value}</span>
               )}
             />
 
@@ -253,7 +253,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
       </div>
 
       {/* Alt bilgi - Renk açıklaması */}
-      <div className="mt-4 pt-4 flex items-center justify-between text-xs text-[var(--text-muted)]" style={{ borderTop: '1px solid var(--border-1)' }}>
+      <div className="mt-4 pt-4 flex items-center justify-between text-xs text-[var(--g-text-muted)]" style={{ borderTop: '1px solid var(--g-border)' }}>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-emerald-500" />
@@ -272,7 +272,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
           Gösterge numarasına göre sıralı
         </span>
       </div>
-    </GlassCard>
+    </div>
   );
 };
 

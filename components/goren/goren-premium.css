@@ -573,8 +573,8 @@
 [data-theme="light"] .goren-module .recharts-polar-grid-angle line,
 .goren-module .recharts-polar-grid-concentric path,
 .goren-module .recharts-polar-grid-angle line {
-  stroke: #94a3b8 !important;
-  stroke-opacity: 1 !important;
+  stroke: #cbd5e1 !important;
+  stroke-opacity: 0.7 !important;
   stroke-width: 1 !important;
 }
 [data-theme="dark"] .goren-module .recharts-polar-grid-concentric path,
