@@ -33,8 +33,8 @@ const getVariantBase = (variant: CardVariant, isDark: boolean): string => {
         : 'bg-transparent border-black/[0.08] shadow-none';
     default: // 'default'
       return isDark
-        ? 'bg-slate-900/60 border-white/[0.15] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.65),0_8px_24px_rgba(0,0,0,0.35)]'
-        : 'bg-white/90 border-black/[0.08] shadow-[0_8px_30px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)]';
+        ? 'bg-slate-900/60 border-white/[0.15] shadow-[0_10px_40px_rgba(0,0,0,0.55),0_2px_12px_rgba(0,0,0,0.35)]'
+        : 'bg-white/[0.88] border-black/[0.10] shadow-[0_2px_12px_rgba(0,0,0,0.05),0_18px_40px_rgba(0,0,0,0.08)]';
   }
 };
 

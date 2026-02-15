@@ -215,7 +215,7 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
   return (
     <div className="space-y-4 animate-in fade-in duration-700 pb-20">
       {toast && (
-        <div className={`fixed top-10 right-10 z-[100] px-6 py-4 rounded-2xl shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-right-10 ${
+        <div className={`fixed top-10 right-10 z-[100] px-6 py-4 rounded-2xl shadow-lg font-bold flex items-center gap-3 animate-in slide-in-from-right-10 ${
           toast.type === 'success' ? 'bg-emerald-600 text-white' : 
           toast.type === 'error' ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white'
         }`}>
@@ -254,7 +254,7 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
               <div className="relative">
                 <input
                   type="text" placeholder="Hekim / Branş..."
-                  className="pl-8 pr-3 py-2 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 w-[160px] h-[38px] placeholder-[var(--text-placeholder)]"
+                  className="pl-8 pr-3 py-2 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 w-[160px] h-[38px] placeholder-[var(--text-muted)]"
                   value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 <svg className="w-4 h-4 text-[var(--text-muted)] absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -264,13 +264,13 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
             {/* Muayene Dosyası - Sadece yükleme izni varsa göster */}
             {canUpload && (
               <div className="flex items-center gap-1">
-                <label className={`flex items-center gap-2 px-3 py-2 h-[38px] rounded-lg font-semibold text-xs cursor-pointer transition-all active:scale-95 shadow-lg ${activeMuayeneFile ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-[var(--surface-2)] border border-[var(--border-2)] text-[var(--text-2)] hover:bg-[var(--surface-hover)]'}`}>
+                <label className={`flex items-center gap-2 px-3 py-2 h-[38px] rounded-xl font-semibold text-xs cursor-pointer transition-all active:scale-95 shadow-sm ${activeMuayeneFile ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-2)] hover:bg-[var(--surface-hover)]'}`}>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   {activeMuayeneFile ? 'Muayene ✓' : 'Muayene'}
                   <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => handleFileUpload(e.target.files, 'muayene')} />
                 </label>
                 {activeMuayeneFile && (
-                  <button onClick={() => clearPeriodData('muayene')} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-colors border border-rose-500/30">
+                  <button onClick={() => clearPeriodData('muayene')} className="p-2 bg-rose-500/20 text-rose-400 rounded-xl hover:bg-rose-500/30 transition-colors border border-rose-500/30">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 )}
@@ -280,13 +280,13 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
             {/* Ameliyat Dosyası - Sadece yükleme izni varsa göster */}
             {canUpload && (
               <div className="flex items-center gap-1">
-                <label className={`flex items-center gap-2 px-3 py-2 h-[38px] rounded-lg font-semibold text-xs cursor-pointer transition-all active:scale-95 shadow-lg ${activeAmeliyatFile ? 'bg-emerald-600 text-white shadow-emerald-500/20' : 'bg-[var(--surface-2)] border border-[var(--border-2)] text-[var(--text-2)] hover:bg-[var(--surface-hover)]'}`}>
+                <label className={`flex items-center gap-2 px-3 py-2 h-[38px] rounded-xl font-semibold text-xs cursor-pointer transition-all active:scale-95 shadow-sm ${activeAmeliyatFile ? 'bg-emerald-600 text-white shadow-emerald-500/20' : 'bg-[var(--surface-2)] border border-[var(--border-1)] text-[var(--text-2)] hover:bg-[var(--surface-hover)]'}`}>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 12V3" /></svg>
                   {activeAmeliyatFile ? 'Ameliyat ✓' : 'Ameliyat'}
                   <input type="file" className="hidden" accept=".xlsx, .xls" onChange={(e) => handleFileUpload(e.target.files, 'ameliyat')} />
                 </label>
                 {activeAmeliyatFile && (
-                  <button onClick={() => clearPeriodData('ameliyat')} className="p-2 bg-rose-500/20 text-rose-400 rounded-lg hover:bg-rose-500/30 transition-colors border border-rose-500/30">
+                  <button onClick={() => clearPeriodData('ameliyat')} className="p-2 bg-rose-500/20 text-rose-400 rounded-xl hover:bg-rose-500/30 transition-colors border border-rose-500/30">
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 )}
@@ -301,15 +301,15 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
         <GlassCard isDark={isDark} variant="flat" hover={false} padding="p-4">
           <div className="flex gap-3">
             {activeMuayeneFile && (
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isDark ? 'bg-indigo-500/10 border border-indigo-500/20' : 'bg-indigo-50 border border-indigo-200/50'}`}>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
                 <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
-                <span className={`text-[10px] font-semibold ${isDark ? 'text-indigo-300' : 'text-indigo-600'}`}>Muayene: {activeMuayeneFile.fileName}</span>
+                <span className="text-[10px] font-semibold text-indigo-400">Muayene: {activeMuayeneFile.fileName}</span>
               </div>
             )}
             {activeAmeliyatFile && (
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-50 border border-emerald-200/50'}`}>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                 <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                <span className={`text-[10px] font-semibold ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>Ameliyat: {activeAmeliyatFile.fileName}</span>
+                <span className="text-[10px] font-semibold text-emerald-400">Ameliyat: {activeAmeliyatFile.fileName}</span>
               </div>
             )}
           </div>
@@ -318,90 +318,90 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
 
       {rosterForPeriod.length > 0 ? (
         <GlassCard isDark={isDark} hover={false} padding="p-0">
-          <div className={`px-6 py-5 flex justify-between items-center border-b ${isDark ? 'border-white/[0.06]' : 'border-black/[0.06]'}`}>
+          <div className="px-6 py-5 flex justify-between items-center border-b border-[var(--border-1)]">
             <div>
-              <h4 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Performans Listesi: {selectedMonth} {selectedYear}</h4>
-              <p className={`text-[10px] mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Dönem hekim kadrosu detaylı cetvellerden otomatik oluşturulmuştur.</p>
+              <h4 className="text-sm font-semibold text-[var(--text-1)]">Performans Listesi: {selectedMonth} {selectedYear}</h4>
+              <p className="text-[10px] mt-1 text-[var(--text-muted)]">Dönem hekim kadrosu detaylı cetvellerden otomatik oluşturulmuştur.</p>
             </div>
             <div className="flex gap-3">
-               <div className={`px-4 py-2 rounded-xl text-center ${isDark ? 'bg-white/[0.04] border border-white/[0.08]' : 'bg-slate-50 border border-black/[0.05]'}`}>
-                  <p className={`text-[9px] font-semibold uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Toplam Hekim</p>
-                  <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{rosterForPeriod.length}</p>
+               <div className="px-4 py-2 rounded-xl text-center bg-[var(--surface-2)] border border-[var(--border-1)]">
+                  <p className="text-[9px] font-semibold uppercase text-[var(--text-muted)]">Toplam Hekim</p>
+                  <p className="text-lg font-bold text-[var(--text-1)]">{rosterForPeriod.length}</p>
                </div>
-               <div className={`px-4 py-2 rounded-xl text-center ${isDark ? 'bg-white/[0.04] border border-white/[0.08]' : 'bg-slate-50 border border-black/[0.05]'}`}>
-                  <p className={`text-[9px] font-semibold uppercase ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Aktif Branş</p>
-                  <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{new Set(rosterForPeriod.map(m => normalizeDoctorName(m.branch))).size}</p>
+               <div className="px-4 py-2 rounded-xl text-center bg-[var(--surface-2)] border border-[var(--border-1)]">
+                  <p className="text-[9px] font-semibold uppercase text-[var(--text-muted)]">Aktif Branş</p>
+                  <p className="text-lg font-bold text-[var(--text-1)]">{new Set(rosterForPeriod.map(m => normalizeDoctorName(m.branch))).size}</p>
                </div>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left" style={{ borderSpacing: 0 }}>
-              <thead className="sticky top-0 z-10">
-                <tr className={isDark ? 'bg-white/[0.04]' : 'bg-slate-50/80'}>
-                  <th className={`px-5 py-3 text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-slate-400 border-b border-white/[0.06]' : 'text-slate-500 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('name'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+              <thead className="sticky top-0 z-10 backdrop-blur-xl bg-[var(--surface-1)]/80">
+                <tr>
+                  <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors whitespace-nowrap text-[var(--text-2)] border-b border-[var(--table-separator)]" onClick={() => { setSortKey('name'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                     <div className="flex items-center gap-1.5">Hekim Ad Soyad {sortKey === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className={`px-5 py-3 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap ${isDark ? 'text-slate-400 border-b border-white/[0.06]' : 'text-slate-500 border-b border-black/[0.06]'}`}>Branş</th>
-                  <th className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-indigo-400 border-b border-white/[0.06]' : 'text-indigo-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap text-[var(--text-2)] border-b border-[var(--table-separator)]">Branş</th>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap text-indigo-400 border-b border-[var(--table-separator)]" onClick={() => { setSortKey('mhrsMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-1.5">MHRS Muayene {sortKey === 'mhrsMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-indigo-400 border-b border-white/[0.06]' : 'text-indigo-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap text-indigo-400 border-b border-[var(--table-separator)]" onClick={() => { setSortKey('ayaktanMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-1.5">Ayaktan Muayene {sortKey === 'ayaktanMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-indigo-400 border-b border-white/[0.06]' : 'text-indigo-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap text-indigo-400 border-b border-[var(--table-separator)]" onClick={() => { setSortKey('toplamMuayene'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                      <div className="flex items-center justify-center gap-1.5">Toplam Muayene {sortKey === 'toplamMuayene' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
-                  <th className={`px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap ${isDark ? 'text-emerald-400 border-b border-white/[0.06]' : 'text-emerald-600 border-b border-black/[0.06]'}`} onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
+                  <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-center cursor-pointer transition-colors whitespace-nowrap text-emerald-400 border-b border-[var(--table-separator)]" onClick={() => { setSortKey('ameliyatCount'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                     <div className="flex items-center justify-center gap-1.5">A+B+C Ameliyat {sortKey === 'ameliyatCount' && (sortOrder === 'asc' ? '↑' : '↓')}</div>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {processedList.length > 0 ? processedList.map((p, idx) => (
-                  <tr key={idx} className={`transition-colors duration-150 ${
-                    idx % 2 === 1 ? (isDark ? 'bg-white/[0.015]' : 'bg-black/[0.015]') : ''
-                  } ${isDark ? 'hover:bg-white/[0.04] border-b border-white/[0.04]' : 'hover:bg-sky-50/50 border-b border-black/[0.04]'}`}>
-                    <td className={`px-5 py-3 text-[13px] font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{p.name}</td>
-                    <td className={`px-5 py-3 text-[13px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{p.branch}</td>
+                  <tr key={idx} className={`transition-colors duration-150 min-h-[44px] border-b border-[var(--table-separator)] hover:bg-[var(--surface-hover)] ${
+                    idx % 2 === 1 ? 'bg-[var(--table-zebra)]' : ''
+                  }`}>
+                    <td className="px-5 py-3 text-[13px] font-semibold text-[var(--text-1)]">{p.name}</td>
+                    <td className="px-5 py-3 text-[13px] text-[var(--text-2)]">{p.branch}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-lg font-semibold text-xs ${
+                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-xl font-semibold text-xs ${
                         p.mhrsMuayene > 0
-                          ? isDark ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20' : 'bg-indigo-50 text-indigo-600 border border-indigo-200/50'
-                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                          ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                          : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)]'
                       }`}>
                         {p.mhrsMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-lg font-semibold text-xs ${
+                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-xl font-semibold text-xs ${
                         p.ayaktanMuayene > 0
-                          ? isDark ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20' : 'bg-indigo-50 text-indigo-600 border border-indigo-200/50'
-                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                          ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                          : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)]'
                       }`}>
                         {p.ayaktanMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-lg font-bold text-xs ${
+                      <span className={`inline-block min-w-[50px] px-2.5 py-1 rounded-xl font-bold text-xs ${
                         p.toplamMuayene > 0
-                          ? isDark ? 'bg-indigo-500/15 text-indigo-200 border border-indigo-500/25' : 'bg-indigo-100 text-indigo-700 border border-indigo-300/50'
-                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                          ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/25'
+                          : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)]'
                       }`}>
                         {p.toplamMuayene.toLocaleString('tr-TR')}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-center">
-                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-lg font-bold text-sm ${
+                      <span className={`inline-block min-w-[60px] px-3 py-1.5 rounded-xl font-bold text-sm ${
                         p.ameliyatCount > 0
-                          ? isDark ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border border-emerald-200/50'
-                          : isDark ? 'bg-white/[0.03] text-slate-600 border border-white/[0.06]' : 'bg-slate-50 text-slate-400 border border-slate-200/50'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-[var(--surface-2)] text-[var(--text-muted)] border border-[var(--border-1)]'
                       }`}>
                         {p.ameliyatCount.toLocaleString('tr-TR')}
                       </span>
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan={6} className={`px-8 py-16 text-center text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Kayıtlı hekim veya arama sonucu bulunamadı</td></tr>
+                  <tr><td colSpan={6} className="px-8 py-16 text-center text-sm text-[var(--text-muted)]">Kayıtlı hekim veya arama sonucu bulunamadı</td></tr>
                 )}
               </tbody>
             </table>
@@ -410,12 +410,12 @@ const PhysicianData: React.FC<PhysicianDataProps> = ({
       ) : (
         <GlassCard isDark={isDark} hover={false} padding="p-16">
           <div className="text-center flex flex-col items-center gap-6">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isDark ? 'bg-rose-500/10 border border-rose-500/20' : 'bg-rose-50 border border-rose-200/50'}`}>
-              <svg className={`w-8 h-8 ${isDark ? 'text-rose-400/50' : 'text-rose-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-rose-500/10 border border-rose-500/20">
+              <svg className="w-8 h-8 text-rose-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
             <div>
-              <h4 className={`text-lg font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Bu Dönem İçin Kadro Bulunamadı</h4>
-              <p className={`text-sm max-w-md mx-auto mt-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Lütfen önce <strong className={isDark ? 'text-slate-300' : 'text-slate-600'}>Detaylı Cetveller</strong> modülünden {selectedMonth} {selectedYear} dönemine ait verileri yükleyiniz.</p>
+              <h4 className="text-lg font-bold text-[var(--text-2)]">Bu Dönem İçin Kadro Bulunamadı</h4>
+              <p className="text-sm max-w-md mx-auto mt-2 text-[var(--text-muted)]">Lütfen önce <strong className="text-[var(--text-1)]">Detaylı Cetveller</strong> modülünden {selectedMonth} {selectedYear} dönemine ait verileri yükleyiniz.</p>
             </div>
             <GlassButton isDark={isDark} variant="primary" size="md" onClick={onNavigateToDetailed}>
               Cetvellere Git

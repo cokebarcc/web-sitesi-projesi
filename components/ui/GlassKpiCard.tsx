@@ -62,7 +62,7 @@ const GlassKpiCard: React.FC<GlassKpiCardProps> = ({
   return (
     <GlassCard
       isDark={isDark}
-      padding="p-4"
+      padding="p-5"
       hover={!!onClick}
       onClick={onClick}
       className={className}
@@ -70,48 +70,50 @@ const GlassKpiCard: React.FC<GlassKpiCardProps> = ({
     >
       {/* İkon */}
       {icon && (
-        <div className={`p-1.5 rounded-lg inline-block mb-2 ${iconBg}`}>
+        <div className={`p-2 rounded-xl inline-block mb-3 ${iconBg}`}>
           <div className={iconText}>{icon}</div>
         </div>
       )}
 
-      {/* Değer — büyük, bold */}
-      <div className={`text-xl font-bold tracking-tight leading-none ${
+      {/* Değer — büyük, bold, tabular-nums */}
+      <div className={`text-2xl font-bold tracking-tight leading-none tabular-nums ${
         isDark ? 'text-white' : 'text-slate-900'
       }`}>
         {typeof value === 'number' ? value.toLocaleString('tr-TR') : value}
       </div>
 
       {/* Başlık — küçük, medium */}
-      <div className={`text-[11px] font-medium mt-1.5 ${
-        isDark ? 'text-slate-300' : 'text-slate-600'
+      <div className={`text-[11px] font-medium mt-2 ${
+        isDark ? 'text-slate-400' : 'text-slate-500'
       }`}>
         {title}
       </div>
 
       {/* Alt bilgi + Trend */}
-      <div className="flex items-center gap-2 mt-1">
-        {subtitle && (
-          <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            {subtitle}
-          </span>
-        )}
-        {trend && (
-          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${
-            trend.value >= 0
-              ? isDark ? 'text-emerald-400' : 'text-emerald-600'
-              : isDark ? 'text-rose-400' : 'text-rose-600'
-          }`}>
-            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d={trend.value >= 0 ? 'M4.5 19.5l15-15' : 'M4.5 4.5l15 15'}
-              />
-            </svg>
-            {trend.value > 0 ? '+' : ''}{trend.value}%
-            {trend.label && <span className="font-normal ml-0.5">{trend.label}</span>}
-          </span>
-        )}
-      </div>
+      {(subtitle || trend) && (
+        <div className="flex items-center gap-2 mt-1.5">
+          {subtitle && (
+            <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              {subtitle}
+            </span>
+          )}
+          {trend && (
+            <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${
+              trend.value >= 0
+                ? isDark ? 'text-emerald-400' : 'text-emerald-600'
+                : isDark ? 'text-rose-400' : 'text-rose-600'
+            }`}>
+              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d={trend.value >= 0 ? 'M4.5 19.5l15-15' : 'M4.5 4.5l15 15'}
+                />
+              </svg>
+              {trend.value > 0 ? '+' : ''}{trend.value}%
+              {trend.label && <span className="font-normal ml-0.5">{trend.label}</span>}
+            </span>
+          )}
+        </div>
+      )}
     </GlassCard>
   );
 };

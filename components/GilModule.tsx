@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { uploadFinansalFile, getFinansalFileMetadata, downloadFinansalFile, deleteFinansalFile } from '../src/services/finansalStorage';
-import { GlassCard } from './ui';
+import { GlassCard, GlassSection } from './ui';
 
 export interface GilExcelData {
   headers: string[];
@@ -206,7 +206,7 @@ const GilModule: React.FC<GilModuleProps> = ({ canUpload = false, theme = 'dark'
           {canUpload ? (
             <GlassCard isDark={isDark} hover={false} padding="p-0">
               <label className={`p-12 cursor-pointer hover:border-lime-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
-                <div className="w-16 h-16 bg-lime-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
+                <div className="w-16 h-16 bg-lime-500/10 rounded-[20px] flex items-center justify-center mb-4 group-hover:bg-lime-500/20 transition-colors">
                   {loading ? (
                     <div className="w-8 h-8 border-2 border-lime-400/30 border-t-lime-400 rounded-full animate-spin"></div>
                   ) : (
@@ -246,16 +246,16 @@ const GilModule: React.FC<GilModuleProps> = ({ canUpload = false, theme = 'dark'
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="bg-lime-500/10 text-lime-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-lime-500/20">
+              <span className="bg-lime-500/10 text-lime-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-lime-500/20">
                 {data.rows.length} kayıt
               </span>
               {canUpload && (
-                <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors" style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}>
+                <label className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', border: '1px solid var(--border-1)' }}>
                   Değiştir
                   <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleUpload} />
                 </label>
               )}
-              <button onClick={handleClear} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">
+              <button onClick={handleClear} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">
                 Temizle
               </button>
             </div>
@@ -265,24 +265,24 @@ const GilModule: React.FC<GilModuleProps> = ({ canUpload = false, theme = 'dark'
           <GlassCard isDark={isDark} hover={false} padding="p-0">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
-                <thead>
-                  <tr style={{ background: 'var(--surface-3)', borderBottom: '1px solid var(--border-2)' }}>
-                    <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>
+                <thead className="sticky top-0 z-10">
+                  <tr className="backdrop-blur-xl" style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--table-separator)' }}>
+                    <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--table-separator)' }}>#</th>
                     {data.headers.map((header, i) => (
-                      <th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>
+                      <th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--table-separator)' }}>
                         {header}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody style={{ borderColor: 'var(--border-2)' }} className="divide-y">
+                <tbody style={{ borderColor: 'var(--table-separator)' }} className="divide-y">
                   {data.rows.map((row, rowIdx) => {
                     const isHeaderRow = String(row[0] || '').trim() === '' && String(row[3] || '').trim() === '';
                     return (
-                      <tr key={rowIdx} className={isHeaderRow ? '' : 'transition-colors'} style={isHeaderRow ? { background: 'var(--surface-3)' } : {}} onMouseEnter={e => { if (!isHeaderRow) e.currentTarget.style.background = 'var(--surface-2)'; }} onMouseLeave={e => { if (!isHeaderRow) e.currentTarget.style.background = ''; }}>
-                        <td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{rowIdx + 1}</td>
+                      <tr key={rowIdx} className={isHeaderRow ? '' : 'transition-colors'} style={{ ...(isHeaderRow ? { background: 'var(--surface-2)' } : {}), minHeight: '44px' }} onMouseEnter={e => { if (!isHeaderRow) e.currentTarget.style.background = 'var(--surface-hover)'; }} onMouseLeave={e => { if (!isHeaderRow) e.currentTarget.style.background = ''; }}>
+                        <td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--table-separator)' }}>{rowIdx + 1}</td>
                         {data.headers.map((_, colIdx) => (
-                          <td key={colIdx} className={`px-4 py-2.5 text-xs ${isHeaderRow ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--border-2)', color: isHeaderRow ? 'var(--accent-lime)' : 'var(--text-2)' }}>
+                          <td key={colIdx} className={`px-4 py-2.5 text-xs ${isHeaderRow ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--table-separator)', color: isHeaderRow ? 'var(--accent-lime)' : 'var(--text-2)' }}>
                             {row[colIdx] !== null && row[colIdx] !== undefined ? String(row[colIdx]) : ''}
                           </td>
                         ))}

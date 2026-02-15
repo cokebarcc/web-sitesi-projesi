@@ -113,7 +113,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
   };
 
   return (
-    <div className="g-filter-panel sticky-filter-panel">
+    <div className="g-filter-panel sticky-filter-panel rounded-[20px] backdrop-blur-xl">
       {/* Tek Satır: Filtreler + Butonlar + Excel Yükle */}
       <div className="flex flex-wrap gap-2 items-end">
         {/* Kurum Türü */}
@@ -192,7 +192,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
         <button
           onClick={onApply}
           disabled={isLoading || !filterState.institutionId}
-          className="g-btn g-btn-primary"
+          className="g-btn g-btn-primary rounded-full"
           style={{ height: '38px', background: 'var(--g-success)', borderColor: 'var(--g-success)' }}
         >
           {isLoading ? (
@@ -216,7 +216,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
         {/* Şablon İndir */}
         <button
           onClick={onDownloadTemplate}
-          className="g-btn g-btn-secondary"
+          className="g-btn g-btn-secondary rounded-full"
           style={{ height: '38px' }}
           title="Veri giriş şablonu indir"
         >
@@ -230,7 +230,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
         {hasData && (
           <button
             onClick={onExport}
-            className="g-btn"
+            className="g-btn rounded-full"
             style={{ height: '38px', background: 'var(--g-info)', color: '#fff', borderColor: 'var(--g-info)' }}
             title="Sonuçları Excel olarak indir"
           >
@@ -248,7 +248,7 @@ export const GorenFilterPanel: React.FC<GorenFilterPanelProps> = ({
 
         {/* Excel Dosyası Yükle — aynı satırda */}
         {canUpload && filterState.institutionId && (
-          <label className="g-btn g-btn-secondary cursor-pointer" style={{ height: '38px', color: 'var(--g-accent-text)', borderColor: 'var(--g-accent)' }}>
+          <label className="g-btn g-btn-secondary rounded-full cursor-pointer" style={{ height: '38px', color: 'var(--g-accent-text)', borderColor: 'var(--g-accent)' }}>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>

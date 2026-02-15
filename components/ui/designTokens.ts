@@ -26,6 +26,11 @@ export const RADIUS = {
   lg: 'rounded-2xl',      // 16px — GlassCard default
   xl: 'rounded-3xl',      // 24px
   full: 'rounded-full',
+  /** Apple Design System radius values */
+  card: 'rounded-[20px]', // 20px — standart kart
+  panel: 'rounded-[24px]',// 24px — büyük panel
+  pill: 'rounded-full',   // 9999px — pill/chip
+  input: 'rounded-xl',    // 12px — input/select
 } as const;
 
 // ── Shadow System ──
@@ -33,14 +38,18 @@ export const SHADOW = {
   dark: {
     sm: 'shadow-[0_4px_12px_rgba(0,0,0,0.3)]',
     md: 'shadow-[0_8px_24px_rgba(0,0,0,0.35)]',
-    lg: 'shadow-[0_20px_60px_-15px_rgba(0,0,0,0.65),0_8px_24px_rgba(0,0,0,0.35)]',
+    lg: 'shadow-[0_10px_40px_rgba(0,0,0,0.55),0_2px_12px_rgba(0,0,0,0.35)]',
     xl: 'shadow-[0_24px_70px_-10px_rgba(0,0,0,0.8)]',
+    /** Apple standart card shadow — dark */
+    card: 'shadow-[0_10px_40px_rgba(0,0,0,0.55),0_2px_12px_rgba(0,0,0,0.35)]',
   },
   light: {
     sm: 'shadow-[0_2px_8px_rgba(15,23,42,0.04)]',
     md: 'shadow-[0_4px_16px_rgba(15,23,42,0.06)]',
-    lg: 'shadow-[0_8px_30px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)]',
+    lg: 'shadow-[0_2px_12px_rgba(0,0,0,0.05),0_18px_40px_rgba(0,0,0,0.08)]',
     xl: 'shadow-[0_24px_70px_-20px_rgba(0,0,0,0.20)]',
+    /** Apple standart card shadow — light (kartlar NET ayrılır) */
+    card: 'shadow-[0_2px_12px_rgba(0,0,0,0.05),0_18px_40px_rgba(0,0,0,0.08)]',
   },
 } as const;
 

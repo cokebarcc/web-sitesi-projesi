@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { CalculationSummary } from '../types/goren.types';
+import { GlassCard } from '../../ui';
 
 interface GorenSummaryCardsProps {
   /** Hesaplama özeti */
@@ -65,11 +66,11 @@ export const GorenSummaryCards: React.FC<GorenSummaryCardsProps> = ({
         {[1, 2, 3, 4].map(i => (
           <div
             key={i}
-            className="g-kpi-card animate-pulse"
+            className="g-kpi-card rounded-[20px] animate-pulse backdrop-blur-xl"
           >
-            <div className="h-3 rounded w-24 mb-3" style={{ background: 'var(--g-border)' }} />
-            <div className="h-8 rounded w-16 mb-2" style={{ background: 'var(--g-border)' }} />
-            <div className="h-2 rounded w-32" style={{ background: 'var(--g-border-light)' }} />
+            <div className="h-3 rounded-xl w-24 mb-3" style={{ background: 'var(--g-border)' }} />
+            <div className="h-8 rounded-xl w-16 mb-2" style={{ background: 'var(--g-border)' }} />
+            <div className="h-2 rounded-xl w-32" style={{ background: 'var(--g-border-light)' }} />
           </div>
         ))}
       </div>
@@ -200,7 +201,7 @@ const TrRolOrtalamasiCard: React.FC<TrRolOrtalamasiCardProps> = ({
   onTempValueChange
 }) => {
   return (
-    <div className="g-kpi-card g-kpi-card--purple">
+    <div className="g-kpi-card rounded-[20px] backdrop-blur-xl g-kpi-card--purple">
       <div className="flex items-start justify-between">
         <p className="g-text-meta">TR ROL ORTALAMASI</p>
         {isAdmin && !isEditing && (
@@ -319,7 +320,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   };
 
   return (
-    <div className={`g-kpi-card ${kpiAccentClass}`}>
+    <div className={`g-kpi-card rounded-[20px] backdrop-blur-xl ${kpiAccentClass}`}>
       <div className="flex items-start justify-between">
         <p className="g-text-meta">{title}</p>
         {trend && (

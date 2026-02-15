@@ -552,8 +552,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
 
   if (sortedDates.length === 0 || hospitalRows.length === 0) {
     return (
-      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} className="rounded-2xl shadow-lg border p-8 text-center">
-        <div style={{ color: 'var(--text-3)' }} className="text-sm">
+      <div style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }} className="rounded-[20px] shadow-lg border backdrop-blur-xl p-8 text-center">
+        <div style={{ color: 'var(--text-muted)' }} className="text-sm">
           Günlük tablo için tarih aralığı seçin
         </div>
       </div>
@@ -561,7 +561,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
   }
 
   return (
-    <div ref={containerRef} className="rounded-2xl shadow-lg overflow-hidden"
+    <div ref={containerRef} className="rounded-[20px] shadow-lg overflow-hidden backdrop-blur-xl"
          style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
       {/* Başlık */}
       <div className="px-6 py-4" style={{ borderBottom: '1px solid var(--border-1)' }}>
@@ -586,12 +586,12 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               <button
                 ref={filterTriggerRef}
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors border ${
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl transition-colors border ${
                   localSelectedHospitals.length > 0
                     ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30 hover:bg-emerald-500/25'
                     : ''
                 }`}
-                style={localSelectedHospitals.length === 0 ? { color: 'var(--text-2)', background: 'var(--surface-3)', borderColor: 'var(--border-2)' } : undefined}
+                style={localSelectedHospitals.length === 0 ? { color: 'var(--text-2)', background: 'var(--surface-2)', borderColor: 'var(--border-1)' } : undefined}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -610,8 +610,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
               {isFilterDropdownOpen && ReactDOM.createPortal(
                 <div
                   ref={filterDropdownPortalRef}
-                  className="fixed z-[9999] w-72 rounded-xl shadow-xl overflow-hidden"
-                  style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border-light)', backdropFilter: 'blur(12px)', top: filterDropdownPos.top, right: filterDropdownPos.right }}
+                  className="fixed z-[9999] w-72 rounded-[16px] shadow-2xl overflow-hidden"
+                  style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)', backdropFilter: 'blur(20px)', top: filterDropdownPos.top, right: filterDropdownPos.right }}
                 >
                   <div className="p-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-1)' }}>
                     <span className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>Kurum Seçin</span>
@@ -636,14 +636,14 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                     {allHospitals.map(hospital => (
                       <label
                         key={hospital}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 cursor-pointer"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[var(--surface-hover)] cursor-pointer transition-colors"
                       >
                         <input
                           type="checkbox"
                           checked={localSelectedHospitals.includes(hospital)}
                           onChange={() => handleHospitalToggle(hospital)}
                           className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500"
-                          style={{ borderColor: 'var(--border-2)', background: 'var(--surface-3)' }}
+                          style={{ borderColor: 'var(--border-1)', background: 'var(--surface-2)' }}
                         />
                         <span className="text-sm truncate" style={{ color: 'var(--text-2)' }}>
                           {getShortHospitalName(hospital)}
@@ -657,8 +657,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </div>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl transition-colors"
+              style={{ background: 'var(--surface-2)', color: 'var(--text-2)', border: '1px solid var(--border-1)' }}
               aria-label="Tabloyu panoya kopyala"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -668,8 +668,8 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </button>
             <button
               onClick={handlePngExport}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors"
-              style={{ background: 'var(--surface-3)', color: 'var(--text-2)', border: '1px solid var(--border-2)' }}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-xl transition-colors"
+              style={{ background: 'var(--surface-2)', color: 'var(--text-2)', border: '1px solid var(--border-1)' }}
               aria-label="PNG olarak dışa aktar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -679,7 +679,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             </button>
             <button
               onClick={handleExcelExport}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"
               aria-label="Excel olarak dışa aktar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -694,23 +694,23 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       {/* Tablo */}
       <div ref={tableRef} className="overflow-x-auto" data-table-scroll>
         <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
-          <thead className="sticky top-0 z-20">
+          <thead className="sticky top-0 z-20 backdrop-blur-xl">
             <tr style={{ background: 'var(--surface-2)' }}>
-              <th className="sticky left-0 z-30 px-4 py-3 text-left font-semibold min-w-[180px] whitespace-nowrap"
-                  style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-1)' }}>
+              <th className="sticky left-0 z-30 px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider min-w-[180px] whitespace-nowrap backdrop-blur-xl"
+                  style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--table-separator, var(--border-1))' }}>
                 Kurum
               </th>
               {sortedDates.map(date => (
                 <th
                   key={date}
-                  className="px-2 py-3 text-center font-semibold min-w-[60px]"
-                  style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-1)' }}
+                  className="px-2 py-3 text-center text-[10px] font-semibold uppercase tracking-wider min-w-[60px]"
+                  style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--table-separator, var(--border-1))' }}
                 >
                   {formatDateHeader(date)}
                 </th>
               ))}
-              <th className="sticky right-0 z-30 px-4 py-3 text-center font-semibold min-w-[140px]"
-                  style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--border-1)' }}>
+              <th className="sticky right-0 z-30 px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider min-w-[140px] backdrop-blur-xl"
+                  style={{ color: 'var(--text-muted)', background: 'var(--surface-2)', borderBottom: '1px solid var(--table-separator, var(--border-1))' }}>
                 Trend Eğrisi
               </th>
             </tr>
@@ -718,19 +718,19 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
           <tbody>
             {hospitalRows.map((row, idx) => {
               const isEven = idx % 2 === 0;
-              const rowBg = isEven ? 'transparent' : 'var(--table-row-alt-bg)';
-              const stickyBg = isEven ? 'var(--surface-1)' : 'var(--surface-3)';
+              const rowBg = isEven ? 'transparent' : 'var(--table-zebra, var(--table-row-alt-bg))';
+              const stickyBg = isEven ? 'var(--surface-1)' : 'var(--surface-2)';
               return (
                 <tr
                   key={row.hospitalName}
-                  className="transition-colors"
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--table-row-hover)'}
+                  className="transition-colors duration-150 min-h-[44px]"
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-hover, var(--table-row-hover))'}
                   onMouseLeave={(e) => e.currentTarget.style.background = rowBg}
                   style={{ background: rowBg }}
                   data-row-index={idx}
                 >
-                  <td className="sticky left-0 z-10 px-4 py-2.5 font-medium whitespace-nowrap"
-                      style={{ color: 'var(--text-1)', borderBottom: '1px solid var(--border-1)', background: stickyBg, verticalAlign: 'middle' }}>
+                  <td className="sticky left-0 z-10 px-4 py-3 font-medium whitespace-nowrap"
+                      style={{ color: 'var(--text-1)', borderBottom: '1px solid var(--table-separator, var(--border-1))', background: stickyBg, verticalAlign: 'middle' }}>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold tabular-nums w-4 text-right flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
                         {idx + 1}
@@ -747,15 +747,15 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                       <td
                         key={date}
                         data-rate-val={rate !== null ? rate.toFixed(1) : ''}
-                        className={`px-2 py-2 text-center font-bold ${getRateColor(rate)}`}
-                        style={{ borderBottom: '1px solid var(--border-1)', verticalAlign: 'middle' }}
+                        className={`px-2 py-3 text-center font-bold text-[13px] ${getRateColor(rate)}`}
+                        style={{ borderBottom: '1px solid var(--table-separator, var(--border-1))', verticalAlign: 'middle' }}
                       >
                         {rate !== null ? `${rate.toFixed(1)}` : '-'}
                       </td>
                     );
                   })}
-                  <td className="sticky right-0 z-10 px-4 py-2"
-                      style={{ borderBottom: '1px solid var(--border-1)', background: stickyBg, verticalAlign: 'middle' }}>
+                  <td className="sticky right-0 z-10 px-4 py-3"
+                      style={{ borderBottom: '1px solid var(--table-separator, var(--border-1))', background: stickyBg, verticalAlign: 'middle' }}>
                     <div className="flex justify-center">
                       <Sparkline
                         values={row.trend}
@@ -771,7 +771,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
             })}
             {/* İl Geneli Satırı - Sadece showProvinceTotals true ise göster */}
             {showProvinceTotals && (
-              <tr style={{ background: 'rgba(52, 211, 153, 0.06)' }} className="font-bold">
+              <tr style={{ background: 'rgba(52, 211, 153, 0.06)' }} className="font-bold min-h-[44px]">
                 <td className="sticky left-0 z-10 px-4 py-3 font-bold status-success"
                     style={{ borderTop: '2px solid rgba(52, 211, 153, 0.2)', background: 'rgba(52, 211, 153, 0.06)' }}>
                   {provinceTotals.hospitalName}
@@ -782,7 +782,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
                     <td
                       key={date}
                       data-rate-val={rate !== null ? rate.toFixed(1) : ''}
-                      className={`px-2 py-3 text-center font-bold ${getRateColor(rate)}`}
+                      className={`px-2 py-3 text-center font-bold text-[13px] ${getRateColor(rate)}`}
                       style={{ borderTop: '2px solid rgba(52, 211, 153, 0.2)' }}
                     >
                       {rate !== null ? `${rate.toFixed(1)}` : '-'}
@@ -808,7 +808,7 @@ const GreenAreaDailyRateTable = forwardRef<GreenAreaDailyRateTableRef, GreenArea
       </div>
 
       {/* Renk açıklaması */}
-      <div className="px-6 py-3 flex items-center gap-4 text-xs" style={{ borderTop: '1px solid var(--border-1)', color: 'var(--text-3)' }}>
+      <div className="px-6 py-3 flex items-center gap-4 text-xs" style={{ borderTop: '1px solid var(--table-separator, var(--border-1))', color: 'var(--text-muted)' }}>
         <span className="font-medium">Oran Renkleri:</span>
         <span className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-emerald-500/30"></span> %65+

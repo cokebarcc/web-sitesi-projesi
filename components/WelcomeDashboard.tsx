@@ -301,10 +301,10 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
               {greeting}
             </span>
             {userName && (
-              <span className={isDark ? 'text-[#556a85]' : ''} style={!isDark ? { color: 'var(--text-3)' } : undefined}>, {userName}</span>
+              <span style={{ color: 'var(--text-muted)' }}>, {userName}</span>
             )}
           </h1>
-          <p className={`text-sm mb-1 ${isDark ? 'text-[#7b8fad]' : ''}`} style={!isDark ? { color: 'var(--text-3)' } : undefined}>{summaryText}</p>
+          <p className="text-sm mb-1" style={{ color: 'var(--text-2)' }}>{summaryText}</p>
           {selectedHospital && (
             <p className="text-[#3d5170] text-xs">
               Seçili Hastane: <span className="text-[#5b9cff]">{selectedHospital}</span>
@@ -337,9 +337,9 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
                   <svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Henüz veri yüklenmedi</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>Henüz veri yüklenmedi</span>
                 </div>
-                <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   Analiz yapabilmek için önce bir hastane seçip veri yükleyin
                 </p>
               </div>
@@ -361,22 +361,20 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
               {/* Content */}
               <div className="relative z-10 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <div className={`transition-colors duration-300 ${isDark ? 'text-slate-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-900'}`}>
+                  <div className="transition-colors duration-300" style={{ color: 'var(--text-2)' }}>
                     {card.icon}
                   </div>
                   {card.badge && (
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                      isDark ? 'bg-sky-500/15 text-sky-400' : 'bg-sky-50 text-sky-600'
-                    }`}>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'color-mix(in srgb, var(--accent) 15%, transparent)', color: 'var(--accent)' }}>
                       {card.badge}
                     </span>
                   )}
                 </div>
                 <div>
-                  <h3 className={`font-semibold text-base mb-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  <h3 className="font-semibold text-base mb-0.5" style={{ color: 'var(--text-1)' }}>
                     {card.title}
                   </h3>
-                  <p className={`text-xs leading-relaxed line-clamp-2 ${isDark ? 'text-slate-500 group-hover:text-slate-400' : 'text-slate-400 group-hover:text-slate-500'}`}>
+                  <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'var(--text-muted)' }}>
                     {card.subtitle}
                   </p>
                 </div>
@@ -389,7 +387,7 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
         <form onSubmit={handleCommandSubmit} className="w-full max-w-2xl mb-8">
           <GlassCard isDark={isDark} padding="p-0" hover={false} className="group">
             <div className="flex items-center">
-              <div className={`pl-5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+              <div className="pl-5" style={{ color: 'var(--text-muted)' }}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -400,7 +398,8 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
                 value={commandInput}
                 onChange={(e) => setCommandInput(e.target.value)}
                 placeholder="Ne yapmak istiyorsunuz? (Örn: 'Ocak ayı yeşil alan oranlarını getir')"
-                className={`flex-1 bg-transparent px-4 py-4 outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`}
+                className="flex-1 bg-transparent px-4 py-4 outline-none text-sm placeholder-[var(--text-muted)]"
+                style={{ color: 'var(--text-1)' }}
               />
 
               <GlassButton
@@ -422,20 +421,18 @@ const WelcomeDashboard: React.FC<WelcomeDashboardProps> = ({
           </GlassCard>
 
           <div className="flex items-center justify-center gap-4 mt-3">
-            <p className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
               AI asistanı kullanarak hızlıca işlem yapabilirsiniz
             </p>
-            <span className={`text-xs ${isDark ? 'text-slate-700' : 'text-slate-300'}`}>|</span>
-            <p className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-              <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                isDark ? 'bg-white/[0.04] border border-white/[0.08] text-slate-500' : 'bg-slate-100 border border-slate-200 text-slate-400'
-              }`}>Ctrl+K</kbd> ile hızlı arama
+            <span className="text-xs" style={{ color: 'var(--border-1)' }}>|</span>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)', color: 'var(--text-muted)' }}>Ctrl+K</kbd> ile hızlı arama
             </p>
           </div>
         </form>
 
         {/* System Status Bar */}
-        <div className={`flex flex-wrap items-center justify-center gap-6 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+        <div className="flex flex-wrap items-center justify-center gap-6 text-xs" style={{ color: 'var(--text-muted)' }}>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <span>Sistem Aktif</span>

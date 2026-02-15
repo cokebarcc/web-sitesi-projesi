@@ -6,6 +6,8 @@ interface GlassTableColumn {
   label: string;
   minWidth?: string;
   align?: 'left' | 'center' | 'right';
+  /** Sayısal sütun — sağ hizalı, tabular-nums */
+  numeric?: boolean;
   className?: string;
 }
 
@@ -29,13 +31,20 @@ interface GlassTableProps {
   className?: string;
   /** Sticky ilk sütun */
   stickyFirstColumn?: boolean;
+  /** GlassCard variant (default: 'default') */
+  variant?: 'default' | 'elevated' | 'flat' | 'outlined';
 }
 
 /**
  * MEDİS Design System — GlassTable
  *
- * Apple tarzı soft tablo: rounded container, hafif thead tint,
- * satır hover highlight, çok ince divider, border yok.
+ * Apple tarzı premium tablo:
+ * - Sticky header + backdrop-blur
+ * - Row min-height 44-48px
+ * - Hairline separator (1px)
+ * - Zebra: light rgba(15,23,42,0.02), dark rgba(255,255,255,0.03)
+ * - Cell padding: px-4 py-3
+ * - Numeric: sağ hizalı, tabular-nums
  */
 const GlassTable: React.FC<GlassTableProps> = ({
   isDark,
@@ -50,12 +59,10 @@ const GlassTable: React.FC<GlassTableProps> = ({
   maxHeight,
   className = '',
   stickyFirstColumn = false,
+  variant = 'default',
 }) => {
-  const cellPad = compact ? 'px-3 py-2' : 'px-4 py-3';
-  const headerPad = compact ? 'px-3 py-2' : 'px-4 py-2.5';
-
   return (
-    <GlassCard isDark={isDark} padding="p-0" hover={false} className={className}>
+    <GlassCard isDark={isDark} padding="p-0" hover={false} className={className} variant={variant}>
       {/* ── Title Bar ── */}
       {(title || headerRight) && (
         <div className={`flex items-center justify-between px-5 pt-4 pb-2 ${
@@ -83,34 +90,37 @@ const GlassTable: React.FC<GlassTableProps> = ({
         style={maxHeight ? { maxHeight, overflowY: 'auto' } : undefined}
       >
         <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
-          {/* ── Header ── */}
+          {/* ── Header — sticky + backdrop-blur ── */}
           <thead className="sticky top-0 z-10">
-            <tr className={
+            <tr className={[
               isDark
-                ? 'bg-white/[0.04]'
-                : 'bg-slate-50/80'
-            }>
-              {columns.map((col, i) => (
-                <th
-                  key={col.key}
-                  className={[
-                    headerPad,
-                    'text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap',
-                    isDark ? 'text-slate-400' : 'text-slate-500',
-                    col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
-                    // Alt border — çok ince
-                    isDark ? 'border-b border-white/[0.06]' : 'border-b border-black/[0.06]',
-                    // Sticky first col
-                    stickyFirstColumn && i === 0
-                      ? `sticky left-0 z-20 ${isDark ? 'bg-slate-900/95' : 'bg-white/95'} backdrop-blur-sm`
-                      : '',
-                    col.className || '',
-                  ].join(' ')}
-                  style={col.minWidth ? { minWidth: col.minWidth } : undefined}
-                >
-                  {col.label}
-                </th>
-              ))}
+                ? 'bg-slate-900/80 backdrop-blur-xl'
+                : 'bg-white/80 backdrop-blur-xl',
+            ].join(' ')}>
+              {columns.map((col, i) => {
+                const isNum = col.numeric || col.align === 'right';
+                return (
+                  <th
+                    key={col.key}
+                    className={[
+                      compact ? 'px-3 py-2' : 'px-4 py-3',
+                      'text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap',
+                      isDark ? 'text-slate-400' : 'text-slate-500',
+                      col.align === 'center' ? 'text-center' : isNum ? 'text-right' : 'text-left',
+                      // Hairline bottom border
+                      isDark ? 'border-b border-white/[0.08]' : 'border-b border-black/[0.08]',
+                      // Sticky first col
+                      stickyFirstColumn && i === 0
+                        ? `sticky left-0 z-20 ${isDark ? 'bg-slate-900/95' : 'bg-white/95'} backdrop-blur-sm`
+                        : '',
+                      col.className || '',
+                    ].join(' ')}
+                    style={col.minWidth ? { minWidth: col.minWidth } : undefined}
+                  >
+                    {col.label}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 
@@ -143,33 +153,35 @@ const GlassTable: React.FC<GlassTableProps> = ({
 export default GlassTable;
 
 /**
- * Tablo satırı için yardımcı: standart td props
- * Kullanım: <GlassTableRow isDark={isDark} index={idx}><td>...</td></GlassTableRow>
+ * Tablo satırı helper — Apple standart row styling
+ * Min-height 44px, zebra, hover, hairline divider
  */
 export const glassRowClass = (isDark: boolean, index: number, compact = false) => {
-  const cellPad = compact ? 'px-3 py-2' : 'px-4 py-3';
   return [
     'transition-colors duration-150',
-    // Zebra — çok hafif
+    // Min-height
+    compact ? 'min-h-[40px]' : 'min-h-[44px]',
+    // Zebra — hafif
     index % 2 === 1
-      ? isDark ? 'bg-white/[0.015]' : 'bg-black/[0.015]'
+      ? isDark ? 'bg-white/[0.03]' : 'bg-[rgba(15,23,42,0.02)]'
       : '',
     // Hover
     isDark
-      ? 'hover:bg-white/[0.04]'
+      ? 'hover:bg-white/[0.05]'
       : 'hover:bg-sky-50/50',
-    // Divider — çok ince
-    isDark ? 'border-b border-white/[0.04]' : 'border-b border-black/[0.04]',
+    // Hairline divider
+    isDark ? 'border-b border-white/[0.04]' : 'border-b border-[rgba(15,23,42,0.06)]',
   ].join(' ');
 };
 
-/** Standart td className */
-export const glassCellClass = (isDark: boolean, compact = false, align?: 'left' | 'center' | 'right') => {
+/** Standart td className — Apple cell padding + typography */
+export const glassCellClass = (isDark: boolean, compact = false, align?: 'left' | 'center' | 'right', numeric?: boolean) => {
   const pad = compact ? 'px-3 py-2' : 'px-4 py-3';
+  const isNum = numeric || align === 'right';
   return [
     pad,
     'text-[13px]',
     isDark ? 'text-slate-300' : 'text-slate-700',
-    align === 'center' ? 'text-center' : align === 'right' ? 'text-right' : 'text-left',
+    isNum ? 'text-right tabular-nums' : align === 'center' ? 'text-center' : 'text-left',
   ].join(' ');
 };

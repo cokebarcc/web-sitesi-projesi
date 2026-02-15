@@ -86,7 +86,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
     : recommendationsSummary.recommendations.slice(0, 10);
 
   return (
-    <div className="g-section-card">
+    <div className="g-section-card rounded-[20px] backdrop-blur-xl">
       {/* A) Başlık + Tahmini Puan Rozeti */}
       <div className="flex items-center justify-between" style={{ padding: 'var(--g-space-5) var(--g-space-6)', borderBottom: '1px solid var(--g-border)' }}>
         <div className="flex items-center gap-3">
@@ -150,7 +150,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
             )}
             <span className="text-[var(--text-muted)]">Maks: <span className="font-bold text-[var(--text-1)]">{maxPossibleGP}</span></span>
           </div>
-          <div className="relative h-4 bg-[var(--glass-bg)] rounded-full border border-[var(--glass-border)] overflow-hidden">
+          <div className="relative h-4 bg-[var(--surface-2)] rounded-full border border-[var(--border-1)] overflow-hidden backdrop-blur-xl">
             {/* Katman 3: Tüm potansiyel (en altta, soluk) */}
             <div
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-amber-500/20 to-amber-400/20 rounded-full transition-all duration-500"
@@ -205,7 +205,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
               {recommendationsSummary.easyTargets.slice(0, 6).map(et => (
                 <div
                   key={et.indicatorCode}
-                  className="p-4 rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-emerald-500/15 dark:to-teal-500/10 border-2 border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-500 dark:hover:border-emerald-500/50 transition-all shadow-md shadow-emerald-500/10 dark:shadow-emerald-500/5 hover:shadow-lg"
+                  className="p-4 rounded-[20px] bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-emerald-500/15 dark:to-teal-500/10 border-2 border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-500 dark:hover:border-emerald-500/50 transition-all shadow-md shadow-emerald-500/10 dark:shadow-emerald-500/5 hover:shadow-lg backdrop-blur-xl"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <span className="text-xs font-mono text-emerald-600/70 dark:text-emerald-400/70">{indicatorPrefix}-{et.sira}</span>
@@ -243,11 +243,11 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
               const isExpanded = expandedRows.has(rec.indicatorCode);
 
               return (
-                <div key={rec.indicatorCode} className="rounded-xl border border-[var(--glass-border)] overflow-hidden">
+                <div key={rec.indicatorCode} className="rounded-[20px] border border-[var(--border-1)] overflow-hidden">
                   {/* Ana satır */}
                   <button
                     onClick={() => toggleRow(rec.indicatorCode)}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-left"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--surface-hover)] transition-colors text-left"
                   >
                     {/* Öncelik rozeti */}
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${colors.badge}`}>
@@ -285,7 +285,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
 
                   {/* Genişletilmiş detay */}
                   {isExpanded && (
-                    <div className="px-4 py-3 border-t border-[var(--glass-border)] bg-slate-100/80 dark:bg-white/[0.04] space-y-2">
+                    <div className="px-4 py-3 border-t border-[var(--border-1)] bg-[var(--surface-2)] space-y-2">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div>
                           <span className="text-[var(--text-muted)]">Kategori</span>
@@ -306,7 +306,7 @@ export const GorenRecommendations: React.FC<GorenRecommendationsProps> = ({
                           </p>
                         </div>
                       </div>
-                      <div className="mt-2 p-3 rounded-xl bg-[var(--glass-bg)] border border-[var(--glass-border)]">
+                      <div className="mt-2 p-3 rounded-[20px] bg-[var(--surface-2)] border border-[var(--border-1)]">
                         <p className="text-xs text-[var(--text-muted)] mb-1">Puanlama Kuralı:</p>
                         <p className="text-xs font-mono text-[var(--text-1)]">{rec.ruleDescription}</p>
                       </div>

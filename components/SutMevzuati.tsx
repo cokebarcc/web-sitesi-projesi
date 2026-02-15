@@ -177,7 +177,7 @@ const SutMevzuati: React.FC = () => {
       <div className="p-8">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-[14px] flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
@@ -235,16 +235,16 @@ const SutMevzuati: React.FC = () => {
         .sut-content h4 { color: var(--text-1); }
         .sut-content strong { color: var(--text-1); }
         .sut-content li { color: var(--text-2); }
-        .sut-content th { background: var(--surface-1); color: var(--text-2); border-color: var(--border-2); }
-        .sut-content td { color: var(--text-2); border-color: var(--border-2); }
+        .sut-content th { background: var(--surface-2); color: var(--text-2); border-color: var(--border-1); }
+        .sut-content td { color: var(--text-2); border-color: var(--border-1); }
         .sut-content sup { color: var(--text-3); }
       `}</style>
 
       {/* Word Yükleme / İçerik */}
       {!htmlContent ? (
         <div className="space-y-4">
-          <label className={`backdrop-blur-xl rounded-2xl border p-12 cursor-pointer hover:border-cyan-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
-            <div className="w-16 h-16 bg-cyan-500/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-colors">
+          <label className={`backdrop-blur-xl rounded-[20px] border p-12 cursor-pointer hover:border-cyan-500/50 transition-all group flex flex-col items-center justify-center ${loading ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }}>
+            <div className="w-16 h-16 bg-cyan-500/10 rounded-[20px] flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-colors">
               {loading ? (
                 <div className="w-8 h-8 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
               ) : (
@@ -265,9 +265,9 @@ const SutMevzuati: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {/* Üst Bar */}
-          <div className="backdrop-blur-xl rounded-2xl border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+          <div className="backdrop-blur-xl rounded-[20px] border p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }}>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-cyan-500/10 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-cyan-500/10 rounded-xl flex items-center justify-center">
                 <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -278,18 +278,18 @@ const SutMevzuati: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>
+              <label className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-1)' }}>
                 Değiştir
                 <input type="file" className="hidden" accept=".docx" onChange={handleUpload} />
               </label>
-              <button onClick={() => { setHtmlContent(null); setFileName(''); deleteFinansalFile('sutMevzuati', 'sut').catch(err => console.error('[SUT] silme hatası:', err)); }} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">
+              <button onClick={() => { setHtmlContent(null); setFileName(''); deleteFinansalFile('sutMevzuati', 'sut').catch(err => console.error('[SUT] silme hatası:', err)); }} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">
                 Temizle
               </button>
             </div>
           </div>
 
           {/* İçerik */}
-          <div className="backdrop-blur-xl rounded-2xl border p-6 sm:p-8" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+          <div className="backdrop-blur-xl rounded-[20px] border p-6 sm:p-8" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }}>
             <div
               ref={contentRef}
               onClick={handleContentClick}
@@ -322,7 +322,7 @@ const SutMevzuati: React.FC = () => {
       {htmlContent && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 w-12 h-12 bg-cyan-500 hover:bg-cyan-400 text-white rounded-full shadow-lg shadow-cyan-500/30 flex items-center justify-center transition-all hover:scale-110 z-[9999]"
+          className="fixed bottom-8 right-8 w-12 h-12 bg-cyan-500 hover:bg-cyan-400 text-white rounded-[20px] shadow-lg shadow-cyan-500/30 flex items-center justify-center transition-all hover:scale-110 z-[9999]"
           title="En yukarı dön"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

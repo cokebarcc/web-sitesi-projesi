@@ -189,7 +189,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
           <p className="font-medium" style={{ color: 'var(--text-3)' }}>Hastaneler arası karşılaştırmalı risk ve performans matrisi</p>
         </div>
         <div className="flex gap-3">
-          <label className="flex items-center gap-2 bg-white px-6 py-3 rounded-2xl text-xs font-black shadow-sm cursor-pointer transition-all" style={{ borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-2)', color: 'var(--text-2)' }}>
+          <label className="flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black shadow-sm cursor-pointer transition-all" style={{ background: 'var(--surface-2)', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--border-1)', color: 'var(--text-2)' }}>
             YENİ VERİ YÜKLE
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
           </label>
@@ -227,7 +227,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
         <GlassCard isDark={isDark} hover={false} padding="p-10">
           <div className="flex justify-between items-start mb-8">
             <h3 className="text-xl font-black tracking-tight uppercase" style={{ color: 'var(--text-1)' }}>İşlem Bazlı Yoğunluk</h3>
-            <select value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)} className="rounded-xl px-4 py-2 text-xs font-black text-blue-600 outline-none" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-2)' }}>
+            <select value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)} className="rounded-xl px-4 py-2 text-xs font-black text-blue-600 outline-none" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)' }}>
               {hospitalList.map(h => <option key={h} value={h}>{h}</option>)}
             </select>
           </div>
@@ -280,11 +280,11 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
            
            <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
              <div className="relative">
-               <input 
-                 type="text" 
-                 placeholder="Hastane veya İşlem Ara..." 
-                 className="rounded-2xl px-12 py-3 text-xs font-bold outline-none focus:ring-2 ring-blue-500/20 w-full sm:w-64"
-                 style={{ background: 'var(--surface-2)', border: '1px solid var(--border-2)' }}
+               <input
+                 type="text"
+                 placeholder="Hastane veya İşlem Ara..."
+                 className="rounded-xl px-12 py-3 text-xs font-bold outline-none focus:ring-2 ring-blue-500/20 w-full sm:w-64"
+                 style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)', color: 'var(--text-1)' }}
                  value={filterText}
                  onChange={(e) => setFilterText(e.target.value)}
                />
@@ -298,7 +298,7 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
         
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead style={{ background: 'var(--surface-2)' }}>
+            <thead className="sticky top-0 z-10 backdrop-blur-xl" style={{ background: 'var(--surface-2)' }}>
               <tr>
                 <SortableHeader label="HASTANE" sortKey="hospital" currentSort={sortConfig} onSort={handleSort} />
                 <SortableHeader label="İŞLEM ADI" sortKey="name" currentSort={sortConfig} onSort={handleSort} />
@@ -308,9 +308,9 @@ const ServiceInterventionAnalysis: React.FC<ServiceInterventionAnalysisProps> = 
                 <SortableHeader label="KAT / SAPMA" sortKey="ratio" currentSort={sortConfig} center onSort={handleSort} />
               </tr>
             </thead>
-            <tbody className="divide-y" style={{ '--tw-divide-color': 'var(--border-2)' } as React.CSSProperties}>
+            <tbody className="divide-y" style={{ '--tw-divide-color': 'var(--table-separator)' } as React.CSSProperties}>
               {filteredAndSortedRisks.length > 0 ? filteredAndSortedRisks.map((item, idx) => (
-                <tr key={idx} className="hover:bg-rose-50/30 transition-colors group">
+                <tr key={idx} className="min-h-[44px] transition-colors group" style={{ ['--hover-bg' as string]: 'var(--surface-hover)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
                   <td className="px-8 py-6">
                     <span className="font-black text-xs uppercase" style={{ color: 'var(--text-1)' }}>{item.hospital}</span>
                   </td>
@@ -366,9 +366,10 @@ const SortableHeader = ({ label, sortKey, currentSort, onSort, center, highlight
   const isActive = currentSort.key === sortKey;
   
   return (
-    <th 
-      className={`px-8 py-5 cursor-pointer select-none group/header ${center ? 'text-center' : 'text-left'} transition-colors`}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-3)')}
+    <th
+      className={`px-8 py-5 min-h-[44px] cursor-pointer select-none group/header ${center ? 'text-center' : 'text-left'} transition-colors`}
+      style={{ borderBottom: '1px solid var(--table-separator)' }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-hover)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
       onClick={() => onSort(sortKey)}
     >

@@ -27,6 +27,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { BHHistoryData } from '../../../src/services/gorenStorage';
+import { GlassCard } from '../../ui';
 
 interface GorenHistoryChartProps {
   data: BHHistoryData[];
@@ -48,7 +49,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <div className="g-section-card p-6">
+      <GlassCard isDark={true} hover={false} padding="p-6" variant="flat">
         <div className="h-80 flex items-center justify-center">
           <div className="flex items-center gap-3 text-[var(--text-muted)]">
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -58,14 +59,14 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
             <span>Grafik yükleniyor...</span>
           </div>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   // Veri yoksa
   if (!data || data.length === 0) {
     return (
-      <div className="g-section-card p-6">
+      <GlassCard isDark={true} hover={false} padding="p-6" variant="flat">
         <div className="h-80 flex flex-col items-center justify-center text-[var(--text-muted)]">
           <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -73,7 +74,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
           <p className="text-sm">Geçmiş dönem verisi bulunamadı</p>
           <p className="text-xs mt-1 opacity-70">Veri yükledikçe grafik oluşacak</p>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
@@ -142,10 +143,10 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   // Ortak eksen özellikleri
   const xAxisProps = {
     dataKey: 'shortLabel',
-    stroke: 'var(--g-text-muted, #64748b)',
+    stroke: 'var(--text-muted, #64748b)',
     fontSize: 11,
     tickLine: false,
-    axisLine: { stroke: 'var(--g-border, #334155)' }
+    axisLine: { stroke: 'var(--border-1, #334155)' }
   };
 
   // Y ekseni için min/max değerleri hesapla (5'lik paydalar için)
@@ -164,10 +165,10 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   }
 
   const yAxisProps = {
-    stroke: 'var(--g-text-muted, #64748b)',
+    stroke: 'var(--text-muted, #64748b)',
     fontSize: 11,
     tickLine: false,
-    axisLine: { stroke: 'var(--g-border, #334155)' },
+    axisLine: { stroke: 'var(--border-1, #334155)' },
     domain: [Math.max(0, yMin), yMax] as [number, number],
     ticks: yTicks
   };
@@ -175,7 +176,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
   // Ortak grid özellikleri
   const gridProps = {
     strokeDasharray: '3 3',
-    stroke: 'var(--g-border, #334155)',
+    stroke: 'var(--border-1, #334155)',
     vertical: false
   };
 
@@ -193,25 +194,28 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
     : null;
 
   return (
-    <div className="g-section-card p-6">
+    <GlassCard isDark={true} hover={false} padding="p-6" variant="flat">
       {/* Başlık ve Stil Seçici */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="g-title-section">Performans Trendi</h3>
-          <p className="g-text-small" style={{ color: 'var(--g-text-muted)', marginTop: '4px' }}>
+          <h3 className="text-sm font-semibold text-[var(--text-1)]">Performans Trendi</h3>
+          <p className="text-xs" style={{ color: 'var(--text-muted)', marginTop: '4px' }}>
             {institutionName ? `${institutionName} - ` : ''}Son {data.length} aylık performans
           </p>
         </div>
 
         {/* Stil Seçici */}
-        <div className="flex items-center gap-1 bg-[var(--surface-2)] rounded-xl p-1">
+        <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: 'var(--surface-2)' }}>
           <button
             onClick={() => setChartStyle('line')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               chartStyle === 'line'
-                ? 'bg-indigo-500 text-white'
-                : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)]'
+                ? 'text-white'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-1)]'
             }`}
+            style={chartStyle === 'line' ? { background: 'var(--accent)' } : { background: 'transparent' }}
+            onMouseEnter={(e) => { if (chartStyle !== 'line') e.currentTarget.style.background = 'var(--surface-hover)'; }}
+            onMouseLeave={(e) => { if (chartStyle !== 'line') e.currentTarget.style.background = 'transparent'; }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -221,9 +225,12 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
             onClick={() => setChartStyle('bar')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               chartStyle === 'bar'
-                ? 'bg-indigo-500 text-white'
-                : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)]'
+                ? 'text-white'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-1)]'
             }`}
+            style={chartStyle === 'bar' ? { background: 'var(--accent)' } : { background: 'transparent' }}
+            onMouseEnter={(e) => { if (chartStyle !== 'bar') e.currentTarget.style.background = 'var(--surface-hover)'; }}
+            onMouseLeave={(e) => { if (chartStyle !== 'bar') e.currentTarget.style.background = 'transparent'; }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -233,9 +240,12 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
             onClick={() => setChartStyle('area')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               chartStyle === 'area'
-                ? 'bg-indigo-500 text-white'
-                : 'text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-3)]'
+                ? 'text-white'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-1)]'
             }`}
+            style={chartStyle === 'area' ? { background: 'var(--accent)' } : { background: 'transparent' }}
+            onMouseEnter={(e) => { if (chartStyle !== 'area') e.currentTarget.style.background = 'var(--surface-hover)'; }}
+            onMouseLeave={(e) => { if (chartStyle !== 'area') e.currentTarget.style.background = 'transparent'; }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
@@ -363,7 +373,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
       </div>
 
       {/* Alt bilgi */}
-      <div className="mt-4 pt-4 border-t border-[var(--border-2)] flex items-center justify-between text-xs text-[var(--text-muted)]">
+      <div className="mt-4 pt-4 flex items-center justify-between text-xs text-[var(--text-muted)]" style={{ borderTop: '1px solid var(--border-1)' }}>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-1 rounded bg-indigo-500" />
@@ -378,7 +388,7 @@ export const GorenHistoryChart: React.FC<GorenHistoryChartProps> = ({
           {data.length} dönem gösteriliyor
         </span>
       </div>
-    </div>
+    </GlassCard>
   );
 };
 

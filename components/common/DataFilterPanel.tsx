@@ -104,7 +104,7 @@ const DataFilterPanel: React.FC<DataFilterPanelProps> = ({
   const hasSelection = selectedYears.length > 0 || selectedMonths.length > 0 || !!selectedHospital || !!selectedBranch;
 
   return (
-    <div className="sticky-filter-panel bg-[var(--glass-bg)] backdrop-blur-xl rounded-2xl shadow-lg border border-[var(--glass-border)] p-4 relative z-[100]">
+    <div className="sticky-filter-panel bg-[var(--glass-bg)] backdrop-blur-xl rounded-[20px] shadow-[var(--card-shadow)] border border-[var(--glass-border)] p-4 relative z-[100]">
       {/* Tüm Filtreler Tek Satırda */}
       <div className="flex flex-wrap gap-3 items-end">
         {/* Hastane Seçimi */}
@@ -174,7 +174,7 @@ const DataFilterPanel: React.FC<DataFilterPanelProps> = ({
           <button
             onClick={onApply}
             disabled={isLoading || applyDisabled}
-            className="px-5 py-2 h-[38px] bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+            className="px-5 py-2 h-[38px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-emerald-500/20"
           >
             {isLoading ? (
               <>

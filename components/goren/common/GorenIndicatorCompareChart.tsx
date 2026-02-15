@@ -19,6 +19,7 @@ import {
   Cell
 } from 'recharts';
 import { BHTableRow } from '../../../src/services/gorenStorage';
+import { GlassCard } from '../../ui';
 
 interface GorenIndicatorCompareChartProps {
   data: BHTableRow[];
@@ -34,7 +35,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
   // Yükleme durumu
   if (isLoading) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+      <GlassCard isDark={true} hover={false} padding="p-6">
         <div className="h-96 flex items-center justify-center">
           <div className="flex items-center gap-3 text-[var(--text-muted)]">
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -44,14 +45,14 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
             <span>Grafik yükleniyor...</span>
           </div>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   // Veri yoksa
   if (!data || data.length === 0) {
     return (
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+      <GlassCard isDark={true} hover={false} padding="p-6">
         <div className="h-96 flex flex-col items-center justify-center text-[var(--text-muted)]">
           <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -59,7 +60,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
           <p className="text-sm">Gösterge verisi bulunamadı</p>
           <p className="text-xs mt-1 opacity-70">Veri yükledikçe grafik oluşacak</p>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
@@ -162,7 +163,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
   }
 
   return (
-    <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-3xl border border-[var(--glass-border)] p-6">
+    <GlassCard isDark={true} hover={false} padding="p-6">
       {/* Başlık */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -176,7 +177,10 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
         {chartData.length > 15 && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="px-4 py-2 rounded-xl text-xs font-medium transition-all bg-[var(--surface-2)] text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]"
+            className="px-4 py-2 rounded-2xl text-xs font-medium transition-all"
+            style={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--text-1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--text-2)'; }}
           >
             {showAll ? `İlk 15'i Göster` : `Tümünü Göster (${chartData.length})`}
           </button>
@@ -192,23 +196,23 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
             barGap={2}
             barCategoryGap="20%"
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-1, #334155)" vertical={false} />
             <XAxis
               dataKey="name"
-              stroke="#64748b"
+              stroke="var(--text-muted, #64748b)"
               fontSize={10}
               tickLine={false}
-              axisLine={{ stroke: '#334155' }}
+              axisLine={{ stroke: 'var(--border-1, #334155)' }}
               angle={-45}
               textAnchor="end"
               height={60}
               interval={0}
             />
             <YAxis
-              stroke="#64748b"
+              stroke="var(--text-muted, #64748b)"
               fontSize={11}
               tickLine={false}
-              axisLine={{ stroke: '#334155' }}
+              axisLine={{ stroke: 'var(--border-1, #334155)' }}
               domain={[Math.max(0, yMin), yMax]}
               ticks={yTicks}
             />
@@ -249,7 +253,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
       </div>
 
       {/* Alt bilgi - Renk açıklaması */}
-      <div className="mt-4 pt-4 border-t border-[var(--border-2)] flex items-center justify-between text-xs text-[var(--text-muted)]">
+      <div className="mt-4 pt-4 flex items-center justify-between text-xs text-[var(--text-muted)]" style={{ borderTop: '1px solid var(--border-1)' }}>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-emerald-500" />
@@ -268,7 +272,7 @@ export const GorenIndicatorCompareChart: React.FC<GorenIndicatorCompareChartProp
           Gösterge numarasına göre sıralı
         </span>
       </div>
-    </div>
+    </GlassCard>
   );
 };
 

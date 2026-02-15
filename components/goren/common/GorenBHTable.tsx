@@ -10,6 +10,7 @@ import { BH_INDICATOR_DETAILS, IndicatorDetail } from '../../../src/config/goren
 import { getAppendixData, AppendixData } from '../../../src/config/goren/bhAppendixData';
 import { InstitutionType, ScoreRecommendation } from '../types/goren.types';
 import { getIndicatorsByCategory } from '../../../src/config/goren';
+import { GlassCard } from '../../ui';
 
 interface BHTableRow {
   sira: number;
@@ -45,16 +46,16 @@ const AppendixModal: React.FC<{
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl max-h-[80vh] rounded-2xl shadow-2xl overflow-hidden"
-        style={{ background: 'var(--surface-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border-2)' }}
+        className="relative w-full max-w-3xl max-h-[80vh] rounded-[20px] shadow-2xl overflow-hidden backdrop-blur-xl"
+        style={{ background: 'var(--surface-1)', borderWidth: 1, borderStyle: 'solid', borderColor: 'var(--border-1)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Başlık */}
-        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-2)' }}>
+        <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b backdrop-blur-xl" style={{ background: 'var(--surface-2)', borderColor: 'var(--border-1)' }}>
           <h3 className="text-lg font-bold" style={{ color: 'var(--text-1)' }}>{appendix.title}</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-[var(--surface-3)] transition-colors"
+            className="p-2 rounded-xl hover:bg-[var(--surface-hover)] transition-colors"
           >
             <svg className="w-5 h-5" style={{ color: 'var(--text-3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -147,16 +148,16 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <div className="g-section-card overflow-hidden">
+      <div className="g-section-card rounded-[20px] overflow-hidden">
         <div className="p-6 animate-pulse">
-          <div className="h-5 bg-gray-600/30 rounded w-64 mb-4" />
+          <div className="h-5 bg-[var(--surface-2)] rounded-xl w-64 mb-4" />
           {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-            <div key={i} className="flex gap-4 py-3 border-b border-[var(--g-border,var(--glass-border))]">
-              <div className="h-4 bg-gray-600/20 rounded w-8" />
-              <div className="h-4 bg-gray-600/20 rounded flex-1" />
-              <div className="h-4 bg-gray-600/20 rounded w-20" />
-              <div className="h-4 bg-gray-600/20 rounded w-20" />
-              <div className="h-4 bg-gray-600/20 rounded w-20" />
+            <div key={i} className="flex gap-4 py-3 border-b border-[var(--border-1)]">
+              <div className="h-4 bg-[var(--surface-2)] rounded-xl w-8" />
+              <div className="h-4 bg-[var(--surface-2)] rounded-xl flex-1" />
+              <div className="h-4 bg-[var(--surface-2)] rounded-xl w-20" />
+              <div className="h-4 bg-[var(--surface-2)] rounded-xl w-20" />
+              <div className="h-4 bg-[var(--surface-2)] rounded-xl w-20" />
             </div>
           ))}
         </div>
@@ -186,13 +187,13 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
         onClose={() => setActiveAppendix(null)}
       />
 
-      <div className="g-section-card overflow-hidden">
+      <div className="g-section-card rounded-[20px] overflow-hidden">
         {/* Tablo */}
         <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           {/* Başlık */}
           <thead>
-            <tr className="bg-[var(--g-accent,#4472C4)] text-white">
+            <tr className="bg-[var(--g-accent,#4472C4)] text-white sticky top-0 z-10 backdrop-blur-xl">
               <th className="px-3 py-3 text-center text-base font-medium border-r border-[var(--g-accent-hover,#3563b5)] w-12">#</th>
               <th className="px-4 py-3 text-left text-base font-medium border-r border-[var(--g-accent-hover,#3563b5)]">Gösterge Adı</th>
               <th className="px-4 py-3 text-center text-base font-medium border-r border-[var(--g-accent-hover,#3563b5)] w-32 whitespace-nowrap">Birim</th>
@@ -281,12 +282,12 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                     {/* Ana Satır */}
                     <tr
                       onClick={() => handleRowClick(row.sira)}
-                      className={`border-b border-[var(--g-border,var(--glass-border))] hover:bg-[var(--bg-2)]/50 transition-colors cursor-pointer ${
-                        idx % 2 === 0 ? '' : 'bg-[var(--bg-1)]/30'
+                      className={`border-b border-[var(--border-1)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer min-h-[44px] ${
+                        idx % 2 === 0 ? '' : 'bg-[var(--table-zebra,var(--surface-2))]'
                       } ${isExpanded ? 'bg-indigo-500/10' : ''}`}
                     >
                       {/* Sıra */}
-                      <td className="px-3 py-3 text-center border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-3 py-3 text-center border-r border-[var(--border-1)]">
                         <div className="flex items-center justify-center gap-1">
                           <svg
                             className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -302,37 +303,37 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                       </td>
 
                       {/* Gösterge Adı */}
-                      <td className="px-4 py-3 border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-4 py-3 border-r border-[var(--border-1)]">
                         <span className="text-base text-[var(--text-1)]">{row.gostergeAdi}</span>
                       </td>
 
                       {/* Birim */}
-                      <td className="px-4 py-3 text-center border-r border-[var(--g-border,var(--glass-border))] whitespace-nowrap">
+                      <td className="px-4 py-3 text-center border-r border-[var(--border-1)] whitespace-nowrap">
                         <span className="text-base text-[var(--text-1)]">{row.birim || '-'}</span>
                       </td>
 
                       {/* A */}
-                      <td className="px-4 py-3 text-center border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-4 py-3 text-center border-r border-[var(--border-1)]">
                         <span className="text-base text-[var(--text-1)]">{formatValue(row.a)}</span>
                       </td>
 
                       {/* B */}
-                      <td className="px-4 py-3 text-center border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-4 py-3 text-center border-r border-[var(--border-1)]">
                         <span className="text-base text-[var(--text-1)]">{formatValue(row.b)}</span>
                       </td>
 
                       {/* Dönem İçi */}
-                      <td className="px-4 py-3 text-center border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-4 py-3 text-center border-r border-[var(--border-1)]">
                         <span className="text-base text-[var(--text-1)]">{formatValue(row.donemIci)}</span>
                       </td>
 
                       {/* TR Rol Ortalama */}
-                      <td className="px-4 py-3 text-center border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-4 py-3 text-center border-r border-[var(--border-1)]">
                         <span className="text-base text-[var(--text-1)]">{formatValue(row.trRolOrtalama)}</span>
                       </td>
 
                       {/* Fark (Dönem İçi - TR Rol Ort.) */}
-                      <td className="px-4 py-3 text-center border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-4 py-3 text-center border-r border-[var(--border-1)]">
                         {(() => {
                           const donemIciVal = typeof row.donemIci === 'number' ? row.donemIci : parseFloat(String(row.donemIci));
                           const trRolVal = typeof row.trRolOrtalama === 'number' ? row.trRolOrtalama : parseFloat(String(row.trRolOrtalama));
@@ -347,7 +348,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                       </td>
 
                       {/* Dönem İçi Puan */}
-                      <td className="px-4 py-3 text-center border-r border-[var(--g-border,var(--glass-border))]">
+                      <td className="px-4 py-3 text-center border-r border-[var(--border-1)]">
                         {getPuanBadge()}
                       </td>
 
@@ -387,7 +388,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
                               {/* Parametreler */}
                               <div className="space-y-4">
                                 {indicatorDetail.parameters.map((param, pIdx) => (
-                                  <div key={pIdx} className="rounded-xl p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+                                  <div key={pIdx} className="rounded-xl p-4" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)' }}>
                                     <div className="flex items-center gap-2 mb-2">
                                       <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-200 dark:bg-indigo-500/30 text-indigo-800 dark:text-indigo-300 font-bold text-lg border border-indigo-300 dark:border-indigo-500/40">
                                         {param.key}
@@ -457,7 +458,7 @@ export const GorenBHTable: React.FC<GorenBHTableProps> = ({
 
                                 {/* Notlar */}
                                 {indicatorDetail.notes && (
-                                  <div className="mt-4 rounded-xl p-4" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}>
+                                  <div className="mt-4 rounded-xl p-4" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)' }}>
                                     <h5 className="font-semibold mb-2 flex items-center gap-2" style={{ color: 'var(--text-3)' }}>
                                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

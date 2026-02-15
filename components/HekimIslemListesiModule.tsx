@@ -572,7 +572,7 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploadLoading || firebaseLoading}
-            className="px-5 py-2 h-[38px] bg-amber-600 text-white rounded-lg font-semibold text-sm hover:bg-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-amber-500/20"
+            className="px-5 py-2 h-[38px] bg-amber-600 text-white rounded-xl font-semibold text-sm hover:bg-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md"
           >
             {uploadLoading ? (
               <>
@@ -603,7 +603,7 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
           <button
             onClick={handleLoadSavedFile}
             disabled={firebaseLoading || uploadLoading}
-            className="px-5 py-2 h-[38px] bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+            className="px-5 py-2 h-[38px] bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md"
           >
             {firebaseLoading ? (
               <>
@@ -688,12 +688,12 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
 
       {/* Tab Navigasyonu */}
       {tableData.length > 0 && (
-        <div className="flex gap-1 mb-4 rounded-xl border p-1 inline-flex" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }}>
+        <div className="flex gap-1 mb-4 rounded-xl border p-1 inline-flex" style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }}>
           <button
             onClick={() => setActiveTab('liste')}
-            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
+            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === 'liste'
-                ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20'
+                ? 'bg-amber-600 text-white shadow-md'
                 : ''
             }`}
             style={activeTab !== 'liste' ? { color: 'var(--text-3)' } : undefined}
@@ -707,9 +707,9 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
           </button>
           <button
             onClick={() => setActiveTab('analiz')}
-            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
+            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
               activeTab === 'analiz'
-                ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20'
+                ? 'bg-amber-600 text-white shadow-md'
                 : ''
             }`}
             style={activeTab !== 'analiz' ? { color: 'var(--text-3)' } : undefined}
@@ -744,7 +744,7 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
               <button
                 onClick={handleLoadSavedFile}
                 disabled={firebaseLoading}
-                className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 mx-auto shadow-lg shadow-emerald-500/20"
+                className="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 mx-auto shadow-md"
               >
                 {firebaseLoading ? (
                   <>
@@ -837,8 +837,8 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
                   <select
                     value={pageSize}
                     onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                    className="text-xs rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                    style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
+                    className="text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-500/50 transition-colors"
+                    style={{ background: 'var(--surface-2)', border: '1px solid var(--border-1)', color: 'var(--text-1)' }}
                   >
                     {PAGE_SIZES.map(s => (
                       <option key={s} value={s}>{s}</option>
@@ -861,20 +861,20 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
           {/* Tablo */}
           <div
             ref={tableRef}
-            className="border overflow-auto max-h-[600px] custom-scrollbar"
-            style={{ background: 'var(--bg-app)', borderColor: 'var(--border-2)' }}
+            className="border rounded-xl overflow-auto max-h-[600px] custom-scrollbar"
+            style={{ background: 'var(--surface-1)', borderColor: 'var(--border-1)' }}
           >
             <table className="w-full text-sm border-collapse">
-              <thead className="sticky top-0 z-10">
-                <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border-2)' }}>
-                  <th className="px-3 py-2.5 text-left text-[10px] font-bold status-warning uppercase tracking-wider whitespace-nowrap w-[40px]" style={{ borderRight: '1px solid var(--border-2)' }}>#</th>
+              <thead className="sticky top-0 z-10 backdrop-blur-xl">
+                <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--table-separator)' }}>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-bold status-warning uppercase tracking-wider whitespace-nowrap w-[40px]" style={{ borderRight: '1px solid var(--table-separator)' }}>#</th>
                   {tableColumns.map(col => (
                     <th
                       key={col.key}
                       className={`px-3 py-2.5 text-[10px] font-bold status-warning uppercase tracking-wider whitespace-nowrap ${
                         col.align === 'right' ? 'text-right' : 'text-left'
                       }`}
-                      style={{ minWidth: col.minW, borderRight: '1px solid var(--border-2)' }}
+                      style={{ minWidth: col.minW, borderRight: '1px solid var(--table-separator)' }}
                     >
                       {col.label}
                     </th>
@@ -887,22 +887,22 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
                   return (
                     <tr
                       key={idx}
-                      className="transition-colors"
-                      style={{ background: idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'var(--bg-app)', borderBottom: '1px solid var(--border-2)' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--table-row-hover)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? 'var(--table-row-alt-bg)' : 'var(--bg-app)'; }}
+                      className="transition-colors min-h-[44px]"
+                      style={{ background: idx % 2 === 0 ? 'var(--table-zebra)' : 'transparent', borderBottom: '1px solid var(--table-separator)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? 'var(--table-zebra)' : 'transparent'; }}
                     >
-                      <td className="px-3 py-1.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{globalIdx}</td>
+                      <td className="px-3 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--table-separator)', minHeight: '44px' }}>{globalIdx}</td>
                       {tableColumns.map(col => {
                         const val = row[col.key];
                         const isNumeric = col.align === 'right';
                         return (
                           <td
                             key={col.key}
-                            className={`px-3 py-1.5 text-xs whitespace-nowrap ${
+                            className={`px-3 py-2.5 text-xs whitespace-nowrap ${
                               isNumeric ? 'text-right font-mono' : ''
                             }`}
-                            style={{ borderRight: '1px solid var(--border-2)', color: isNumeric ? 'var(--text-2)' : 'var(--text-3)' }}
+                            style={{ borderRight: '1px solid var(--table-separator)', color: isNumeric ? 'var(--text-2)' : 'var(--text-3)', minHeight: '44px' }}
                           >
                             {isNumeric && typeof val === 'number' ? formatNumber(val) : String(val || '')}
                           </td>
@@ -960,9 +960,9 @@ const HekimIslemListesiModule: React.FC<HekimIslemListesiModuleProps> = ({ theme
                       <button
                         key={page}
                         onClick={() => goToPage(page)}
-                        className={`px-2.5 py-1 text-xs rounded transition-all ${
+                        className={`px-2.5 py-1 text-xs rounded-lg transition-all ${
                           currentPage === page
-                            ? 'bg-amber-600 text-white font-bold'
+                            ? 'bg-amber-600 text-white font-bold shadow-sm'
                             : ''
                         }`}
                         style={currentPage !== page ? { color: 'var(--text-3)' } : undefined}

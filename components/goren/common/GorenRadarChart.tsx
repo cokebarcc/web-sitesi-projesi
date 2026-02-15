@@ -24,6 +24,7 @@ import {
 } from 'recharts';
 import { BHTableRow, loadGorenBHData } from '../../../src/services/gorenStorage';
 import { InstitutionType } from '../types/goren.types';
+import { GlassCard } from '../../ui';
 
 interface GorenRadarChartProps {
   data: BHTableRow[];
@@ -411,7 +412,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <div className="g-section-card p-6">
+      <GlassCard isDark={true} hover={false} padding="p-6" overflowVisible>
         <div className="h-[500px] flex items-center justify-center">
           <div className="flex items-center gap-3 text-[var(--text-muted)]">
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -421,21 +422,21 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
             <span>Grafik yükleniyor...</span>
           </div>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   // Veri yoksa
   if (!data || data.length === 0) {
     return (
-      <div className="g-section-card p-6">
+      <GlassCard isDark={true} hover={false} padding="p-6" overflowVisible>
         <div className="h-[500px] flex flex-col items-center justify-center text-[var(--text-muted)]">
           <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           <p className="text-sm">Gösterge verisi bulunamadı</p>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
@@ -459,7 +460,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
     : null;
 
   return (
-    <div className="g-section-card p-6">
+    <GlassCard isDark={true} hover={false} padding="p-6" overflowVisible>
       {/* Başlık ve Karşılaştırma Filtresi */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
@@ -997,7 +998,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
         </div>,
         document.body
       )}
-    </div>
+    </GlassCard>
   );
 };
 

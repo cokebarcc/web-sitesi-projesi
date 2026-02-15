@@ -52,7 +52,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   showYearFilter = false
 }) => {
   return (
-    <div className="sticky-filter-panel p-4 rounded-[32px] shadow-sm mb-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
+    <div className="sticky-filter-panel p-4 rounded-[20px] shadow-sm mb-6" style={{ background: 'var(--surface-1)', border: '1px solid var(--border-1)' }}>
       <div className="flex flex-wrap gap-4 items-end">
         {/* Hastane Dropdown */}
         {showHospitalFilter && (
@@ -63,7 +63,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             <select
               value={selectedHospital}
               onChange={(e) => onHospitalChange(e.target.value)}
-              className="rounded-2xl px-6 py-4 text-sm font-black min-w-[240px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              className="rounded-xl px-4 py-2.5 text-sm font-semibold min-w-[240px] outline-none focus:ring-2 ring-blue-500 transition-all"
               style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
             >
               {allowedHospitals.map(h => (
@@ -83,7 +83,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               <select
                 value={selectedBranch || ''}
                 onChange={(e) => onBranchChange(e.target.value || null)}
-                className="rounded-2xl px-6 py-4 text-sm font-black min-w-[200px] outline-none focus:ring-2 ring-blue-500 transition-all"
+                className="rounded-xl px-4 py-2.5 text-sm font-semibold min-w-[200px] outline-none focus:ring-2 ring-blue-500 transition-all"
                 style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
               >
                 <option value="">Tüm Branşlar</option>
@@ -115,7 +115,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             <select
               value={selectedMonth}
               onChange={(e) => onMonthChange(e.target.value)}
-              className="rounded-2xl px-6 py-4 text-sm font-black min-w-[140px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              className="rounded-xl px-4 py-2.5 text-sm font-semibold min-w-[140px] outline-none focus:ring-2 ring-blue-500 transition-all"
               style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
             >
               {MONTHS.map(m => (
@@ -134,7 +134,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             <select
               value={selectedYear}
               onChange={(e) => onYearChange(Number(e.target.value))}
-              className="rounded-2xl px-6 py-4 text-sm font-black min-w-[120px] outline-none focus:ring-2 ring-blue-500 transition-all"
+              className="rounded-xl px-4 py-2.5 text-sm font-semibold min-w-[120px] outline-none focus:ring-2 ring-blue-500 transition-all"
               style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--input-text)' }}
             >
               {YEARS.map(y => (
@@ -156,7 +156,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           <button
             onClick={onApply}
             disabled={!selectedHospital || (!selectedYear && showYearFilter) || (!selectedMonth && showMonthFilter)}
-            className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all flex items-center gap-2 uppercase"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />

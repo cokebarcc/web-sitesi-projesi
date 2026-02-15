@@ -805,7 +805,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
               <select
                 value={referansMonthIdx ?? ''}
                 onChange={(e) => setReferansMonthIdx(e.target.value ? Number(e.target.value) : null)}
-                className="px-3 py-2 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 min-w-[140px] h-[38px]"
+                className="px-3 py-2 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] text-[var(--text-1)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 min-w-[140px] h-[38px]"
               >
                 <option value="">Referans Ay Seçin</option>
                 {MONTHS.map((m, i) => (
@@ -820,7 +820,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
               <select
                 value={hedefMonthIdx ?? ''}
                 onChange={(e) => setHedefMonthIdx(e.target.value ? Number(e.target.value) : null)}
-                className="px-3 py-2 rounded-lg border border-amber-500/30 bg-[var(--input-bg)] text-amber-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 min-w-[140px] h-[38px]"
+                className="px-3 py-2 rounded-xl border border-[var(--border-1)] bg-[var(--surface-2)] text-amber-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 min-w-[140px] h-[38px]"
               >
                 <option value="" className="text-[var(--text-1)]">Hedef Ay Seçin</option>
                 {MONTHS.map((m, i) => (
@@ -887,7 +887,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
       </div>
 
       {/* Hekim Verimlilik Tablosu */}
-      <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-6">
+      <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-6 !rounded-[20px]">
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
           <div>
             <h3 className="text-xl font-black text-[var(--text-1)] uppercase">
@@ -931,9 +931,9 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           </div>
         ) : (
           <div className="overflow-x-auto -mx-4">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-[var(--surface-2)]/60 border-b-2 border-[var(--border-1)]">
+            <table className="w-full border-collapse border-spacing-0">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[var(--surface-2)]/80 backdrop-blur-xl border-b border-[var(--table-separator)]">
                   <SortHeader column="doctorName" label="Hekim" className="!text-left !justify-start" />
                   <SortHeader column="branchName" label="Branş" className="!text-left !justify-start" />
                   <SortHeader column="plannedDays" label={`Ameliyat Günü ${referansMonth}`} />
@@ -955,14 +955,14 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
                 {sortedDoctors.map((doc, idx) => (
                   <tr
                     key={idx}
-                    className={`transition-colors border-b border-[var(--border-1)]/50 ${
+                    className={`transition-colors min-h-[44px] border-b border-[var(--table-separator)] ${
                       doc.status === 'low'
                         ? (idx % 2 === 0 ? 'bg-red-500/10 hover:bg-red-500/18' : 'bg-red-500/[0.04] hover:bg-red-500/12')
                         : doc.status === 'high'
                         ? (idx % 2 === 0 ? 'bg-emerald-500/10 hover:bg-emerald-500/18' : 'bg-emerald-500/[0.04] hover:bg-emerald-500/12')
                         : doc.status === 'no-plan'
                         ? (idx % 2 === 0 ? 'bg-amber-500/10 hover:bg-amber-500/18' : 'bg-amber-500/[0.04] hover:bg-amber-500/12')
-                        : idx % 2 === 0 ? 'bg-[var(--surface-2)]/40 hover:bg-[var(--surface-2)]/60' : 'hover:bg-[var(--surface-2)]/30'
+                        : idx % 2 === 0 ? 'bg-[var(--table-zebra)] hover:bg-[var(--surface-hover)]' : 'hover:bg-[var(--surface-hover)]'
                     }`}
                   >
                     <td className="px-4 py-3 text-[13px] font-semibold text-[var(--text-1)] whitespace-nowrap">{doc.doctorName}</td>
@@ -1004,7 +1004,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
 
       {/* Oneri Tablosu */}
       {isPeriodSelected && proposals.length > 0 && (
-        <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-6">
+        <GlassCard isDark={isDark} hover={false} padding="p-6" className="space-y-6 !rounded-[20px]">
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
             <div>
               <h3 className="text-xl font-black text-[var(--text-1)] uppercase">
@@ -1027,9 +1027,9 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
           </div>
 
           <div className="overflow-x-auto -mx-4">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-[var(--surface-2)]/60 border-b-2 border-[var(--border-1)]">
+            <table className="w-full border-collapse border-spacing-0">
+              <thead className="sticky top-0 z-10">
+                <tr className="bg-[var(--surface-2)]/80 backdrop-blur-xl border-b border-[var(--table-separator)]">
                   <th className="px-4 py-3.5 text-left text-[11px] font-black uppercase tracking-wider">Hekim</th>
                   <th className="px-4 py-3.5 text-left text-[11px] font-black uppercase tracking-wider">Branş</th>
                   <th className="px-4 py-3.5 text-center text-[11px] font-black uppercase tracking-wider">Mevcut Gün {hedefMonth}</th>
@@ -1042,7 +1042,7 @@ const AICetvelPlanlama: React.FC<AICetvelPlanlamaProps> = ({
               </thead>
               <tbody>
                 {proposals.map((p, idx) => (
-                  <tr key={idx} className={`transition-colors border-b border-[var(--border-1)]/50 ${
+                  <tr key={idx} className={`transition-colors min-h-[44px] border-b border-[var(--table-separator)] ${
                     idx % 2 === 0 ? 'bg-red-500/[0.12] hover:bg-red-500/[0.18]' : 'bg-amber-500/[0.08] hover:bg-amber-500/[0.14]'
                   }`}>
                     <td className="px-4 py-3 text-[13px] font-semibold text-[var(--text-1)] whitespace-nowrap">{p.doctorName}</td>
@@ -1115,7 +1115,7 @@ const RoleGroupTooltip: React.FC<{
       )}
       {showTooltip && roleGroup && hospitals.length > 0 && ReactDOM.createPortal(
         <div className="fixed z-[9999] min-w-[220px]" style={{ top: tooltipPos.top, left: tooltipPos.left, transform: 'translateX(-50%)' }}>
-          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-2xl p-4 space-y-2">
+          <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-[20px] shadow-lg shadow-black/20 p-4 space-y-2">
             <div className="text-[10px] font-black text-indigo-400 uppercase border-b border-[var(--border-1)] pb-2">
               Rol Grubu {roleGroup} Hastaneleri ({loadedCount}/{hospitals.length} yüklü)
             </div>
@@ -1154,7 +1154,7 @@ const KpiCard: React.FC<{
   const gradient = accentColors[accent] || accentColors.capacity;
 
   return (
-    <GlassCard isDark={isDark} hover={false} padding="p-6" className="relative overflow-hidden group">
+    <GlassCard isDark={isDark} hover={false} padding="p-6" className="relative overflow-hidden group !rounded-[20px]">
       <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient}`} />
       <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] mb-3">{title}</p>
       {isEmpty ? (

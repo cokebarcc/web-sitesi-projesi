@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { uploadFinansalFile, getFinansalModuleFiles, downloadFinansalFile, deleteFinansalFile } from '../src/services/finansalStorage';
-import { GlassCard } from './ui';
+import { GlassCard, GlassSection } from './ui';
 
 export interface ExcelData {
   headers: string[];
@@ -375,7 +375,7 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
       {canUpload && showUploadButtons && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
           {!ek2aData && (
-            <label className={`backdrop-blur-xl rounded-2xl border p-6 cursor-pointer hover:border-emerald-500/50 transition-all group ${loadingId === 'ek2a' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
+            <label className={`backdrop-blur-xl rounded-[20px] border p-6 cursor-pointer hover:border-emerald-500/50 transition-all group ${loadingId === 'ek2a' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
                   {loadingId === 'ek2a' ? (<div className="w-5 h-5 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin"></div>) : (
@@ -392,7 +392,7 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
             </label>
           )}
           {!ek2a2Data && (
-            <label className={`backdrop-blur-xl rounded-2xl border p-6 cursor-pointer hover:border-blue-500/50 transition-all group ${loadingId === 'ek2a2' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
+            <label className={`backdrop-blur-xl rounded-[20px] border p-6 cursor-pointer hover:border-blue-500/50 transition-all group ${loadingId === 'ek2a2' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
                   {loadingId === 'ek2a2' ? (<div className="w-5 h-5 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>) : (
@@ -409,7 +409,7 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
             </label>
           )}
           {!ek2bData && (
-            <label className={`backdrop-blur-xl rounded-2xl border p-6 cursor-pointer hover:border-amber-500/50 transition-all group ${loadingId === 'ek2b' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
+            <label className={`backdrop-blur-xl rounded-[20px] border p-6 cursor-pointer hover:border-amber-500/50 transition-all group ${loadingId === 'ek2b' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
                   {loadingId === 'ek2b' ? (<div className="w-5 h-5 border-2 border-amber-400/30 border-t-amber-400 rounded-full animate-spin"></div>) : (
@@ -426,7 +426,7 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
             </label>
           )}
           {!ek2cData && (
-            <label className={`backdrop-blur-xl rounded-2xl border p-6 cursor-pointer hover:border-purple-500/50 transition-all group ${loadingId === 'ek2c' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
+            <label className={`backdrop-blur-xl rounded-[20px] border p-6 cursor-pointer hover:border-purple-500/50 transition-all group ${loadingId === 'ek2c' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
                   {loadingId === 'ek2c' ? (<div className="w-5 h-5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin"></div>) : (
@@ -443,7 +443,7 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
             </label>
           )}
           {!ek2cdData && (
-            <label className={`backdrop-blur-xl rounded-2xl border p-6 cursor-pointer hover:border-rose-500/50 transition-all group ${loadingId === 'ek2cd' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
+            <label className={`backdrop-blur-xl rounded-[20px] border p-6 cursor-pointer hover:border-rose-500/50 transition-all group ${loadingId === 'ek2cd' ? 'opacity-50 pointer-events-none' : ''}`} style={{ background: 'var(--surface-1)', borderColor: 'var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-1)')}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center group-hover:bg-rose-500/20 transition-colors">
                   {loadingId === 'ek2cd' ? (<div className="w-5 h-5 border-2 border-rose-400/30 border-t-rose-400 rounded-full animate-spin"></div>) : (
@@ -478,16 +478,16 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-500/20">{ek2aData.rows.length} kayıt</span>
-                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a')} /></label>}
-                <button onClick={() => handleClear('ek2a')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
+                <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-emerald-500/20">{ek2aData.rows.length} kayıt</span>
+                {canUpload && <label className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-1)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a')} /></label>}
+                <button onClick={() => handleClear('ek2a')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </GlassCard>
             <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2aData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
-                  <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2aData.rows.map((row, ri) => (<tr key={ri} className="transition-colors" style={{ borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--table-row-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{ri + 1}</td>{ek2aData.headers.map((_, ci) => (<td key={ci} className="px-4 py-2.5 text-xs" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--border-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>))}</tbody>
+                  <thead className="sticky top-0 z-10"><tr className="backdrop-blur-xl" style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--table-separator)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>#</th>{ek2aData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>{h}</th>))}</tr></thead>
+                  <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2aData.rows.map((row, ri) => (<tr key={ri} className="transition-colors" style={{ borderBottom: '1px solid var(--table-separator)', minHeight: '44px' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--table-separator)' }}>{ri + 1}</td>{ek2aData.headers.map((_, ci) => (<td key={ci} className="px-4 py-2.5 text-xs" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--table-separator)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>))}</tbody>
                 </table>
               </div>
             </GlassCard>
@@ -508,16 +508,16 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-500/20">{ek2a2Data.rows.length} kayıt</span>
-                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a2')} /></label>}
-                <button onClick={() => handleClear('ek2a2')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
+                <span className="bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-blue-500/20">{ek2a2Data.rows.length} kayıt</span>
+                {canUpload && <label className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-1)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2a2')} /></label>}
+                <button onClick={() => handleClear('ek2a2')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </GlassCard>
             <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2a2Data.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
-                  <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2a2Data.rows.map((row, ri) => (<tr key={ri} className="transition-colors" style={{ borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--table-row-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{ri + 1}</td>{ek2a2Data.headers.map((_, ci) => (<td key={ci} className="px-4 py-2.5 text-xs" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--border-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>))}</tbody>
+                  <thead className="sticky top-0 z-10"><tr className="backdrop-blur-xl" style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--table-separator)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>#</th>{ek2a2Data.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>{h}</th>))}</tr></thead>
+                  <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2a2Data.rows.map((row, ri) => (<tr key={ri} className="transition-colors" style={{ borderBottom: '1px solid var(--table-separator)', minHeight: '44px' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--table-separator)' }}>{ri + 1}</td>{ek2a2Data.headers.map((_, ci) => (<td key={ci} className="px-4 py-2.5 text-xs" style={{ color: 'var(--text-2)', borderRight: '1px solid var(--table-separator)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>))}</tbody>
                 </table>
               </div>
             </GlassCard>
@@ -538,18 +538,18 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="bg-amber-500/10 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-500/20">{ek2bData.rows.length} kayıt</span>
-                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2b')} /></label>}
-                <button onClick={() => handleClear('ek2b')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
+                <span className="bg-amber-500/10 text-amber-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-500/20">{ek2bData.rows.length} kayıt</span>
+                {canUpload && <label className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-1)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2b')} /></label>}
+                <button onClick={() => handleClear('ek2b')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </GlassCard>
             <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2bData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
+                  <thead className="sticky top-0 z-10"><tr className="backdrop-blur-xl" style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--table-separator)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>#</th>{ek2bData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>{h}</th>))}</tr></thead>
                   <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2bData.rows.map((row, ri) => {
                     const isHdr = String(row[0] || '').trim() === '' && String(row[3] || '').trim() === '';
-                    return (<tr key={ri} className={isHdr ? '' : 'transition-colors'} style={{ background: isHdr ? 'var(--surface-1)' : undefined, borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => { if (!isHdr) e.currentTarget.style.background = 'var(--table-row-hover)'; }} onMouseLeave={e => { if (!isHdr) e.currentTarget.style.background = ''; }}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{ri + 1}</td>{ek2bData.headers.map((_, ci) => (<td key={ci} className={`px-4 py-2.5 text-xs ${isHdr ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--border-2)', color: isHdr ? 'var(--accent-amber)' : 'var(--text-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>);
+                    return (<tr key={ri} className={isHdr ? '' : 'transition-colors'} style={{ background: isHdr ? 'var(--surface-1)' : undefined, borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => { if (!isHdr) e.currentTarget.style.background = 'var(--surface-hover)'; }} onMouseLeave={e => { if (!isHdr) e.currentTarget.style.background = ''; }}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--table-separator)' }}>{ri + 1}</td>{ek2bData.headers.map((_, ci) => (<td key={ci} className={`px-4 py-2.5 text-xs ${isHdr ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--table-separator)', color: isHdr ? 'var(--accent-amber)' : 'var(--text-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>);
                   })}</tbody>
                 </table>
               </div>
@@ -571,18 +571,18 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="bg-purple-500/10 text-purple-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-500/20">{ek2cData.rows.length} kayıt</span>
-                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2c')} /></label>}
-                <button onClick={() => handleClear('ek2c')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
+                <span className="bg-purple-500/10 text-purple-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-purple-500/20">{ek2cData.rows.length} kayıt</span>
+                {canUpload && <label className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-1)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2c')} /></label>}
+                <button onClick={() => handleClear('ek2c')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </GlassCard>
             <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2cData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
+                  <thead className="sticky top-0 z-10"><tr className="backdrop-blur-xl" style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--table-separator)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>#</th>{ek2cData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>{h}</th>))}</tr></thead>
                   <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2cData.rows.map((row, ri) => {
                     const isHdr = String(row[0] || '').trim() === '' && String(row[4] || '').trim() === '';
-                    return (<tr key={ri} className={isHdr ? '' : 'transition-colors'} style={{ background: isHdr ? 'var(--surface-1)' : undefined, borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => { if (!isHdr) e.currentTarget.style.background = 'var(--table-row-hover)'; }} onMouseLeave={e => { if (!isHdr) e.currentTarget.style.background = ''; }}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{ri + 1}</td>{ek2cData.headers.map((_, ci) => (<td key={ci} className={`px-4 py-2.5 text-xs ${isHdr ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--border-2)', color: isHdr ? 'var(--accent-purple)' : 'var(--text-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>);
+                    return (<tr key={ri} className={isHdr ? '' : 'transition-colors'} style={{ background: isHdr ? 'var(--surface-1)' : undefined, borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => { if (!isHdr) e.currentTarget.style.background = 'var(--surface-hover)'; }} onMouseLeave={e => { if (!isHdr) e.currentTarget.style.background = ''; }}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--table-separator)' }}>{ri + 1}</td>{ek2cData.headers.map((_, ci) => (<td key={ci} className={`px-4 py-2.5 text-xs ${isHdr ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--table-separator)', color: isHdr ? 'var(--accent-purple)' : 'var(--text-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>);
                   })}</tbody>
                 </table>
               </div>
@@ -604,18 +604,18 @@ const EkListeTanimlama: React.FC<EkListeTanimlamaProps> = ({ canUpload = false, 
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-500/20">{ek2cdData.rows.length} kayıt</span>
-                {canUpload && <label className="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-2)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2cd')} /></label>}
-                <button onClick={() => handleClear('ek2cd')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
+                <span className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold border border-rose-500/20">{ek2cdData.rows.length} kayıt</span>
+                {canUpload && <label className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors border" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', borderColor: 'var(--border-1)' }}>Değiştir<input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange('ek2cd')} /></label>}
+                <button onClick={() => handleClear('ek2cd')} className="bg-rose-500/10 text-rose-400 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-500/20 transition-colors border border-rose-500/20">Temizle</button>
               </div>
             </GlassCard>
             <GlassCard isDark={isDark} hover={false} padding="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
-                  <thead><tr style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--border-2)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>#</th>{ek2cdData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--border-2)' }}>{h}</th>))}</tr></thead>
+                  <thead className="sticky top-0 z-10"><tr className="backdrop-blur-xl" style={{ background: 'var(--surface-1)', borderBottom: '1px solid var(--table-separator)' }}><th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider w-12" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>#</th>{ek2cdData.headers.map((h, i) => (<th key={i} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ color: 'var(--text-3)', borderRight: '1px solid var(--table-separator)' }}>{h}</th>))}</tr></thead>
                   <tbody style={{ borderColor: 'var(--border-2)' }}>{ek2cdData.rows.map((row, ri) => {
                     const isHdr = String(row[0] || '').trim() === '' && String(row[3] || '').trim() === '';
-                    return (<tr key={ri} className={isHdr ? '' : 'transition-colors'} style={{ background: isHdr ? 'var(--surface-1)' : undefined, borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => { if (!isHdr) e.currentTarget.style.background = 'var(--table-row-hover)'; }} onMouseLeave={e => { if (!isHdr) e.currentTarget.style.background = ''; }}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--border-2)' }}>{ri + 1}</td>{ek2cdData.headers.map((_, ci) => (<td key={ci} className={`px-4 py-2.5 text-xs ${isHdr ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--border-2)', color: isHdr ? 'var(--accent-rose)' : 'var(--text-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>);
+                    return (<tr key={ri} className={isHdr ? '' : 'transition-colors'} style={{ background: isHdr ? 'var(--surface-1)' : undefined, borderBottom: '1px solid var(--border-2)' }} onMouseEnter={e => { if (!isHdr) e.currentTarget.style.background = 'var(--surface-hover)'; }} onMouseLeave={e => { if (!isHdr) e.currentTarget.style.background = ''; }}><td className="px-4 py-2.5 text-xs font-mono" style={{ color: 'var(--text-muted)', borderRight: '1px solid var(--table-separator)' }}>{ri + 1}</td>{ek2cdData.headers.map((_, ci) => (<td key={ci} className={`px-4 py-2.5 text-xs ${isHdr ? 'font-bold' : ''}`} style={{ borderRight: '1px solid var(--table-separator)', color: isHdr ? 'var(--accent-rose)' : 'var(--text-2)' }}>{row[ci] != null ? String(row[ci]) : ''}</td>))}</tr>);
                   })}</tbody>
                 </table>
               </div>
