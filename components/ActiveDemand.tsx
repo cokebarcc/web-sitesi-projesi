@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import {
   uploadActiveDemandFile,
   getDemandSummary,
@@ -104,8 +105,11 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
   const [uploadHospitalId, setUploadHospitalId] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadHospitalDropdownOpen, setUploadHospitalDropdownOpen] = useState(false);
+  const [uploadDropdownPos, setUploadDropdownPos] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadDropdownRef = useRef<HTMLDivElement>(null);
+  const uploadTriggerRef = useRef<HTMLButtonElement>(null);
+  const uploadDropdownPortalRef = useRef<HTMLDivElement>(null);
 
   // Filtre state'leri - EmergencyService ile aynı mantık
   const [availableYears, setAvailableYears] = useState<number[]>([]);
@@ -162,10 +166,43 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
     loadDateParts();
   }, []);
 
+  // Upload dropdown pozisyonunu hesapla
+  const updateUploadDropdownPos = useCallback(() => {
+    if (uploadTriggerRef.current) {
+      const rect = uploadTriggerRef.current.getBoundingClientRect();
+      setUploadDropdownPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: Math.max(rect.width, 200),
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (uploadHospitalDropdownOpen) {
+      updateUploadDropdownPos();
+    }
+  }, [uploadHospitalDropdownOpen, updateUploadDropdownPos]);
+
+  useEffect(() => {
+    if (!uploadHospitalDropdownOpen) return;
+    const handle = () => updateUploadDropdownPos();
+    window.addEventListener('scroll', handle, true);
+    window.addEventListener('resize', handle);
+    return () => {
+      window.removeEventListener('scroll', handle, true);
+      window.removeEventListener('resize', handle);
+    };
+  }, [uploadHospitalDropdownOpen, updateUploadDropdownPos]);
+
   // Upload dropdown dışına tıklandığında kapat
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (uploadDropdownRef.current && !uploadDropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        uploadDropdownRef.current && !uploadDropdownRef.current.contains(target) &&
+        uploadDropdownPortalRef.current && !uploadDropdownPortalRef.current.contains(target)
+      ) {
         setUploadHospitalDropdownOpen(false);
       }
     };
@@ -1156,6 +1193,7 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
               <label style={{ color: 'var(--text-3)' }} className="text-sm font-medium">Hastane</label>
               <div className="relative">
                 <button
+                  ref={uploadTriggerRef}
                   type="button"
                   onClick={() => setUploadHospitalDropdownOpen(!uploadHospitalDropdownOpen)}
                   style={{ background: 'var(--input-bg)', borderColor: 'var(--input-border)' }}
@@ -1169,8 +1207,12 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                   </svg>
                 </button>
 
-                {uploadHospitalDropdownOpen && (
-                  <div style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border-light)' }} className="absolute z-50 mt-1 w-full border rounded-xl shadow-xl max-h-[280px] overflow-y-auto backdrop-blur-xl">
+                {uploadHospitalDropdownOpen && ReactDOM.createPortal(
+                  <div
+                    ref={uploadDropdownPortalRef}
+                    style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border-light)', top: uploadDropdownPos.top, left: uploadDropdownPos.left, minWidth: uploadDropdownPos.width }}
+                    className="fixed z-[9999] border rounded-xl shadow-xl max-h-[280px] overflow-y-auto backdrop-blur-xl"
+                  >
                     {uploadHospitalOptions.map(opt => (
                       <button
                         key={String(opt.value)}
@@ -1190,7 +1232,8 @@ const ActiveDemand: React.FC<ActiveDemandProps> = ({
                         <span className={uploadHospitalId === opt.value ? '' : 'ml-6'}>{opt.label}</span>
                       </button>
                     ))}
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>

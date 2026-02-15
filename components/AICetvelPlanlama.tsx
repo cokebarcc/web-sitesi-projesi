@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import * as XLSX from 'xlsx';
 import pptxgen from 'pptxgenjs';
 import { DetailedScheduleData } from '../types';
@@ -1082,9 +1083,26 @@ const RoleGroupTooltip: React.FC<{
   loadedCount: number;
 }> = ({ roleGroup, hospitals, loadedCount }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLSpanElement>(null);
+
+  const updatePos = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setTooltipPos({
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showTooltip) updatePos();
+  }, [showTooltip, updatePos]);
 
   return (
     <span
+      ref={triggerRef}
       className="relative cursor-help inline-flex items-center gap-1"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
@@ -1095,8 +1113,8 @@ const RoleGroupTooltip: React.FC<{
           {roleGroup}
         </span>
       )}
-      {showTooltip && roleGroup && hospitals.length > 0 && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[220px]">
+      {showTooltip && roleGroup && hospitals.length > 0 && ReactDOM.createPortal(
+        <div className="fixed z-[9999] min-w-[220px]" style={{ top: tooltipPos.top, left: tooltipPos.left, transform: 'translateX(-50%)' }}>
           <div className="bg-[var(--surface-1)] border border-[var(--border-1)] rounded-xl shadow-2xl p-4 space-y-2">
             <div className="text-[10px] font-black text-indigo-400 uppercase border-b border-[var(--border-1)] pb-2">
               Rol Grubu {roleGroup} Hastaneleri ({loadedCount}/{hospitals.length} yüklü)
@@ -1110,7 +1128,8 @@ const RoleGroupTooltip: React.FC<{
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </span>
   );
