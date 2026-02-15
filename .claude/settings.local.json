@@ -61,7 +61,24 @@
       "Bash(find:*)",
       "Bash(git stash:*)",
       "Bash(git rebase:*)",
-      "Bash(git stash pop:*)"
+      "Bash(git stash pop:*)",
+      "Bash(git apply:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(__NEW_LINE_e09fffaec4dcb886__ done)",
+      "Bash(ls:*)",
+      "Bash(while read file)",
+      "Bash(do)",
+      "Bash(if ! grep -q \"import.*Glass\" \"$file\")",
+      "Bash(then)",
+      "Bash(fi)",
+      "Bash(__NEW_LINE_d7cca5ff03e13e43__ done)",
+      "Bash(for file in ActiveDemand.tsx EmergencyService.tsx AICetvelPlanlama.tsx EfficiencyAnalysis.tsx SchedulePlanning.tsx HekimIslemListesiModule.tsx PhysicianData.tsx ChangeAnalysis.tsx ComplianceAnalysisPanel.tsx AnalysisModule.tsx Dashboard.tsx)",
+      "Bash(__NEW_LINE_e6759be20560236d__ done)",
+      "Bash(for file in GorenModule.tsx common/GorenSummaryCards.tsx)",
+      "Bash(__NEW_LINE_647fb3ee9f218ace__ head -50 \"$file\")",
+      "Bash(__NEW_LINE_c6dc241fe1d5416d__ done)"
     ]
   }
 }
