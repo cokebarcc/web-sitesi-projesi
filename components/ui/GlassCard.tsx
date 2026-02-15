@@ -12,6 +12,8 @@ interface GlassCardProps {
   padding?: string;
   onClick?: () => void;
   style?: React.CSSProperties;
+  /** overflow-hidden yerine overflow-visible kullanmak için (dropdown içeren paneller) */
+  overflowVisible?: boolean;
 }
 
 // ── Variant: Surface + Border + Shadow ──
@@ -81,6 +83,7 @@ const GlassCard: React.FC<GlassCardProps> = ({
   padding = 'p-5',
   onClick,
   style,
+  overflowVisible = false,
 }) => {
   const showInnerEffects = variant === 'default' || variant === 'elevated';
 
@@ -89,7 +92,7 @@ const GlassCard: React.FC<GlassCardProps> = ({
       onClick={onClick}
       style={style}
       className={[
-        'relative rounded-2xl border overflow-hidden',
+        `relative rounded-2xl border ${overflowVisible ? 'overflow-visible' : 'overflow-hidden'}`,
         showInnerEffects ? 'backdrop-blur-xl' : 'backdrop-blur-sm',
         // ── Surface + Border + Shadow (variant-aware) ──
         getVariantBase(variant, isDark),

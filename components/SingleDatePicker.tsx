@@ -5,7 +5,8 @@
  * tek tarih seçimi için tasarlanmış bileşen.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 
 interface SingleDatePickerProps {
   label: string;
@@ -28,7 +29,10 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredBtn, setHoveredBtn] = useState<string | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   // Başlangıç görünümü - seçili tarih veya bugün
   const getInitialView = () => {
@@ -43,10 +47,45 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
   const [viewYear, setViewYear] = useState<number>(getInitialView().year);
   const [viewMonth, setViewMonth] = useState<number>(getInitialView().month);
 
+  // Popover pozisyonunu hesapla
+  const updatePopoverPosition = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPopoverPos({
+        top: rect.bottom + 4,
+        left: rect.left,
+      });
+    }
+  }, []);
+
+  // Açıldığında pozisyon hesapla
+  useEffect(() => {
+    if (isOpen) {
+      updatePopoverPosition();
+    }
+  }, [isOpen, updatePopoverPosition]);
+
+  // Scroll/resize'da pozisyon güncelle
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleScrollOrResize = () => updatePopoverPosition();
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [isOpen, updatePopoverPosition]);
+
   // Dışarı tıklandığında kapat
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        popoverRef.current && !popoverRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -159,12 +198,148 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
 
   const todayStr = new Date().toISOString().split('T')[0];
 
+  // Portal ile render edilen takvim popover
+  const renderPopover = () => {
+    if (!isOpen) return null;
+
+    const popover = (
+      <div
+        ref={popoverRef}
+        className="fixed z-[9999] rounded-xl shadow-2xl p-4 min-w-[300px]"
+        style={{
+          background: 'var(--surface-1)',
+          border: '1px solid var(--border-2)',
+          top: popoverPos.top,
+          left: popoverPos.left,
+        }}
+      >
+        {/* Header - Ay/Yıl Navigasyonu */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={() => changeMonth(-1)}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ background: hoveredBtn === 'prev' ? 'var(--surface-hover)' : 'transparent' }}
+            onMouseEnter={() => setHoveredBtn('prev')}
+            onMouseLeave={() => setHoveredBtn(null)}
+          >
+            <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div className="font-semibold" style={{ color: 'var(--text-1)' }}>
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </div>
+          <button
+            type="button"
+            onClick={() => changeMonth(1)}
+            className="p-1.5 rounded-lg transition-colors"
+            style={{ background: hoveredBtn === 'next' ? 'var(--surface-hover)' : 'transparent' }}
+            onMouseEnter={() => setHoveredBtn('next')}
+            onMouseLeave={() => setHoveredBtn(null)}
+          >
+            <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Gün İsimleri */}
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {DAY_NAMES.map(day => (
+            <div key={day} className="text-center text-xs font-medium py-1" style={{ color: 'var(--text-3)' }}>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Günler */}
+        <div className="grid grid-cols-7 gap-1">
+          {calendarDays.map((day, index) => {
+            if (day === null) {
+              return <div key={`empty-${index}`} className="h-9" />;
+            }
+
+            const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isSelected = value === dateStr;
+            const isToday = dateStr === todayStr;
+            const dayKey = `day-${day}`;
+
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => handleDateClick(day)}
+                className={`
+                  h-9 w-full rounded-lg text-sm font-medium transition-all relative
+                  ${isSelected
+                    ? 'bg-orange-500 text-white hover:bg-orange-600'
+                    : ''
+                  }
+                `}
+                style={
+                  isSelected
+                    ? {}
+                    : isToday
+                      ? {
+                          background: hoveredBtn === dayKey ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.2)',
+                          color: 'rgb(96,165,250)'
+                        }
+                      : {
+                          color: 'var(--text-2)',
+                          background: hoveredBtn === dayKey ? 'var(--surface-hover)' : 'transparent'
+                        }
+                }
+                onMouseEnter={() => !isSelected && setHoveredBtn(dayKey)}
+                onMouseLeave={() => setHoveredBtn(null)}
+              >
+                {day}
+                {isToday && !isSelected && (
+                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-400 rounded-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: '1px solid var(--border-2)' }}>
+          <button
+            type="button"
+            onClick={goToToday}
+            className="text-xs text-orange-400 hover:text-orange-300 font-medium"
+          >
+            Bugün
+          </button>
+          {value && (
+            <button
+              type="button"
+              onClick={() => {
+                clearSelection();
+                setIsOpen(false);
+              }}
+              className="text-xs font-medium"
+              style={{ color: hoveredBtn === 'temizle' ? 'var(--text-2)' : 'var(--text-3)' }}
+              onMouseEnter={() => setHoveredBtn('temizle')}
+              onMouseLeave={() => setHoveredBtn(null)}
+            >
+              Temizle
+            </button>
+          )}
+        </div>
+      </div>
+    );
+
+    return ReactDOM.createPortal(popover, document.body);
+  };
+
   return (
     <div className="flex flex-col gap-1.5" ref={containerRef}>
       <label className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>{label}</label>
       <div className="relative">
         {/* Trigger Button */}
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           onKeyDown={handleKeyDown}
@@ -224,128 +399,8 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
           </svg>
         </button>
 
-        {/* Calendar Popover */}
-        {isOpen && (
-          <div
-            className="absolute left-0 top-full z-50 mt-1 rounded-xl shadow-xl p-4 min-w-[300px]"
-            style={{ background: 'var(--surface-1)', border: '1px solid var(--border-2)' }}
-          >
-            {/* Header - Ay/Yıl Navigasyonu */}
-            <div className="flex items-center justify-between mb-4">
-              <button
-                type="button"
-                onClick={() => changeMonth(-1)}
-                className="p-1.5 rounded-lg transition-colors"
-                style={{ background: hoveredBtn === 'prev' ? 'var(--surface-hover)' : 'transparent' }}
-                onMouseEnter={() => setHoveredBtn('prev')}
-                onMouseLeave={() => setHoveredBtn(null)}
-              >
-                <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div className="font-semibold" style={{ color: 'var(--text-1)' }}>
-                {MONTH_NAMES[viewMonth]} {viewYear}
-              </div>
-              <button
-                type="button"
-                onClick={() => changeMonth(1)}
-                className="p-1.5 rounded-lg transition-colors"
-                style={{ background: hoveredBtn === 'next' ? 'var(--surface-hover)' : 'transparent' }}
-                onMouseEnter={() => setHoveredBtn('next')}
-                onMouseLeave={() => setHoveredBtn(null)}
-              >
-                <svg className="w-5 h-5" style={{ color: 'var(--text-2)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Gün İsimleri */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {DAY_NAMES.map(day => (
-                <div key={day} className="text-center text-xs font-medium py-1" style={{ color: 'var(--text-3)' }}>
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Günler */}
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, index) => {
-                if (day === null) {
-                  return <div key={`empty-${index}`} className="h-9" />;
-                }
-
-                const dateStr = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const isSelected = value === dateStr;
-                const isToday = dateStr === todayStr;
-                const dayKey = `day-${day}`;
-
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => handleDateClick(day)}
-                    className={`
-                      h-9 w-full rounded-lg text-sm font-medium transition-all relative
-                      ${isSelected
-                        ? 'bg-orange-500 text-white hover:bg-orange-600'
-                        : ''
-                      }
-                    `}
-                    style={
-                      isSelected
-                        ? {}
-                        : isToday
-                          ? {
-                              background: hoveredBtn === dayKey ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.2)',
-                              color: 'rgb(96,165,250)'
-                            }
-                          : {
-                              color: 'var(--text-2)',
-                              background: hoveredBtn === dayKey ? 'var(--surface-hover)' : 'transparent'
-                            }
-                    }
-                    onMouseEnter={() => !isSelected && setHoveredBtn(dayKey)}
-                    onMouseLeave={() => setHoveredBtn(null)}
-                  >
-                    {day}
-                    {isToday && !isSelected && (
-                      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-400 rounded-full" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: '1px solid var(--border-2)' }}>
-              <button
-                type="button"
-                onClick={goToToday}
-                className="text-xs text-orange-400 hover:text-orange-300 font-medium"
-              >
-                Bugün
-              </button>
-              {value && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    clearSelection();
-                    setIsOpen(false);
-                  }}
-                  className="text-xs font-medium"
-                  style={{ color: hoveredBtn === 'temizle' ? 'var(--text-2)' : 'var(--text-3)' }}
-                  onMouseEnter={() => setHoveredBtn('temizle')}
-                  onMouseLeave={() => setHoveredBtn(null)}
-                >
-                  Temizle
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Calendar Popover - Portal ile body'ye render */}
+        {renderPopover()}
       </div>
     </div>
   );
