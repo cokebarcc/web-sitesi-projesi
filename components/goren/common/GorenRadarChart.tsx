@@ -24,7 +24,7 @@ import {
 } from 'recharts';
 import { BHTableRow, loadGorenBHData } from '../../../src/services/gorenStorage';
 import { InstitutionType } from '../types/goren.types';
-import { GlassCard } from '../../ui';
+
 
 interface GorenRadarChartProps {
   data: BHTableRow[];
@@ -412,9 +412,9 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
   // Yükleme durumu
   if (isLoading) {
     return (
-      <GlassCard isDark={true} hover={false} padding="p-6" overflowVisible>
+      <div className="g-section-card p-6" style={{ overflow: 'visible' }}>
         <div className="h-[500px] flex items-center justify-center">
-          <div className="flex items-center gap-3 text-[var(--text-muted)]">
+          <div className="flex items-center gap-3" style={{ color: 'var(--g-text-tertiary)' }}>
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -422,21 +422,21 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
             <span>Grafik yükleniyor...</span>
           </div>
         </div>
-      </GlassCard>
+      </div>
     );
   }
 
   // Veri yoksa
   if (!data || data.length === 0) {
     return (
-      <GlassCard isDark={true} hover={false} padding="p-6" overflowVisible>
-        <div className="h-[500px] flex flex-col items-center justify-center text-[var(--text-muted)]">
+      <div className="g-section-card p-6" style={{ overflow: 'visible' }}>
+        <div className="h-[500px] flex flex-col items-center justify-center" style={{ color: 'var(--g-text-tertiary)' }}>
           <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           <p className="text-sm">Gösterge verisi bulunamadı</p>
         </div>
-      </GlassCard>
+      </div>
     );
   }
 
@@ -460,15 +460,15 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
     : null;
 
   return (
-    <GlassCard isDark={true} hover={false} padding="p-6" overflowVisible>
+    <div className="g-section-card p-6" style={{ overflow: 'visible' }}>
       {/* Başlık ve Karşılaştırma Filtresi */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-1)' }}>
+          <h3 className="g-title-section flex items-center gap-2">
             <span>🕸️</span>
             Gösterge Dağılım Haritası
           </h3>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
+          <p className="g-text-small mt-1">
             {getCategoryCountForModule(moduleType)} kategori, {getIndicatorCountForModule(moduleType)} gösterge - Ağırlıklandırılmış performans analizi
           </p>
         </div>
@@ -476,14 +476,14 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
         {/* Karşılaştırma Filtresi - Modern Dropdown */}
         <div className="relative">
           <div className="flex items-center gap-2">
-            <label className="text-xs whitespace-nowrap" style={{ color: 'var(--text-3)' }}>Karşılaştır:</label>
+            <label className="text-xs whitespace-nowrap" style={{ color: 'var(--g-text-tertiary)' }}>Karşılaştır:</label>
             <button
               ref={radarTriggerRef}
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 min-w-[220px] hover:border-emerald-500/50 transition-all group"
-              style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-3)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-2)'; }}
+              style={{ backgroundColor: 'var(--g-surface-raised)', border: '1px solid var(--g-border)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--g-surface-muted)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--g-surface-raised)'; }}
             >
               <div className="flex items-center gap-2">
                 {compareHospitalName ? (
@@ -491,14 +491,14 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     <svg className="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>{compareHospitalName}</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--g-text)' }}>{compareHospitalName}</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" style={{ color: 'var(--text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4" style={{ color: 'var(--g-text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <span className="text-sm" style={{ color: 'var(--text-3)' }}>Kurum seçin...</span>
+                    <span className="text-sm" style={{ color: 'var(--g-text-tertiary)' }}>Kurum seçin...</span>
                   </>
                 )}
               </div>
@@ -517,15 +517,15 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                       setCompareHospitalName('');
                     }}
                     className="p-0.5 rounded transition-colors"
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-3)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--g-surface-muted)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    <svg className="w-4 h-4" style={{ color: 'var(--text-3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4" style={{ color: 'var(--g-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 )}
-                <svg className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--text-3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--g-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -544,11 +544,11 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                 }}
               />
               {/* Dropdown Content */}
-              <div ref={radarDropdownRef} className="fixed w-72 backdrop-blur-xl rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)', top: radarDropdownPos.top, right: radarDropdownPos.right }}>
+              <div ref={radarDropdownRef} className="fixed w-72 backdrop-blur-xl rounded-xl shadow-2xl z-[9999] overflow-hidden" style={{ backgroundColor: 'var(--g-surface-raised)', border: '1px solid var(--g-border)', top: radarDropdownPos.top, right: radarDropdownPos.right }}>
                 {/* Search Input */}
-                <div className="p-3" style={{ borderBottom: '1px solid var(--border-2)' }}>
+                <div className="p-3" style={{ borderBottom: '1px solid var(--g-border)' }}>
                   <div className="relative">
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--g-text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input
@@ -557,7 +557,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-emerald-500/50"
-                      style={{ backgroundColor: 'var(--surface-1)', border: '1px solid var(--border-2)', color: 'var(--text-1)' }}
+                      style={{ backgroundColor: 'var(--g-surface)', border: '1px solid var(--g-border)', color: 'var(--g-text)' }}
                       autoFocus
                     />
                   </div>
@@ -581,13 +581,13 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                           className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
                             isSelected ? 'bg-emerald-500/10 border-l-2 border-emerald-500' : ''
                           }`}
-                          onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--surface-3)'; }}
+                          onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--g-surface-muted)'; }}
                           onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent'; }}
                         >
-                          <svg className={`w-4 h-4 ${isSelected ? 'text-emerald-400' : ''}`} style={!isSelected ? { color: 'var(--text-muted)' } : undefined} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className={`w-4 h-4 ${isSelected ? 'text-emerald-400' : ''}`} style={!isSelected ? { color: 'var(--g-text-muted)' } : undefined} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
-                          <span className={`text-sm ${isSelected ? 'text-emerald-400 font-medium' : ''}`} style={!isSelected ? { color: 'var(--text-2)' } : undefined}>
+                          <span className={`text-sm ${isSelected ? 'text-emerald-400 font-medium' : ''}`} style={!isSelected ? { color: 'var(--g-text-secondary)' } : undefined}>
                             {inst.name}
                           </span>
                           {isSelected && (
@@ -599,7 +599,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                       );
                     })
                   ) : (
-                    <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                    <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--g-text-muted)' }}>
                       Kurum bulunamadı
                     </div>
                   )}
@@ -614,14 +614,14 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       {/* Skor Kartları */}
       <div className="flex items-center justify-center gap-8 mb-4">
         <div className="text-center">
-          <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{currentInstitutionName || 'Mevcut Kurum'}</p>
+          <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--g-text-muted)' }}>{currentInstitutionName || 'Mevcut Kurum'}</p>
           <p className="text-3xl font-black text-emerald-400">%{Math.round(overallScore)}</p>
         </div>
         {compareOverallScore !== null && (
           <>
-            <div className="text-2xl" style={{ color: 'var(--text-muted)' }}>vs</div>
+            <div className="text-2xl" style={{ color: 'var(--g-text-muted)' }}>vs</div>
             <div className="text-center">
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{compareHospitalName}</p>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--g-text-muted)' }}>{compareHospitalName}</p>
               <p className="text-3xl font-black text-orange-400">%{Math.round(compareOverallScore)}</p>
             </div>
           </>
@@ -632,16 +632,16 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       <div className="h-[450px]">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={combinedData} cx="50%" cy="50%" outerRadius="70%">
-            <PolarGrid stroke="#94a3b8" strokeDasharray="3 3" strokeOpacity={1} />
+            <PolarGrid stroke="#cbd5e1" strokeDasharray="3 3" strokeOpacity={0.7} />
             <PolarAngleAxis
               dataKey="category"
-              tick={{ fill: 'var(--text-3)', fontSize: 11, fontWeight: 500 }}
+              tick={{ fill: '#334155', fontSize: 11, fontWeight: 600 }}
               tickLine={false}
             />
             <PolarRadiusAxis
               angle={90}
               domain={[0, 100]}
-              tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
+              tick={{ fill: '#64748b', fontSize: 10 }}
               tickCount={6}
               axisLine={false}
             />
@@ -705,7 +705,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
               <Legend
                 wrapperStyle={{ paddingTop: '10px' }}
                 formatter={(value: string) => (
-                  <span className="text-xs" style={{ color: 'var(--text-2)' }}>{value}</span>
+                  <span className="text-xs" style={{ color: 'var(--g-text-secondary)' }}>{value}</span>
                 )}
               />
             )}
@@ -714,7 +714,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       </div>
 
       {/* Detay Açıklama */}
-      <p className="text-center text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+      <p className="text-center text-xs mt-2" style={{ color: 'var(--g-text-muted)' }}>
         Detay için aşağıdaki kartlara veya grafikteki noktalara tıklayın
       </p>
 
@@ -741,15 +741,15 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                 : ''
               }`}
               style={{
-                backgroundColor: 'var(--surface-1)',
-                ...(item.score >= 70 ? { borderColor: 'var(--border-2)' } : {})
+                backgroundColor: 'var(--g-surface)',
+                ...(item.score >= 70 ? { borderColor: 'var(--g-border)' } : {})
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-2)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-1)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--g-surface-raised)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--g-surface)'; }}
             >
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">{item.icon}</span>
-                <span className="text-xs truncate" style={{ color: 'var(--text-3)' }}>{item.category}</span>
+                <span className="text-xs truncate" style={{ color: 'var(--g-text-tertiary)' }}>{item.category}</span>
               </div>
               <div className="flex items-end justify-between">
                 <div className="flex items-baseline gap-2">
@@ -762,12 +762,12 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                     </span>
                   )}
                 </div>
-                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                <span className="text-[10px]" style={{ color: 'var(--g-text-muted)' }}>
                   {item.indicatorCount}/{item.totalIndicators}
                 </span>
               </div>
               {/* Mini progress bar */}
-              <div className="mt-2 h-1 rounded-full overflow-hidden relative" style={{ backgroundColor: 'var(--border-2)' }}>
+              <div className="mt-2 h-1 rounded-full overflow-hidden relative" style={{ backgroundColor: 'var(--g-border)' }}>
                 <div
                   className="absolute h-full rounded-full transition-all duration-500"
                   style={{
@@ -792,7 +792,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       </div>
 
       {/* Alt bilgi */}
-      <div className="mt-4 pt-4 flex items-center justify-between text-xs text-[var(--text-muted)]" style={{ borderTop: '1px solid var(--border-2)' }}>
+      <div className="mt-4 pt-4 flex items-center justify-between text-xs text-[var(--g-text-muted)]" style={{ borderTop: '1px solid var(--g-border)' }}>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-emerald-500" />
@@ -817,51 +817,123 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
       {/* Kategori Detay Modal - Portal ile document.body'ye render edilir */}
       {selectedCategory && ReactDOM.createPortal(
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          style={{
+            background: 'linear-gradient(135deg, rgba(15,23,42,0.6) 0%, rgba(30,41,59,0.7) 100%)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)'
+          }}
           onClick={() => setSelectedCategory(null)}
         >
           <div
-            className="rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
-            style={{ backgroundColor: 'var(--surface-1)', border: '1px solid var(--border-2)' }}
+            className="w-full max-w-2xl max-h-[80vh] overflow-hidden"
+            style={{
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)',
+              borderRadius: '24px',
+              border: '1px solid rgba(148,163,184,0.2)',
+              boxShadow: '0 25px 60px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.8)'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-5" style={{ borderBottom: '1px solid var(--border-2)' }}>
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{selectedCategory.icon}</span>
-                <div>
-                  <h3 className="font-bold text-lg" style={{ color: 'var(--text-1)' }}>{selectedCategory.fullName}</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-3)' }}>{selectedCategory.indicatorCount}/{selectedCategory.totalIndicators} gösterge hesaplandı</p>
+            {/* Modal Header - Gradient accent bar */}
+            <div style={{
+              background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6d28d9 100%)',
+              padding: '24px 28px',
+              borderRadius: '24px 24px 0 0',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Dekoratif ışık efekti */}
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                right: '-20%',
+                width: '300px',
+                height: '300px',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)',
+                borderRadius: '50%',
+                pointerEvents: 'none'
+              }} />
+              <div className="flex items-center justify-between" style={{ position: 'relative', zIndex: 1 }}>
+                <div className="flex items-center gap-4">
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px'
+                  }}>
+                    {selectedCategory.icon}
+                  </div>
+                  <div>
+                    <h3 style={{ color: '#fff', fontWeight: 800, fontSize: '20px', letterSpacing: '-0.02em' }}>{selectedCategory.fullName}</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginTop: '2px' }}>{selectedCategory.indicatorCount}/{selectedCategory.totalIndicators} gösterge hesaplandı</p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.15)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.3)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+                >
+                  <svg className="w-5 h-5" style={{ color: '#fff' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className="p-2 rounded-lg transition-colors"
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-2)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                <svg className="w-5 h-5" style={{ color: 'var(--text-3)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
             </div>
 
-            {/* Kategori Skoru */}
-            <div className="flex items-center justify-between px-5 py-4" style={{ backgroundColor: 'var(--surface-2)' }}>
-              <span className="text-base font-medium" style={{ color: 'var(--text-2)' }}>Kategori Skoru:</span>
+            {/* Kategori Skoru - Premium card */}
+            <div className="flex items-center justify-between" style={{
+              padding: '20px 28px',
+              background: 'linear-gradient(135deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%)',
+              borderBottom: '1px solid rgba(226,232,240,0.6)'
+            }}>
+              <span style={{ color: '#64748b', fontWeight: 600, fontSize: '14px', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Kategori Skoru</span>
               <div className="flex items-center gap-3">
-                <span className={`text-4xl font-black ${
-                  selectedCategory.score >= 70 ? 'text-emerald-400'
-                  : selectedCategory.score >= 50 ? 'text-amber-400'
-                  : selectedCategory.score >= 30 ? 'text-orange-400'
-                  : 'text-rose-400'
-                }`}>
+                <span style={{
+                  fontSize: '36px',
+                  fontWeight: 900,
+                  letterSpacing: '-0.03em',
+                  background: selectedCategory.score >= 70
+                    ? 'linear-gradient(135deg, #059669, #10b981)'
+                    : selectedCategory.score >= 50
+                    ? 'linear-gradient(135deg, #d97706, #f59e0b)'
+                    : selectedCategory.score >= 30
+                    ? 'linear-gradient(135deg, #ea580c, #f97316)'
+                    : 'linear-gradient(135deg, #dc2626, #f43f5e)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
                   %{selectedCategory.score}
                 </span>
                 {selectedCategory.compareScore !== undefined && (
                   <>
-                    <span style={{ color: 'var(--text-muted)' }}>vs</span>
-                    <span className="text-2xl font-bold text-orange-400">
+                    <span style={{ color: '#cbd5e1', fontSize: '20px' }}>vs</span>
+                    <span style={{
+                      fontSize: '24px',
+                      fontWeight: 800,
+                      background: 'linear-gradient(135deg, #ea580c, #f97316)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
                       %{selectedCategory.compareScore}
                     </span>
                   </>
@@ -870,17 +942,17 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
             </div>
 
             {/* Göstergeler Listesi */}
-            <div className="p-5 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 200px)' }}>
+            <div className="overflow-y-auto" style={{ padding: '20px 28px', maxHeight: 'calc(80vh - 220px)' }}>
               {/* Kurum başlıkları - karşılaştırma varsa göster */}
               {selectedCategory.compareDetails && selectedCategory.compareDetails.length > 0 && (
-                <div className="flex items-center justify-end gap-4 mb-4 pr-2">
+                <div className="flex items-center justify-end gap-5 mb-5 pr-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500" />
-                    <span className="text-xs" style={{ color: 'var(--text-3)' }}>{currentInstitutionName || 'Mevcut'}</span>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'linear-gradient(135deg, #059669, #10b981)' }} />
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{currentInstitutionName || 'Mevcut'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-orange-500" />
-                    <span className="text-xs" style={{ color: 'var(--text-3)' }}>{compareHospitalName}</span>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'linear-gradient(135deg, #ea580c, #f97316)' }} />
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{compareHospitalName}</span>
                   </div>
                 </div>
               )}
@@ -893,95 +965,139 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                       cd => cd.name === detail.name
                     );
 
+                    const ratio = detail.maxScore > 0 ? detail.score / detail.maxScore : 0;
+                    const badgeGradient = ratio >= 1 ? 'linear-gradient(135deg, #059669, #10b981)'
+                      : ratio >= 0.7 ? 'linear-gradient(135deg, #10b981, #34d399)'
+                      : ratio >= 0.4 ? 'linear-gradient(135deg, #d97706, #f59e0b)'
+                      : ratio > 0 ? 'linear-gradient(135deg, #ea580c, #f97316)'
+                      : 'linear-gradient(135deg, #dc2626, #ef4444)';
+
                     return (
                       <div
                         key={idx}
-                        className="p-4 rounded-xl"
-                        style={{ backgroundColor: 'var(--surface-2)', border: '1px solid var(--border-2)' }}
+                        style={{
+                          padding: '16px 20px',
+                          borderRadius: '16px',
+                          background: '#fff',
+                          border: '1px solid rgba(226,232,240,0.7)',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                          e.currentTarget.style.borderColor = 'rgba(99,102,241,0.3)';
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+                          e.currentTarget.style.borderColor = 'rgba(226,232,240,0.7)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <span className="text-sm leading-relaxed flex-1" style={{ color: 'var(--text-2)' }}>
+                        <div className="flex items-center justify-between gap-4">
+                          <span style={{ fontSize: '14px', lineHeight: 1.5, flex: 1, color: '#334155', fontWeight: 500 }}>
                             {detail.name}
                           </span>
                           <div className="flex items-center gap-3">
-                            {/* Ana kurum puanı - Renk skalası */}
-                            <div className="flex flex-col items-center gap-1">
+                            {/* Ana kurum puanı - Premium gradient badge */}
+                            <div className="flex flex-col items-center gap-1.5">
                               <span
-                                className="text-white font-bold text-sm px-3 py-1.5 rounded-lg"
                                 style={{
-                                  backgroundColor: (() => {
-                                    const ratio = detail.maxScore > 0 ? detail.score / detail.maxScore : 0;
-                                    if (ratio >= 1) return 'rgb(16, 185, 129)';      // Tam puan - yeşil
-                                    if (ratio >= 0.7) return 'rgb(52, 211, 153)';     // %70+ - açık yeşil
-                                    if (ratio >= 0.4) return 'rgb(251, 191, 36)';     // %40-70 - amber
-                                    if (ratio > 0) return 'rgb(249, 115, 22)';        // %1-40 - turuncu
-                                    return 'rgb(239, 68, 68)';                         // Sıfır - kırmızı
-                                  })()
+                                  color: '#fff',
+                                  fontWeight: 700,
+                                  fontSize: '13px',
+                                  padding: '6px 14px',
+                                  borderRadius: '10px',
+                                  background: badgeGradient,
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                                  letterSpacing: '0.02em'
                                 }}
                               >
                                 {detail.score}/{detail.maxScore}
                               </span>
                             </div>
 
-                            {/* Karşılaştırma kurumu puanı - Turuncu renk skalası */}
-                            {compareDetail && (
-                              <div className="flex flex-col items-center gap-1">
-                                <span
-                                  className="text-white font-bold text-sm px-3 py-1.5 rounded-lg"
-                                  style={{
-                                    backgroundColor: (() => {
-                                      const ratio = compareDetail.maxScore > 0 ? compareDetail.score / compareDetail.maxScore : 0;
-                                      if (ratio >= 1) return 'rgb(249, 115, 22)';      // Tam puan - turuncu
-                                      if (ratio >= 0.7) return 'rgb(251, 146, 60)';     // %70+ - açık turuncu
-                                      if (ratio >= 0.4) return 'rgb(251, 191, 36)';     // %40-70 - amber
-                                      if (ratio > 0) return 'rgb(234, 179, 8)';         // %1-40 - sarı
-                                      return 'rgb(239, 68, 68)';                         // Sıfır - kırmızı
-                                    })()
-                                  }}
-                                >
-                                  {compareDetail.score}/{compareDetail.maxScore}
-                                </span>
-                              </div>
-                            )}
+                            {/* Karşılaştırma kurumu puanı */}
+                            {compareDetail && (() => {
+                              const cRatio = compareDetail.maxScore > 0 ? compareDetail.score / compareDetail.maxScore : 0;
+                              const cGradient = cRatio >= 1 ? 'linear-gradient(135deg, #ea580c, #f97316)'
+                                : cRatio >= 0.7 ? 'linear-gradient(135deg, #f97316, #fb923c)'
+                                : cRatio >= 0.4 ? 'linear-gradient(135deg, #d97706, #f59e0b)'
+                                : cRatio > 0 ? 'linear-gradient(135deg, #ca8a04, #eab308)'
+                                : 'linear-gradient(135deg, #dc2626, #ef4444)';
+                              return (
+                                <div className="flex flex-col items-center gap-1.5">
+                                  <span
+                                    style={{
+                                      color: '#fff',
+                                      fontWeight: 700,
+                                      fontSize: '13px',
+                                      padding: '6px 14px',
+                                      borderRadius: '10px',
+                                      background: cGradient,
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                                      letterSpacing: '0.02em'
+                                    }}
+                                  >
+                                    {compareDetail.score}/{compareDetail.maxScore}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
 
-                        {/* Karşılaştırma çubuğu */}
-                        {compareDetail && (
-                          <div className="mt-3 flex items-center gap-2">
-                            <div className="flex-1 h-2 rounded-full overflow-hidden relative" style={{ backgroundColor: 'var(--border-2)' }}>
+                        {/* İlerleme çubuğu */}
+                        {!compareDetail && (
+                          <div className="flex items-center gap-3" style={{ marginTop: '12px' }}>
+                            <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: '#f1f5f9', overflow: 'hidden' }}>
                               <div
-                                className="absolute h-full rounded-full"
                                 style={{
                                   width: `${detail.normalized}%`,
-                                  backgroundColor: '#10b981'
+                                  height: '100%',
+                                  borderRadius: '3px',
+                                  background: badgeGradient,
+                                  transition: 'width 0.5s ease'
                                 }}
                               />
                             </div>
-                            <span className="text-[10px] text-emerald-400 w-10 text-right">%{Math.round(detail.normalized)}</span>
-                          </div>
-                        )}
-                        {compareDetail && (
-                          <div className="mt-1 flex items-center gap-2">
-                            <div className="flex-1 h-2 rounded-full overflow-hidden relative" style={{ backgroundColor: 'var(--border-2)' }}>
-                              <div
-                                className="absolute h-full rounded-full"
-                                style={{
-                                  width: `${compareDetail.normalized}%`,
-                                  backgroundColor: '#f97316'
-                                }}
-                              />
-                            </div>
-                            <span className="text-[10px] text-orange-400 w-10 text-right">%{Math.round(compareDetail.normalized)}</span>
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', minWidth: '40px', textAlign: 'right' as const }}>
+                              %{Math.round(detail.normalized)}
+                            </span>
                           </div>
                         )}
 
-                        {/* Karşılaştırma yoksa sadece yüzde göster */}
-                        {!compareDetail && (
-                          <div className="mt-2 text-right">
-                            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                              %{Math.round(detail.normalized)}
-                            </span>
+                        {/* Karşılaştırma çubukları */}
+                        {compareDetail && (
+                          <div style={{ marginTop: '12px' }}>
+                            <div className="flex items-center gap-3">
+                              <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: '#f1f5f9', overflow: 'hidden' }}>
+                                <div
+                                  style={{
+                                    width: `${detail.normalized}%`,
+                                    height: '100%',
+                                    borderRadius: '3px',
+                                    background: 'linear-gradient(135deg, #059669, #10b981)',
+                                    transition: 'width 0.5s ease'
+                                  }}
+                                />
+                              </div>
+                              <span style={{ fontSize: '11px', fontWeight: 600, color: '#10b981', minWidth: '40px', textAlign: 'right' as const }}>%{Math.round(detail.normalized)}</span>
+                            </div>
+                            <div className="flex items-center gap-3" style={{ marginTop: '6px' }}>
+                              <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: '#f1f5f9', overflow: 'hidden' }}>
+                                <div
+                                  style={{
+                                    width: `${compareDetail.normalized}%`,
+                                    height: '100%',
+                                    borderRadius: '3px',
+                                    background: 'linear-gradient(135deg, #ea580c, #f97316)',
+                                    transition: 'width 0.5s ease'
+                                  }}
+                                />
+                              </div>
+                              <span style={{ fontSize: '11px', fontWeight: 600, color: '#f97316', minWidth: '40px', textAlign: 'right' as const }}>%{Math.round(compareDetail.normalized)}</span>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -989,8 +1105,11 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Bu kategoride hesaplanmış gösterge yok</p>
+                <div className="text-center" style={{ padding: '40px 0' }}>
+                  <svg className="w-12 h-12 mx-auto mb-3" style={{ color: '#cbd5e1' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 500 }}>Bu kategoride hesaplanmış gösterge yok</p>
                 </div>
               )}
             </div>
@@ -998,7 +1117,7 @@ export const GorenRadarChart: React.FC<GorenRadarChartProps> = ({
         </div>,
         document.body
       )}
-    </GlassCard>
+    </div>
   );
 };
 
