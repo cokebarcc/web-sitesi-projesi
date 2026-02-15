@@ -108,7 +108,7 @@ const HBYSPerformance: React.FC<HBYSPerformanceProps> = ({ data, detailedSchedul
   }, [appliedMonths, appliedYears]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Veri Filtreleme */}
       <DataFilterPanel
         title="Veri Filtreleme"

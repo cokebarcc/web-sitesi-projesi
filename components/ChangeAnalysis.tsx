@@ -581,7 +581,7 @@ const ChangeAnalysis: React.FC<ChangeAnalysisProps> = ({
   };
 
   return (
-    <div className="space-y-10 pb-20 animate-in fade-in duration-700">
+    <div className="space-y-4 pb-20 animate-in fade-in duration-700">
       {toast && (
         <div className={`fixed top-10 right-10 z-[100] px-6 py-4 rounded-2xl shadow-2xl font-bold flex items-center gap-3 animate-in slide-in-from-right-10 ${
           toast.type === 'success' ? 'bg-emerald-600 text-white' :

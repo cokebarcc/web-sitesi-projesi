@@ -206,7 +206,7 @@ const DetailedSchedule: React.FC<DetailedScheduleProps> = ({ data, selectedBranc
   }, [summaryData]);
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-4 pb-20">
       {/* Veri Filtreleme */}
       <DataFilterPanel
         title="Veri Filtreleme"

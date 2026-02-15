@@ -622,7 +622,7 @@ const EfficiencyAnalysis: React.FC<EfficiencyAnalysisProps> = ({
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-700 pb-24">
+    <div className="space-y-4 animate-in fade-in duration-700 pb-24">
       {!overrideMonth && (
         <>
           <DataFilterPanel

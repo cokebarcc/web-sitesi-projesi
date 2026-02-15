@@ -61,7 +61,7 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({ data, hbysData, report, s
   }
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-4 animate-in fade-in duration-700 pb-20">
       {/* Yönetici Özeti Bölümü */}
       <div className="bg-white p-10 rounded-[48px] border shadow-xl relative overflow-hidden group" style={{ borderColor: 'var(--border-2)' }}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full -mr-32 -mt-32 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>

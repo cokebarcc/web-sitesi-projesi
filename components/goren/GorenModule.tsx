@@ -651,7 +651,7 @@ export const GorenModule: React.FC<GorenModuleProps> = ({
   }
 
   return (
-    <div className="goren-module" style={{ padding: 'var(--g-space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--g-space-6)' }}>
+    <div className="goren-module" style={{ padding: '0', display: 'flex', flexDirection: 'column', gap: 'var(--g-space-4, 16px)' }}>
       {/* Bildirim */}
       {notification && (
         <div className={`g-toast fixed top-4 right-4 z-50 g-toast--${notification.type}`}>

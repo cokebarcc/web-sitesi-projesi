@@ -572,7 +572,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   );
 
   return (
-    <div className="space-y-16 pb-32 animate-in fade-in duration-500">
+    <div className="space-y-4 pb-32 animate-in fade-in duration-500">
       
       {/* 1. SEKSİYON: KONSOLİDE ANALİZ PANELİ (TÜM ÜST PANEL) */}
       <div ref={consolidatedPanelRef} className="relative group/mainpanel">
